@@ -21,6 +21,7 @@ Environment:
 #include "device.h"
 #include "queue.h"
 #include "trace.h"
+#include "Bluetooth.h"
 
 EXTERN_C_START
 

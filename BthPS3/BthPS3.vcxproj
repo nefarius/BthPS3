@@ -38,11 +38,13 @@
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Bluetooth.c" />
     <ClCompile Include="Device.c" />
     <ClCompile Include="Driver.c" />
     <ClCompile Include="Queue.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Bluetooth.h" />
     <ClInclude Include="Device.h" />
     <ClInclude Include="Driver.h" />
     <ClInclude Include="Public.h" />

@@ -4,8 +4,8 @@
 
 [Version]
 Signature="$WINDOWS NT$"
-Class=Sample ; TODO: edit Class
-ClassGuid={78A1C341-4539-11d3-B88D-00C04FAD5171} ; TODO: edit ClassGuid
+Class=Bluetooth
+ClassGuid={e0cbf06c-cd8b-4647-bb8a-263b43f0f974}
 Provider=%ManufacturerName%
 CatalogFile=BthPS3.cat
 DriverVer= ; TODO: set DriverVer in stampinf property pages
@@ -15,13 +15,6 @@ DefaultDestDir = 12
 BthPS3_Device_CoInstaller_CopyFiles = 11
 
 ; ================= Class section =====================
-
-[ClassInstall32]
-Addreg=SampleClassReg
-
-[SampleClassReg]
-HKR,,,0,%ClassName%
-HKR,,Icon,,-5
 
 [SourceDisksNames]
 1 = %DiskName%,,,""
@@ -35,10 +28,10 @@ WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1 ; make sure the number matches with
 ;*****************************************
 
 [Manufacturer]
-%ManufacturerName%=Standard,NT$ARCH$
+%ManufacturerName%=BthPS3,NT$ARCH$
 
-[Standard.NT$ARCH$]
-%BthPS3.DeviceDesc%=BthPS3_Device, Root\BthPS3 ; TODO: edit hw-id
+[BthPS3.NT$ARCH$]
+%BthPS3.DeviceDesc%=BthPS3_Device, BTHENUM\{c07508f2-b970-43ca-b5dd-cc4f2391bef4}
 
 [BthPS3_Device.NT]
 CopyFiles=Drivers_Dir
@@ -79,8 +72,7 @@ KmdfLibraryVersion = $KMDFVERSION$
 
 [Strings]
 SPSVCINST_ASSOCSERVICE= 0x00000002
-ManufacturerName="<Your manufacturer name>" ;TODO: Replace with your manufacturer name
-ClassName="Samples" ; TODO: edit ClassName
+ManufacturerName="Nefarius Software Solutions e.U."
 DiskName = "BthPS3 Installation Disk"
 BthPS3.DeviceDesc = "BthPS3 Device"
 BthPS3.SVCDESC = "BthPS3 Service"

@@ -146,3 +146,11 @@ BthPS3ConnectionObjectInit(
     _In_ WDFOBJECT ConnectionObject,
     _In_ PBTHPS3_DEVICE_CONTEXT_HEADER DevCtxHdr
 );
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+NTSTATUS
+BthPS3ConnectionObjectCreate(
+    _In_ PBTHPS3_DEVICE_CONTEXT_HEADER DevCtxHdr,
+    _In_ WDFOBJECT ParentObject,
+    _Out_ WDFOBJECT*  ConnectionObject
+);

@@ -12,6 +12,8 @@ BthPS3RetrieveLocalInfo(
     NTSTATUS status = STATUS_SUCCESS;
     struct _BRB_GET_LOCAL_BD_ADDR * brb = NULL;
 
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Entry");
+
     brb = (struct _BRB_GET_LOCAL_BD_ADDR *)
         DevCtxHdr->ProfileDrvInterface.BthAllocateBrb(
             BRB_HCI_GET_LOCAL_BD_ADDR,
@@ -65,6 +67,9 @@ BthPS3RetrieveLocalInfo(
 exit1:
     DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
 exit:
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Exit");
+
     return status;
 }
 
@@ -120,10 +125,10 @@ _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3GetHostSupportedFeatures(
     _In_ PBTHPS3_DEVICE_CONTEXT_HEADER DevCtxHdr
-    )
-{   
-    WDF_MEMORY_DESCRIPTOR outMemDesc = {0};
-    BTH_HOST_FEATURE_MASK localFeatures = {0};
+)
+{
+    WDF_MEMORY_DESCRIPTOR outMemDesc = { 0 };
+    BTH_HOST_FEATURE_MASK localFeatures = { 0 };
     NTSTATUS status = STATUS_SUCCESS;
 
     DevCtxHdr->LocalFeatures.Mask = 0;
@@ -132,7 +137,7 @@ BthPS3GetHostSupportedFeatures(
         &outMemDesc,
         &localFeatures,
         sizeof(localFeatures)
-        );
+    );
 
     status = WdfIoTargetSendIoctlSynchronously(
         DevCtxHdr->IoTarget,
@@ -142,12 +147,12 @@ BthPS3GetHostSupportedFeatures(
         &outMemDesc,
         NULL,
         NULL
-        );
+    );
 
     if (!NT_SUCCESS(status)) {
         return status;
     }
-    
+
     DevCtxHdr->LocalFeatures = localFeatures;
 
     return status;
@@ -164,6 +169,8 @@ BthPS3RegisterPSM(
     NTSTATUS status;
     struct _BRB_PSM * brb;
 
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Entry");
+
     DevCtx->Header.ProfileDrvInterface.BthReuseBrb(
         &(DevCtx->RegisterUnregisterBrb),
         BRB_REGISTER_PSM
@@ -172,10 +179,18 @@ BthPS3RegisterPSM(
     brb = (struct _BRB_PSM *)
         &(DevCtx->RegisterUnregisterBrb);
 
+    DevCtx->Psm = 0x5053;
+
     //
     // Send in our preferred PSM
     //
     brb->Psm = DevCtx->Psm;
+
+    TraceEvents(TRACE_LEVEL_INFORMATION, 
+        TRACE_BTH, 
+        "++ Trying to register PSM 0x%04X",
+        brb->Psm
+    );
 
     status = BthPS3SendBrbSynchronously(
         DevCtx->Header.IoTarget,
@@ -196,7 +211,16 @@ BthPS3RegisterPSM(
     //
     DevCtx->Psm = brb->Psm;
 
+    TraceEvents(TRACE_LEVEL_INFORMATION,
+        TRACE_BTH,
+        "++ Got PSM 0x%04X",
+        brb->Psm
+    );
+
 exit:
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Exit");
+
     return status;
 }
 
@@ -204,12 +228,14 @@ _IRQL_requires_max_(PASSIVE_LEVEL)
 VOID
 BthPS3UnregisterPSM(
     _In_ PBTHPS3_SERVER_CONTEXT DevCtx
-    )
+)
 {
     NTSTATUS status;
     struct _BRB_PSM * brb;
 
     PAGED_CODE();
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Entry");
 
     if (0 == DevCtx->Psm)
     {
@@ -217,40 +243,43 @@ BthPS3UnregisterPSM(
     }
 
     DevCtx->Header.ProfileDrvInterface.BthReuseBrb(
-        &(DevCtx->RegisterUnregisterBrb), 
+        &(DevCtx->RegisterUnregisterBrb),
         BRB_UNREGISTER_PSM
-        );
+    );
 
     brb = (struct _BRB_PSM *)
-            &(DevCtx->RegisterUnregisterBrb);
+        &(DevCtx->RegisterUnregisterBrb);
 
     //
     // Format Brb
     //
-    
+
     brb->Psm = DevCtx->Psm;
 
     status = BthPS3SendBrbSynchronously(
         DevCtx->Header.IoTarget,
         DevCtx->Header.Request,
-        (PBRB) brb,
+        (PBRB)brb,
         sizeof(*(brb))
-        );
+    );
 
     if (!NT_SUCCESS(status))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH, 
+        TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
             "BRB_UNREGISTER_PSM failed with status %!STATUS!", status);
 
         //
         // Send does not fail for resource reasons
         //
         NT_ASSERT(FALSE);
-        
-        goto exit;        
+
+        goto exit;
     }
 
 exit:
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Exit");
+
     return;
 }
 
@@ -262,6 +291,8 @@ BthPS3RegisterL2CAPServer(
 {
     NTSTATUS status;
     struct _BRB_L2CA_REGISTER_SERVER *brb;
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Entry");
 
     DevCtx->Header.ProfileDrvInterface.BthReuseBrb(
         &(DevCtx->RegisterUnregisterBrb),
@@ -276,7 +307,7 @@ BthPS3RegisterL2CAPServer(
     //
     brb->BtAddress = BTH_ADDR_NULL;
     brb->PSM = 0; //we have already registered the PSM
-    // brb->IndicationCallback = &BthEchoSrvIndicationCallback;
+    brb->IndicationCallback = &BthPS3IndicationCallback;
     brb->IndicationCallbackContext = DevCtx;
     brb->IndicationFlags = 0;
     brb->ReferenceObject = WdfDeviceWdmGetDeviceObject(DevCtx->Header.Device);
@@ -301,6 +332,9 @@ BthPS3RegisterL2CAPServer(
     DevCtx->L2CAPServerHandle = brb->ServerHandle;
 
 exit:
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Exit");
+
     return status;
 }
 
@@ -460,6 +494,8 @@ BthPS3IndicationCallback(
     _In_ PINDICATION_PARAMETERS Parameters
 )
 {
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Entry");
+
     switch (Indication)
     {
     case IndicationAddReference:
@@ -469,8 +505,8 @@ BthPS3IndicationCallback(
     {
         PBTHPS3_SERVER_CONTEXT devCtx = (PBTHPS3_SERVER_CONTEXT)Context;
 
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
-            "!FUNC! ++ IndicationRemoteConnect");
+        TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_BTH,
+            "%!FUNC! ++ IndicationRemoteConnect");
 
         UNREFERENCED_PARAMETER(devCtx);
         UNREFERENCED_PARAMETER(Parameters);
@@ -491,4 +527,6 @@ BthPS3IndicationCallback(
     case IndicationFreeExtraOptions:
         break;
     }
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Exit");
 }

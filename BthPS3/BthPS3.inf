@@ -31,7 +31,7 @@ WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1 ; make sure the number matches with
 %ManufacturerName%=BthPS3,NT$ARCH$
 
 [BthPS3.NT$ARCH$]
-%BthPS3.DeviceDesc%=BthPS3_Device, BTHENUM\{c07508f2-b970-43ca-b5dd-cc4f2391bef4}
+%BthPS3.DeviceDesc%=BthPS3_Device, BTHENUM\{c07508f2-b970-43ca-b5dd-cc4f2391bef4} ; TODO: change GUID
 
 [BthPS3_Device.NT]
 CopyFiles=Drivers_Dir

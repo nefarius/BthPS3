@@ -530,3 +530,16 @@ BthPS3IndicationCallback(
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Exit");
 }
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+NTSTATUS
+BthPS3SendConnectResponse(
+    _In_ PBTHPS3_SERVER_CONTEXT DevCtx,
+    _In_ PINDICATION_PARAMETERS ConnectParams
+)
+{
+    UNREFERENCED_PARAMETER(DevCtx);
+    UNREFERENCED_PARAMETER(ConnectParams);
+
+    return STATUS_SUCCESS;
+}

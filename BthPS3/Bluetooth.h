@@ -204,3 +204,10 @@ BthPS3IndicationCallback(
     _In_ INDICATION_CODE Indication,
     _In_ PINDICATION_PARAMETERS Parameters
 );
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+NTSTATUS
+BthPS3SendConnectResponse(
+    _In_ PBTHPS3_SERVER_CONTEXT DevCtx,
+    _In_ PINDICATION_PARAMETERS ConnectParams
+);

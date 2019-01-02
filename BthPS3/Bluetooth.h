@@ -222,10 +222,4 @@ BthPS3SendBrbAsync(
     _In_opt_ WDFCONTEXT Context
 );
 
-void
-BthPS3RemoteConnectResponseCompletion(
-    _In_ WDFREQUEST  Request,
-    _In_ WDFIOTARGET  Target,
-    _In_ PWDF_REQUEST_COMPLETION_PARAMS  Params,
-    _In_ WDFCONTEXT  Context
-);
+EVT_WDF_REQUEST_COMPLETION_ROUTINE BthPS3RemoteConnectResponseCompletion;

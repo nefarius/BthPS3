@@ -569,7 +569,7 @@ BthPS3SendConnectResponse(
     connection->ConnectionState = ConnectionStateConnecting;
 
     //
-    // Insert the connection object in the conenction list that we track
+    // Insert the connection object in the connection list that we track
     //
     InsertConnectionEntryLocked(DevCtx, &connection->ConnectionListEntry);
 
@@ -587,7 +587,7 @@ BthPS3SendConnectResponse(
     brb->ChannelHandle = ConnectParams->ConnectionHandle;
     brb->Response = CONNECT_RSP_RESULT_SUCCESS;
 
-    brb->ChannelFlags = CF_ROLE_MASTER;
+    brb->ChannelFlags = CF_ROLE_EITHER;
 
     brb->ConfigOut.Flags = 0;
     brb->ConfigIn.Flags = 0;
@@ -633,6 +633,9 @@ exit:
         // If we failed to connect remove connection from list and
         // delete the object
         //
+        TraceEvents(TRACE_LEVEL_WARNING, 
+            TRACE_BTH, 
+            "Failed to establish connection, clean-up");
 
         //
         // connection should not be NULL if connectionObject is not NULL
@@ -825,10 +828,123 @@ BthPS3RemoteConnectResponseCompletion(
 {
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Entry");
 
+    NTSTATUS status;
+    struct _BRB_L2CA_OPEN_CHANNEL *brb;
+    PBTHPS3_CONNECTION connection;
+    WDFOBJECT connectionObject;
+
+
     UNREFERENCED_PARAMETER(Target);
-    UNREFERENCED_PARAMETER(Request);
-    UNREFERENCED_PARAMETER(Params);
-    UNREFERENCED_PARAMETER(Context);
+    UNREFERENCED_PARAMETER(Request); //we reuse the request, hence it is not needed here
+
+    status = Params->IoStatus.Status;
+
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_BTH,
+        "Connection completion, status: %!STATUS!", status);
+
+    brb = (struct _BRB_L2CA_OPEN_CHANNEL *) Context;
+
+    //
+    // We receice connection object as the context in the BRB
+    //
+    connectionObject = (WDFOBJECT)brb->Hdr.ClientContext[0];
+    connection = GetConnectionObjectContext(connectionObject);
+
+    if (NT_SUCCESS(status))
+    {
+        connection->OutMTU = brb->OutResults.Params.Mtu;
+        connection->InMTU = brb->InResults.Params.Mtu;
+        connection->ChannelHandle = brb->ChannelHandle;
+        connection->RemoteAddress = brb->BtAddress;
+
+        TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_BTH,
+            "Connection established with client");
+
+        //
+        // Check if we already received a disconnect request
+        // and if so disconnect
+        //
+
+        WdfSpinLockAcquire(connection->ConnectionLock);
+
+        if (connection->ConnectionState == ConnectionStateDisconnecting)
+        {
+            //
+            // We allow transition to disconnected state only from
+            // connected state
+            //
+            // If we are in disconnection state this means that
+            // we were waiting for connect to complete before we
+            // can send disconnect down
+            //
+            // Set the state to Connected and call BthEchoConnectionObjectRemoteDisconnect
+            //
+            connection->ConnectionState = ConnectionStateConnected;
+            WdfSpinLockRelease(connection->ConnectionLock);
+
+            TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_BTH,
+                "Remote connect response completion: "
+                "disconnect has been received "
+                "for connection 0x%p", connection);
+
+            //BthEchoConnectionObjectRemoteDisconnect(connection->DevCtxHdr, connection);
+        }
+        else
+        {
+            connection->ConnectionState = ConnectionStateConnected;
+            WdfSpinLockRelease(connection->ConnectionLock);
+
+            TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_BTH,
+                "Connection completed, connection: 0x%p", connection);
+
+            //
+            // Call BthEchoSrvConnectionStateConnected to perform post connect processing
+            // (namely initializing continuous readers)
+            //
+            //status = BthEchoSrvConnectionStateConnected(connectionObject);
+            //if (!NT_SUCCESS(status))
+            //{
+            //    //
+            //    // If the post connect processing failed, let us disconnect
+            //    //
+            //    BthEchoConnectionObjectRemoteDisconnect(connection->DevCtxHdr, connection);
+            //}
+
+        }
+    }
+    else
+    {
+        BOOLEAN setDisconnectEvent = FALSE;
+
+        WdfSpinLockAcquire(connection->ConnectionLock);
+        if (connection->ConnectionState == ConnectionStateDisconnecting)
+        {
+            setDisconnectEvent = TRUE;
+        }
+
+        connection->ConnectionState = ConnectionStateConnectFailed;
+        WdfSpinLockRelease(connection->ConnectionLock);
+
+        if (setDisconnectEvent)
+        {
+            KeSetEvent(&connection->DisconnectEvent,
+                0,
+                FALSE);
+        }
+
+    }
+
+    if (!NT_SUCCESS(status))
+    {
+        RemoveConnectionEntryLocked(
+            (PBTHPS3_SERVER_CONTEXT)connection->DevCtxHdr,
+            &connection->ConnectionListEntry
+        );
+
+        WdfObjectDelete(connectionObject);
+    }
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Exit");
+
+    return;
 }

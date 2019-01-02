@@ -74,5 +74,5 @@ KmdfLibraryVersion = $KMDFVERSION$
 SPSVCINST_ASSOCSERVICE= 0x00000002
 ManufacturerName="Nefarius Software Solutions e.U."
 DiskName = "BthPS3 Installation Disk"
-BthPS3.DeviceDesc = "BthPS3 Device"
+BthPS3.DeviceDesc = "PlayStation 3 Bluetooth Profile Driver"
 BthPS3.SVCDESC = "BthPS3 Service"

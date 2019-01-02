@@ -154,3 +154,31 @@ BthPS3ConnectionObjectCreate(
     _In_ WDFOBJECT ParentObject,
     _Out_ WDFOBJECT*  ConnectionObject
 );
+
+void
+FORCEINLINE
+InsertConnectionEntryLocked(
+    PBTHPS3_SERVER_CONTEXT devCtx,
+    PLIST_ENTRY ple
+)
+{
+    WdfSpinLockAcquire(devCtx->ConnectionListLock);
+
+    InsertTailList(&devCtx->ConnectionList, ple);
+
+    WdfSpinLockRelease(devCtx->ConnectionListLock);
+}
+
+void
+FORCEINLINE
+RemoveConnectionEntryLocked(
+    PBTHPS3_SERVER_CONTEXT devCtx,
+    PLIST_ENTRY ple
+)
+{
+    WdfSpinLockAcquire(devCtx->ConnectionListLock);
+
+    RemoveEntryList(ple);
+
+    WdfSpinLockRelease(devCtx->ConnectionListLock);
+}

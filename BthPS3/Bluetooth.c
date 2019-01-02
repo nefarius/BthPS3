@@ -545,10 +545,33 @@ BthPS3SendConnectResponse(
     WDFOBJECT connectionObject = NULL;
     PBTHPS3_CONNECTION connection = NULL;
 
-    UNREFERENCED_PARAMETER(DevCtx);
-    UNREFERENCED_PARAMETER(ConnectParams);
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Entry");
+
+    //
+    // We create the connection object as the first step so that if we receive 
+    // remove before connect response is completed
+    // we can wait for connection and disconnect.
+    //
+    status = BthPS3ConnectionObjectCreate(
+        &DevCtx->Header,
+        DevCtx->Header.Device,
+        &connectionObject
+    );
+
+    if (!NT_SUCCESS(status))
+    {
+        goto exit;
+    }
+
+    connection = GetConnectionObjectContext(connectionObject);
+
+    connection->ConnectionState = ConnectionStateConnecting;
+
+    //
+    // Insert the connection object in the conenction list that we track
+    //
+    InsertConnectionEntryLocked(DevCtx, &connection->ConnectionListEntry);
 
     WDF_REQUEST_REUSE_PARAMS_INIT(&reuseParams, WDF_REQUEST_REUSE_NO_FLAGS, STATUS_NOT_SUPPORTED);
     statusReuse = WdfRequestReuse(connection->ConnectDisconnectRequest, &reuseParams);
@@ -587,11 +610,53 @@ BthPS3SendConnectResponse(
     brb->CallbackContext = connectionObject;
     brb->ReferenceObject = (PVOID)WdfDeviceWdmGetDeviceObject(DevCtx->Header.Device);
 
+    status = BthPS3SendBrbAsync(
+        DevCtx->Header.IoTarget,
+        connection->ConnectDisconnectRequest,
+        (PBRB)brb,
+        sizeof(*brb),
+        BthPS3RemoteConnectResponseCompletion,
+        brb
+    );
 
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
+            "BthPS3SendBrbAsync failed, status = %!STATUS!", status);
+    }
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Exit");
+exit:
 
-    return STATUS_SUCCESS;
+    if (!NT_SUCCESS(status) && connectionObject)
+    {
+        //
+        // If we failed to connect remove connection from list and
+        // delete the object
+        //
+
+        //
+        // connection should not be NULL if connectionObject is not NULL
+        // since first thing we do after creating connectionObject is to
+        // get context which gives us connection
+        //
+        NT_ASSERT(connection != NULL);
+
+        if (connection != NULL)
+        {
+            connection->ConnectionState = ConnectionStateConnectFailed;
+
+            RemoveConnectionEntryLocked(
+                (PBTHPS3_SERVER_CONTEXT)connection->DevCtxHdr,
+                &connection->ConnectionListEntry
+            );
+        }
+
+        WdfObjectDelete(connectionObject);
+    }
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Exit (%!STATUS!)", status);
+
+    return status;
 }
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
@@ -641,6 +706,129 @@ BthPS3ConnectionIndicationCallback(
         //
         NT_ASSERT(FALSE);
     }
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Exit");
+}
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+NTSTATUS
+BthPS3SendBrbAsync(
+    _In_ WDFIOTARGET IoTarget,
+    _In_ WDFREQUEST Request,
+    _In_ PBRB Brb,
+    _In_ size_t BrbSize,
+    _In_ PFN_WDF_REQUEST_COMPLETION_ROUTINE ComplRoutine,
+    _In_opt_ WDFCONTEXT Context
+)
+{
+    NTSTATUS status = BTH_ERROR_SUCCESS;
+    WDF_OBJECT_ATTRIBUTES attributes;
+    WDFMEMORY memoryArg1 = NULL;
+
+    if (BrbSize <= 0)
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
+            "BrbSize has invalid value: %I64d\n",
+            BrbSize
+        );
+
+        status = STATUS_INVALID_PARAMETER;
+
+        goto exit;
+    }
+
+    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+    attributes.ParentObject = Request;
+
+    status = WdfMemoryCreatePreallocated(
+        &attributes,
+        Brb,
+        BrbSize,
+        &memoryArg1
+    );
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
+            "Creating preallocated memory for Brb 0x%p failed, Request to be formatted 0x%p, "
+            "Status code %!STATUS!\n",
+            Brb,
+            Request,
+            status
+        );
+
+        goto exit;
+    }
+
+    status = WdfIoTargetFormatRequestForInternalIoctlOthers(
+        IoTarget,
+        Request,
+        IOCTL_INTERNAL_BTH_SUBMIT_BRB,
+        memoryArg1,
+        NULL, //OtherArg1Offset
+        NULL, //OtherArg2
+        NULL, //OtherArg2Offset
+        NULL, //OtherArg4
+        NULL  //OtherArg4Offset
+    );
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
+            "Formatting request 0x%p with Brb 0x%p failed, Status code %!STATUS!\n",
+            Request,
+            Brb,
+            status
+        );
+
+        goto exit;
+    }
+
+    //
+    // Set a CompletionRoutine callback function.
+    //
+    WdfRequestSetCompletionRoutine(
+        Request,
+        ComplRoutine,
+        Context
+    );
+
+    if (FALSE == WdfRequestSend(
+        Request,
+        IoTarget,
+        NULL
+    ))
+    {
+        status = WdfRequestGetStatus(Request);
+
+        TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
+            "Request send failed for request 0x%p, Brb 0x%p, Status code %!STATUS!\n",
+            Request,
+            Brb,
+            status
+        );
+
+        goto exit;
+    }
+
+exit:
+    return status;
+}
+
+void
+BthPS3RemoteConnectResponseCompletion(
+    _In_ WDFREQUEST  Request,
+    _In_ WDFIOTARGET  Target,
+    _In_ PWDF_REQUEST_COMPLETION_PARAMS  Params,
+    _In_ WDFCONTEXT  Context
+)
+{
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Entry");
+
+    UNREFERENCED_PARAMETER(Target);
+    UNREFERENCED_PARAMETER(Request);
+    UNREFERENCED_PARAMETER(Params);
+    UNREFERENCED_PARAMETER(Context);
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Exit");
 }

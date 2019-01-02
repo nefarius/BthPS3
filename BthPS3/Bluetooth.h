@@ -210,3 +210,22 @@ BthPS3ConnectionIndicationCallback(
     _In_ INDICATION_CODE Indication,
     _In_ PINDICATION_PARAMETERS Parameters
 );
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+NTSTATUS
+BthPS3SendBrbAsync(
+    _In_ WDFIOTARGET IoTarget,
+    _In_ WDFREQUEST Request,
+    _In_ PBRB Brb,
+    _In_ size_t BrbSize,
+    _In_ PFN_WDF_REQUEST_COMPLETION_ROUTINE ComplRoutine,
+    _In_opt_ WDFCONTEXT Context
+);
+
+void
+BthPS3RemoteConnectResponseCompletion(
+    _In_ WDFREQUEST  Request,
+    _In_ WDFIOTARGET  Target,
+    _In_ PWDF_REQUEST_COMPLETION_PARAMS  Params,
+    _In_ WDFCONTEXT  Context
+);

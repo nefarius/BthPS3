@@ -179,6 +179,7 @@ BthPS3RegisterPSM(
     brb = (struct _BRB_PSM *)
         &(DevCtx->RegisterUnregisterBrb);
 
+    // TODO: move somewhere else
     DevCtx->Psm = 0x5053;
 
     //

@@ -187,8 +187,8 @@ BthPS3RegisterPSM(
     //
     brb->Psm = DevCtx->Psm;
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, 
-        TRACE_BTH, 
+    TraceEvents(TRACE_LEVEL_INFORMATION,
+        TRACE_BTH,
         "++ Trying to register PSM 0x%04X",
         brb->Psm
     );
@@ -512,7 +512,7 @@ BthPS3IndicationCallback(
         UNREFERENCED_PARAMETER(devCtx);
         UNREFERENCED_PARAMETER(Parameters);
 
-        //BthEchoSrvSendConnectResponse(devCtx, Parameters);
+        BthPS3SendConnectResponse(devCtx, Parameters);
         break;
     }
     case IndicationRemoteDisconnect:
@@ -539,8 +539,108 @@ BthPS3SendConnectResponse(
     _In_ PINDICATION_PARAMETERS ConnectParams
 )
 {
+    NTSTATUS status, statusReuse;
+    WDF_REQUEST_REUSE_PARAMS reuseParams;
+    struct _BRB_L2CA_OPEN_CHANNEL *brb = NULL;
+    WDFOBJECT connectionObject = NULL;
+    PBTHPS3_CONNECTION connection = NULL;
+
     UNREFERENCED_PARAMETER(DevCtx);
     UNREFERENCED_PARAMETER(ConnectParams);
 
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Entry");
+
+    WDF_REQUEST_REUSE_PARAMS_INIT(&reuseParams, WDF_REQUEST_REUSE_NO_FLAGS, STATUS_NOT_SUPPORTED);
+    statusReuse = WdfRequestReuse(connection->ConnectDisconnectRequest, &reuseParams);
+    NT_ASSERT(NT_SUCCESS(statusReuse));
+    UNREFERENCED_PARAMETER(statusReuse);
+
+    brb = (struct _BRB_L2CA_OPEN_CHANNEL*) &(connection->ConnectDisconnectBrb);
+    DevCtx->Header.ProfileDrvInterface.BthReuseBrb((PBRB)brb, BRB_L2CA_OPEN_CHANNEL_RESPONSE);
+
+    brb->Hdr.ClientContext[0] = connectionObject;
+    brb->BtAddress = ConnectParams->BtAddress;
+    brb->Psm = ConnectParams->Parameters.Connect.Request.PSM;
+    brb->ChannelHandle = ConnectParams->ConnectionHandle;
+    brb->Response = CONNECT_RSP_RESULT_SUCCESS;
+
+    brb->ChannelFlags = CF_ROLE_MASTER;
+
+    brb->ConfigOut.Flags = 0;
+    brb->ConfigIn.Flags = 0;
+
+    brb->ConfigOut.Flags |= CFG_MTU;
+    brb->ConfigOut.Mtu.Max = L2CAP_DEFAULT_MTU;
+    brb->ConfigOut.Mtu.Min = L2CAP_MIN_MTU;
+    brb->ConfigOut.Mtu.Preferred = L2CAP_DEFAULT_MTU;
+
+    brb->ConfigIn.Flags = CFG_MTU;
+    brb->ConfigIn.Mtu.Max = brb->ConfigOut.Mtu.Max;
+    brb->ConfigIn.Mtu.Min = brb->ConfigOut.Mtu.Min;
+    brb->ConfigIn.Mtu.Preferred = brb->ConfigOut.Mtu.Max;
+
+    //
+    // Get notifications about disconnect
+    //
+    brb->CallbackFlags = CALLBACK_DISCONNECT;
+    brb->Callback = &BthPS3ConnectionIndicationCallback;
+    brb->CallbackContext = connectionObject;
+    brb->ReferenceObject = (PVOID)WdfDeviceWdmGetDeviceObject(DevCtx->Header.Device);
+
+
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Exit");
+
     return STATUS_SUCCESS;
+}
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+void
+BthPS3ConnectionIndicationCallback(
+    _In_ PVOID Context,
+    _In_ INDICATION_CODE Indication,
+    _In_ PINDICATION_PARAMETERS Parameters
+)
+{
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Entry");
+
+    UNREFERENCED_PARAMETER(Parameters);
+
+    switch (Indication)
+    {
+    case IndicationAddReference:
+        break;
+    case IndicationReleaseReference:
+        break;
+    case IndicationRemoteConnect:
+    {
+        //
+        // We don't expect connect on this callback
+        //
+        NT_ASSERT(FALSE);
+        break;
+    }
+    case IndicationRemoteDisconnect:
+    {
+        WDFOBJECT connectionObject = (WDFOBJECT)Context;
+        PBTHPS3_CONNECTION connection = GetConnectionObjectContext(connectionObject);
+
+        UNREFERENCED_PARAMETER(connection);
+
+        //BthEchoSrvDisconnectConnection(connection);
+
+        break;
+    }
+    case IndicationRemoteConfigRequest:
+    case IndicationRemoteConfigResponse:
+    case IndicationFreeExtraOptions:
+        break;
+    default:
+        //
+        // We don't expect any other indications on this callback
+        //
+        NT_ASSERT(FALSE);
+    }
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Exit");
 }

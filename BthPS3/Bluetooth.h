@@ -33,15 +33,6 @@ typedef struct _BTHPS3_DEVICE_CONTEXT_HEADER
     //
     BTH_ADDR LocalBthAddr;
 
-#if (NTDDI_VERSION >= NTDDI_WIN8)
-
-    //
-    // Features supported by the local stack
-    //
-    BTH_HOST_FEATURE_MASK LocalFeatures;
-
-#endif
-
     //
     // Preallocated request to be reused during initialization/deinitialzation phase
     // Access to this reqeust is not synchronized
@@ -210,4 +201,12 @@ NTSTATUS
 BthPS3SendConnectResponse(
     _In_ PBTHPS3_SERVER_CONTEXT DevCtx,
     _In_ PINDICATION_PARAMETERS ConnectParams
+);
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+void
+BthPS3ConnectionIndicationCallback(
+    _In_ PVOID Context,
+    _In_ INDICATION_CODE Indication,
+    _In_ PINDICATION_PARAMETERS Parameters
 );

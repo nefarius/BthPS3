@@ -845,7 +845,7 @@ BthPS3RemoteConnectResponseCompletion(
     brb = (struct _BRB_L2CA_OPEN_CHANNEL *) Context;
 
     //
-    // We receice connection object as the context in the BRB
+    // We receive connection object as the context in the BRB
     //
     connectionObject = (WDFOBJECT)brb->Hdr.ClientContext[0];
     connection = GetConnectionObjectContext(connectionObject);

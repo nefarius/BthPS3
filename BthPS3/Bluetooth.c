@@ -179,13 +179,7 @@ BthPS3RegisterPSM(
     brb = (struct _BRB_PSM *)
         &(DevCtx->RegisterUnregisterBrb);
 
-    // TODO: move somewhere else
-    DevCtx->Psm = 0x5053;
-
-    //
-    // Send in our preferred PSM
-    //
-    brb->Psm = DevCtx->Psm;
+    brb->Psm = PSM_DS3_HID_CONTROL;
 
     TraceEvents(TRACE_LEVEL_INFORMATION,
         TRACE_BTH,
@@ -210,7 +204,40 @@ BthPS3RegisterPSM(
     //
     // Store PSM obtained
     //
-    DevCtx->Psm = brb->Psm;
+    DevCtx->PsmHidControl = brb->Psm;
+
+    TraceEvents(TRACE_LEVEL_INFORMATION,
+        TRACE_BTH,
+        "++ Got PSM 0x%04X",
+        brb->Psm
+    );
+
+    brb->Psm = PSM_DS3_HID_INTERRUPT;
+
+    TraceEvents(TRACE_LEVEL_INFORMATION,
+        TRACE_BTH,
+        "++ Trying to register PSM 0x%04X",
+        brb->Psm
+    );
+
+    status = BthPS3SendBrbSynchronously(
+        DevCtx->Header.IoTarget,
+        DevCtx->Header.Request,
+        (PBRB)brb,
+        sizeof(*brb)
+    );
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
+            "BRB_REGISTER_PSM failed with status %!STATUS!", status);
+        goto exit;
+    }
+
+    //
+    // Store PSM obtained
+    //
+    DevCtx->PsmHidInterrupt = brb->Psm;
 
     TraceEvents(TRACE_LEVEL_INFORMATION,
         TRACE_BTH,
@@ -255,7 +282,29 @@ BthPS3UnregisterPSM(
     // Format Brb
     //
 
-    brb->Psm = DevCtx->Psm;
+    brb->Psm = DevCtx->PsmHidControl;
+
+    status = BthPS3SendBrbSynchronously(
+        DevCtx->Header.IoTarget,
+        DevCtx->Header.Request,
+        (PBRB)brb,
+        sizeof(*(brb))
+    );
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
+            "BRB_UNREGISTER_PSM failed with status %!STATUS!", status);
+
+        //
+        // Send does not fail for resource reasons
+        //
+        NT_ASSERT(FALSE);
+
+        goto exit;
+    }
+
+    brb->Psm = DevCtx->PsmHidInterrupt;
 
     status = BthPS3SendBrbSynchronously(
         DevCtx->Header.IoTarget,

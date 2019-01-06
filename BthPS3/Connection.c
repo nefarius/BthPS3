@@ -55,7 +55,7 @@ BthPS3ConnectionObjectInit(
     KeInitializeEvent(&connection->DisconnectEvent, NotificationEvent, TRUE);
 
     //
-    // Initalize list entry
+    // Initialize list entry
     //
 
     InitializeListHead(&connection->ConnectionListEntry);
@@ -133,27 +133,6 @@ VOID
 BthPS3EvtConnectionObjectCleanup(
     WDFOBJECT  ConnectionObject
     )
-/*++
-
-Description:
-
-    This routine is invoked by the Framework when connection object
-    gets deleted (either explicitly or implicitly because of parent
-    deletion).
-
-    Since we mark ExecutionLevel as passive for connection object we get this
-    callback at passive level and can wait for stopping of continuous
-    readers and for disconnect to complete.
-
-Arguments:
-
-    ConnectionObject - The Connection Object
-
-Return Value:
-
-    None
-
---*/
 {
     PBTHPS3_CONNECTION connection = GetConnectionObjectContext(ConnectionObject);
 

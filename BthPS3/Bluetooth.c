@@ -520,7 +520,9 @@ BthPS3IndicationCallback(
         UNREFERENCED_PARAMETER(devCtx);
         UNREFERENCED_PARAMETER(Parameters);
 
-        BthPS3SendConnectResponse(devCtx, Parameters);
+        //BthPS3SendConnectResponse(devCtx, Parameters);
+        L2CAP_PS3_SendConnectResponse(devCtx, Parameters);
+
         break;
     }
     case IndicationRemoteDisconnect:

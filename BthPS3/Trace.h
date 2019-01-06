@@ -30,6 +30,7 @@ Environment:
         WPP_DEFINE_BIT(TRACE_QUEUE)                                    \
         WPP_DEFINE_BIT(TRACE_BTH)                                      \
         WPP_DEFINE_BIT(TRACE_CONNECTION)                               \
+        WPP_DEFINE_BIT(TRACE_L2CAP)                                    \
         )                             
 
 #define WPP_FLAG_LEVEL_LOGGER(flag, level)                                  \

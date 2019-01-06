@@ -80,8 +80,7 @@ BthPS3ConnectionObjectCreate(
 
     WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&attributes, BTHPS3_CONNECTION);
     attributes.ParentObject = ParentObject;
-    // TODO: implement
-    //attributes.EvtCleanupCallback = BthEchoEvtConnectionObjectCleanup;
+    attributes.EvtCleanupCallback = BthPS3EvtConnectionObjectCleanup;
 
     //
     // We set execution level to passive so that we get cleanup at passive
@@ -126,3 +125,49 @@ exit:
 
     return status;
 }
+
+#pragma warning(push)
+#pragma warning(disable:28118) // this callback will run at IRQL=PASSIVE_LEVEL
+_Use_decl_annotations_
+VOID
+BthPS3EvtConnectionObjectCleanup(
+    WDFOBJECT  ConnectionObject
+    )
+/*++
+
+Description:
+
+    This routine is invoked by the Framework when connection object
+    gets deleted (either explicitly or implicitly because of parent
+    deletion).
+
+    Since we mark ExecutionLevel as passive for connection object we get this
+    callback at passive level and can wait for stopping of continuous
+    readers and for disconnect to complete.
+
+Arguments:
+
+    ConnectionObject - The Connection Object
+
+Return Value:
+
+    None
+
+--*/
+{
+    PBTHPS3_CONNECTION connection = GetConnectionObjectContext(ConnectionObject);
+
+    PAGED_CODE();
+        
+    //BthEchoConnectionObjectWaitForAndUninitializeContinuousReader(connection);
+
+    KeWaitForSingleObject(&connection->DisconnectEvent,
+        Executive,
+        KernelMode,
+        FALSE,
+        NULL);
+
+    WdfObjectDelete(connection->ConnectDisconnectRequest);
+}
+#pragma warning(pop) // enable 28118 again
+

@@ -110,16 +110,6 @@ BthPS3SendBrbSynchronously(
     _In_ ULONG BrbSize
 );
 
-#if (NTDDI_VERSION >= NTDDI_WIN8)
-
-_IRQL_requires_max_(PASSIVE_LEVEL)
-NTSTATUS
-BthPS3GetHostSupportedFeatures(
-    _In_ PBTHPS3_DEVICE_CONTEXT_HEADER DevCtxHdr
-);
-
-#endif
-
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3RegisterPSM(

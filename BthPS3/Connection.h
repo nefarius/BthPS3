@@ -182,3 +182,9 @@ RemoveConnectionEntryLocked(
 
     WdfSpinLockRelease(devCtx->ConnectionListLock);
 }
+
+_Use_decl_annotations_
+VOID
+BthPS3EvtConnectionObjectCleanup(
+    WDFOBJECT  ConnectionObject
+);

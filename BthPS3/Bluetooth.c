@@ -119,47 +119,6 @@ exit:
     return status;
 }
 
-#if (NTDDI_VERSION >= NTDDI_WIN8)
-
-_IRQL_requires_max_(PASSIVE_LEVEL)
-NTSTATUS
-BthPS3GetHostSupportedFeatures(
-    _In_ PBTHPS3_DEVICE_CONTEXT_HEADER DevCtxHdr
-)
-{
-    WDF_MEMORY_DESCRIPTOR outMemDesc = { 0 };
-    BTH_HOST_FEATURE_MASK localFeatures = { 0 };
-    NTSTATUS status = STATUS_SUCCESS;
-
-    DevCtxHdr->LocalFeatures.Mask = 0;
-
-    WDF_MEMORY_DESCRIPTOR_INIT_BUFFER(
-        &outMemDesc,
-        &localFeatures,
-        sizeof(localFeatures)
-    );
-
-    status = WdfIoTargetSendIoctlSynchronously(
-        DevCtxHdr->IoTarget,
-        NULL,
-        IOCTL_BTH_GET_HOST_SUPPORTED_FEATURES,
-        NULL,
-        &outMemDesc,
-        NULL,
-        NULL
-    );
-
-    if (!NT_SUCCESS(status)) {
-        return status;
-    }
-
-    DevCtxHdr->LocalFeatures = localFeatures;
-
-    return status;
-}
-
-#endif
-
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3RegisterPSM(

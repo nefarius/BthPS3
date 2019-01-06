@@ -23,6 +23,7 @@ Environment:
 #include "trace.h"
 #include "Bluetooth.h"
 #include "Connection.h"
+#include "L2CAP.h"
 
 EXTERN_C_START
 

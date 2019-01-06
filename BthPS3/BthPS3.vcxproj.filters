@@ -48,6 +48,9 @@
     <ClInclude Include="Connection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="L2CAP.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Device.c">
@@ -63,6 +66,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Connection.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="L2CAP.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

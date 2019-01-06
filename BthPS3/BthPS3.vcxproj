@@ -42,6 +42,7 @@
     <ClCompile Include="Connection.c" />
     <ClCompile Include="Device.c" />
     <ClCompile Include="Driver.c" />
+    <ClCompile Include="L2CAP.c" />
     <ClCompile Include="Queue.c" />
   </ItemGroup>
   <ItemGroup>
@@ -49,6 +50,7 @@
     <ClInclude Include="Connection.h" />
     <ClInclude Include="Device.h" />
     <ClInclude Include="Driver.h" />
+    <ClInclude Include="L2CAP.h" />
     <ClInclude Include="Public.h" />
     <ClInclude Include="Queue.h" />
     <ClInclude Include="Trace.h" />

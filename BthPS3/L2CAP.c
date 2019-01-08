@@ -67,16 +67,16 @@ L2CAP_PS3_SendConnectResponse(
     brb->ConfigOut.Mtu.Max = L2CAP_MAX_MTU;
     brb->ConfigOut.Mtu.Min = L2CAP_MIN_MTU;
     brb->ConfigOut.Mtu.Preferred = L2CAP_MAX_MTU;
-
+        
     brb->ConfigIn.Flags = CFG_MTU;
     brb->ConfigIn.Mtu.Max = brb->ConfigOut.Mtu.Max;
     brb->ConfigIn.Mtu.Min = brb->ConfigOut.Mtu.Min;
     brb->ConfigIn.Mtu.Preferred = brb->ConfigOut.Mtu.Max;
-
+    
     //
     // Get notifications about disconnect
     //
-    brb->CallbackFlags = CALLBACK_DISCONNECT;
+    brb->CallbackFlags = CALLBACK_DISCONNECT | CALLBACK_CONFIG_QOS;
     brb->Callback = &BthPS3ConnectionIndicationCallback;
     brb->CallbackContext = connectionObject;
     brb->ReferenceObject = (PVOID)WdfDeviceWdmGetDeviceObject(DevCtx->Header.Device);

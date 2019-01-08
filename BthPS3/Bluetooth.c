@@ -709,6 +709,17 @@ BthPS3ConnectionIndicationCallback(
         break;
     }
     case IndicationRemoteConfigRequest:
+
+        TraceEvents(TRACE_LEVEL_INFORMATION,
+            TRACE_BTH, 
+            "%!FUNC! ++ IndicationRemoteConfigRequest");
+
+        //
+        // TODO: this catches QOS configuration request and inherently succeeds it
+        // 
+
+        break;
+
     case IndicationRemoteConfigResponse:
     case IndicationFreeExtraOptions:
         break;

@@ -90,19 +90,24 @@ AdjustProcessPrivileges(
     BOOL bRetVal;
     DWORD err;
 
-    bRetVal = OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &procToken);
+    bRetVal = OpenProcessToken(
+        GetCurrentProcess(), 
+        TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, 
+        &procToken
+    );
+
     if (!bRetVal)
     {
         err = GetLastError();
-        printf("OpenProcessToken failed, err = %d\n", err);
+        std::cout << "OpenProcessToken failed, err = " << err << std::endl;
         goto exit;
     }
 
-    bRetVal = LookupPrivilegeValue(NULL, SE_LOAD_DRIVER_NAME, &luid);
+    bRetVal = LookupPrivilegeValue(nullptr, SE_LOAD_DRIVER_NAME, &luid);
     if (!bRetVal)
     {
         err = GetLastError();
-        printf("LookupPrivilegeValue failed, err = %d\n", err);
+        std::cout << "LookupPrivilegeValue failed, err " <<  err << std::endl;
         goto exit1;
     }
 
@@ -117,13 +122,20 @@ AdjustProcessPrivileges(
     // Hence we check for GetLastError in both success and failure case.
     //
 
-    (void)AdjustTokenPrivileges(procToken, FALSE, &tp, sizeof(TOKEN_PRIVILEGES), (PTOKEN_PRIVILEGES)NULL, (PDWORD)NULL);
+    (void)AdjustTokenPrivileges(
+        procToken, 
+        FALSE, 
+        &tp, 
+        sizeof(TOKEN_PRIVILEGES), 
+        (PTOKEN_PRIVILEGES)nullptr, 
+        (PDWORD)nullptr
+    );
     err = GetLastError();
 
     if (err != ERROR_SUCCESS)
     {
         bRetVal = FALSE;
-        printf("AdjustTokenPrivileges failed, err = %d\n", err);
+        std::cout << "AdjustTokenPrivileges failed, err " << err << std::endl;
         goto exit1;
     }
 

@@ -515,11 +515,10 @@ BthPS3IndicationCallback(
         PBTHPS3_SERVER_CONTEXT devCtx = (PBTHPS3_SERVER_CONTEXT)Context;
 
         TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_BTH,
-            "%!FUNC! ++ IndicationRemoteConnect");
-
-        UNREFERENCED_PARAMETER(devCtx);
-        UNREFERENCED_PARAMETER(Parameters);
-
+            "New connection for PSM 0x%04X from %llX arrived",
+            Parameters->Parameters.Connect.Request.PSM,
+            Parameters->BtAddress);
+                
         //BthPS3SendConnectResponse(devCtx, Parameters);
         L2CAP_PS3_SendConnectResponse(devCtx, Parameters);
 

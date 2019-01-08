@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.28307.106
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BthPS3", "BthPS3\BthPS3.vcxproj", "{F329494F-152C-4739-AFC2-00DF81B78D5F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BthPS3Util", "BthPS3Util\BthPS3Util.vcxproj", "{95155A88-FEDA-443A-B85D-2DB6A8CD4CBE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -41,6 +43,18 @@ Global
 		{F329494F-152C-4739-AFC2-00DF81B78D5F}.Release|x86.ActiveCfg = Release|Win32
 		{F329494F-152C-4739-AFC2-00DF81B78D5F}.Release|x86.Build.0 = Release|Win32
 		{F329494F-152C-4739-AFC2-00DF81B78D5F}.Release|x86.Deploy.0 = Release|Win32
+		{95155A88-FEDA-443A-B85D-2DB6A8CD4CBE}.Debug|ARM.ActiveCfg = Debug|Win32
+		{95155A88-FEDA-443A-B85D-2DB6A8CD4CBE}.Debug|ARM64.ActiveCfg = Debug|Win32
+		{95155A88-FEDA-443A-B85D-2DB6A8CD4CBE}.Debug|x64.ActiveCfg = Debug|x64
+		{95155A88-FEDA-443A-B85D-2DB6A8CD4CBE}.Debug|x64.Build.0 = Debug|x64
+		{95155A88-FEDA-443A-B85D-2DB6A8CD4CBE}.Debug|x86.ActiveCfg = Debug|Win32
+		{95155A88-FEDA-443A-B85D-2DB6A8CD4CBE}.Debug|x86.Build.0 = Debug|Win32
+		{95155A88-FEDA-443A-B85D-2DB6A8CD4CBE}.Release|ARM.ActiveCfg = Release|Win32
+		{95155A88-FEDA-443A-B85D-2DB6A8CD4CBE}.Release|ARM64.ActiveCfg = Release|Win32
+		{95155A88-FEDA-443A-B85D-2DB6A8CD4CBE}.Release|x64.ActiveCfg = Release|x64
+		{95155A88-FEDA-443A-B85D-2DB6A8CD4CBE}.Release|x64.Build.0 = Release|x64
+		{95155A88-FEDA-443A-B85D-2DB6A8CD4CBE}.Release|x86.ActiveCfg = Release|Win32
+		{95155A88-FEDA-443A-B85D-2DB6A8CD4CBE}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

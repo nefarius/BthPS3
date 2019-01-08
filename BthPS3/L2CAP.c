@@ -56,7 +56,7 @@ L2CAP_PS3_SendConnectResponse(
     brb->BtAddress = ConnectParams->BtAddress;
     brb->Psm = ConnectParams->Parameters.Connect.Request.PSM;
     brb->ChannelHandle = ConnectParams->ConnectionHandle;
-    brb->Response = CONNECT_RSP_RESULT_PENDING;
+    brb->Response = CONNECT_RSP_RESULT_SUCCESS;
 
     brb->ChannelFlags = CF_ROLE_EITHER;
 
@@ -64,9 +64,9 @@ L2CAP_PS3_SendConnectResponse(
     brb->ConfigIn.Flags = 0;
 
     brb->ConfigOut.Flags |= CFG_MTU;
-    brb->ConfigOut.Mtu.Max = L2CAP_DEFAULT_MTU;
+    brb->ConfigOut.Mtu.Max = L2CAP_MAX_MTU;
     brb->ConfigOut.Mtu.Min = L2CAP_MIN_MTU;
-    brb->ConfigOut.Mtu.Preferred = L2CAP_DEFAULT_MTU;
+    brb->ConfigOut.Mtu.Preferred = L2CAP_MAX_MTU;
 
     brb->ConfigIn.Flags = CFG_MTU;
     brb->ConfigIn.Mtu.Max = brb->ConfigOut.Mtu.Max;
@@ -86,7 +86,7 @@ L2CAP_PS3_SendConnectResponse(
         connection->ConnectDisconnectRequest,
         (PBRB)brb,
         sizeof(*brb),
-        L2CAP_PS3_ConnectResponsePendingCompleted,
+        L2CAP_PS3_ConnectResponseCompleted,
         brb
     );
 
@@ -134,31 +134,28 @@ exit:
 }
 
 void
-L2CAP_PS3_ConnectResponsePendingCompleted(
+L2CAP_PS3_ConnectResponseCompleted(
     _In_ WDFREQUEST  Request,
     _In_ WDFIOTARGET  Target,
     _In_ PWDF_REQUEST_COMPLETION_PARAMS  Params,
     _In_ WDFCONTEXT  Context
 )
 {
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
+
     NTSTATUS status;
     struct _BRB_L2CA_OPEN_CHANNEL *brb;
     PBTHPS3_CONNECTION connection;
     WDFOBJECT connectionObject;
-    NTSTATUS statusReuse;
-    WDF_REQUEST_REUSE_PARAMS reuseParams;
-    PBTHPS3_SERVER_CONTEXT DevCtx;
 
-    UNREFERENCED_PARAMETER(Request); // Request gets reused, ignore
+
     UNREFERENCED_PARAMETER(Target);
-
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
-
+    UNREFERENCED_PARAMETER(Request); //we reuse the request, hence it is not needed here
 
     status = Params->IoStatus.Status;
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_L2CAP,
-        "Connection PENDING completed with status: %!STATUS!", status);
+        "Connection completion, status: %!STATUS!", status);
 
     brb = (struct _BRB_L2CA_OPEN_CHANNEL *) Context;
 
@@ -170,60 +167,64 @@ L2CAP_PS3_ConnectResponsePendingCompleted(
 
     if (NT_SUCCESS(status))
     {
-        WDF_REQUEST_REUSE_PARAMS_INIT(&reuseParams, WDF_REQUEST_REUSE_NO_FLAGS, STATUS_NOT_SUPPORTED);
-        statusReuse = WdfRequestReuse(connection->ConnectDisconnectRequest, &reuseParams);
-        NT_ASSERT(NT_SUCCESS(statusReuse));
-        UNREFERENCED_PARAMETER(statusReuse);
+        connection->OutMTU = brb->OutResults.Params.Mtu;
+        connection->InMTU = brb->InResults.Params.Mtu;
+        connection->ChannelHandle = brb->ChannelHandle;
+        connection->RemoteAddress = brb->BtAddress;
 
-        brb = (struct _BRB_L2CA_OPEN_CHANNEL*) &(connection->ConnectDisconnectBrb);
-        DevCtx = (PBTHPS3_SERVER_CONTEXT)brb->Hdr.ClientContext[1];
-
-        L2CAP_REUSE_OPEN_CHANNEL_RESPONSE(
-            &DevCtx->Header.ProfileDrvInterface,
-            BRB_L2CA_OPEN_CHANNEL_RESPONSE,
-            brb
-        );
-
-        brb->Hdr.ClientContext[0] = connectionObject;
-
-        brb->Response = CONNECT_RSP_RESULT_SUCCESS;
-
-        brb->ChannelFlags = CF_ROLE_EITHER;
-
-        brb->ConfigOut.Flags = 0;
-        brb->ConfigIn.Flags = 0;
-
-        brb->ConfigOut.Flags |= CFG_MTU;
-        brb->ConfigOut.Mtu.Max = L2CAP_DEFAULT_MTU;
-        brb->ConfigOut.Mtu.Min = L2CAP_MIN_MTU;
-        brb->ConfigOut.Mtu.Preferred = L2CAP_DEFAULT_MTU;
-
-        brb->ConfigIn.Flags = CFG_MTU;
-        brb->ConfigIn.Mtu.Max = brb->ConfigOut.Mtu.Max;
-        brb->ConfigIn.Mtu.Min = brb->ConfigOut.Mtu.Min;
-        brb->ConfigIn.Mtu.Preferred = brb->ConfigOut.Mtu.Max;
+        TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_L2CAP,
+            "Connection established with client");
 
         //
-        // Get notifications about disconnect
+        // Check if we already received a disconnect request
+        // and if so disconnect
         //
-        brb->CallbackFlags = CALLBACK_DISCONNECT;
-        brb->Callback = &BthPS3ConnectionIndicationCallback;
-        brb->CallbackContext = connectionObject;
-        brb->ReferenceObject = (PVOID)WdfDeviceWdmGetDeviceObject(DevCtx->Header.Device);
 
-        status = BthPS3SendBrbAsync(
-            DevCtx->Header.IoTarget,
-            connection->ConnectDisconnectRequest,
-            (PBRB)brb,
-            sizeof(*brb),
-            BthPS3RemoteConnectResponseCompletion,
-            brb
-        );
+        WdfSpinLockAcquire(connection->ConnectionLock);
 
-        if (!NT_SUCCESS(status))
+        if (connection->ConnectionState == ConnectionStateDisconnecting)
         {
-            TraceEvents(TRACE_LEVEL_ERROR, TRACE_L2CAP,
-                "BthPS3SendBrbAsync failed with status %!STATUS!", status);
+            //
+            // We allow transition to disconnected state only from
+            // connected state
+            //
+            // If we are in disconnection state this means that
+            // we were waiting for connect to complete before we
+            // can send disconnect down
+            //
+            // Set the state to Connected and call BthEchoConnectionObjectRemoteDisconnect
+            //
+            connection->ConnectionState = ConnectionStateConnected;
+            WdfSpinLockRelease(connection->ConnectionLock);
+
+            TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_L2CAP,
+                "Remote connect response completion: "
+                "disconnect has been received "
+                "for connection 0x%p", connection);
+
+            //BthEchoConnectionObjectRemoteDisconnect(connection->DevCtxHdr, connection);
+        }
+        else
+        {
+            connection->ConnectionState = ConnectionStateConnected;
+            WdfSpinLockRelease(connection->ConnectionLock);
+
+            TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_L2CAP,
+                "Connection completed, connection: 0x%p", connection);
+
+            //
+            // Call BthEchoSrvConnectionStateConnected to perform post connect processing
+            // (namely initializing continuous readers)
+            //
+            //status = BthEchoSrvConnectionStateConnected(connectionObject);
+            //if (!NT_SUCCESS(status))
+            //{
+            //    //
+            //    // If the post connect processing failed, let us disconnect
+            //    //
+            //    BthEchoConnectionObjectRemoteDisconnect(connection->DevCtxHdr, connection);
+            //}
+
         }
     }
     else

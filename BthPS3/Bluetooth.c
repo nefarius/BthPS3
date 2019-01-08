@@ -594,7 +594,7 @@ BthPS3SendConnectResponse(
     brb->BtAddress = ConnectParams->BtAddress;
     brb->Psm = ConnectParams->Parameters.Connect.Request.PSM;
     brb->ChannelHandle = ConnectParams->ConnectionHandle;
-    brb->Response = CONNECT_RSP_RESULT_PENDING;
+    brb->Response = CONNECT_RSP_RESULT_SUCCESS;
 
     brb->ChannelFlags = CF_ROLE_EITHER;
 

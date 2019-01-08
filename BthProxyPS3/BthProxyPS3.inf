@@ -1,0 +1,84 @@
+;
+; BthProxyPS3.inf
+;
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=System
+ClassGuid={4D36E97D-E325-11CE-BFC1-08002BE10318}
+Provider=%ManufacturerName%
+CatalogFile=BthProxyPS3.cat
+DriverVer= ; TODO: set DriverVer in stampinf property pages
+
+[DestinationDirs]
+DefaultDestDir = 12
+BthProxyPS3_Device_CoInstaller_CopyFiles = 11
+
+; ================= Class section =====================
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+BthProxyPS3.sys  = 1,,
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1 ; make sure the number matches with SourceDisksNames
+
+;*****************************************
+; Install Section
+;*****************************************
+
+[Manufacturer]
+%ManufacturerName%=Standard,NT$ARCH$
+
+[Standard.NT$ARCH$]
+%BthProxyPS3.DeviceDesc%=BthProxyPS3_Device, Nefarius\BthProxyPS3\Gen1
+
+[BthProxyPS3_Device.NT]
+CopyFiles=Drivers_Dir
+
+[BthProxyPS3_Device.NT.HW]
+AddReg = BthProxyPS3_AddReg
+
+[BthProxyPS3_AddReg]
+HKLM,SYSTEM\CurrentControlSet\Control\Class\{e0cbf06c-cd8b-4647-bb8a-263b43f0f974},LowerFilters,0x00010008,BthProxyPS3
+
+[Drivers_Dir]
+BthProxyPS3.sys
+
+;-------------- Service installation
+[BthProxyPS3_Device.NT.Services]
+AddService = BthProxyPS3,%SPSVCINST_ASSOCSERVICE%, BthProxyPS3_Service_Inst
+
+; -------------- BthProxyPS3 driver install sections
+[BthProxyPS3_Service_Inst]
+DisplayName    = %BthProxyPS3.SVCDESC%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\BthProxyPS3.sys
+
+;
+;--- BthProxyPS3_Device Coinstaller installation ------
+;
+
+[BthProxyPS3_Device.NT.CoInstallers]
+AddReg=BthProxyPS3_Device_CoInstaller_AddReg
+CopyFiles=BthProxyPS3_Device_CoInstaller_CopyFiles
+
+[BthProxyPS3_Device_CoInstaller_AddReg]
+HKR,,CoInstallers32,0x00010000, "WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll,WdfCoInstaller"
+
+[BthProxyPS3_Device_CoInstaller_CopyFiles]
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll
+
+[BthProxyPS3_Device.NT.Wdf]
+KmdfService =  BthProxyPS3, BthProxyPS3_wdfsect
+[BthProxyPS3_wdfsect]
+KmdfLibraryVersion = $KMDFVERSION$
+
+[Strings]
+SPSVCINST_ASSOCSERVICE= 0x00000002
+ManufacturerName="Nefarius Software Solutions e.U."
+DiskName = "BthProxyPS3 Installation Disk"
+BthProxyPS3.DeviceDesc = "BthProxyPS3 Bluetooth Filter Device"
+BthProxyPS3.SVCDESC = "BthProxyPS3 Bluetooth Filter Service"

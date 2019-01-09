@@ -224,11 +224,6 @@ BthPS3UnregisterPSM(
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Entry");
 
-    if (0 == DevCtx->Psm)
-    {
-        return;
-    }
-
     DevCtx->Header.ProfileDrvInterface.BthReuseBrb(
         &(DevCtx->RegisterUnregisterBrb),
         BRB_UNREGISTER_PSM
@@ -236,10 +231,6 @@ BthPS3UnregisterPSM(
 
     brb = (struct _BRB_PSM *)
         &(DevCtx->RegisterUnregisterBrb);
-
-    //
-    // Format Brb
-    //
 
     brb->Psm = DevCtx->PsmHidControl;
 
@@ -262,6 +253,14 @@ BthPS3UnregisterPSM(
 
         goto exit;
     }
+
+    DevCtx->Header.ProfileDrvInterface.BthReuseBrb(
+        &(DevCtx->RegisterUnregisterBrb),
+        BRB_UNREGISTER_PSM
+    );
+
+    brb = (struct _BRB_PSM *)
+        &(DevCtx->RegisterUnregisterBrb);
 
     brb->Psm = DevCtx->PsmHidInterrupt;
 

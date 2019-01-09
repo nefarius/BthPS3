@@ -53,12 +53,13 @@ typedef struct _BTHPS3_SERVER_CONTEXT
     BTHPS3_DEVICE_CONTEXT_HEADER Header;
 
     //
-    // Our Data PSM
-    //    
-    USHORT Psm;
-
+    // Artificial HID Control PSM
+    // 
     USHORT PsmHidControl;
 
+    //
+    // Artificial HID Interrupt PSM
+    // 
     USHORT PsmHidInterrupt;
 
     //

@@ -42,16 +42,24 @@ L2CAP_PS3_SendConnectResponse(
     //
     InsertConnectionEntryLocked(DevCtx, &connection->ConnectionListEntry);
 
+    //
+    // Reuse request
+    // 
     WDF_REQUEST_REUSE_PARAMS_INIT(&reuseParams, WDF_REQUEST_REUSE_NO_FLAGS, STATUS_NOT_SUPPORTED);
     statusReuse = WdfRequestReuse(connection->ConnectDisconnectRequest, &reuseParams);
     NT_ASSERT(NT_SUCCESS(statusReuse));
     UNREFERENCED_PARAMETER(statusReuse);
 
+    //
+    // Prepare connection response BRB
+    // 
     brb = (struct _BRB_L2CA_OPEN_CHANNEL*) &(connection->ConnectDisconnectBrb);
     DevCtx->Header.ProfileDrvInterface.BthReuseBrb((PBRB)brb, BRB_L2CA_OPEN_CHANNEL_RESPONSE);
 
+    //
+    // Pass connection object along as context
+    // 
     brb->Hdr.ClientContext[0] = connectionObject;
-    brb->Hdr.ClientContext[1] = DevCtx;
 
     brb->BtAddress = ConnectParams->BtAddress;
     brb->Psm = ConnectParams->Parameters.Connect.Request.PSM;
@@ -63,6 +71,9 @@ L2CAP_PS3_SendConnectResponse(
     brb->ConfigOut.Flags = 0;
     brb->ConfigIn.Flags = 0;
 
+    //
+    // Set expected and preferred MTU to max value
+    // 
     brb->ConfigOut.Flags |= CFG_MTU;
     brb->ConfigOut.Mtu.Max = L2CAP_MAX_MTU;
     brb->ConfigOut.Mtu.Min = L2CAP_MIN_MTU;
@@ -74,13 +85,16 @@ L2CAP_PS3_SendConnectResponse(
     brb->ConfigIn.Mtu.Preferred = brb->ConfigOut.Mtu.Max;
     
     //
-    // Get notifications about disconnect
+    // Get notifications about disconnect and QOS
     //
     brb->CallbackFlags = CALLBACK_DISCONNECT | CALLBACK_CONFIG_QOS;
-    brb->Callback = &BthPS3ConnectionIndicationCallback;
+    brb->Callback = &L2CAP_PS3_ConnectionIndicationCallback;
     brb->CallbackContext = connectionObject;
     brb->ReferenceObject = (PVOID)WdfDeviceWdmGetDeviceObject(DevCtx->Header.Device);
 
+    //
+    // Submit response
+    // 
     status = BthPS3SendBrbAsync(
         DevCtx->Header.IoTarget,
         connection->ConnectDisconnectRequest,
@@ -263,3 +277,73 @@ L2CAP_PS3_ConnectResponseCompleted(
 
     return;
 }
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+void
+L2CAP_PS3_ConnectionIndicationCallback(
+    _In_ PVOID Context,
+    _In_ INDICATION_CODE Indication,
+    _In_ PINDICATION_PARAMETERS Parameters
+)
+{
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
+
+    UNREFERENCED_PARAMETER(Parameters);
+
+    switch (Indication)
+    {
+    case IndicationAddReference:
+        break;
+    case IndicationReleaseReference:
+        break;
+    case IndicationRemoteConnect:
+    {
+        //
+        // We don't expect connect on this callback
+        //
+        NT_ASSERT(FALSE);
+        break;
+    }
+    case IndicationRemoteDisconnect:
+    {
+        WDFOBJECT connectionObject = (WDFOBJECT)Context;
+        PBTHPS3_CONNECTION connection = GetConnectionObjectContext(connectionObject);
+
+        UNREFERENCED_PARAMETER(connection);
+
+        //BthEchoSrvDisconnectConnection(connection);
+
+        break;
+    }
+    case IndicationRemoteConfigRequest:
+
+        TraceEvents(TRACE_LEVEL_INFORMATION,
+            TRACE_L2CAP,
+            "%!FUNC! ++ IndicationRemoteConfigRequest");
+
+        //
+        // TODO: this catches QOS configuration request and inherently succeeds it
+        // 
+
+        break;
+
+    case IndicationRemoteConfigResponse:
+
+        TraceEvents(TRACE_LEVEL_INFORMATION,
+            TRACE_L2CAP,
+            "%!FUNC! ++ IndicationRemoteConfigResponse");
+
+        break;
+
+    case IndicationFreeExtraOptions:
+        break;
+    default:
+        //
+        // We don't expect any other indications on this callback
+        //
+        NT_ASSERT(FALSE);
+    }
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
+}
+

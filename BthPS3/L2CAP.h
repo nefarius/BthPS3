@@ -8,4 +8,12 @@ L2CAP_PS3_SendConnectResponse(
     _In_ PINDICATION_PARAMETERS ConnectParams
 );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
+void
+L2CAP_PS3_ConnectionIndicationCallback(
+    _In_ PVOID Context,
+    _In_ INDICATION_CODE Indication,
+    _In_ PINDICATION_PARAMETERS Parameters
+);
+
 EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_ConnectResponseCompleted;

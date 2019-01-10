@@ -64,7 +64,7 @@ int main(int, char* argv[])
 
     DWORD err = ERROR_SUCCESS;
     BLUETOOTH_LOCAL_SERVICE_INFO SvcInfo = { 0 };
-    wcscpy_s(SvcInfo.szName, BLUETOOTH_MAX_SERVICE_NAME_SIZE, BthPS3ServiceName);
+    wcscpy_s(SvcInfo.szName, sizeof(SvcInfo.szName) / sizeof(WCHAR), BthPS3ServiceName);
 
     if (cmdl[{ "--enable-service" }])
     {

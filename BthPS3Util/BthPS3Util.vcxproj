@@ -171,7 +171,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="argh.h" />
+    <ClInclude Include="BthPS3Util.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="WinReg.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="BthPS3Util.rc" />

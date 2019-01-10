@@ -1,49 +1,7 @@
 // BthPS3Util.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
-//
-// Windows
-// 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <SetupAPI.h>
-
-//
-// OS Bluetooth APIs
-// 
-#include <bthsdpdef.h>
-#include <bthdef.h>
-#include <BlueToothApis.h>
-
-//
-// Device class interfaces
-// 
-#include <initguid.h>
-#include <devguid.h>
-
-//
-// STL
-// 
-#include <iostream>
-#include <algorithm>
-#include <vector>
-#include <string>
-
-//
-// Driver constants
-// 
-#include "Public.h"
-
-//
-// CLI argument parser
-// 
-#include "argh.h"
-
-//
-// Registry manipulation wrapper
-// 
-#include "WinReg.hpp"
-
+#include "BthPS3Util.h"
 using namespace winreg;
 
 
@@ -57,17 +15,18 @@ int main(int, char* argv[])
 {
     argh::parser cmdl(argv);
 
-    if (FALSE == AdjustProcessPrivileges())
-    {
-        return ERROR_ACCESS_DENIED;
-    }
-
     DWORD err = ERROR_SUCCESS;
     BLUETOOTH_LOCAL_SERVICE_INFO SvcInfo = { 0 };
     wcscpy_s(SvcInfo.szName, sizeof(SvcInfo.szName) / sizeof(WCHAR), BthPS3ServiceName);
 
     if (cmdl[{ "--enable-service" }])
     {
+        if (FALSE == AdjustProcessPrivileges())
+        {
+            std::cout << "Failed to gain required privileges, error " << std::hex << GetLastError() << std::endl;
+            return ERROR_ACCESS_DENIED;
+        }
+
         SvcInfo.Enabled = TRUE;
 
         if (ERROR_SUCCESS != (err = BluetoothSetLocalServiceInfo(
@@ -88,6 +47,12 @@ int main(int, char* argv[])
 
     if (cmdl[{ "--disable-service" }])
     {
+        if (FALSE == AdjustProcessPrivileges())
+        {
+            std::cout << "Failed to gain required privileges, error " << std::hex << GetLastError() << std::endl;
+            return ERROR_ACCESS_DENIED;
+        }
+
         SvcInfo.Enabled = FALSE;
 
         if (ERROR_SUCCESS != (err = BluetoothSetLocalServiceInfo(
@@ -137,8 +102,10 @@ int main(int, char* argv[])
             return ERROR_SUCCESS;
         }
 
+        //
+        // Patch in our filter
+        // 
         auto lowerFilters = classKey.GetMultiStringValue(LOWER_FILTERS);
-
         if (std::find(lowerFilters.begin(), lowerFilters.end(), BthPS3FilterName) == lowerFilters.end())
         {
             lowerFilters.emplace_back(BthPS3FilterName);
@@ -150,6 +117,44 @@ int main(int, char* argv[])
 
     if (cmdl[{ "--disable-filter" }])
     {
+        auto key = SetupDiOpenClassRegKey(&GUID_DEVCLASS_BLUETOOTH, KEY_ALL_ACCESS);
+
+        if (INVALID_HANDLE_VALUE == key)
+        {
+            std::cout << "Couldn't open Class key, error " << std::hex << GetLastError() << std::endl;
+            return ERROR_ACCESS_DENIED;
+        }
+
+        // wrap it up
+        RegKey classKey(key);
+
+        //
+        // Check if "LowerFilters" value exists
+        // 
+        auto values = classKey.EnumValues();
+        auto ret = std::find_if(values.begin(), values.end(), [&](std::pair<std::wstring, DWORD> const & ref) {
+            return ref.first == LOWER_FILTERS;
+        });
+
+        //
+        // Value exists, patch out our name
+        // 
+        if (ret != values.end())
+        {
+            auto lowerFilters = classKey.GetMultiStringValue(LOWER_FILTERS);
+            lowerFilters.erase(
+                std::remove(
+                    lowerFilters.begin(),
+                    lowerFilters.end(),
+                    BthPS3FilterName),
+                lowerFilters.end());
+            classKey.SetMultiStringValue(LOWER_FILTERS, lowerFilters);
+            classKey.Close();
+            return ERROR_SUCCESS;
+        }
+
+        classKey.Close();
+        return ERROR_SUCCESS;
     }
 
     return ERROR_INVALID_PARAMETER;

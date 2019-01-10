@@ -15,10 +15,26 @@ Environment:
 --*/
 
 #include "public.h"
-#include "Bluetooth.h"
+#include <usb.h>
+#include <wdfusb.h>
 
 EXTERN_C_START
 
+typedef struct _BTHPS3_DEVICE_CONTEXT_FILTER
+{
+    WDFUSBDEVICE UsbDevice;
+
+    WDFUSBINTERFACE UsbInterface;
+
+    WDFUSBPIPE InterruptPipe;
+
+    WDFUSBPIPE BulkReadPipe;
+
+    WDFUSBPIPE BulkWritePipe;
+
+} BTHPS3_DEVICE_CONTEXT_FILTER, *PBTHPS3_DEVICE_CONTEXT_FILTER;
+
+WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_DEVICE_CONTEXT_FILTER, DeviceGetFilterContext)
 
 
 //

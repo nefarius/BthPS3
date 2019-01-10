@@ -113,6 +113,8 @@ int main(int, char* argv[])
             classKey.Close();
             return ERROR_SUCCESS;
         }
+
+        return ERROR_SUCCESS;
     }
 
     if (cmdl[{ "--disable-filter" }])

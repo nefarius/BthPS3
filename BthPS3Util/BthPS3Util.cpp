@@ -7,7 +7,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <SetupAPI.h>
-#include <strsafe.h>
 
 //
 // OS Bluetooth APIs
@@ -65,12 +64,7 @@ int main(int, char* argv[])
 
     DWORD err = ERROR_SUCCESS;
     BLUETOOTH_LOCAL_SERVICE_INFO SvcInfo = { 0 };
-
-    if (FAILED(StringCbCopyW(SvcInfo.szName, sizeof(SvcInfo.szName), BthPS3ServiceName)))
-    {
-        std::cout << "Couldn't set service name" << std::endl;
-        return GetLastError();
-    }
+    wcscpy_s(SvcInfo.szName, BLUETOOTH_MAX_SERVICE_NAME_SIZE, BthPS3ServiceName);
 
     if (cmdl[{ "--enable-service" }])
     {

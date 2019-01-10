@@ -30,6 +30,7 @@ BthPS3CreateDevice(
     WDFDEVICE                       device;
     NTSTATUS                        status;
     WDF_PNPPOWER_EVENT_CALLBACKS    pnpPowerCallbacks;
+    WDFMEMORY                       classMemory;
 
     PAGED_CODE();
 

@@ -1,17 +1,54 @@
 // BthPS3Util.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
+//
+// Windows
+// 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include <SetupAPI.h>
 #include <strsafe.h>
+
+//
+// OS Bluetooth APIs
+// 
 #include <bthsdpdef.h>
 #include <bthdef.h>
 #include <BlueToothApis.h>
-#include <iostream>
+
+//
+// Device class interfaces
+// 
 #include <initguid.h>
+#include <devguid.h>
+
+//
+// STL
+// 
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <string>
+
+//
+// Driver constants
+// 
 #include "Public.h"
+
+//
+// CLI argument parser
+// 
 #include "argh.h"
 
+//
+// Registry manipulation wrapper
+// 
+#include "WinReg.hpp"
+
+using namespace winreg;
+
+
+#define LOWER_FILTERS L"LowerFilters"
 
 BOOL
 AdjustProcessPrivileges(
@@ -35,7 +72,7 @@ int main(int, char* argv[])
         return GetLastError();
     }
 
-    if (cmdl[{ "-i", "--install" }])
+    if (cmdl[{ "--enable-service" }])
     {
         SvcInfo.Enabled = TRUE;
 
@@ -50,12 +87,12 @@ int main(int, char* argv[])
             return GetLastError();
         }
 
-        std::cout << "Service installed successfully" << std::endl;
+        std::cout << "Service enabled successfully" << std::endl;
 
         return ERROR_SUCCESS;
     }
 
-    if (cmdl[{ "-u", "--uninstall" }])
+    if (cmdl[{ "--disable-service" }])
     {
         SvcInfo.Enabled = FALSE;
 
@@ -70,12 +107,56 @@ int main(int, char* argv[])
             return GetLastError();
         }
 
-        std::cout << "Service uninstalled successfully" << std::endl;
+        std::cout << "Service disabled successfully" << std::endl;
 
         return ERROR_SUCCESS;
     }
 
-    std::cout << "usage: .\\BthPS3Util -i|-u" << std::endl;
+    if (cmdl[{ "--enable-filter" }])
+    {
+        auto key = SetupDiOpenClassRegKey(&GUID_DEVCLASS_BLUETOOTH, KEY_ALL_ACCESS);
+
+        if (INVALID_HANDLE_VALUE == key)
+        {
+            std::cout << "Couldn't open Class key, error " << std::hex << GetLastError() << std::endl;
+            return ERROR_ACCESS_DENIED;
+        }
+
+        // wrap it up
+        RegKey classKey(key);
+
+        //
+        // Check if "LowerFilters" value exists
+        // 
+        auto values = classKey.EnumValues();
+        auto ret = std::find_if(values.begin(), values.end(), [&](std::pair<std::wstring, DWORD> const & ref) {
+            return ref.first == LOWER_FILTERS;
+        });
+
+        //
+        // Value doesn't exist, create with filter driver name
+        // 
+        if (ret == values.end())
+        {
+            classKey.SetMultiStringValue(LOWER_FILTERS, { BthPS3FilterName });
+            classKey.Close();
+            return ERROR_SUCCESS;
+        }
+
+        auto lowerFilters = classKey.GetMultiStringValue(LOWER_FILTERS);
+
+        if (std::find(lowerFilters.begin(), lowerFilters.end(), BthPS3FilterName) == lowerFilters.end())
+        {
+            lowerFilters.emplace_back(BthPS3FilterName);
+            classKey.SetMultiStringValue(LOWER_FILTERS, lowerFilters);
+            classKey.Close();
+            return ERROR_SUCCESS;
+        }
+    }
+
+    if (cmdl[{ "--disable-filter" }])
+    {
+    }
 
     return ERROR_INVALID_PARAMETER;
 }
@@ -91,8 +172,8 @@ AdjustProcessPrivileges(
     DWORD err;
 
     bRetVal = OpenProcessToken(
-        GetCurrentProcess(), 
-        TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, 
+        GetCurrentProcess(),
+        TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
         &procToken
     );
 
@@ -107,7 +188,7 @@ AdjustProcessPrivileges(
     if (!bRetVal)
     {
         err = GetLastError();
-        std::cout << "LookupPrivilegeValue failed, err " <<  err << std::endl;
+        std::cout << "LookupPrivilegeValue failed, err " << err << std::endl;
         goto exit1;
     }
 
@@ -123,11 +204,11 @@ AdjustProcessPrivileges(
     //
 
     (void)AdjustTokenPrivileges(
-        procToken, 
-        FALSE, 
-        &tp, 
-        sizeof(TOKEN_PRIVILEGES), 
-        (PTOKEN_PRIVILEGES)nullptr, 
+        procToken,
+        FALSE,
+        &tp,
+        sizeof(TOKEN_PRIVILEGES),
+        (PTOKEN_PRIVILEGES)nullptr,
         (PDWORD)nullptr
     );
     err = GetLastError();

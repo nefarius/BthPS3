@@ -51,7 +51,6 @@
     <ClInclude Include="Device.h" />
     <ClInclude Include="Driver.h" />
     <ClInclude Include="L2CAP.h" />
-    <ClInclude Include="Public.h" />
     <ClInclude Include="Queue.h" />
     <ClInclude Include="Trace.h" />
   </ItemGroup>
@@ -159,34 +158,42 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
+    <IncludePath>$(SolutionDir)\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
+    <IncludePath>$(SolutionDir)\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
+    <IncludePath>$(SolutionDir)\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
+    <IncludePath>$(SolutionDir)\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
+    <IncludePath>$(SolutionDir)\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
+    <IncludePath>$(SolutionDir)\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
+    <IncludePath>$(SolutionDir)\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
+    <IncludePath>$(SolutionDir)\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

@@ -14,7 +14,7 @@ Environment:
 
 --*/
 
-#include "public.h"
+#include "BthPS3.h"
 
 EXTERN_C_START
 

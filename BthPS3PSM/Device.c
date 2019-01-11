@@ -111,7 +111,7 @@ Return Value:
         //
         status = WdfDeviceCreateDeviceInterface(
             device,
-            &GUID_DEVINTERFACE_BthPS3PSM,
+            &GUID_DEVINTERFACE_BTHPS3PSM,
             NULL // ReferenceString
             );
 

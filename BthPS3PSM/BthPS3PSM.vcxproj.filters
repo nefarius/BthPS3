@@ -33,9 +33,6 @@
     <ClInclude Include="Driver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Public.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Queue.h">
       <Filter>Header Files</Filter>
     </ClInclude>

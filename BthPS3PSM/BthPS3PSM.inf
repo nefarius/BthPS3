@@ -8,7 +8,7 @@ Class=System
 ClassGuid={4D36E97D-E325-11CE-BFC1-08002BE10318}
 Provider=%ManufacturerName%
 CatalogFile=BthPS3PSM.cat
-DriverVer= ; TODO: set DriverVer in stampinf property pages
+DriverVer=
 
 [DestinationDirs]
 DefaultDestDir = 12
@@ -21,7 +21,7 @@ BthPS3PSM_Device_CoInstaller_CopyFiles = 11
 
 [SourceDisksFiles]
 BthPS3PSM.sys  = 1,,
-WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1 ; make sure the number matches with SourceDisksNames
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1
 
 ;*****************************************
 ; Install Section
@@ -36,11 +36,11 @@ WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1 ; make sure the number matches with
 [BthPS3PSM_Device.NT]
 CopyFiles=Drivers_Dir
 
-[BthPS3PSM_Device.NT.HW]
-AddReg = BthPS3PSM_AddReg
+;[BthPS3PSM_Device.NT.HW]
+;AddReg = BthPS3PSM_AddReg
 
-[BthPS3PSM_AddReg]
-HKLM,SYSTEM\CurrentControlSet\Control\Class\{e0cbf06c-cd8b-4647-bb8a-263b43f0f974},LowerFilters,0x00010008,BthPS3PSM
+;[BthPS3PSM_AddReg]
+;HKLM,SYSTEM\CurrentControlSet\Control\Class\{e0cbf06c-cd8b-4647-bb8a-263b43f0f974},LowerFilters,0x00010008,BthPS3PSM
 
 [Drivers_Dir]
 BthPS3PSM.sys

@@ -31,7 +31,7 @@
 //
 // Driver constants
 // 
-#include "Public.h"
+#include "BthPS3.h"
 
 //
 // CLI argument parser

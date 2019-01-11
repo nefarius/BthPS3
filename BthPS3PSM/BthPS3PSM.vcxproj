@@ -51,7 +51,6 @@
     <ClInclude Include="Filter.h" />
     <ClInclude Include="HCI.h" />
     <ClInclude Include="L2CAP.h" />
-    <ClInclude Include="Public.h" />
     <ClInclude Include="Queue.h" />
     <ClInclude Include="Trace.h" />
     <ClInclude Include="UsbUtil.h" />
@@ -159,27 +158,35 @@
   <PropertyGroup />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
+    <IncludePath>$(SolutionDir)\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
+    <IncludePath>$(SolutionDir)\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
+    <IncludePath>$(SolutionDir)\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
+    <IncludePath>$(SolutionDir)\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
+    <IncludePath>$(SolutionDir)\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
+    <IncludePath>$(SolutionDir)\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
+    <IncludePath>$(SolutionDir)\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
+    <IncludePath>$(SolutionDir)\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

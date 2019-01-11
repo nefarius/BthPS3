@@ -43,6 +43,7 @@
     <ClCompile Include="Queue.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\include\BthPS3.h" />
     <ClInclude Include="Bluetooth.h" />
     <ClInclude Include="Connection.h" />
     <ClInclude Include="Device.h" />

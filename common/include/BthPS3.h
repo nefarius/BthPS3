@@ -10,3 +10,8 @@ DEFINE_GUID(GUID_DEVINTERFACE_BTHPS3PSM,
 
 extern __declspec(selectany) PCWSTR BthPS3FilterName = L"BthPS3PSM";
 extern __declspec(selectany) PCWSTR BthPS3ServiceName = L"BthPS3Service";
+
+// 0x11 -> 0x5053
+#define PSM_DS3_HID_CONTROL     0x5053
+// 0x13 -> 0x5055
+#define PSM_DS3_HID_INTERRUPT   0x5055

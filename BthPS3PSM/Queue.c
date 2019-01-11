@@ -220,7 +220,6 @@ BthPS3PSMEvtIoInternalDeviceControl(
     PIO_STACK_LOCATION          irpStack;
     WDFDEVICE                   device;
     PDEVICE_CONTEXT             pContext;
-    PUCHAR                      buffer;
 
 
     UNREFERENCED_PARAMETER(OutputBufferLength);
@@ -313,70 +312,6 @@ BthPS3PSMEvtIoInternalDeviceControl(
                 }
 
                 return;
-            }
-
-            //
-            // This URB targets the interrupt IN pipe so we attach a completion
-            // routine to it so we can grab the incoming data once coming
-            // back from the lower driver.
-            // 
-            if (urb->UrbBulkOrInterruptTransfer.PipeHandle ==
-                WdfUsbTargetPipeWdmGetPipeHandle(pContext->InterruptPipe))
-            {
-                TraceEvents(TRACE_LEVEL_VERBOSE,
-                    TRACE_QUEUE,
-                    "Interrupt IN transfer"
-                );
-
-                WdfRequestFormatRequestUsingCurrentType(Request);
-
-                WdfRequestSetCompletionRoutine(
-                    Request,
-                    UrbFunctionInterruptInTransferCompleted,
-                    NULL // TODO: what makes sense to pass here?
-                );
-
-                ret = WdfRequestSend(
-                    Request,
-                    WdfDeviceGetIoTarget(WdfIoQueueGetDevice(Queue)),
-                    WDF_NO_SEND_OPTIONS);
-
-                if (ret == FALSE) {
-                    status = WdfRequestGetStatus(Request);
-                    TraceEvents(TRACE_LEVEL_ERROR,
-                        TRACE_QUEUE,
-                        "WdfRequestSend failed with status %!STATUS!",
-                        status
-                    );
-                    WdfRequestComplete(Request, status);
-                }
-
-                return;
-            }
-
-            //
-            // Catch outgoing bulk (L2CAP) data
-            // 
-            if (urb->UrbBulkOrInterruptTransfer.PipeHandle ==
-                WdfUsbTargetPipeWdmGetPipeHandle(pContext->BulkWritePipe))
-            {
-                TraceEvents(TRACE_LEVEL_VERBOSE,
-                    TRACE_QUEUE,
-                    "Bulk OUT transfer"
-                );
-
-                if (urb->UrbBulkOrInterruptTransfer.TransferBufferLength >= 12)
-                {
-                    buffer = (PUCHAR)USBPcapURBGetBufferPointer(
-                        urb->UrbBulkOrInterruptTransfer.TransferBufferLength,
-                        urb->UrbBulkOrInterruptTransfer.TransferBuffer,
-                        urb->UrbBulkOrInterruptTransfer.TransferBufferMDL
-                    );
-
-                    L2CAP_SIGNALLING_COMMAND_CODE code = L2CAP_GET_SIGNALLING_COMMAND_CODE(buffer);
-
-                    DumpL2CAPSignallingCommandCode("<<", code, &buffer[8]);
-                }
             }
 
             break;

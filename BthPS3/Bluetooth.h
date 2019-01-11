@@ -10,12 +10,6 @@
 
 #define POOLTAG_BTHPS3          'PhtB'
 
-// 0x11 -> 0x5053
-#define PSM_DS3_HID_CONTROL     0x5053
-// 0x13 -> 0x5055
-#define PSM_DS3_HID_INTERRUPT   0x5055
-
-
 typedef struct _BTHPS3_DEVICE_CONTEXT_HEADER
 {
     //

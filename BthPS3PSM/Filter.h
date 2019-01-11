@@ -9,5 +9,4 @@ ProxyUrbSelectConfiguration(
     PDEVICE_CONTEXT Context
 );
 
-EVT_WDF_REQUEST_COMPLETION_ROUTINE UrbFunctionInterruptInTransferCompleted;
 EVT_WDF_REQUEST_COMPLETION_ROUTINE UrbFunctionBulkInTransferCompleted;

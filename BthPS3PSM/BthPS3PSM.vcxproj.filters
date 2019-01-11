@@ -45,12 +45,6 @@
     <ClInclude Include="L2CAP.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HCI.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Diagnostics.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Device.c">
@@ -63,9 +57,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Filter.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Diagnostics.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -24,8 +24,6 @@ Environment:
 #include "UsbUtil.h"
 #include "Filter.h"
 #include "L2CAP.h"
-#include "HCI.h"
-#include "Diagnostics.h"
 
 EXTERN_C_START
 

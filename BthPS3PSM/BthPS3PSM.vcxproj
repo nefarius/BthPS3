@@ -36,17 +36,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Device.c" />
-    <ClCompile Include="Diagnostics.c" />
     <ClCompile Include="Driver.c" />
     <ClCompile Include="Filter.c" />
     <ClCompile Include="Queue.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Device.h" />
-    <ClInclude Include="Diagnostics.h" />
     <ClInclude Include="Driver.h" />
     <ClInclude Include="Filter.h" />
-    <ClInclude Include="HCI.h" />
     <ClInclude Include="L2CAP.h" />
     <ClInclude Include="Queue.h" />
     <ClInclude Include="Trace.h" />

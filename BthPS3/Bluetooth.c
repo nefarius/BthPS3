@@ -44,25 +44,8 @@ BthPS3RetrieveLocalInfo(
 
         goto exit1;
     }
-
+    
     DevCtxHdr->LocalBthAddr = brb->BtAddress;
-
-#if (NTDDI_VERSION >= NTDDI_WIN8)
-
-    //
-    // Now retrieve local host supported features
-    //
-    status = BthPS3GetHostSupportedFeatures(DevCtxHdr);
-
-    if (!NT_SUCCESS(status))
-    {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
-            "Sending IOCTL for reading supported features failed, Status code %!STATUS!\n", status);
-
-        goto exit1;
-    }
-
-#endif
 
 exit1:
     DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);

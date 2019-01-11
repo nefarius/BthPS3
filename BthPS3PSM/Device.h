@@ -51,9 +51,4 @@ BthPS3PSMCreateDevice(
     _Inout_ PWDFDEVICE_INIT DeviceInit
     );
 
-NTSTATUS 
-BthPS3PSMLoadConfiguration(
-    WDFDEVICE Device
-);
-
 EXTERN_C_END

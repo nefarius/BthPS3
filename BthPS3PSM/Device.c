@@ -125,13 +125,3 @@ Return Value:
 
     return status;
 }
-
-NTSTATUS
-BthPS3PSMLoadConfiguration(
-    WDFDEVICE Device
-)
-{
-    UNREFERENCED_PARAMETER(Device);
-
-    return STATUS_SUCCESS;
-}

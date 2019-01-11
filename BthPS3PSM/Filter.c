@@ -174,7 +174,7 @@ UrbFunctionBulkInTransferCompleted(
         pTransfer->TransferBufferMDL
     );
 
-    if (bufferLength >= 8 && L2CAP_IS_CONTROL_CHANNEL(buffer))
+    if (bufferLength >= L2CAP_MIN_BUFFER_LEN && L2CAP_IS_CONTROL_CHANNEL(buffer))
     {
         if (L2CAP_IS_SIGNALLING_COMMAND_CODE(buffer))
         {

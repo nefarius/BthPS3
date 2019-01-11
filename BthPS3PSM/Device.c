@@ -95,9 +95,18 @@ Return Value:
             WDF_NO_OBJECT_ATTRIBUTES,
             &deviceContext->UsbDevice
         );
+
+        //
+        // This will typically fail with either
+        // - STATUS_INVALID_DEVICE_REQUEST
+        // - STATUS_NO_SUCH_DEVICE
+        // if getting attached to a non-USB device
+        // which will then conveniently cause 
+        // unloading the filter automatically.
+        // 
         if (!NT_SUCCESS(status)) {
 
-            TraceEvents(TRACE_LEVEL_VERBOSE,
+            TraceEvents(TRACE_LEVEL_WARNING,
                 TRACE_QUEUE,
                 "WdfUsbTargetDeviceCreateWithParameters failed with status %!STATUS!",
                 status);

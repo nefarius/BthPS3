@@ -35,9 +35,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <None Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="Bluetooth.c" />
     <ClCompile Include="Connection.c" />
     <ClCompile Include="Device.c" />

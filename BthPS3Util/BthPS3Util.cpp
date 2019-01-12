@@ -24,7 +24,7 @@ int main(int, char* argv[])
         if (FALSE == AdjustProcessPrivileges())
         {
             std::cout << "Failed to gain required privileges, error " << std::hex << GetLastError() << std::endl;
-            return ERROR_ACCESS_DENIED;
+            return GetLastError();
         }
 
         SvcInfo.Enabled = TRUE;
@@ -50,7 +50,7 @@ int main(int, char* argv[])
         if (FALSE == AdjustProcessPrivileges())
         {
             std::cout << "Failed to gain required privileges, error " << std::hex << GetLastError() << std::endl;
-            return ERROR_ACCESS_DENIED;
+            return GetLastError();
         }
 
         SvcInfo.Enabled = FALSE;
@@ -71,6 +71,23 @@ int main(int, char* argv[])
         return ERROR_SUCCESS;
     }
 
+    if (cmdl[{ "--create-filter-device" }])
+    {
+        auto ret = devcon::create(
+            L"System",
+            &GUID_DEVCLASS_SYSTEM,
+            L"Nefarius\\{a3dc6d41-9e10-46d9-8be2-9b4a279841df}\0\0"
+        );
+
+        if (!ret)
+        {
+            std::cout << "Failed to create device, error " << std::hex << GetLastError() << std::endl;
+            return GetLastError();
+        }
+
+        return ERROR_SUCCESS;
+    }
+
     if (cmdl[{ "--enable-filter" }])
     {
         auto key = SetupDiOpenClassRegKey(&GUID_DEVCLASS_BLUETOOTH, KEY_ALL_ACCESS);
@@ -78,7 +95,7 @@ int main(int, char* argv[])
         if (INVALID_HANDLE_VALUE == key)
         {
             std::cout << "Couldn't open Class key, error " << std::hex << GetLastError() << std::endl;
-            return ERROR_ACCESS_DENIED;
+            return GetLastError();
         }
 
         // wrap it up
@@ -124,7 +141,7 @@ int main(int, char* argv[])
         if (INVALID_HANDLE_VALUE == key)
         {
             std::cout << "Couldn't open Class key, error " << std::hex << GetLastError() << std::endl;
-            return ERROR_ACCESS_DENIED;
+            return GetLastError();
         }
 
         // wrap it up

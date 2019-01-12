@@ -36,12 +36,6 @@ WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1
 [BthPS3PSM_Device.NT]
 CopyFiles=Drivers_Dir
 
-;[BthPS3PSM_Device.NT.HW]
-;AddReg = BthPS3PSM_AddReg
-
-;[BthPS3PSM_AddReg]
-;HKLM,SYSTEM\CurrentControlSet\Control\Class\{e0cbf06c-cd8b-4647-bb8a-263b43f0f974},LowerFilters,0x00010008,BthPS3PSM
-
 [Drivers_Dir]
 BthPS3PSM.sys
 
@@ -80,5 +74,5 @@ KmdfLibraryVersion = $KMDFVERSION$
 SPSVCINST_ASSOCSERVICE= 0x00000002
 ManufacturerName="Nefarius Software Solutions e.U."
 DiskName = "BthPS3PSM Installation Disk"
-BthPS3PSM.DeviceDesc = "BthPS3PSM Bluetooth Filter Device"
-BthPS3PSM.SVCDESC = "BthPS3PSM Bluetooth Filter Service"
+BthPS3PSM.DeviceDesc = "PlayStation 3 Bluetooth Filter Device"
+BthPS3PSM.SVCDESC = "PlayStation 3 Bluetooth Filter Service"

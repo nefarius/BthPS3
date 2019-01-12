@@ -6,6 +6,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <SetupAPI.h>
+#include <newdev.h>
 
 //
 // OS Bluetooth APIs
@@ -42,5 +43,7 @@
 // Registry manipulation wrapper
 // 
 #include "WinReg.hpp"
+
+#include "colorwin.hpp"
 
 #include "Devcon.h"

@@ -2,7 +2,9 @@
 //
 
 #include "BthPS3Util.h"
+
 using namespace winreg;
+using namespace colorwin;
 
 
 #define LOWER_FILTERS L"LowerFilters"
@@ -13,7 +15,10 @@ AdjustProcessPrivileges(
 
 int main(int, char* argv[])
 {
-    argh::parser cmdl(argv);
+    argh::parser cmdl;
+    cmdl.add_params({ "--inf-path" });
+    cmdl.parse(argv);
+    std::string infPath;
 
     DWORD err = ERROR_SUCCESS;
     BLUETOOTH_LOCAL_SERVICE_INFO SvcInfo = { 0 };
@@ -23,7 +28,7 @@ int main(int, char* argv[])
     {
         if (FALSE == AdjustProcessPrivileges())
         {
-            std::cout << "Failed to gain required privileges, error " << std::hex << GetLastError() << std::endl;
+            std::cout << color(red) << "Failed to gain required privileges, error " << std::hex << GetLastError() << std::endl;
             return GetLastError();
         }
 
@@ -36,7 +41,7 @@ int main(int, char* argv[])
             &SvcInfo
         )))
         {
-            std::cout << "BluetoothSetLocalServiceInfo failed, err " << err << std::endl;
+            std::cout << color(red) << "BluetoothSetLocalServiceInfo failed, err " << err << std::endl;
             return GetLastError();
         }
 
@@ -49,7 +54,7 @@ int main(int, char* argv[])
     {
         if (FALSE == AdjustProcessPrivileges())
         {
-            std::cout << "Failed to gain required privileges, error " << std::hex << GetLastError() << std::endl;
+            std::cout << color(red) << "Failed to gain required privileges, error " << std::hex << GetLastError() << std::endl;
             return GetLastError();
         }
 
@@ -62,7 +67,7 @@ int main(int, char* argv[])
             &SvcInfo
         )))
         {
-            std::cout << "BluetoothSetLocalServiceInfo failed, err " << err << std::endl;
+            std::cout << color(red) << "BluetoothSetLocalServiceInfo failed, err " << err << std::endl;
             return GetLastError();
         }
 
@@ -81,11 +86,38 @@ int main(int, char* argv[])
 
         if (!ret)
         {
-            std::cout << "Failed to create device, error " << std::hex << GetLastError() << std::endl;
+            std::cout << color(red) << "Failed to create device, error " << std::hex << GetLastError() << std::endl;
             return GetLastError();
         }
 
+        std::cout << "Device node created successfully" << std::endl;
         return ERROR_SUCCESS;
+    }
+
+    if (cmdl[{ "--install-driver" }])
+    {
+        if (!(cmdl({ "--inf-path" }) >> infPath)) {
+            std::cout << color(red) << "INF path missing" << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        BOOL rebootRequired;
+        auto ret = DiInstallDriverA(
+            nullptr,
+            infPath.c_str(),
+            (cmdl[{ "--force" }]) ? DIIRFLAG_FORCE_INF : 0,
+            &rebootRequired
+        );
+
+        if (!ret)
+        {
+            std::cout << color(red) << "Failed to install driver, error " << std::hex << GetLastError() << std::endl;
+            return GetLastError();
+        }
+
+        std::cout << "Driver installed successfully" << std::endl;
+
+        return (rebootRequired) ? ERROR_RESTART_APPLICATION : ERROR_SUCCESS;
     }
 
     if (cmdl[{ "--enable-filter" }])
@@ -175,6 +207,19 @@ int main(int, char* argv[])
         classKey.Close();
         return ERROR_SUCCESS;
     }
+
+    std::cout << "usage: .\\BthPS3Util [options]" << std::endl << std::endl;
+    std::cout << "  options:" << std::endl;
+    std::cout << "    --enable-service          Register BthPS3 service on Bluetooth radio" << std::endl;
+    std::cout << "    --disable-service         De-Register BthPS3 service on Bluetooth radio" << std::endl;
+    std::cout << "    --create-filter-device    Create virtual device node for filter driver" << std::endl;
+    std::cout << "    --install-driver          Invoke the installation of a given PNP driver" << std::endl;
+    std::cout << "      --inf-path              Path to the INF file to install" << std::endl;
+    std::cout << "      --force                 Force using this driver (even if older)" << std::endl;
+    std::cout << "    --enable-filter           Register BthPS3PSM as lower filter for Bluetooth Class" << std::endl;
+    std::cout << "    --disable-filter          De-Register BthPS3PSM as lower filter for Bluetooth Class" << std::endl;
+    std::cout << "    -v, --version             Display version of this utility" << std::endl;
+    std::cout << std::endl;
 
     return ERROR_INVALID_PARAMETER;
 }

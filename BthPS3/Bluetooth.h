@@ -191,13 +191,6 @@ BthPS3IndicationCallback(
 );
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
-NTSTATUS
-BthPS3SendConnectResponse(
-    _In_ PBTHPS3_SERVER_CONTEXT DevCtx,
-    _In_ PINDICATION_PARAMETERS ConnectParams
-);
-
-_IRQL_requires_max_(DISPATCH_LEVEL)
 void
 BthPS3ConnectionIndicationCallback(
     _In_ PVOID Context,
@@ -215,5 +208,3 @@ BthPS3SendBrbAsync(
     _In_ PFN_WDF_REQUEST_COMPLETION_ROUTINE ComplRoutine,
     _In_opt_ WDFCONTEXT Context
 );
-
-EVT_WDF_REQUEST_COMPLETION_ROUTINE BthPS3RemoteConnectResponseCompletion;

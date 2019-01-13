@@ -57,11 +57,6 @@ typedef struct _BTHPS3_SERVER_CONTEXT
     USHORT PsmHidInterrupt;
 
     //
-    // Handle to published SDP record
-    //
-    HANDLE_SDP SdpRecordHandle;
-
-    //
     // Handle obtained by registering L2CAP server
     //
     L2CAP_SERVER_HANDLE L2CAPServerHandle;

@@ -1,6 +1,9 @@
 #include "Driver.h"
 #include "l2cap.tmh"
 
+//
+// Incoming connection request, prepare and send response
+// 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_SendConnectResponse(
@@ -16,6 +19,23 @@ L2CAP_PS3_SendConnectResponse(
 
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
+
+    /*
+    if (PSM_DS3_HID_INTERRUPT == ConnectParams->Parameters.Connect.Request.PSM)
+    {
+    }
+
+    if (RETRIEVE_CONNECTION_ENTRY_BY_BTH_ADDR_LOCKED(
+        DevCtx,
+        &ConnectParams->BtAddress,
+        connection
+    ))
+    {
+        TraceEvents(TRACE_LEVEL_INFORMATION,
+            TRACE_L2CAP,
+            "!! Existing connection found");
+    }
+    */
 
     //
     // We create the connection object as the first step so that if we receive 
@@ -40,7 +60,7 @@ L2CAP_PS3_SendConnectResponse(
     //
     // Insert the connection object in the connection list that we track
     //
-    InsertConnectionEntryLocked(DevCtx, &connection->ConnectionListEntry);
+    INSERT_CONNECTION_ENTRY_LOCKED(DevCtx, &connection->ConnectionListEntry);
 
     //
     // Reuse request
@@ -78,12 +98,12 @@ L2CAP_PS3_SendConnectResponse(
     brb->ConfigOut.Mtu.Max = L2CAP_MAX_MTU;
     brb->ConfigOut.Mtu.Min = L2CAP_MIN_MTU;
     brb->ConfigOut.Mtu.Preferred = L2CAP_MAX_MTU;
-        
+
     brb->ConfigIn.Flags = CFG_MTU;
     brb->ConfigIn.Mtu.Max = brb->ConfigOut.Mtu.Max;
     brb->ConfigIn.Mtu.Min = brb->ConfigOut.Mtu.Min;
     brb->ConfigIn.Mtu.Preferred = brb->ConfigOut.Mtu.Max;
-    
+
     //
     // Get notifications about disconnect and QOS
     //
@@ -133,7 +153,7 @@ exit:
         {
             connection->ConnectionState = ConnectionStateConnectFailed;
 
-            RemoveConnectionEntryLocked(
+            REMOVE_CONNECTION_ENTRY_LOCKED(
                 (PBTHPS3_SERVER_CONTEXT)connection->DevCtxHdr,
                 &connection->ConnectionListEntry
             );
@@ -265,7 +285,7 @@ L2CAP_PS3_ConnectResponseCompleted(
 
     if (!NT_SUCCESS(status))
     {
-        RemoveConnectionEntryLocked(
+        REMOVE_CONNECTION_ENTRY_LOCKED(
             (PBTHPS3_SERVER_CONTEXT)connection->DevCtxHdr,
             &connection->ConnectionListEntry
         );

@@ -44,7 +44,7 @@ BthPS3RetrieveLocalInfo(
 
         goto exit1;
     }
-    
+
     DevCtxHdr->LocalBthAddr = brb->BtAddress;
 
 exit1:
@@ -500,8 +500,7 @@ BthPS3IndicationCallback(
             "New connection for PSM 0x%04X from %llX arrived",
             Parameters->Parameters.Connect.Request.PSM,
             Parameters->BtAddress);
-                
-        //BthPS3SendConnectResponse(devCtx, Parameters);
+
         L2CAP_PS3_SendConnectResponse(devCtx, Parameters);
 
         break;
@@ -563,12 +562,8 @@ BthPS3ConnectionIndicationCallback(
     case IndicationRemoteConfigRequest:
 
         TraceEvents(TRACE_LEVEL_INFORMATION,
-            TRACE_BTH, 
+            TRACE_BTH,
             "%!FUNC! ++ IndicationRemoteConfigRequest");
-
-        //
-        // TODO: this catches QOS configuration request and inherently succeeds it
-        // 
 
         break;
 

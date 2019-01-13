@@ -155,9 +155,12 @@ BthPS3ConnectionObjectCreate(
     _Out_ WDFOBJECT*  ConnectionObject
 );
 
+//
+// Add new connection to connection list in a thread-safe way
+// 
 void
 FORCEINLINE
-InsertConnectionEntryLocked(
+INSERT_CONNECTION_ENTRY_LOCKED(
     PBTHPS3_SERVER_CONTEXT devCtx,
     PLIST_ENTRY ple
 )
@@ -169,9 +172,12 @@ InsertConnectionEntryLocked(
     WdfSpinLockRelease(devCtx->ConnectionListLock);
 }
 
+//
+// Remove a connection from connection list in a thread-safe way
+// 
 void
 FORCEINLINE
-RemoveConnectionEntryLocked(
+REMOVE_CONNECTION_ENTRY_LOCKED(
     PBTHPS3_SERVER_CONTEXT devCtx,
     PLIST_ENTRY ple
 )
@@ -183,26 +189,23 @@ RemoveConnectionEntryLocked(
     WdfSpinLockRelease(devCtx->ConnectionListLock);
 }
 
-_Use_decl_annotations_
-VOID
-BthPS3EvtConnectionObjectCleanup(
-    WDFOBJECT  ConnectionObject
-);
-
+//
+// Retrieve existing connection from connection list by remote address
+// 
 BOOLEAN
 FORCEINLINE
-CONNECTION_GET_BY_BTH_ADDR(
+RETRIEVE_CONNECTION_ENTRY_BY_BTH_ADDR_LOCKED(
     PBTHPS3_SERVER_CONTEXT Context,
-    BTH_ADDR RemoteAddress,
+    PBTH_ADDR RemoteAddress,
     PBTHPS3_CONNECTION Connection
 )
 {
-    if (Context == NULL || Connection == NULL) {
-        return FALSE;
-    }
+    BOOLEAN ret = FALSE;
+
+    WdfSpinLockAcquire(Context->ConnectionListLock);
 
     if (IsListEmpty(&Context->ConnectionList)) {
-        return FALSE;
+        goto exit;
     }
 
     PLIST_ENTRY pEntry = Context->ConnectionList.Flink;
@@ -211,12 +214,22 @@ CONNECTION_GET_BY_BTH_ADDR(
     {
         Connection = CONTAINING_RECORD(pEntry, BTHPS3_CONNECTION, ConnectionListEntry);
 
-        if (Connection->RemoteAddress == RemoteAddress) {
-            return TRUE;
+        if (Connection->RemoteAddress == *RemoteAddress) {
+            ret = TRUE;
+            break;
         }
 
         pEntry = pEntry->Flink;
     }
 
-    return FALSE;
+exit:
+    WdfSpinLockRelease(Context->ConnectionListLock);
+    return ret;
 }
+
+_Use_decl_annotations_
+VOID
+BthPS3EvtConnectionObjectCleanup(
+    WDFOBJECT  ConnectionObject
+);
+

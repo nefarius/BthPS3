@@ -188,3 +188,35 @@ VOID
 BthPS3EvtConnectionObjectCleanup(
     WDFOBJECT  ConnectionObject
 );
+
+BOOLEAN
+FORCEINLINE
+CONNECTION_GET_BY_BTH_ADDR(
+    PBTHPS3_SERVER_CONTEXT Context,
+    BTH_ADDR RemoteAddress,
+    PBTHPS3_CONNECTION Connection
+)
+{
+    if (Context == NULL || Connection == NULL) {
+        return FALSE;
+    }
+
+    if (IsListEmpty(&Context->ConnectionList)) {
+        return FALSE;
+    }
+
+    PLIST_ENTRY pEntry = Context->ConnectionList.Flink;
+
+    while (pEntry != &Context->ConnectionList)
+    {
+        Connection = CONTAINING_RECORD(pEntry, BTHPS3_CONNECTION, ConnectionListEntry);
+
+        if (Connection->RemoteAddress == RemoteAddress) {
+            return TRUE;
+        }
+
+        pEntry = pEntry->Flink;
+    }
+
+    return FALSE;
+}

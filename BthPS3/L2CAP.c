@@ -250,7 +250,7 @@ L2CAP_PS3_ConnectResponseCompleted(
             // Call BthEchoSrvConnectionStateConnected to perform post connect processing
             // (namely initializing continuous readers)
             //
-            //status = BthEchoSrvConnectionStateConnected(connectionObject);
+            status = L2CAP_PS3_ConnectionStateConnected(connectionObject);
             //if (!NT_SUCCESS(status))
             //{
             //    //
@@ -367,3 +367,13 @@ L2CAP_PS3_ConnectionIndicationCallback(
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
 }
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
+NTSTATUS
+L2CAP_PS3_ConnectionStateConnected(
+    WDFOBJECT ConnectionObject
+)
+{
+    UNREFERENCED_PARAMETER(ConnectionObject);
+
+    return STATUS_SUCCESS;
+}

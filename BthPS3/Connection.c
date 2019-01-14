@@ -132,12 +132,12 @@ _Use_decl_annotations_
 VOID
 BthPS3EvtConnectionObjectCleanup(
     WDFOBJECT  ConnectionObject
-    )
+)
 {
     PBTHPS3_CONNECTION connection = GetConnectionObjectContext(ConnectionObject);
 
     PAGED_CODE();
-        
+
     //BthEchoConnectionObjectWaitForAndUninitializeContinuousReader(connection);
 
     KeWaitForSingleObject(&connection->DisconnectEvent,
@@ -149,4 +149,133 @@ BthPS3EvtConnectionObjectCleanup(
     WdfObjectDelete(connection->ConnectDisconnectRequest);
 }
 #pragma warning(pop) // enable 28118 again
+
+/************************************************************************/
+/* The new stuff                                                        */
+/************************************************************************/
+
+NTSTATUS
+ClientConnections_CreateAndInsert(
+    _In_ PBTHPS3_SERVER_CONTEXT Context,
+    _In_ PFN_WDF_OBJECT_CONTEXT_CLEANUP CleanupCallback,
+    _Out_ PBTHPS3_CLIENT_CONNECTION ClientConnection
+)
+{
+    NTSTATUS                    status;
+    WDF_OBJECT_ATTRIBUTES       attributes;
+    WDFOBJECT                   connectionObject = NULL;
+    PBTHPS3_CLIENT_CONNECTION   connectionCtx = NULL;
+
+
+    WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&attributes, BTHPS3_CLIENT_CONNECTION);
+    attributes.ParentObject = Context->Header.Device;
+    attributes.EvtCleanupCallback = CleanupCallback;
+    attributes.ExecutionLevel = WdfExecutionLevelPassive;
+
+    //
+    // Create piggyback object carrying the context
+    // 
+    status = WdfObjectCreate(
+        &attributes,
+        &connectionObject
+    );
+
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_CONNECTION,
+            "WdfObjectCreate for connection object failed with status %!STATUS!",
+            status
+        );
+
+        return status;
+    }
+
+    //
+    // Piggyback object is parent
+    // 
+    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+    attributes.ParentObject = connectionObject;
+
+    connectionCtx = GetClientConnection(connectionObject);
+    connectionCtx->DevCtxHdr = &Context->Header;
+
+    //
+    // Initialize HidControlChannel properties
+    // 
+
+    status = WdfRequestCreate(
+        &attributes,
+        connectionCtx->DevCtxHdr->IoTarget,
+        &connectionCtx->HidControlChannel.ConnectDisconnectRequest
+    );
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_CONNECTION,
+            "WdfRequestCreate for HidControlChannel failed with status %!STATUS!",
+            status
+        );
+
+        goto exitFailure;
+    }
+
+    KeInitializeEvent(&connectionCtx->HidControlChannel.DisconnectEvent,
+        NotificationEvent,
+        TRUE
+    );
+
+    connectionCtx->HidControlChannel.ConnectionState = ConnectionStateInitialized;
+
+    //
+    // Initialize HidInterruptChannel properties
+    // 
+
+    status = WdfRequestCreate(
+        &attributes,
+        connectionCtx->DevCtxHdr->IoTarget,
+        &connectionCtx->HidInterruptChannel.ConnectDisconnectRequest
+    );
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_CONNECTION,
+            "WdfRequestCreate for HidInterruptChannel failed with status %!STATUS!",
+            status
+        );
+
+        goto exitFailure;
+    }
+
+    KeInitializeEvent(&connectionCtx->HidInterruptChannel.DisconnectEvent,
+        NotificationEvent,
+        TRUE
+    );
+
+    connectionCtx->HidInterruptChannel.ConnectionState = ConnectionStateInitialized;
+
+    //
+    // Insert initialized connection list in connection collection
+    // 
+    status = WdfCollectionAdd(Context->ClientConnections, connectionObject);
+
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_CONNECTION,
+            "WdfCollectionAdd for connection object failed with status %!STATUS!",
+            status
+        );
+
+        goto exitFailure;
+    }
+
+    //
+    // Pass back valid pointer
+    // 
+    ClientConnection = connectionCtx;
+
+    return status;
+
+exitFailure:
+
+    WdfObjectDelete(connectionObject);
+    return status;
+}
 

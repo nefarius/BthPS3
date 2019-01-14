@@ -165,6 +165,34 @@ BTHPS3_SERVER_CONTEXT_INIT(
 
     InitializeListHead(&Context->ConnectionList);
 
+    /************************************************************************/
+    /* The new stuff                                                        */
+    /************************************************************************/
+
+    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+    attributes.ParentObject = Device;
+
+    status = WdfSpinLockCreate(
+        &attributes,
+        &Context->ClientConnectionsLock
+    );
+    if (!NT_SUCCESS(status))
+    {
+        goto exit;
+    }
+
+    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+    attributes.ParentObject = Device;
+
+    status = WdfCollectionCreate(
+        &attributes,
+        &Context->ClientConnections
+    );
+    if (!NT_SUCCESS(status))
+    {
+        goto exit;
+    }
+
 exit:
     return status;
 }

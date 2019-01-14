@@ -2,6 +2,7 @@
 
 #include <ntstrsafe.h>
 
+
 typedef struct _BTHPS3_CONNECTION * PBTHPS3_CONNECTION;
 
 #define BTHPS3_NUM_CONTINUOUS_READERS 2
@@ -230,3 +231,41 @@ BthPS3EvtConnectionObjectCleanup(
     WDFOBJECT  ConnectionObject
 );
 
+/************************************************************************/
+/* The new stuff                                                        */
+/************************************************************************/
+
+typedef struct _BTHPS3_CLIENT_L2CAP_CHANNEL
+{
+    BTHPS3_CONNECTION_STATE     ConnectionState;
+
+    L2CAP_CHANNEL_HANDLE        ChannelHandle;
+
+    struct _BRB                 ConnectDisconnectBrb;
+
+    WDFREQUEST                  ConnectDisconnectRequest;
+
+    KEVENT                      DisconnectEvent;
+
+} BTHPS3_CLIENT_L2CAP_CHANNEL, *PBTHPS3_CLIENT_L2CAP_CHANNEL;
+
+typedef struct _BTHPS3_CLIENT_CONNECTION
+{
+    PBTHPS3_DEVICE_CONTEXT_HEADER       DevCtxHdr;
+
+    BTH_ADDR                            RemoteAddress;
+
+    BTHPS3_CLIENT_L2CAP_CHANNEL         HidControlChannel;
+
+    BTHPS3_CLIENT_L2CAP_CHANNEL         HidInterruptChannel;
+
+} BTHPS3_CLIENT_CONNECTION, *PBTHPS3_CLIENT_CONNECTION;
+
+WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_CLIENT_CONNECTION, GetClientConnection)
+
+NTSTATUS
+ClientConnections_CreateAndInsert(
+    _In_ PBTHPS3_SERVER_CONTEXT Context,
+    _In_ PFN_WDF_OBJECT_CONTEXT_CLEANUP CleanupCallback,
+    _Out_ PBTHPS3_CLIENT_CONNECTION ClientConnection
+);

@@ -519,64 +519,6 @@ BthPS3IndicationCallback(
 }
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
-void
-BthPS3ConnectionIndicationCallback(
-    _In_ PVOID Context,
-    _In_ INDICATION_CODE Indication,
-    _In_ PINDICATION_PARAMETERS Parameters
-)
-{
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Entry");
-
-    UNREFERENCED_PARAMETER(Parameters);
-
-    switch (Indication)
-    {
-    case IndicationAddReference:
-        break;
-    case IndicationReleaseReference:
-        break;
-    case IndicationRemoteConnect:
-    {
-        //
-        // We don't expect connect on this callback
-        //
-        NT_ASSERT(FALSE);
-        break;
-    }
-    case IndicationRemoteDisconnect:
-    {
-        WDFOBJECT connectionObject = (WDFOBJECT)Context;
-        PBTHPS3_CONNECTION connection = GetConnectionObjectContext(connectionObject);
-
-        UNREFERENCED_PARAMETER(connection);
-
-        //BthEchoSrvDisconnectConnection(connection);
-
-        break;
-    }
-    case IndicationRemoteConfigRequest:
-
-        TraceEvents(TRACE_LEVEL_INFORMATION,
-            TRACE_BTH,
-            "%!FUNC! ++ IndicationRemoteConfigRequest");
-
-        break;
-
-    case IndicationRemoteConfigResponse:
-    case IndicationFreeExtraOptions:
-        break;
-    default:
-        //
-        // We don't expect any other indications on this callback
-        //
-        NT_ASSERT(FALSE);
-    }
-
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Exit");
-}
-
-_IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 BthPS3SendBrbAsync(
     _In_ WDFIOTARGET IoTarget,

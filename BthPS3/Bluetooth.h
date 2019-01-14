@@ -186,14 +186,6 @@ BthPS3IndicationCallback(
 );
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
-void
-BthPS3ConnectionIndicationCallback(
-    _In_ PVOID Context,
-    _In_ INDICATION_CODE Indication,
-    _In_ PINDICATION_PARAMETERS Parameters
-);
-
-_IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 BthPS3SendBrbAsync(
     _In_ WDFIOTARGET IoTarget,

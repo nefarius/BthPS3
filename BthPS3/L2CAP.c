@@ -16,9 +16,26 @@ L2CAP_PS3_SendConnectResponse(
     struct _BRB_L2CA_OPEN_CHANNEL *brb = NULL;
     WDFOBJECT connectionObject = NULL;
     PBTHPS3_CONNECTION connection = NULL;
+    PFN_WDF_REQUEST_COMPLETION_ROUTINE completionRoutine = NULL;
+    USHORT psm = ConnectParams->Parameters.Connect.Request.PSM;
 
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
+
+    //
+    // Adjust control flow depending on PSM
+    // 
+    switch (psm)
+    {
+    case PSM_DS3_HID_CONTROL:
+        completionRoutine = L2CAP_PS3_ControlConnectResponseCompleted;
+        break;
+    case PSM_DS3_HID_INTERRUPT:
+        completionRoutine = L2CAP_PS3_InterruptConnectResponseCompleted;
+        break;
+    default:
+        break;
+    }
 
     /*
     if (PSM_DS3_HID_INTERRUPT == ConnectParams->Parameters.Connect.Request.PSM)
@@ -120,7 +137,7 @@ L2CAP_PS3_SendConnectResponse(
         connection->ConnectDisconnectRequest,
         (PBRB)brb,
         sizeof(*brb),
-        L2CAP_PS3_ConnectResponseCompleted,
+        completionRoutine,
         brb
     );
 
@@ -294,6 +311,40 @@ L2CAP_PS3_ConnectResponseCompleted(
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
 
     return;
+}
+
+//
+// Control channel connection result
+// 
+void
+L2CAP_PS3_ControlConnectResponseCompleted(
+    _In_ WDFREQUEST  Request,
+    _In_ WDFIOTARGET  Target,
+    _In_ PWDF_REQUEST_COMPLETION_PARAMS  Params,
+    _In_ WDFCONTEXT  Context
+)
+{
+    UNREFERENCED_PARAMETER(Request);
+    UNREFERENCED_PARAMETER(Target);
+    UNREFERENCED_PARAMETER(Params);
+    UNREFERENCED_PARAMETER(Context);
+}
+
+//
+// Interrupt channel connection result
+// 
+void
+L2CAP_PS3_InterruptConnectResponseCompleted(
+    _In_ WDFREQUEST  Request,
+    _In_ WDFIOTARGET  Target,
+    _In_ PWDF_REQUEST_COMPLETION_PARAMS  Params,
+    _In_ WDFCONTEXT  Context
+)
+{
+    UNREFERENCED_PARAMETER(Request);
+    UNREFERENCED_PARAMETER(Target);
+    UNREFERENCED_PARAMETER(Params);
+    UNREFERENCED_PARAMETER(Context);
 }
 
 _IRQL_requires_max_(DISPATCH_LEVEL)

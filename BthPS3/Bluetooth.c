@@ -3,6 +3,13 @@
 #include <bthguid.h>
 
 
+#ifdef ALLOC_PRAGMA
+#pragma alloc_text (PAGE, BthPS3UnregisterPSM)
+#pragma alloc_text (PAGE, BthPS3UnregisterL2CAPServer)
+#pragma alloc_text (PAGE, BthPS3QueryInterfaces)
+#pragma alloc_text (PAGE, BthPS3Initialize)
+#endif
+
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3RetrieveLocalInfo(
@@ -24,8 +31,11 @@ BthPS3RetrieveLocalInfo(
     {
         status = STATUS_INSUFFICIENT_RESOURCES;
 
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
-            "Failed to allocate brb BRB_HCI_GET_LOCAL_BD_ADDR, returning status code %!STATUS!\n", status);
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_BTH,
+            "Failed to allocate brb BRB_HCI_GET_LOCAL_BD_ADDR with status %!STATUS!",
+            status
+        );
 
         goto exit;
     }
@@ -41,14 +51,14 @@ BthPS3RetrieveLocalInfo(
     {
         TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
             "Retrieving local bth address failed, Status code %!STATUS!\n", status);
-
-        goto exit1;
+    }
+    else
+    {
+        DevCtxHdr->LocalBthAddr = brb->BtAddress;
     }
 
-    DevCtxHdr->LocalBthAddr = brb->BtAddress;
-
-exit1:
     DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+
 exit:
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Exit");
@@ -78,7 +88,7 @@ BthPS3SendBrbSynchronously(
     status = WdfRequestReuse(Request, &reuseParams);
     if (!NT_SUCCESS(status))
     {
-        goto exit;
+        return status;
     }
 
     WDF_MEMORY_DESCRIPTOR_INIT_BUFFER(
@@ -98,7 +108,6 @@ BthPS3SendBrbSynchronously(
         NULL  //BytesReturned
     );
 
-exit:
     return status;
 }
 
@@ -297,7 +306,7 @@ BthPS3RegisterL2CAPServer(
     // Format brb
     //
     brb->BtAddress = BTH_ADDR_NULL;
-    brb->PSM = 0; //we have already registered the PSM
+    brb->PSM = 0; //we have already registered the PSMs
     brb->IndicationCallback = &BthPS3IndicationCallback;
     brb->IndicationCallbackContext = DevCtx;
     brb->IndicationFlags = 0;
@@ -314,15 +323,14 @@ BthPS3RegisterL2CAPServer(
     {
         TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
             "BRB_REGISTER_PSM failed with status %!STATUS!", status);
-        goto exit;
     }
-
-    //
-    // Store server handle
-    //
-    DevCtx->L2CAPServerHandle = brb->ServerHandle;
-
-exit:
+    else
+    {
+        //
+        // Store server handle
+        //
+        DevCtx->L2CAPServerHandle = brb->ServerHandle;
+    }
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Exit");
 
@@ -377,12 +385,11 @@ BthPS3UnregisterL2CAPServer(
         //
         NT_ASSERT(FALSE);
 
-        goto exit;
+        return;
     }
 
     DevCtx->L2CAPServerHandle = NULL;
 
-exit:
     return;
 }
 
@@ -415,13 +422,13 @@ BthPS3DeviceContextHeaderInit(
 
     if (!NT_SUCCESS(status))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
-            "Failed to pre-allocate request in device context, Status code %!STATUS!\n", status);
-
-        goto exit;
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_BTH,
+            "Failed to pre-allocate request in device context with status %!STATUS!",
+            status
+        );
     }
 
-exit:
     return status;
 }
 
@@ -447,13 +454,11 @@ BthPS3QueryInterfaces(
     if (!NT_SUCCESS(status))
     {
         TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
-            "QueryInterface failed for Interface profile driver interface, version %d, Status code %!STATUS!\n",
+            "QueryInterface failed for Interface profile driver interface, version %d, Status code %!STATUS!",
             BTHDDI_PROFILE_DRIVER_INTERFACE_VERSION_FOR_QI,
             status);
-
-        goto exit;
     }
-exit:
+
     return status;
 }
 
@@ -463,18 +468,9 @@ BthPS3Initialize(
     _In_ PBTHPS3_SERVER_CONTEXT DevCtx
 )
 {
-    NTSTATUS status;
-
     PAGED_CODE();
 
-    status = BthPS3QueryInterfaces(DevCtx);
-    if (!NT_SUCCESS(status))
-    {
-        goto exit;
-    }
-
-exit:
-    return status;
+    return BthPS3QueryInterfaces(DevCtx);
 }
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
@@ -604,7 +600,7 @@ BthPS3SendBrbAsync(
 
         status = STATUS_INVALID_PARAMETER;
 
-        goto exit;
+        return status;
     }
 
     WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
@@ -627,7 +623,7 @@ BthPS3SendBrbAsync(
             status
         );
 
-        goto exit;
+        return status;
     }
 
     status = WdfIoTargetFormatRequestForInternalIoctlOthers(
@@ -651,7 +647,7 @@ BthPS3SendBrbAsync(
             status
         );
 
-        goto exit;
+        return status;
     }
 
     //
@@ -678,9 +674,8 @@ BthPS3SendBrbAsync(
             status
         );
 
-        goto exit;
+        return status;
     }
 
-exit:
     return status;
 }

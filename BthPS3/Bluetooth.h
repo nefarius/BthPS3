@@ -80,6 +80,10 @@ typedef struct _BTHPS3_SERVER_CONTEXT
     //
     LIST_ENTRY ConnectionList;
 
+    WDFCOLLECTION ClientConnections;
+
+    WDFSPINLOCK ClientConnectionsLock;
+
 } BTHPS3_SERVER_CONTEXT, *PBTHPS3_SERVER_CONTEXT;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_SERVER_CONTEXT, GetServerDeviceContext)
@@ -133,7 +137,7 @@ BthPS3DeviceContextHeaderInit(
 
 NTSTATUS
 FORCEINLINE
-BthPS3ServerContextInit(
+BTHPS3_SERVER_CONTEXT_INIT(
     PBTHPS3_SERVER_CONTEXT Context,
     WDFDEVICE Device
 )

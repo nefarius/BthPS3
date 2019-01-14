@@ -37,6 +37,8 @@ L2CAP_PS3_SendConnectResponse(
         break;
     }
 
+    completionRoutine = L2CAP_PS3_ConnectResponseCompleted;
+
     /*
     if (PSM_DS3_HID_INTERRUPT == ConnectParams->Parameters.Connect.Request.PSM)
     {

@@ -57,7 +57,7 @@ BthPS3CreateDevice(
         goto exit;
     }
 
-    status = BthPS3ServerContextInit(GetServerDeviceContext(device), device);
+    status = BTHPS3_SERVER_CONTEXT_INIT(GetServerDeviceContext(device), device);
 
     if (!NT_SUCCESS(status))
     {

@@ -111,9 +111,6 @@ typedef struct _BTHPS3_CONNECTION {
     //
     WDFSPINLOCK                             ConnectionLock;
 
-    USHORT                                  OutMTU;
-    USHORT                                  InMTU;
-
     L2CAP_CHANNEL_HANDLE                    ChannelHandle;
     BTH_ADDR                                RemoteAddress;
 

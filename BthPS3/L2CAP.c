@@ -201,8 +201,6 @@ L2CAP_PS3_ConnectResponseCompleted(
 
     if (NT_SUCCESS(status))
     {
-        connection->OutMTU = brb->OutResults.Params.Mtu;
-        connection->InMTU = brb->InResults.Params.Mtu;
         connection->ChannelHandle = brb->ChannelHandle;
         connection->RemoteAddress = brb->BtAddress;
 

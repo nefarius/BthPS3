@@ -278,4 +278,3 @@ exitFailure:
     WdfObjectDelete(connectionObject);
     return status;
 }
-

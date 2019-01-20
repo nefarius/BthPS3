@@ -20,6 +20,7 @@ L2CAP_PS3_SendConnectResponse(
     PBTHPS3_CLIENT_CONNECTION clientConnection = NULL;
     WDFREQUEST brbAsyncRequest = NULL;
     CHAR remoteName[BTH_MAX_NAME_SIZE];
+    USHORT response = CONNECT_RSP_RESULT_SUCCESS;
 
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
@@ -38,6 +39,15 @@ L2CAP_PS3_SendConnectResponse(
             ConnectParams->BtAddress,
             remoteName
         );
+    }
+    else {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_L2CAP,
+            "BTHPS3_GET_DEVICE_NAME failed with status %!STATUS!",
+            status
+        );
+
+        response = CONNECT_RSP_RESULT_PSM_NEG;
     }
 
     //
@@ -93,7 +103,7 @@ L2CAP_PS3_SendConnectResponse(
     brb->BtAddress = ConnectParams->BtAddress;
     brb->Psm = ConnectParams->Parameters.Connect.Request.PSM;
     brb->ChannelHandle = ConnectParams->ConnectionHandle;
-    brb->Response = CONNECT_RSP_RESULT_SUCCESS;
+    brb->Response = response;
 
     brb->ChannelFlags = CF_ROLE_EITHER;
 

@@ -8,7 +8,9 @@
 #include <bthsdpddi.h>
 #include <bthsdpdef.h>
 
-#define POOLTAG_BTHPS3          'PhtB'
+#define POOLTAG_BTHPS3                  'PhtB'
+#define BTH_DEVICE_INFO_MAX_COUNT       0x0A
+#define BTH_DEVICE_INFO_MAX_RETRIES     0x05
 
 typedef struct _BTHPS3_DEVICE_CONTEXT_HEADER
 {
@@ -244,38 +246,57 @@ BTHPS3_GET_DEVICE_NAME(
     PCHAR Name
 )
 {
-    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    NTSTATUS status = STATUS_INVALID_BUFFER_SIZE;
     ULONG index = 0;
     WDF_MEMORY_DESCRIPTOR MemoryDescriptor;
     WDFMEMORY MemoryHandle = NULL;
     PBTH_DEVICE_INFO_LIST pDeviceInfoList = NULL;
+    ULONG maxDevices = BTH_DEVICE_INFO_MAX_COUNT;
+    ULONG retryCount = 0;
 
-    status = WdfMemoryCreate(NULL,
-        NonPagedPool,
-        POOLTAG_BTHPS3,
-        sizeof(BTH_DEVICE_INFO_LIST) + (sizeof(BTH_DEVICE_INFO) * 10),
-        &MemoryHandle,
-        NULL);
+    //
+    // Retry increasing the buffer a few times if _a lot_ of devices
+    // are cached and the allocated memory can't store them all.
+    // 
+    for (retryCount = 0; (retryCount <= BTH_DEVICE_INFO_MAX_RETRIES
+        && status == STATUS_INVALID_BUFFER_SIZE); retryCount++)
+    {
+        if (MemoryHandle != NULL) {
+            WdfObjectDelete(MemoryHandle);
+        }
 
-    if (!NT_SUCCESS(status)) {
-        return status;
+        status = WdfMemoryCreate(NULL,
+            NonPagedPool,
+            POOLTAG_BTHPS3,
+            sizeof(BTH_DEVICE_INFO_LIST) + (sizeof(BTH_DEVICE_INFO) * maxDevices),
+            &MemoryHandle,
+            NULL);
+
+        if (!NT_SUCCESS(status)) {
+            return status;
+        }
+
+        WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(
+            &MemoryDescriptor,
+            MemoryHandle,
+            NULL
+        );
+
+        status = WdfIoTargetSendIoctlSynchronously(
+            IoTarget,
+            NULL,
+            IOCTL_BTH_GET_DEVICE_INFO,
+            &MemoryDescriptor,
+            &MemoryDescriptor,
+            NULL,
+            NULL
+        );
+
+        //
+        // Increase memory to allocate
+        // 
+        maxDevices += BTH_DEVICE_INFO_MAX_COUNT;
     }
-
-    WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(
-        &MemoryDescriptor,
-        MemoryHandle,
-        NULL
-    );
-
-    status = WdfIoTargetSendIoctlSynchronously(
-        IoTarget,
-        NULL,
-        IOCTL_BTH_GET_DEVICE_INFO,
-        &MemoryDescriptor,
-        &MemoryDescriptor,
-        NULL,
-        NULL
-    );
 
     if (!NT_SUCCESS(status)) {
         WdfObjectDelete(MemoryHandle);
@@ -291,6 +312,12 @@ BTHPS3_GET_DEVICE_NAME(
 
         if (pDeviceInfo->address == RemoteAddress)
         {
+            if (strlen(pDeviceInfo->name) == 0)
+            {
+                status = STATUS_INVALID_PARAMETER;
+                break;
+            }
+
             strcpy_s(Name, BTH_MAX_NAME_SIZE, pDeviceInfo->name);
             status = STATUS_SUCCESS;
             break;

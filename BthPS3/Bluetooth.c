@@ -68,51 +68,6 @@ exit:
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-BthPS3SendBrbSynchronously(
-    _In_ WDFIOTARGET IoTarget,
-    _In_ WDFREQUEST Request,
-    _In_ PBRB Brb,
-    _In_ ULONG BrbSize
-)
-{
-    NTSTATUS status;
-    WDF_REQUEST_REUSE_PARAMS reuseParams;
-    WDF_MEMORY_DESCRIPTOR OtherArg1Desc;
-
-    WDF_REQUEST_REUSE_PARAMS_INIT(
-        &reuseParams,
-        WDF_REQUEST_REUSE_NO_FLAGS,
-        STATUS_NOT_SUPPORTED
-    );
-
-    status = WdfRequestReuse(Request, &reuseParams);
-    if (!NT_SUCCESS(status))
-    {
-        return status;
-    }
-
-    WDF_MEMORY_DESCRIPTOR_INIT_BUFFER(
-        &OtherArg1Desc,
-        Brb,
-        BrbSize
-    );
-
-    status = WdfIoTargetSendInternalIoctlOthersSynchronously(
-        IoTarget,
-        Request,
-        IOCTL_INTERNAL_BTH_SUBMIT_BRB,
-        &OtherArg1Desc,
-        NULL, //OtherArg2
-        NULL, //OtherArg4
-        NULL, //RequestOptions
-        NULL  //BytesReturned
-    );
-
-    return status;
-}
-
-_IRQL_requires_max_(PASSIVE_LEVEL)
-NTSTATUS
 BthPS3RegisterPSM(
     _In_ PBTHPS3_SERVER_CONTEXT DevCtx
 )
@@ -518,6 +473,53 @@ BthPS3IndicationCallback(
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Exit");
 }
 
+#pragma region BRB Request submission
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS
+BthPS3SendBrbSynchronously(
+    _In_ WDFIOTARGET IoTarget,
+    _In_ WDFREQUEST Request,
+    _In_ PBRB Brb,
+    _In_ ULONG BrbSize
+)
+{
+    NTSTATUS status;
+    WDF_REQUEST_REUSE_PARAMS reuseParams;
+    WDF_MEMORY_DESCRIPTOR OtherArg1Desc;
+
+    WDF_REQUEST_REUSE_PARAMS_INIT(
+        &reuseParams,
+        WDF_REQUEST_REUSE_NO_FLAGS,
+        STATUS_NOT_SUPPORTED
+    );
+
+    status = WdfRequestReuse(Request, &reuseParams);
+    if (!NT_SUCCESS(status))
+    {
+        return status;
+    }
+
+    WDF_MEMORY_DESCRIPTOR_INIT_BUFFER(
+        &OtherArg1Desc,
+        Brb,
+        BrbSize
+    );
+
+    status = WdfIoTargetSendInternalIoctlOthersSynchronously(
+        IoTarget,
+        Request,
+        IOCTL_INTERNAL_BTH_SUBMIT_BRB,
+        &OtherArg1Desc,
+        NULL, //OtherArg2
+        NULL, //OtherArg4
+        NULL, //RequestOptions
+        NULL  //BytesReturned
+    );
+
+    return status;
+}
+
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 BthPS3SendBrbAsync(
@@ -621,3 +623,5 @@ BthPS3SendBrbAsync(
 
     return status;
 }
+
+#pragma endregion

@@ -104,6 +104,8 @@ BthPS3SendBrbSynchronously(
     _In_ ULONG BrbSize
 );
 
+#pragma region PSM Registration
+
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3RegisterPSM(
@@ -116,6 +118,10 @@ BthPS3UnregisterPSM(
     _In_ PBTHPS3_SERVER_CONTEXT DevCtx
 );
 
+#pragma endregion
+
+#pragma region L2CAP Server
+
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3RegisterL2CAPServer(
@@ -127,6 +133,8 @@ VOID
 BthPS3UnregisterL2CAPServer(
     _In_ PBTHPS3_SERVER_CONTEXT DevCtx
 );
+
+#pragma endregion
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS

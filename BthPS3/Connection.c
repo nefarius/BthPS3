@@ -158,7 +158,7 @@ NTSTATUS
 ClientConnections_CreateAndInsert(
     _In_ PBTHPS3_SERVER_CONTEXT Context,
     _In_ PFN_WDF_OBJECT_CONTEXT_CLEANUP CleanupCallback,
-    _Out_ PBTHPS3_CLIENT_CONNECTION ClientConnection
+    _Out_ PBTHPS3_CLIENT_CONNECTION *ClientConnection
 )
 {
     NTSTATUS                    status;
@@ -269,8 +269,8 @@ ClientConnections_CreateAndInsert(
     //
     // Pass back valid pointer
     // 
-    ClientConnection = connectionCtx;
-
+    *ClientConnection = connectionCtx;
+    
     return status;
 
 exitFailure:

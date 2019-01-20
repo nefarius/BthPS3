@@ -11,13 +11,14 @@ L2CAP_PS3_SendConnectResponse(
     _In_ PINDICATION_PARAMETERS ConnectParams
 )
 {
-    NTSTATUS status, statusReuse;
-    WDF_REQUEST_REUSE_PARAMS reuseParams;
+    NTSTATUS status;
     struct _BRB_L2CA_OPEN_CHANNEL *brb = NULL;
     WDFOBJECT connectionObject = NULL;
     PBTHPS3_CONNECTION connection = NULL;
     PFN_WDF_REQUEST_COMPLETION_ROUTINE completionRoutine = NULL;
     USHORT psm = ConnectParams->Parameters.Connect.Request.PSM;
+    PBTHPS3_CLIENT_CONNECTION clientConnection = NULL;
+    WDFREQUEST brbAsyncRequest = NULL;
 
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
@@ -37,68 +38,40 @@ L2CAP_PS3_SendConnectResponse(
         break;
     }
 
-    completionRoutine = L2CAP_PS3_ConnectResponseCompleted;
+    //completionRoutine = L2CAP_PS3_ConnectResponseCompleted;
 
-    /*
-    if (PSM_DS3_HID_INTERRUPT == ConnectParams->Parameters.Connect.Request.PSM)
-    {
-    }
-
-    if (RETRIEVE_CONNECTION_ENTRY_BY_BTH_ADDR_LOCKED(
-        DevCtx,
-        &ConnectParams->BtAddress,
-        connection
-    ))
-    {
-        TraceEvents(TRACE_LEVEL_INFORMATION,
+    status = ClientConnections_CreateAndInsert(DevCtx, NULL, &clientConnection);
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR, 
             TRACE_L2CAP,
-            "!! Existing connection found");
-    }
-    */
-
-    //
-    // We create the connection object as the first step so that if we receive 
-    // remove before connect response is completed
-    // we can wait for connection and disconnect.
-    //
-    status = BthPS3ConnectionObjectCreate(
-        &DevCtx->Header,
-        DevCtx->Header.Device,
-        &connectionObject
-    );
-
-    if (!NT_SUCCESS(status))
-    {
+            "ClientConnections_CreateAndInsert failed with status %!STATUS!", status);
         goto exit;
     }
-
-    connection = GetConnectionObjectContext(connectionObject);
-
-    connection->ConnectionState = ConnectionStateConnecting;
-
-    //
-    // Insert the connection object in the connection list that we track
-    //
-    INSERT_CONNECTION_ENTRY_LOCKED(DevCtx, &connection->ConnectionListEntry);
-
-    //
-    // Reuse request
-    // 
-    WDF_REQUEST_REUSE_PARAMS_INIT(&reuseParams, WDF_REQUEST_REUSE_NO_FLAGS, STATUS_NOT_SUPPORTED);
-    statusReuse = WdfRequestReuse(connection->ConnectDisconnectRequest, &reuseParams);
-    NT_ASSERT(NT_SUCCESS(statusReuse));
-    UNREFERENCED_PARAMETER(statusReuse);
 
     //
     // Prepare connection response BRB
     // 
-    brb = (struct _BRB_L2CA_OPEN_CHANNEL*) &(connection->ConnectDisconnectBrb);
+    switch (psm)
+    {
+    case PSM_DS3_HID_CONTROL:
+        brbAsyncRequest = clientConnection->HidControlChannel.ConnectDisconnectRequest;
+        brb = (struct _BRB_L2CA_OPEN_CHANNEL*) &(clientConnection->HidControlChannel.ConnectDisconnectBrb);
+        break;
+    case PSM_DS3_HID_INTERRUPT:
+        brbAsyncRequest = clientConnection->HidInterruptChannel.ConnectDisconnectRequest;
+        brb = (struct _BRB_L2CA_OPEN_CHANNEL*) &(clientConnection->HidInterruptChannel.ConnectDisconnectBrb);
+        break;
+    default:
+        break;
+    }
+
+    CLIENT_CONNECTION_REQUEST_REUSE(brbAsyncRequest);
     DevCtx->Header.ProfileDrvInterface.BthReuseBrb((PBRB)brb, BRB_L2CA_OPEN_CHANNEL_RESPONSE);
 
     //
     // Pass connection object along as context
     // 
-    brb->Hdr.ClientContext[0] = connectionObject;
+    brb->Hdr.ClientContext[0] = clientConnection;
 
     brb->BtAddress = ConnectParams->BtAddress;
     brb->Psm = ConnectParams->Parameters.Connect.Request.PSM;
@@ -128,7 +101,7 @@ L2CAP_PS3_SendConnectResponse(
     //
     brb->CallbackFlags = CALLBACK_DISCONNECT | CALLBACK_CONFIG_QOS;
     brb->Callback = &L2CAP_PS3_ConnectionIndicationCallback;
-    brb->CallbackContext = connectionObject;
+    brb->CallbackContext = clientConnection;
     brb->ReferenceObject = (PVOID)WdfDeviceWdmGetDeviceObject(DevCtx->Header.Device);
 
     //
@@ -136,7 +109,7 @@ L2CAP_PS3_SendConnectResponse(
     // 
     status = BthPS3SendBrbAsync(
         DevCtx->Header.IoTarget,
-        connection->ConnectDisconnectRequest,
+        brbAsyncRequest,
         (PBRB)brb,
         sizeof(*brb),
         completionRoutine,
@@ -360,6 +333,7 @@ L2CAP_PS3_ConnectionIndicationCallback(
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
 
     UNREFERENCED_PARAMETER(Parameters);
+    UNREFERENCED_PARAMETER(Context);
 
     switch (Indication)
     {
@@ -377,10 +351,14 @@ L2CAP_PS3_ConnectionIndicationCallback(
     }
     case IndicationRemoteDisconnect:
     {
-        WDFOBJECT connectionObject = (WDFOBJECT)Context;
-        PBTHPS3_CONNECTION connection = GetConnectionObjectContext(connectionObject);
+        TraceEvents(TRACE_LEVEL_VERBOSE, 
+            TRACE_L2CAP, 
+            "++ IndicationRemoteDisconnect");
 
-        UNREFERENCED_PARAMETER(connection);
+        //WDFOBJECT connectionObject = (WDFOBJECT)Context;
+        //PBTHPS3_CONNECTION connection = GetConnectionObjectContext(connectionObject);
+        //
+        //UNREFERENCED_PARAMETER(connection);
 
         //BthEchoSrvDisconnectConnection(connection);
 

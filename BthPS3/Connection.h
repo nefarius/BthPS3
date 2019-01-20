@@ -267,5 +267,20 @@ NTSTATUS
 ClientConnections_CreateAndInsert(
     _In_ PBTHPS3_SERVER_CONTEXT Context,
     _In_ PFN_WDF_OBJECT_CONTEXT_CLEANUP CleanupCallback,
-    _Out_ PBTHPS3_CLIENT_CONNECTION ClientConnection
+    _Out_ PBTHPS3_CLIENT_CONNECTION *ClientConnection
 );
+
+VOID
+FORCEINLINE
+CLIENT_CONNECTION_REQUEST_REUSE(
+    _In_ WDFREQUEST Request
+)
+{
+    NTSTATUS statusReuse;
+    WDF_REQUEST_REUSE_PARAMS reuseParams;
+
+    WDF_REQUEST_REUSE_PARAMS_INIT(&reuseParams, WDF_REQUEST_REUSE_NO_FLAGS, STATUS_NOT_SUPPORTED);
+    statusReuse = WdfRequestReuse(Request, &reuseParams);
+    NT_ASSERT(NT_SUCCESS(statusReuse));
+    UNREFERENCED_PARAMETER(statusReuse);
+}

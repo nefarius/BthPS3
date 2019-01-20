@@ -19,9 +19,26 @@ L2CAP_PS3_SendConnectResponse(
     USHORT psm = ConnectParams->Parameters.Connect.Request.PSM;
     PBTHPS3_CLIENT_CONNECTION clientConnection = NULL;
     WDFREQUEST brbAsyncRequest = NULL;
+    CHAR remoteName[BTH_MAX_NAME_SIZE];
 
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
+
+    status = BTHPS3_GET_DEVICE_NAME(
+        DevCtx->Header.IoTarget,
+        ConnectParams->BtAddress,
+        remoteName
+    );
+
+    if (NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_INFORMATION,
+            TRACE_L2CAP,
+            "++ Device %llX name: %s",
+            ConnectParams->BtAddress,
+            remoteName
+        );
+    }
 
     //
     // Adjust control flow depending on PSM
@@ -42,7 +59,7 @@ L2CAP_PS3_SendConnectResponse(
 
     status = ClientConnections_CreateAndInsert(DevCtx, NULL, &clientConnection);
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR, 
+        TraceEvents(TRACE_LEVEL_ERROR,
             TRACE_L2CAP,
             "ClientConnections_CreateAndInsert failed with status %!STATUS!", status);
         goto exit;
@@ -351,8 +368,8 @@ L2CAP_PS3_ConnectionIndicationCallback(
     }
     case IndicationRemoteDisconnect:
     {
-        TraceEvents(TRACE_LEVEL_VERBOSE, 
-            TRACE_L2CAP, 
+        TraceEvents(TRACE_LEVEL_VERBOSE,
+            TRACE_L2CAP,
             "++ IndicationRemoteDisconnect");
 
         //WDFOBJECT connectionObject = (WDFOBJECT)Context;

@@ -235,3 +235,68 @@ BthPS3SendBrbAsync(
     _In_ PFN_WDF_REQUEST_COMPLETION_ROUTINE ComplRoutine,
     _In_opt_ WDFCONTEXT Context
 );
+
+NTSTATUS
+FORCEINLINE
+BTHPS3_GET_DEVICE_NAME(
+    WDFIOTARGET IoTarget,
+    BTH_ADDR RemoteAddress,
+    PCHAR Name
+)
+{
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    ULONG index = 0;
+    WDF_MEMORY_DESCRIPTOR MemoryDescriptor;
+    WDFMEMORY MemoryHandle = NULL;
+    PBTH_DEVICE_INFO_LIST pDeviceInfoList = NULL;
+
+    status = WdfMemoryCreate(NULL,
+        NonPagedPool,
+        POOLTAG_BTHPS3,
+        sizeof(BTH_DEVICE_INFO_LIST) + (sizeof(BTH_DEVICE_INFO) * 10),
+        &MemoryHandle,
+        NULL);
+
+    if (!NT_SUCCESS(status)) {
+        return status;
+    }
+
+    WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(
+        &MemoryDescriptor,
+        MemoryHandle,
+        NULL
+    );
+
+    status = WdfIoTargetSendIoctlSynchronously(
+        IoTarget,
+        NULL,
+        IOCTL_BTH_GET_DEVICE_INFO,
+        &MemoryDescriptor,
+        &MemoryDescriptor,
+        NULL,
+        NULL
+    );
+
+    if (!NT_SUCCESS(status)) {
+        WdfObjectDelete(MemoryHandle);
+        return status;
+    }
+
+    pDeviceInfoList = WdfMemoryGetBuffer(MemoryHandle, NULL);
+    status = STATUS_NOT_FOUND;
+
+    for (index = 0; index < pDeviceInfoList->numOfDevices; index++)
+    {
+        PBTH_DEVICE_INFO pDeviceInfo = &pDeviceInfoList->deviceList[index];
+
+        if (pDeviceInfo->address == RemoteAddress)
+        {
+            strcpy_s(Name, BTH_MAX_NAME_SIZE, pDeviceInfo->name);
+            status = STATUS_SUCCESS;
+            break;
+        }
+    }
+
+    WdfObjectDelete(MemoryHandle);
+    return status;
+}

@@ -106,10 +106,12 @@ L2CAP_PS3_HandleRemoteConnect(
     switch (psm)
     {
     case PSM_DS3_HID_CONTROL:
+        clientConnection->HidControlChannel.ChannelHandle = ConnectParams->ConnectionHandle;
         brbAsyncRequest = clientConnection->HidControlChannel.ConnectDisconnectRequest;
         brb = (struct _BRB_L2CA_OPEN_CHANNEL*) &(clientConnection->HidControlChannel.ConnectDisconnectBrb);
         break;
     case PSM_DS3_HID_INTERRUPT:
+        clientConnection->HidInterruptChannel.ChannelHandle = ConnectParams->ConnectionHandle;
         brbAsyncRequest = clientConnection->HidInterruptChannel.ConnectDisconnectRequest;
         brb = (struct _BRB_L2CA_OPEN_CHANNEL*) &(clientConnection->HidInterruptChannel.ConnectDisconnectBrb);
         break;
@@ -129,19 +131,7 @@ L2CAP_PS3_HandleRemoteConnect(
     brb->Psm = ConnectParams->Parameters.Connect.Request.PSM;
     brb->ChannelHandle = ConnectParams->ConnectionHandle;
     brb->Response = response;
-
-    switch (psm)
-    {
-    case PSM_DS3_HID_CONTROL:
-        clientConnection->HidControlChannel.ChannelHandle = ConnectParams->ConnectionHandle;
-        break;
-    case PSM_DS3_HID_INTERRUPT:
-        clientConnection->HidInterruptChannel.ChannelHandle = ConnectParams->ConnectionHandle;
-        break;
-    default:
-        break;
-    }
-
+    
     brb->ChannelFlags = CF_ROLE_EITHER;
 
     brb->ConfigOut.Flags = 0;

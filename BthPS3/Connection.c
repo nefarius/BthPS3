@@ -157,6 +157,7 @@ BthPS3EvtConnectionObjectCleanup(
 NTSTATUS
 ClientConnections_CreateAndInsert(
     _In_ PBTHPS3_SERVER_CONTEXT Context,
+    _In_ BTH_ADDR RemoteAddress,
     _In_ PFN_WDF_OBJECT_CONTEXT_CLEANUP CleanupCallback,
     _Out_ PBTHPS3_CLIENT_CONNECTION *ClientConnection
 )
@@ -267,14 +268,116 @@ ClientConnections_CreateAndInsert(
     }
 
     //
+    // This is our "primary key"
+    // 
+    connectionCtx->RemoteAddress = RemoteAddress;
+
+    //
     // Pass back valid pointer
     // 
     *ClientConnection = connectionCtx;
-    
+
     return status;
 
 exitFailure:
 
     WdfObjectDelete(connectionObject);
     return status;
+}
+
+VOID
+ClientConnections_RemoveAndDestroy(
+    _In_ PBTHPS3_SERVER_CONTEXT Context,
+    _In_ PBTHPS3_CLIENT_CONNECTION ClientConnection
+)
+{
+    ULONG itemCount;
+    ULONG index;
+    WDFOBJECT item, currentItem;
+
+    TraceEvents(TRACE_LEVEL_VERBOSE,
+        TRACE_L2CAP,
+        "%!FUNC! Entry (ClientConnection: 0x%p)",
+        ClientConnection
+    );
+
+    WdfSpinLockAcquire(Context->ClientConnectionsLock);
+
+    item = WdfObjectContextGetObject(ClientConnection);
+    itemCount = WdfCollectionGetCount(Context->ClientConnections);
+
+    for (index = 0; index < itemCount; index++)
+    {
+        currentItem = WdfCollectionGetItem(Context->ClientConnections, index);
+
+        if (currentItem == item)
+        {
+            TraceEvents(TRACE_LEVEL_VERBOSE,
+                TRACE_CONNECTION,
+                "++ Found desired connection item in connection list"
+            );
+
+            WdfCollectionRemoveItem(Context->ClientConnections, index);
+            WdfObjectDelete(item);
+            break;
+        }
+    }
+
+    WdfSpinLockRelease(Context->ClientConnectionsLock);
+}
+
+NTSTATUS
+ClientConnections_RetrieveByBthAddr(
+    _In_ PBTHPS3_SERVER_CONTEXT Context,
+    _In_ BTH_ADDR RemoteAddress,
+    _Out_ PBTHPS3_CLIENT_CONNECTION *ClientConnection
+)
+{
+    NTSTATUS status = STATUS_NOT_FOUND;
+    ULONG itemCount;
+    ULONG index;
+    WDFOBJECT currentItem;
+    PBTHPS3_CLIENT_CONNECTION connection;
+
+    WdfSpinLockAcquire(Context->ClientConnectionsLock);
+
+    itemCount = WdfCollectionGetCount(Context->ClientConnections);
+
+    for (index = 0; index < itemCount; index++)
+    {
+        currentItem = WdfCollectionGetItem(Context->ClientConnections, index);
+        connection = GetClientConnection(currentItem);
+
+        if (connection->RemoteAddress == RemoteAddress)
+        {
+            TraceEvents(TRACE_LEVEL_VERBOSE,
+                TRACE_CONNECTION,
+                "++ Found desired connection item in connection list"
+            );
+
+            status = STATUS_SUCCESS;
+            *ClientConnection = connection;
+            break;
+        }
+    }
+
+    WdfSpinLockRelease(Context->ClientConnectionsLock);
+
+    return status;
+}
+
+_Use_decl_annotations_
+VOID
+EvtClientConnectionsDestroyConnection(
+    WDFOBJECT Object
+)
+{
+    PBTHPS3_CLIENT_CONNECTION connection = NULL;
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CONNECTION, "%!FUNC! Entry");
+
+    connection = GetClientConnection(Object);
+
+    WdfObjectDelete(connection->HidControlChannel.ConnectDisconnectRequest);
+    WdfObjectDelete(connection->HidInterruptChannel.ConnectDisconnectRequest);
 }

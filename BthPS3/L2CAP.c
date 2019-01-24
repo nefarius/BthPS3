@@ -13,8 +13,6 @@ L2CAP_PS3_SendConnectResponse(
 {
     NTSTATUS status;
     struct _BRB_L2CA_OPEN_CHANNEL *brb = NULL;
-    WDFOBJECT connectionObject = NULL;
-    PBTHPS3_CONNECTION connection = NULL;
     PFN_WDF_REQUEST_COMPLETION_ROUTINE completionRoutine = NULL;
     USHORT psm = ConnectParams->Parameters.Connect.Request.PSM;
     PBTHPS3_CLIENT_CONNECTION clientConnection = NULL;
@@ -40,13 +38,19 @@ L2CAP_PS3_SendConnectResponse(
             remoteName
         );
     }
-    else {
+    else
+    {
         TraceEvents(TRACE_LEVEL_ERROR,
             TRACE_L2CAP,
             "BTHPS3_GET_DEVICE_NAME failed with status %!STATUS!",
             status
         );
 
+        //
+        // No name returned can happen; deny this connection and
+        // the controller will retry, then the name request will
+        // succeed and we can continue.
+        // 
         response = CONNECT_RSP_RESULT_PSM_NEG;
     }
 
@@ -67,12 +71,33 @@ L2CAP_PS3_SendConnectResponse(
 
     //completionRoutine = L2CAP_PS3_ConnectResponseCompleted;
 
-    status = ClientConnections_CreateAndInsert(DevCtx, NULL, &clientConnection);
-    if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR,
-            TRACE_L2CAP,
-            "ClientConnections_CreateAndInsert failed with status %!STATUS!", status);
-        goto exit;
+    //
+    // Look for an existing connection object and reuse that
+    // 
+    status = ClientConnections_RetrieveByBthAddr(
+        DevCtx,
+        ConnectParams->BtAddress,
+        &clientConnection
+    );
+
+    //
+    // This device apparently isn't connected, allocate new object
+    // 
+    if (status == STATUS_NOT_FOUND)
+    {
+        status = ClientConnections_CreateAndInsert(
+            DevCtx,
+            ConnectParams->BtAddress,
+            EvtClientConnectionsDestroyConnection,
+            &clientConnection
+        );
+
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_L2CAP,
+                "ClientConnections_CreateAndInsert failed with status %!STATUS!", status);
+            goto exit;
+        }
     }
 
     //
@@ -104,6 +129,18 @@ L2CAP_PS3_SendConnectResponse(
     brb->Psm = ConnectParams->Parameters.Connect.Request.PSM;
     brb->ChannelHandle = ConnectParams->ConnectionHandle;
     brb->Response = response;
+
+    switch (psm)
+    {
+    case PSM_DS3_HID_CONTROL:
+        clientConnection->HidControlChannel.ChannelHandle = ConnectParams->ConnectionHandle;
+        break;
+    case PSM_DS3_HID_INTERRUPT:
+        clientConnection->HidInterruptChannel.ChannelHandle = ConnectParams->ConnectionHandle;
+        break;
+    default:
+        break;
+    }
 
     brb->ChannelFlags = CF_ROLE_EITHER;
 
@@ -151,34 +188,9 @@ L2CAP_PS3_SendConnectResponse(
 
 exit:
 
-    if (!NT_SUCCESS(status) && connectionObject)
+    if (!NT_SUCCESS(status) && clientConnection)
     {
-        //
-        // If we failed to connect remove connection from list and
-        // delete the object
-        //
-        TraceEvents(TRACE_LEVEL_WARNING,
-            TRACE_L2CAP,
-            "Failed to establish connection, clean-up");
-
-        //
-        // connection should not be NULL if connectionObject is not NULL
-        // since first thing we do after creating connectionObject is to
-        // get context which gives us connection
-        //
-        NT_ASSERT(connection != NULL);
-
-        if (connection != NULL)
-        {
-            connection->ConnectionState = ConnectionStateConnectFailed;
-
-            REMOVE_CONNECTION_ENTRY_LOCKED(
-                (PBTHPS3_SERVER_CONTEXT)connection->DevCtxHdr,
-                &connection->ConnectionListEntry
-            );
-        }
-
-        WdfObjectDelete(connectionObject);
+        ClientConnections_RemoveAndDestroy(DevCtx, clientConnection);
     }
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit (%!STATUS!)", status);
@@ -357,10 +369,14 @@ L2CAP_PS3_ConnectionIndicationCallback(
     _In_ PINDICATION_PARAMETERS Parameters
 )
 {
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
+    PBTHPS3_SERVER_CONTEXT deviceCtx = NULL;
+    PBTHPS3_CLIENT_CONNECTION connection = NULL;
 
-    UNREFERENCED_PARAMETER(Parameters);
-    UNREFERENCED_PARAMETER(Context);
+    TraceEvents(TRACE_LEVEL_VERBOSE,
+        TRACE_L2CAP,
+        "%!FUNC! Entry (Indication: 0x%X, Context: 0x%p)",
+        Indication, Context
+    );
 
     switch (Indication)
     {
@@ -377,20 +393,54 @@ L2CAP_PS3_ConnectionIndicationCallback(
         break;
     }
     case IndicationRemoteDisconnect:
-    {
+
         TraceEvents(TRACE_LEVEL_VERBOSE,
             TRACE_L2CAP,
-            "++ IndicationRemoteDisconnect");
+            "++ IndicationRemoteDisconnect [0x%p]",
+            Parameters->ConnectionHandle);
 
-        //WDFOBJECT connectionObject = (WDFOBJECT)Context;
-        //PBTHPS3_CONNECTION connection = GetConnectionObjectContext(connectionObject);
+        connection = (PBTHPS3_CLIENT_CONNECTION)Context;
+        deviceCtx = GetServerDeviceContext(connection->DevCtxHdr->Device);
+
         //
-        //UNREFERENCED_PARAMETER(connection);
+        // HID Control Channel disconnected
+        // 
+        if (Parameters->ConnectionHandle ==
+            connection->HidControlChannel.ChannelHandle)
+        {
+            TraceEvents(TRACE_LEVEL_VERBOSE,
+                TRACE_L2CAP,
+                "++ HID Control Channel 0x%p disconnected",
+                Parameters->ConnectionHandle);
 
-        //BthEchoSrvDisconnectConnection(connection);
+            connection->HidControlChannel.ConnectionState = ConnectionStateDisconnected;
+        }
+
+        //
+        // HID Interrupt Channel disconnected
+        // 
+        if (Parameters->ConnectionHandle ==
+            connection->HidInterruptChannel.ChannelHandle)
+        {
+            TraceEvents(TRACE_LEVEL_VERBOSE,
+                TRACE_L2CAP,
+                "++ HID Interrupt Channel 0x%p disconnected",
+                Parameters->ConnectionHandle);
+
+            connection->HidInterruptChannel.ConnectionState = ConnectionStateDisconnected;
+        }
+
+        //
+        // Both channels are gone, invoke clean-up
+        // 
+        if (connection->HidControlChannel.ConnectionState == ConnectionStateDisconnected
+            && connection->HidInterruptChannel.ConnectionState == ConnectionStateDisconnected)
+        {
+            ClientConnections_RemoveAndDestroy(deviceCtx, connection);
+        }
 
         break;
-    }
+
     case IndicationRemoteConfigRequest:
 
         TraceEvents(TRACE_LEVEL_INFORMATION,

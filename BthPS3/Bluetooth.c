@@ -452,14 +452,14 @@ BthPS3IndicationCallback(
             Parameters->Parameters.Connect.Request.PSM,
             Parameters->BtAddress);
 
-        L2CAP_PS3_SendConnectResponse(devCtx, Parameters);
+        L2CAP_PS3_HandleRemoteConnect(devCtx, Parameters);
 
         break;
     }
     case IndicationRemoteDisconnect:
     {
         //
-        // We register BthEchoSrvConnectionIndicationCallback for disconnect
+        // We register L2CAP_PS3_ConnectionIndicationCallback for disconnect
         //
         NT_ASSERT(FALSE);
         break;

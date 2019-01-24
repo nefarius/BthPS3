@@ -3,7 +3,7 @@
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
-L2CAP_PS3_SendConnectResponse(
+L2CAP_PS3_HandleRemoteConnect(
     _In_ PBTHPS3_SERVER_CONTEXT DevCtx,
     _In_ PINDICATION_PARAMETERS ConnectParams
 );

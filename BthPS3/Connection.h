@@ -138,98 +138,7 @@ typedef struct _BTHPS3_CONNECTION {
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_CONNECTION, GetConnectionObjectContext)
 
 
-_IRQL_requires_max_(DISPATCH_LEVEL)
-NTSTATUS
-BthPS3ConnectionObjectInit(
-    _In_ WDFOBJECT ConnectionObject,
-    _In_ PBTHPS3_DEVICE_CONTEXT_HEADER DevCtxHdr
-);
 
-_IRQL_requires_max_(DISPATCH_LEVEL)
-NTSTATUS
-BthPS3ConnectionObjectCreate(
-    _In_ PBTHPS3_DEVICE_CONTEXT_HEADER DevCtxHdr,
-    _In_ WDFOBJECT ParentObject,
-    _Out_ WDFOBJECT*  ConnectionObject
-);
-
-//
-// Add new connection to connection list in a thread-safe way
-// 
-void
-FORCEINLINE
-INSERT_CONNECTION_ENTRY_LOCKED(
-    PBTHPS3_SERVER_CONTEXT devCtx,
-    PLIST_ENTRY ple
-)
-{
-    WdfSpinLockAcquire(devCtx->ConnectionListLock);
-
-    InsertTailList(&devCtx->ConnectionList, ple);
-
-    WdfSpinLockRelease(devCtx->ConnectionListLock);
-}
-
-//
-// Remove a connection from connection list in a thread-safe way
-// 
-void
-FORCEINLINE
-REMOVE_CONNECTION_ENTRY_LOCKED(
-    PBTHPS3_SERVER_CONTEXT devCtx,
-    PLIST_ENTRY ple
-)
-{
-    WdfSpinLockAcquire(devCtx->ConnectionListLock);
-
-    RemoveEntryList(ple);
-
-    WdfSpinLockRelease(devCtx->ConnectionListLock);
-}
-
-//
-// Retrieve existing connection from connection list by remote address
-// 
-BOOLEAN
-FORCEINLINE
-RETRIEVE_CONNECTION_ENTRY_BY_BTH_ADDR_LOCKED(
-    PBTHPS3_SERVER_CONTEXT Context,
-    PBTH_ADDR RemoteAddress,
-    PBTHPS3_CONNECTION Connection
-)
-{
-    BOOLEAN ret = FALSE;
-
-    WdfSpinLockAcquire(Context->ConnectionListLock);
-
-    if (IsListEmpty(&Context->ConnectionList)) {
-        goto exit;
-    }
-
-    PLIST_ENTRY pEntry = Context->ConnectionList.Flink;
-
-    while (pEntry != &Context->ConnectionList)
-    {
-        Connection = CONTAINING_RECORD(pEntry, BTHPS3_CONNECTION, ConnectionListEntry);
-
-        if (Connection->RemoteAddress == *RemoteAddress) {
-            ret = TRUE;
-            break;
-        }
-
-        pEntry = pEntry->Flink;
-    }
-
-exit:
-    WdfSpinLockRelease(Context->ConnectionListLock);
-    return ret;
-}
-
-_Use_decl_annotations_
-VOID
-BthPS3EvtConnectionObjectCleanup(
-    WDFOBJECT  ConnectionObject
-);
 
 /************************************************************************/
 /* The new stuff                                                        */
@@ -263,6 +172,7 @@ typedef struct _BTHPS3_CLIENT_CONNECTION
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_CLIENT_CONNECTION, GetClientConnection)
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 ClientConnections_CreateAndInsert(
     _In_ PBTHPS3_SERVER_CONTEXT Context,

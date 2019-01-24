@@ -6,7 +6,7 @@
 // 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
-L2CAP_PS3_SendConnectResponse(
+L2CAP_PS3_HandleRemoteConnect(
     _In_ PBTHPS3_SERVER_CONTEXT DevCtx,
     _In_ PINDICATION_PARAMETERS ConnectParams
 )
@@ -314,10 +314,10 @@ L2CAP_PS3_ConnectResponseCompleted(
 
     if (!NT_SUCCESS(status))
     {
-        REMOVE_CONNECTION_ENTRY_LOCKED(
-            (PBTHPS3_SERVER_CONTEXT)connection->DevCtxHdr,
-            &connection->ConnectionListEntry
-        );
+        //REMOVE_CONNECTION_ENTRY_LOCKED(
+        //    (PBTHPS3_SERVER_CONTEXT)connection->DevCtxHdr,
+        //    &connection->ConnectionListEntry
+        //);
 
         WdfObjectDelete(connectionObject);
     }

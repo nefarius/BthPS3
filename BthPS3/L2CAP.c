@@ -22,6 +22,9 @@ L2CAP_PS3_HandleRemoteConnect(
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
 
+    //
+    // Request remote name from radio for device identification
+    // 
     status = BTHPS3_GET_DEVICE_NAME(
         DevCtx->Header.IoTarget,
         ConnectParams->BtAddress,
@@ -41,28 +44,28 @@ L2CAP_PS3_HandleRemoteConnect(
     {
         TraceEvents(TRACE_LEVEL_ERROR,
             TRACE_L2CAP,
-            "BTHPS3_GET_DEVICE_NAME failed with status %!STATUS!",
+            "BTHPS3_GET_DEVICE_NAME failed with status %!STATUS!, dropping connection",
             status
         );
 
         //
-        // TODO: put new deny code here
+        // Name couldn't be resolved, drop connection
         // 
+        return L2CAP_PS3_DenyRemoteConnect(DevCtx, ConnectParams);
     }
 
     //
-    // Adjust control flow depending on PSM
+    // TODO: refine
     // 
-    switch (psm)
+    if (remoteName[0] != 'P')
     {
-    case PSM_DS3_HID_CONTROL:
-        completionRoutine = L2CAP_PS3_ControlConnectResponseCompleted;
-        break;
-    case PSM_DS3_HID_INTERRUPT:
-        completionRoutine = L2CAP_PS3_InterruptConnectResponseCompleted;
-        break;
-    default:
-        break;
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_L2CAP,
+            "Not a DS3, dropping connection",
+            status
+        );
+
+        return L2CAP_PS3_DenyRemoteConnect(DevCtx, ConnectParams);
     }
 
     //completionRoutine = L2CAP_PS3_ConnectResponseCompleted;
@@ -97,21 +100,24 @@ L2CAP_PS3_HandleRemoteConnect(
     }
 
     //
-    // Prepare connection response BRB
+    // Adjust control flow depending on PSM
     // 
     switch (psm)
     {
     case PSM_DS3_HID_CONTROL:
+        completionRoutine = L2CAP_PS3_ControlConnectResponseCompleted;
         clientConnection->HidControlChannel.ChannelHandle = ConnectParams->ConnectionHandle;
         brbAsyncRequest = clientConnection->HidControlChannel.ConnectDisconnectRequest;
         brb = (struct _BRB_L2CA_OPEN_CHANNEL*) &(clientConnection->HidControlChannel.ConnectDisconnectBrb);
         break;
     case PSM_DS3_HID_INTERRUPT:
+        completionRoutine = L2CAP_PS3_InterruptConnectResponseCompleted;
         clientConnection->HidInterruptChannel.ChannelHandle = ConnectParams->ConnectionHandle;
         brbAsyncRequest = clientConnection->HidInterruptChannel.ConnectDisconnectRequest;
         brb = (struct _BRB_L2CA_OPEN_CHANNEL*) &(clientConnection->HidInterruptChannel.ConnectDisconnectBrb);
         break;
     default:
+        // Doesn't happen
         break;
     }
 
@@ -298,7 +304,7 @@ L2CAP_PS3_DenyRemoteConnectCompleted(
     struct _BRB_L2CA_OPEN_CHANNEL *brb = NULL;
 
     UNREFERENCED_PARAMETER(Target);
-    
+
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry (%!STATUS!)",
         Params->IoStatus.Status);
@@ -474,6 +480,9 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
     UNREFERENCED_PARAMETER(Context);
 }
 
+//
+// Gets invoked on remote disconnect or configuration request
+// 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 void
 L2CAP_PS3_ConnectionIndicationCallback(
@@ -586,6 +595,9 @@ L2CAP_PS3_ConnectionIndicationCallback(
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
 }
 
+//
+// Connection has been fully established (both channels)
+// 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_ConnectionStateConnected(

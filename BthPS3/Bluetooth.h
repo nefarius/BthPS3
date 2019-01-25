@@ -35,10 +35,11 @@ typedef struct _BTHPS3_DEVICE_CONTEXT_HEADER
     BTH_ADDR LocalBthAddr;
 
     //
-    // Preallocated request to be reused during initialization/deinitialzation phase
-    // Access to this reqeust is not synchronized
+    // Preallocated request to be reused during initialization/deinitialization phase
+    // Access to this request is not synchronized
     //
-    WDFREQUEST Request;
+    WDFREQUEST HostInitRequest;
+
 } BTHPS3_DEVICE_CONTEXT_HEADER, *PBTHPS3_DEVICE_CONTEXT_HEADER;
 
 typedef struct _BTHPS3_SERVER_CONTEXT

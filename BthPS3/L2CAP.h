@@ -9,6 +9,13 @@ L2CAP_PS3_HandleRemoteConnect(
 );
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
+NTSTATUS
+L2CAP_PS3_DenyRemoteConnect(
+    _In_ PBTHPS3_SERVER_CONTEXT DevCtx,
+    _In_ PINDICATION_PARAMETERS ConnectParams
+);
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
 void
 L2CAP_PS3_ConnectionIndicationCallback(
     _In_ PVOID Context,

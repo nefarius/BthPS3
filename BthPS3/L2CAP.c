@@ -188,6 +188,24 @@ exit:
     return status;
 }
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
+NTSTATUS
+L2CAP_PS3_DenyRemoteConnect(
+    _In_ PBTHPS3_SERVER_CONTEXT DevCtx,
+    _In_ PINDICATION_PARAMETERS ConnectParams
+)
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    struct _BRB_L2CA_OPEN_CHANNEL *brb = NULL;
+    
+    UNREFERENCED_PARAMETER(DevCtx);
+    UNREFERENCED_PARAMETER(ConnectParams);
+    UNREFERENCED_PARAMETER(brb);
+
+
+    return status;
+}
+
 void
 L2CAP_PS3_ConnectResponseCompleted(
     _In_ WDFREQUEST  Request,

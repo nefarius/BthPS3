@@ -42,7 +42,7 @@ BthPS3RetrieveLocalInfo(
 
     status = BthPS3SendBrbSynchronously(
         DevCtxHdr->IoTarget,
-        DevCtxHdr->Request,
+        DevCtxHdr->HostInitRequest,
         (PBRB)brb,
         sizeof(*brb)
     );
@@ -95,7 +95,7 @@ BthPS3RegisterPSM(
 
     status = BthPS3SendBrbSynchronously(
         DevCtx->Header.IoTarget,
-        DevCtx->Header.Request,
+        DevCtx->Header.HostInitRequest,
         (PBRB)brb,
         sizeof(*brb)
     );
@@ -128,7 +128,7 @@ BthPS3RegisterPSM(
 
     status = BthPS3SendBrbSynchronously(
         DevCtx->Header.IoTarget,
-        DevCtx->Header.Request,
+        DevCtx->Header.HostInitRequest,
         (PBRB)brb,
         sizeof(*brb)
     );
@@ -183,7 +183,7 @@ BthPS3UnregisterPSM(
 
     status = BthPS3SendBrbSynchronously(
         DevCtx->Header.IoTarget,
-        DevCtx->Header.Request,
+        DevCtx->Header.HostInitRequest,
         (PBRB)brb,
         sizeof(*(brb))
     );
@@ -213,7 +213,7 @@ BthPS3UnregisterPSM(
 
     status = BthPS3SendBrbSynchronously(
         DevCtx->Header.IoTarget,
-        DevCtx->Header.Request,
+        DevCtx->Header.HostInitRequest,
         (PBRB)brb,
         sizeof(*(brb))
     );
@@ -269,7 +269,7 @@ BthPS3RegisterL2CAPServer(
 
     status = BthPS3SendBrbSynchronously(
         DevCtx->Header.IoTarget,
-        DevCtx->Header.Request,
+        DevCtx->Header.HostInitRequest,
         (PBRB)brb,
         sizeof(*brb)
     );
@@ -325,7 +325,7 @@ BthPS3UnregisterL2CAPServer(
 
     status = BthPS3SendBrbSynchronously(
         DevCtx->Header.IoTarget,
-        DevCtx->Header.Request,
+        DevCtx->Header.HostInitRequest,
         (PBRB)brb,
         sizeof(*(brb))
     );
@@ -372,7 +372,7 @@ BthPS3DeviceContextHeaderInit(
     status = WdfRequestCreate(
         &attributes,
         Header->IoTarget,
-        &Header->Request
+        &Header->HostInitRequest
     );
 
     if (!NT_SUCCESS(status))

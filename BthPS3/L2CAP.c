@@ -61,8 +61,7 @@ L2CAP_PS3_HandleRemoteConnect(
     {
         TraceEvents(TRACE_LEVEL_ERROR,
             TRACE_L2CAP,
-            "Not a DS3, dropping connection",
-            status
+            "Not a DS3, dropping connection"
         );
 
         return L2CAP_PS3_DenyRemoteConnect(DevCtx, ConnectParams);

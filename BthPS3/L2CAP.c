@@ -18,7 +18,6 @@ L2CAP_PS3_HandleRemoteConnect(
     PBTHPS3_CLIENT_CONNECTION clientConnection = NULL;
     WDFREQUEST brbAsyncRequest = NULL;
     CHAR remoteName[BTH_MAX_NAME_SIZE];
-    USHORT response = CONNECT_RSP_RESULT_SUCCESS;
 
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
@@ -47,11 +46,8 @@ L2CAP_PS3_HandleRemoteConnect(
         );
 
         //
-        // No name returned can happen; deny this connection and
-        // the controller will retry, then the name request will
-        // succeed and we can continue.
+        // TODO: put new deny code here
         // 
-        response = CONNECT_RSP_RESULT_PSM_NEG;
     }
 
     //
@@ -130,8 +126,8 @@ L2CAP_PS3_HandleRemoteConnect(
     brb->BtAddress = ConnectParams->BtAddress;
     brb->Psm = ConnectParams->Parameters.Connect.Request.PSM;
     brb->ChannelHandle = ConnectParams->ConnectionHandle;
-    brb->Response = response;
-    
+    brb->Response = CONNECT_RSP_RESULT_SUCCESS;
+
     brb->ChannelFlags = CF_ROLE_EITHER;
 
     brb->ConfigOut.Flags = 0;
@@ -188,6 +184,9 @@ exit:
     return status;
 }
 
+//
+// Deny an L2CAP connection request
+// 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_DenyRemoteConnect(
@@ -196,14 +195,120 @@ L2CAP_PS3_DenyRemoteConnect(
 )
 {
     NTSTATUS status = STATUS_SUCCESS;
+    WDFREQUEST brbAsyncRequest = NULL;
     struct _BRB_L2CA_OPEN_CHANNEL *brb = NULL;
-    
-    UNREFERENCED_PARAMETER(DevCtx);
-    UNREFERENCED_PARAMETER(ConnectParams);
-    UNREFERENCED_PARAMETER(brb);
+    WDF_OBJECT_ATTRIBUTES attributes;
 
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
+
+    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+    attributes.ParentObject = DevCtx->Header.Device;
+
+    status = WdfRequestCreate(
+        &attributes,
+        DevCtx->Header.IoTarget,
+        &brbAsyncRequest);
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_L2CAP,
+            "WdfRequestCreate failed with status %!STATUS!",
+            status
+        );
+
+        return status;
+    }
+
+    brb = (struct _BRB_L2CA_OPEN_CHANNEL*)
+        DevCtx->Header.ProfileDrvInterface.BthAllocateBrb(
+            BRB_L2CA_OPEN_CHANNEL_RESPONSE,
+            POOLTAG_BTHPS3
+        );
+
+    if (brb == NULL)
+    {
+        status = STATUS_INSUFFICIENT_RESOURCES;
+
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_L2CAP,
+            "Failed to allocate brb BRB_L2CA_OPEN_CHANNEL_RESPONSE with status %!STATUS!",
+            status
+        );
+
+        WdfObjectDelete(brbAsyncRequest);
+        return status;
+    }
+
+    brb->Hdr.ClientContext[0] = DevCtx;
+
+    brb->BtAddress = ConnectParams->BtAddress;
+    brb->Psm = ConnectParams->Parameters.Connect.Request.PSM;
+    brb->ChannelHandle = ConnectParams->ConnectionHandle;
+
+    //
+    // Drop connection
+    // 
+    brb->Response = CONNECT_RSP_RESULT_PSM_NEG;
+
+    brb->ChannelFlags = CF_ROLE_EITHER;
+
+    brb->ConfigOut.Flags = 0;
+    brb->ConfigIn.Flags = 0;
+
+    //
+    // Submit response
+    // 
+    status = BthPS3SendBrbAsync(
+        DevCtx->Header.IoTarget,
+        brbAsyncRequest,
+        (PBRB)brb,
+        sizeof(*brb),
+        L2CAP_PS3_DenyRemoteConnectCompleted,
+        brb
+    );
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, TRACE_L2CAP,
+            "BthPS3SendBrbAsync failed with status %!STATUS!", status);
+
+        DevCtx->Header.ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+        WdfObjectDelete(brbAsyncRequest);
+    }
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
 
     return status;
+}
+
+//
+// Free resources used by deny connection response
+// 
+void
+L2CAP_PS3_DenyRemoteConnectCompleted(
+    _In_ WDFREQUEST  Request,
+    _In_ WDFIOTARGET  Target,
+    _In_ PWDF_REQUEST_COMPLETION_PARAMS  Params,
+    _In_ WDFCONTEXT  Context
+)
+{
+    PBTHPS3_SERVER_CONTEXT deviceCtx = NULL;
+    struct _BRB_L2CA_OPEN_CHANNEL *brb = NULL;
+
+    UNREFERENCED_PARAMETER(Target);
+    
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry (%!STATUS!)",
+        Params->IoStatus.Status);
+
+    brb = (struct _BRB_L2CA_OPEN_CHANNEL*)Context;
+    deviceCtx = (PBTHPS3_SERVER_CONTEXT)brb->Hdr.ClientContext[0];
+    deviceCtx->Header.ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+    WdfObjectDelete(Request);
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
 }
 
 void

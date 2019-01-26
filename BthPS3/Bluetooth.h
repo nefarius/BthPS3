@@ -74,17 +74,14 @@ typedef struct _BTHPS3_SERVER_CONTEXT
     struct _BRB RegisterUnregisterBrb;
 
     //
-    // Connection List lock
-    //
-    WDFSPINLOCK ConnectionListLock;
-
-    //
-    // Outstanding open connections
-    //
-    LIST_ENTRY ConnectionList;
-
+    // Collection of state information about 
+    // currently established connections
+    // 
     WDFCOLLECTION ClientConnections;
 
+    //
+    // Lock for ClientConnections collection
+    // 
     WDFSPINLOCK ClientConnectionsLock;
 
 } BTHPS3_SERVER_CONTEXT, *PBTHPS3_SERVER_CONTEXT;
@@ -96,15 +93,6 @@ _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3RetrieveLocalInfo(
     _In_ PBTHPS3_DEVICE_CONTEXT_HEADER DevCtxHdr
-);
-
-_IRQL_requires_max_(PASSIVE_LEVEL)
-NTSTATUS
-BthPS3SendBrbSynchronously(
-    _In_ WDFIOTARGET IoTarget,
-    _In_ WDFREQUEST Request,
-    _In_ PBRB Brb,
-    _In_ ULONG BrbSize
 );
 
 #pragma region PSM Registration
@@ -167,24 +155,6 @@ BTHPS3_SERVER_CONTEXT_INIT(
 
     status = WdfSpinLockCreate(
         &attributes,
-        &Context->ConnectionListLock
-    );
-    if (!NT_SUCCESS(status))
-    {
-        goto exit;
-    }
-
-    InitializeListHead(&Context->ConnectionList);
-
-    /************************************************************************/
-    /* The new stuff                                                        */
-    /************************************************************************/
-
-    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
-    attributes.ParentObject = Device;
-
-    status = WdfSpinLockCreate(
-        &attributes,
         &Context->ClientConnectionsLock
     );
     if (!NT_SUCCESS(status))
@@ -228,6 +198,17 @@ BthPS3IndicationCallback(
     _In_ PINDICATION_PARAMETERS Parameters
 );
 
+#pragma region BRB Request submission
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS
+BthPS3SendBrbSynchronously(
+    _In_ WDFIOTARGET IoTarget,
+    _In_ WDFREQUEST Request,
+    _In_ PBRB Brb,
+    _In_ ULONG BrbSize
+);
+
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 BthPS3SendBrbAsync(
@@ -238,6 +219,8 @@ BthPS3SendBrbAsync(
     _In_ PFN_WDF_REQUEST_COMPLETION_ROUTINE ComplRoutine,
     _In_opt_ WDFCONTEXT Context
 );
+
+#pragma endregion
 
 NTSTATUS
 FORCEINLINE

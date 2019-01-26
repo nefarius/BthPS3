@@ -2,11 +2,6 @@
 #include "connection.tmh"
 
 
-
-/************************************************************************/
-/* The new stuff                                                        */
-/************************************************************************/
-
 //
 // Creates & allocates new connection object and inserts it into connection list
 // 
@@ -229,6 +224,9 @@ ClientConnections_RetrieveByBthAddr(
     return status;
 }
 
+//
+// Performs clean-up when a connection object is disposed
+// 
 _Use_decl_annotations_
 VOID
 EvtClientConnectionsDestroyConnection(
@@ -243,4 +241,6 @@ EvtClientConnectionsDestroyConnection(
 
     WdfObjectDelete(connection->HidControlChannel.ConnectDisconnectRequest);
     WdfObjectDelete(connection->HidInterruptChannel.ConnectDisconnectRequest);
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CONNECTION, "%!FUNC! Exit");
 }

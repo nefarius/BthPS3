@@ -9,9 +9,6 @@ using namespace colorwin;
 
 #define LOWER_FILTERS L"LowerFilters"
 
-BOOL
-AdjustProcessPrivileges(
-);
 
 int main(int, char* argv[])
 {
@@ -26,7 +23,7 @@ int main(int, char* argv[])
 
     if (cmdl[{ "--enable-service" }])
     {
-        if (FALSE == AdjustProcessPrivileges())
+        if (FALSE == winapi::AdjustProcessPrivileges())
         {
             std::cout << color(red) << "Failed to gain required privileges, error " << std::hex << GetLastError() << std::endl;
             return GetLastError();
@@ -52,7 +49,7 @@ int main(int, char* argv[])
 
     if (cmdl[{ "--disable-service" }])
     {
-        if (FALSE == AdjustProcessPrivileges())
+        if (FALSE == winapi::AdjustProcessPrivileges())
         {
             std::cout << color(red) << "Failed to gain required privileges, error " << std::hex << GetLastError() << std::endl;
             return GetLastError();
@@ -224,9 +221,7 @@ int main(int, char* argv[])
     return ERROR_INVALID_PARAMETER;
 }
 
-BOOL
-AdjustProcessPrivileges(
-)
+BOOL winapi::AdjustProcessPrivileges()
 {
     HANDLE procToken;
     LUID luid;

@@ -47,3 +47,8 @@
 #include "colorwin.hpp"
 
 #include "Devcon.h"
+
+namespace winapi
+{
+    BOOL AdjustProcessPrivileges();
+};

@@ -34,3 +34,12 @@ NTSTATUS
 L2CAP_PS3_ConnectionStateConnected(
     PBTHPS3_CLIENT_CONNECTION ClientConnection
 );
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+NTSTATUS
+L2CAP_PS3_SendControlTransfer(
+    PBTHPS3_CLIENT_CONNECTION ClientConnection,
+    PVOID Buffer,
+    size_t BufferLength,
+    PFN_WDF_REQUEST_COMPLETION_ROUTINE CompletionRoutine
+);

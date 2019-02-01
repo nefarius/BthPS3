@@ -213,16 +213,12 @@ L2CAP_PS3_DenyRemoteConnect(
     NTSTATUS status = STATUS_SUCCESS;
     WDFREQUEST brbAsyncRequest = NULL;
     struct _BRB_L2CA_OPEN_CHANNEL *brb = NULL;
-    WDF_OBJECT_ATTRIBUTES attributes;
 
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
 
-    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
-    attributes.ParentObject = DevCtx->Header.Device;
-
     status = WdfRequestCreate(
-        &attributes,
+        WDF_NO_OBJECT_ATTRIBUTES,
         DevCtx->Header.IoTarget,
         &brbAsyncRequest);
 
@@ -725,16 +721,12 @@ L2CAP_PS3_SendControlTransfer(
     NTSTATUS status;
     struct _BRB_L2CA_ACL_TRANSFER* brb = NULL;
     WDFREQUEST brbAsyncRequest = NULL;
-    WDF_OBJECT_ATTRIBUTES attributes;
-
-    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
-    attributes.ParentObject = ClientConnection->DevCtxHdr->Device;
-
+    
     //
     // Allocate request
     // 
     status = WdfRequestCreate(
-        &attributes,
+        WDF_NO_OBJECT_ATTRIBUTES,
         ClientConnection->DevCtxHdr->IoTarget,
         &brbAsyncRequest);
 

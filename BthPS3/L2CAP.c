@@ -774,3 +774,32 @@ L2CAP_PS3_SendControlTransfer(
 
     return status;
 }
+
+//
+// Request sent to HID control channel got completed
+// 
+void
+L2CAP_PS3_ControlTransferCompleted(
+    _In_ WDFREQUEST  Request,
+    _In_ WDFIOTARGET  Target,
+    _In_ PWDF_REQUEST_COMPLETION_PARAMS  Params,
+    _In_ WDFCONTEXT  Context
+)
+{
+    struct _BRB_L2CA_ACL_TRANSFER* brb =
+        (struct _BRB_L2CA_ACL_TRANSFER*)Context;
+    PBTHPS3_CLIENT_CONNECTION clientConnection =
+        (PBTHPS3_CLIENT_CONNECTION)brb->Hdr.ClientContext[0];
+
+    UNREFERENCED_PARAMETER(Target);
+
+    TraceEvents(TRACE_LEVEL_VERBOSE,
+        TRACE_L2CAP,
+        "Control transfer request completed with status %!STATUS!",
+        Params->IoStatus.Status
+    );
+
+    ExFreePoolWithTag(brb->Buffer, POOLTAG_BTHPS3);
+    clientConnection->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+    WdfObjectDelete(Request);
+}

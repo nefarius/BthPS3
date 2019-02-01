@@ -43,3 +43,5 @@ L2CAP_PS3_SendControlTransfer(
     size_t BufferLength,
     PFN_WDF_REQUEST_COMPLETION_ROUTINE CompletionRoutine
 );
+
+EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_ControlTransferCompleted;

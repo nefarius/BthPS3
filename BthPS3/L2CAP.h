@@ -1,6 +1,10 @@
 #pragma once
 
 
+#define DS3_HID_OUTPUT_REPORT_SIZE      0x32 // 50 bytes
+extern CONST UCHAR G_Ds3HidOutputReport[];
+
+
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_HandleRemoteConnect(

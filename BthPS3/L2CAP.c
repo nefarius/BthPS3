@@ -1,6 +1,17 @@
 #include "Driver.h"
 #include "l2cap.tmh"
 
+
+const UCHAR G_Ds3HidOutputReport[] = {
+    0x52, 0x01, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x1E, 0xFF, 0x27, 0x10, 0x00,
+    0x32, 0xFF, 0x27, 0x10, 0x00, 0x32, 0xFF, 0x27,
+    0x10, 0x00, 0x32, 0xFF, 0x27, 0x10, 0x00, 0x32,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00
+};
+
 //
 // Incoming connection request, prepare and send response
 // 
@@ -673,13 +684,33 @@ L2CAP_PS3_ConnectionStateConnected(
     PBTHPS3_CLIENT_CONNECTION ClientConnection
 )
 {
+    NTSTATUS status = STATUS_SUCCESS;
+
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
 
     UNREFERENCED_PARAMETER(ClientConnection);
 
+    status = L2CAP_PS3_SendControlTransfer(
+        ClientConnection,
+        (PVOID)G_Ds3HidOutputReport,
+        DS3_HID_OUTPUT_REPORT_SIZE,
+        L2CAP_PS3_ControlTransferCompleted
+    );
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_L2CAP,
+            "L2CAP_PS3_SendControlTransfer failed with status %!STATUS!",
+            status
+        );
+
+        return status;
+    }
+
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
 
-    return STATUS_SUCCESS;
+    return status;
 }
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
@@ -731,6 +762,11 @@ L2CAP_PS3_SendControlTransfer(
     {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
+
+    //
+    // Used in completion routine to free BRB
+    // 
+    brb->Hdr.ClientContext[0] = ClientConnection->DevCtxHdr;
 
     //
     // Set channel properties
@@ -788,8 +824,8 @@ L2CAP_PS3_ControlTransferCompleted(
 {
     struct _BRB_L2CA_ACL_TRANSFER* brb =
         (struct _BRB_L2CA_ACL_TRANSFER*)Context;
-    PBTHPS3_CLIENT_CONNECTION clientConnection =
-        (PBTHPS3_CLIENT_CONNECTION)brb->Hdr.ClientContext[0];
+    PBTHPS3_DEVICE_CONTEXT_HEADER deviceCtxHdr =
+        (PBTHPS3_DEVICE_CONTEXT_HEADER)brb->Hdr.ClientContext[0];
 
     UNREFERENCED_PARAMETER(Target);
 
@@ -800,6 +836,6 @@ L2CAP_PS3_ControlTransferCompleted(
     );
 
     ExFreePoolWithTag(brb->Buffer, POOLTAG_BTHPS3);
-    clientConnection->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+    deviceCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
     WdfObjectDelete(Request);
 }

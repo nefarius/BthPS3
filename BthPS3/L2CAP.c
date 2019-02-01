@@ -752,6 +752,7 @@ L2CAP_PS3_SendControlTransfer(
 
     if (brb == NULL)
     {
+        WdfObjectDelete(brbAsyncRequest);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 

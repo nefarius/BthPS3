@@ -456,10 +456,42 @@ L2CAP_PS3_ControlConnectResponseCompleted(
     _In_ WDFCONTEXT  Context
 )
 {
+    NTSTATUS status;
+    struct _BRB_L2CA_OPEN_CHANNEL *brb = NULL;
+    PBTHPS3_CLIENT_CONNECTION clientConnection = NULL;
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
+
     UNREFERENCED_PARAMETER(Request);
     UNREFERENCED_PARAMETER(Target);
-    UNREFERENCED_PARAMETER(Params);
-    UNREFERENCED_PARAMETER(Context);
+
+    status = Params->IoStatus.Status;
+
+    TraceEvents(TRACE_LEVEL_INFORMATION,
+        TRACE_L2CAP,
+        "Connection completion, status: %!STATUS!",
+        status
+    );
+
+    brb = (struct _BRB_L2CA_OPEN_CHANNEL *) Context;
+    clientConnection = brb->Hdr.ClientContext[0];
+
+    //
+    // Connection acceptance successful, channel ready to operate
+    // 
+    if (NT_SUCCESS(status))
+    {
+        WdfSpinLockAcquire(clientConnection->HidControlChannel.ConnectionStateLock);
+        clientConnection->HidControlChannel.ConnectionState = ConnectionStateConnected;
+        WdfSpinLockRelease(clientConnection->HidControlChannel.ConnectionStateLock);
+
+        TraceEvents(TRACE_LEVEL_INFORMATION, 
+            TRACE_L2CAP,
+            "HID Control Channel connection established"
+        );
+    }
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
 }
 
 //
@@ -473,10 +505,42 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
     _In_ WDFCONTEXT  Context
 )
 {
+    NTSTATUS status;
+    struct _BRB_L2CA_OPEN_CHANNEL *brb = NULL;
+    PBTHPS3_CLIENT_CONNECTION clientConnection = NULL;
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
+
     UNREFERENCED_PARAMETER(Request);
     UNREFERENCED_PARAMETER(Target);
-    UNREFERENCED_PARAMETER(Params);
-    UNREFERENCED_PARAMETER(Context);
+
+    status = Params->IoStatus.Status;
+
+    TraceEvents(TRACE_LEVEL_INFORMATION,
+        TRACE_L2CAP,
+        "Connection completion, status: %!STATUS!",
+        status
+    );
+
+    brb = (struct _BRB_L2CA_OPEN_CHANNEL *) Context;
+    clientConnection = brb->Hdr.ClientContext[0];
+
+    //
+    // Connection acceptance successful, channel ready to operate
+    // 
+    if (NT_SUCCESS(status))
+    {
+        WdfSpinLockAcquire(clientConnection->HidInterruptChannel.ConnectionStateLock);
+        clientConnection->HidInterruptChannel.ConnectionState = ConnectionStateConnected;
+        WdfSpinLockRelease(clientConnection->HidInterruptChannel.ConnectionStateLock);
+
+        TraceEvents(TRACE_LEVEL_INFORMATION,
+            TRACE_L2CAP,
+            "HID Interrupt Channel connection established"
+        );
+    }
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
 }
 
 //
@@ -534,7 +598,9 @@ L2CAP_PS3_ConnectionIndicationCallback(
                 "++ HID Control Channel 0x%p disconnected",
                 Parameters->ConnectionHandle);
 
+            WdfSpinLockAcquire(connection->HidControlChannel.ConnectionStateLock);
             connection->HidControlChannel.ConnectionState = ConnectionStateDisconnected;
+            WdfSpinLockRelease(connection->HidControlChannel.ConnectionStateLock);
         }
 
         //
@@ -548,7 +614,9 @@ L2CAP_PS3_ConnectionIndicationCallback(
                 "++ HID Interrupt Channel 0x%p disconnected",
                 Parameters->ConnectionHandle);
 
+            WdfSpinLockAcquire(connection->HidInterruptChannel.ConnectionStateLock);
             connection->HidInterruptChannel.ConnectionState = ConnectionStateDisconnected;
+            WdfSpinLockRelease(connection->HidInterruptChannel.ConnectionStateLock);
         }
 
         //
@@ -569,7 +637,7 @@ L2CAP_PS3_ConnectionIndicationCallback(
             "%!FUNC! ++ IndicationRemoteConfigRequest");
 
         //
-        // TODO: this catches QOS configuration request and inherently succeeds it
+        // This catches QOS configuration request and inherently succeeds it
         // 
 
         break;

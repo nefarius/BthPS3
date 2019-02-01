@@ -32,5 +32,5 @@ EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_InterruptConnectResponseCompleted;
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_ConnectionStateConnected(
-    WDFOBJECT ConnectionObject
+    PBTHPS3_CLIENT_CONNECTION ClientConnection
 );

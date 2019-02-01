@@ -538,6 +538,8 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
             TRACE_L2CAP,
             "HID Interrupt Channel connection established"
         );
+
+        L2CAP_PS3_ConnectionStateConnected(clientConnection);
     }
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
@@ -668,10 +670,14 @@ L2CAP_PS3_ConnectionIndicationCallback(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_ConnectionStateConnected(
-    WDFOBJECT ConnectionObject
+    PBTHPS3_CLIENT_CONNECTION ClientConnection
 )
 {
-    UNREFERENCED_PARAMETER(ConnectionObject);
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
+
+    UNREFERENCED_PARAMETER(ClientConnection);
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
 
     return STATUS_SUCCESS;
 }

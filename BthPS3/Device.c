@@ -30,8 +30,26 @@ BthPS3CreateDevice(
     WDFDEVICE                       device;
     NTSTATUS                        status;
     WDF_PNPPOWER_EVENT_CALLBACKS    pnpPowerCallbacks;
+    WDF_CHILD_LIST_CONFIG           childListCfg;
 
     PAGED_CODE();
+
+
+    //
+    // Prepare child list
+    // 
+    WDF_CHILD_LIST_CONFIG_INIT(
+        &childListCfg,
+        sizeof(PDO_IDENTIFICATION_DESCRIPTION),
+        BthPS3_EvtWdfChildListCreateDevice
+    );
+
+    WdfDeviceInitSetDeviceType(DeviceInit, FILE_DEVICE_BUS_EXTENDER);
+
+    WdfFdoInitSetDefaultChildListConfig(DeviceInit,
+        &childListCfg,
+        WDF_NO_OBJECT_ATTRIBUTES
+    );
 
     //
     // Configure PNP/power callbacks

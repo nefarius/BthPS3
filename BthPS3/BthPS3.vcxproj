@@ -36,6 +36,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Bluetooth.c" />
+    <ClCompile Include="BusLogic.c" />
     <ClCompile Include="Connection.c" />
     <ClCompile Include="Device.c" />
     <ClCompile Include="Driver.c" />
@@ -45,6 +46,7 @@
   <ItemGroup>
     <ClInclude Include="..\common\include\BthPS3.h" />
     <ClInclude Include="Bluetooth.h" />
+    <ClInclude Include="BusLogic.h" />
     <ClInclude Include="Connection.h" />
     <ClInclude Include="Device.h" />
     <ClInclude Include="Driver.h" />

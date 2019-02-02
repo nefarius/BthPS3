@@ -24,6 +24,7 @@ Environment:
 #include "Bluetooth.h"
 #include "Connection.h"
 #include "L2CAP.h"
+#include "BusLogic.h"
 
 EXTERN_C_START
 

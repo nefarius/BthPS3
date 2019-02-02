@@ -55,8 +55,8 @@ BthPS3CreateDevice(
     // Configure PNP/power callbacks
     //
     WDF_PNPPOWER_EVENT_CALLBACKS_INIT(&pnpPowerCallbacks);
-    pnpPowerCallbacks.EvtDeviceSelfManagedIoInit = BthPS3EvtWdfDeviceSelfManagedIoInit;
-    pnpPowerCallbacks.EvtDeviceSelfManagedIoCleanup = BthPS3EvtWdfDeviceSelfManagedIoCleanup;
+    pnpPowerCallbacks.EvtDeviceSelfManagedIoInit = BthPS3_EvtWdfDeviceSelfManagedIoInit;
+    pnpPowerCallbacks.EvtDeviceSelfManagedIoCleanup = BthPS3_EvtWdfDeviceSelfManagedIoCleanup;
 
     WdfDeviceInitSetPnpPowerEventCallbacks(
         DeviceInit,
@@ -101,7 +101,7 @@ exit:
 
 _Use_decl_annotations_
 NTSTATUS
-BthPS3EvtWdfDeviceSelfManagedIoInit(
+BthPS3_EvtWdfDeviceSelfManagedIoInit(
     WDFDEVICE  Device
 )
 {
@@ -133,7 +133,7 @@ exit:
 
 _Use_decl_annotations_
 VOID
-BthPS3EvtWdfDeviceSelfManagedIoCleanup(
+BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
     WDFDEVICE  Device
 )
 {

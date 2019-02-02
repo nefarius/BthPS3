@@ -29,8 +29,8 @@ BthPS3CreateDevice(
     _Inout_ PWDFDEVICE_INIT DeviceInit
     );
 
-EVT_WDF_DEVICE_SELF_MANAGED_IO_INIT BthPS3EvtWdfDeviceSelfManagedIoInit;
-EVT_WDF_DEVICE_SELF_MANAGED_IO_CLEANUP BthPS3EvtWdfDeviceSelfManagedIoCleanup;
+EVT_WDF_DEVICE_SELF_MANAGED_IO_INIT BthPS3_EvtWdfDeviceSelfManagedIoInit;
+EVT_WDF_DEVICE_SELF_MANAGED_IO_CLEANUP BthPS3_EvtWdfDeviceSelfManagedIoCleanup;
 
 
 EXTERN_C_END

@@ -29,6 +29,7 @@ L2CAP_PS3_HandleRemoteConnect(
     PBTHPS3_CLIENT_CONNECTION clientConnection = NULL;
     WDFREQUEST brbAsyncRequest = NULL;
     CHAR remoteName[BTH_MAX_NAME_SIZE];
+    DS_DEVICE_TYPE deviceType = DS_DEVICE_TYPE_UNKNOWN;
 
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
@@ -66,19 +67,28 @@ L2CAP_PS3_HandleRemoteConnect(
     }
 
     //
-    // TODO: refine
+    // Distinguish device type based on reported remote name
     // 
-    if (remoteName[0] != 'P')
+    switch (remoteName[0])
     {
-        TraceEvents(TRACE_LEVEL_ERROR,
-            TRACE_L2CAP,
-            "Not a DS3, dropping connection"
-        );
-
+    case 'P': // First letter in PLAYSTATION(R)3 Controller ('P')
+        deviceType = DS_DEVICE_TYPE_SIXAXIS;
+        break;
+    case 'N': // First letter in Navigation Controller ('N')
+        deviceType = DS_DEVICE_TYPE_NAVIGATION;
+        break;
+    case 'M': // First letter in Motion Controller ('M')
+        deviceType = DS_DEVICE_TYPE_MOTION;
+        break;
+    case 'W': // First letter in Wireless Controller ('W')
+        deviceType = DS_DEVICE_TYPE_WIRELESS;
+        // For now, fall through
+    default:
+        //
+        // Unsupported device, drop connection
+        // 
         return L2CAP_PS3_DenyRemoteConnect(DevCtx, ConnectParams);
     }
-
-    //completionRoutine = L2CAP_PS3_ConnectResponseCompleted;
 
     //
     // Look for an existing connection object and reuse that
@@ -108,6 +118,8 @@ L2CAP_PS3_HandleRemoteConnect(
             goto exit;
         }
     }
+
+    clientConnection->DeviceType = deviceType;
 
     //
     // Adjust control flow depending on PSM
@@ -721,7 +733,7 @@ L2CAP_PS3_SendControlTransfer(
     NTSTATUS status;
     struct _BRB_L2CA_ACL_TRANSFER* brb = NULL;
     WDFREQUEST brbAsyncRequest = NULL;
-    
+
     //
     // Allocate request
     // 

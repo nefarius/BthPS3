@@ -5,6 +5,10 @@
 #pragma alloc_text (PAGE, BthPS3_EvtWdfChildListCreateDevice)
 #endif
 
+
+//
+// Spawn new child device (PDO)
+// 
 _Use_decl_annotations_
 NTSTATUS
 BthPS3_EvtWdfChildListCreateDevice(
@@ -17,17 +21,21 @@ BthPS3_EvtWdfChildListCreateDevice(
     PPDO_IDENTIFICATION_DESCRIPTION     pDesc;
     UNICODE_STRING                      guidString;
     WDFDEVICE                           hChild = NULL;
+    WDF_IO_QUEUE_CONFIG                 defaultQueueCfg;
+    WDFQUEUE                            defaultQueue;
+    WDF_OBJECT_ATTRIBUTES               attributes;
+    PBTHPS3_PDO_DEVICE_CONTEXT          pdoCtx = NULL;
 
     DECLARE_UNICODE_STRING_SIZE(deviceId, MAX_DEVICE_ID_LEN);
     DECLARE_UNICODE_STRING_SIZE(hardwareId, MAX_DEVICE_ID_LEN);
-    DECLARE_UNICODE_STRING_SIZE(instanceId, 12);
+    DECLARE_UNICODE_STRING_SIZE(instanceId, BTH_ADDR_HEX_LEN);
 
     UNREFERENCED_PARAMETER(ChildList);
 
     PAGED_CODE();
 
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_BUSLOGIC, "%!FUNC! Entry");
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Entry");
 
     pDesc = CONTAINING_RECORD(
         IdentificationDescription,
@@ -38,6 +46,10 @@ BthPS3_EvtWdfChildListCreateDevice(
     // PDO features
     // 
     WdfDeviceInitSetDeviceType(ChildInit, FILE_DEVICE_BUS_EXTENDER);
+
+    //
+    // Parent FDO will handle IRP_MJ_INTERNAL_DEVICE_CONTROL
+    // 
     WdfPdoInitAllowForwardingRequestToParent(ChildInit);
 
     //
@@ -163,11 +175,29 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 #pragma endregion
 
+#pragma region Add request context shared with PDOs
+
+    WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(
+        &attributes,
+        BTHPS3_FDO_PDO_REQUEST_CONTEXT
+    );
+    WdfDeviceInitSetRequestAttributes(
+        ChildInit,
+        &attributes
+    );
+
+#pragma endregion
+
 #pragma region Child device creation
 
+    WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(
+        &attributes,
+        BTHPS3_PDO_DEVICE_CONTEXT
+    );
+
     status = WdfDeviceCreate(
-        &ChildInit, 
-        WDF_NO_OBJECT_ATTRIBUTES, 
+        &ChildInit,
+        &attributes,
         &hChild
     );
     if (!NT_SUCCESS(status)) {
@@ -180,11 +210,100 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 #pragma endregion
 
+#pragma region Fill device context
+
+    //
+    // This info is used to attach it to incoming requests 
+    // later on so the bus driver knows for which remote
+    // device the request was made for.
+    // 
+
+    pdoCtx = GetPdoDeviceContext(hChild);
+
+    pdoCtx->RemoteAddress = pDesc->RemoteAddress;
+    pdoCtx->DeviceType = pDesc->DeviceType;
+
+#pragma endregion
+
+#pragma region Default I/O Queue creation
+
+    WDF_IO_QUEUE_CONFIG_INIT_DEFAULT_QUEUE(&defaultQueueCfg, WdfIoQueueDispatchParallel);
+    defaultQueueCfg.EvtIoInternalDeviceControl = BthPS3_PDO_EvtWdfIoQueueIoInternalDeviceControl;
+
+    status = WdfIoQueueCreate(
+        hChild,
+        &defaultQueueCfg,
+        WDF_NO_OBJECT_ATTRIBUTES,
+        &defaultQueue
+    );
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_BUSLOGIC,
+            "WdfIoQueueCreate (Default) failed with status %!STATUS!",
+            status);
+        goto freeAndExit;
+    }
+
+#pragma endregion
+
     freeAndExit:
 
                RtlFreeUnicodeString(&guidString);
 
-               TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_BUSLOGIC, "%!FUNC! Exit");
+               TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Exit");
 
                return status;
+}
+
+//
+// Handle IRP_MJ_INTERNAL_DEVICE_CONTROL sent to PDO
+// 
+void BthPS3_PDO_EvtWdfIoQueueIoInternalDeviceControl(
+    WDFQUEUE Queue,
+    WDFREQUEST Request,
+    size_t OutputBufferLength,
+    size_t InputBufferLength,
+    ULONG IoControlCode
+)
+{
+    WDFDEVICE device, parentDevice;
+    WDF_REQUEST_FORWARD_OPTIONS forwardOptions;
+    NTSTATUS status;
+    PBTHPS3_FDO_PDO_REQUEST_CONTEXT reqCtx = NULL;
+    PBTHPS3_PDO_DEVICE_CONTEXT pdoCtx = NULL;
+
+    UNREFERENCED_PARAMETER(OutputBufferLength);
+    UNREFERENCED_PARAMETER(InputBufferLength);
+    UNREFERENCED_PARAMETER(IoControlCode);
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Entry");
+
+    device = WdfIoQueueGetDevice(Queue);
+    parentDevice = WdfPdoGetParent(device);
+    reqCtx = GetFdoPdoRequestContext(Request);
+    pdoCtx = GetPdoDeviceContext(device);
+
+    //
+    // Establish relationship of PDO to BTH_ADDR so the parent bus
+    // can pick the related device from connection list.
+    // 
+    reqCtx->RemoteAddress = pdoCtx->RemoteAddress;
+    reqCtx->DeviceType = pdoCtx->DeviceType;
+
+    WDF_REQUEST_FORWARD_OPTIONS_INIT(&forwardOptions);
+    forwardOptions.Flags = WDF_REQUEST_FORWARD_OPTION_SEND_AND_FORGET;
+
+    //
+    // FDO has all the state info so don't bother handing this ourself
+    // 
+    status = WdfRequestForwardToParentDeviceIoQueue(
+        Request,
+        WdfDeviceGetDefaultQueue(parentDevice),
+        &forwardOptions
+    );
+    if (!NT_SUCCESS(status)) {
+        WdfRequestComplete(Request, status);
+    }
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Exit");
 }

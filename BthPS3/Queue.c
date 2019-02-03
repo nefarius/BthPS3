@@ -24,7 +24,7 @@ Environment:
 NTSTATUS
 BthPS3QueueInitialize(
     _In_ WDFDEVICE Device
-    )
+)
 /*++
 
 Routine Description:
@@ -58,21 +58,21 @@ Return Value:
     // other queues get dispatched here.
     //
     WDF_IO_QUEUE_CONFIG_INIT_DEFAULT_QUEUE(
-         &queueConfig,
+        &queueConfig,
         WdfIoQueueDispatchParallel
-        );
+    );
 
-    queueConfig.EvtIoDeviceControl = BthPS3EvtIoDeviceControl;
-    queueConfig.EvtIoStop = BthPS3EvtIoStop;
+    queueConfig.EvtIoStop = BthPS3_EvtIoStop;
+    queueConfig.EvtIoInternalDeviceControl = BthPS3_EvtWdfIoQueueIoInternalDeviceControl;
 
     status = WdfIoQueueCreate(
-                 Device,
-                 &queueConfig,
-                 WDF_NO_OBJECT_ATTRIBUTES,
-                 &queue
-                 );
+        Device,
+        &queueConfig,
+        WDF_NO_OBJECT_ATTRIBUTES,
+        &queue
+    );
 
-    if(!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status)) {
         TraceEvents(TRACE_LEVEL_ERROR, TRACE_QUEUE, "WdfIoQueueCreate failed %!STATUS!", status);
         return status;
     }
@@ -80,51 +80,27 @@ Return Value:
     return status;
 }
 
-VOID
-BthPS3EvtIoDeviceControl(
-    _In_ WDFQUEUE Queue,
-    _In_ WDFREQUEST Request,
-    _In_ size_t OutputBufferLength,
-    _In_ size_t InputBufferLength,
-    _In_ ULONG IoControlCode
-    )
-/*++
-
-Routine Description:
-
-    This event is invoked when the framework receives IRP_MJ_DEVICE_CONTROL request.
-
-Arguments:
-
-    Queue -  Handle to the framework queue object that is associated with the
-             I/O request.
-
-    Request - Handle to a framework request object.
-
-    OutputBufferLength - Size of the output buffer in bytes
-
-    InputBufferLength - Size of the input buffer in bytes
-
-    IoControlCode - I/O control code.
-
-Return Value:
-
-    VOID
-
---*/
+//
+// Handle IRP_MJ_INTERNAL_DEVICE_CONTROL sent to FDO
+// 
+void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
+    WDFQUEUE Queue,
+    WDFREQUEST Request,
+    size_t OutputBufferLength,
+    size_t InputBufferLength,
+    ULONG IoControlCode
+)
 {
-    TraceEvents(TRACE_LEVEL_INFORMATION, 
-                TRACE_QUEUE, 
-                "%!FUNC! Queue 0x%p, Request 0x%p OutputBufferLength %d InputBufferLength %d IoControlCode %d", 
-                Queue, Request, (int) OutputBufferLength, (int) InputBufferLength, IoControlCode);
+    UNREFERENCED_PARAMETER(Queue);
+    UNREFERENCED_PARAMETER(OutputBufferLength);
+    UNREFERENCED_PARAMETER(InputBufferLength);
+    UNREFERENCED_PARAMETER(IoControlCode);
 
-    WdfRequestComplete(Request, STATUS_SUCCESS);
-
-    return;
+    WdfRequestComplete(Request, STATUS_UNSUCCESSFUL);
 }
 
 VOID
-BthPS3EvtIoStop(
+BthPS3_EvtIoStop(
     _In_ WDFQUEUE Queue,
     _In_ WDFREQUEST Request,
     _In_ ULONG ActionFlags
@@ -152,10 +128,10 @@ Return Value:
 
 --*/
 {
-    TraceEvents(TRACE_LEVEL_INFORMATION, 
-                TRACE_QUEUE, 
-                "%!FUNC! Queue 0x%p, Request 0x%p ActionFlags %d", 
-                Queue, Request, ActionFlags);
+    TraceEvents(TRACE_LEVEL_INFORMATION,
+        TRACE_QUEUE,
+        "%!FUNC! Queue 0x%p, Request 0x%p ActionFlags %d",
+        Queue, Request, ActionFlags);
 
     //
     // In most cases, the EvtIoStop callback function completes, cancels, or postpones

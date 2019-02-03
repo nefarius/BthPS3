@@ -82,7 +82,7 @@ L2CAP_PS3_HandleRemoteConnect(
         break;
     case 'W': // First letter in Wireless Controller ('W')
         deviceType = DS_DEVICE_TYPE_WIRELESS;
-        // For now, fall through
+        break;
     default:
         //
         // Unsupported device, drop connection

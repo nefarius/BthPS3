@@ -13,6 +13,11 @@ typedef struct _PDO_IDENTIFICATION_DESCRIPTION
     // 
     BTH_ADDR RemoteAddress;
 
+    //
+    // Type (make, model) of remote device
+    // 
+    DS_DEVICE_TYPE DeviceType;
+
 } PDO_IDENTIFICATION_DESCRIPTION, *PPDO_IDENTIFICATION_DESCRIPTION;
 
 EVT_WDF_CHILD_LIST_CREATE_DEVICE BthPS3_EvtWdfChildListCreateDevice;

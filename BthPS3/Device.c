@@ -21,11 +21,12 @@
 #include "device.tmh"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text (PAGE, BthPS3CreateDevice)
+#pragma alloc_text (PAGE, BthPS3_CreateDevice)
+#pragma alloc_text (PAGE, BthPS3_EvtWdfDeviceSelfManagedIoCleanup)
 #endif
 
 NTSTATUS
-BthPS3CreateDevice(
+BthPS3_CreateDevice(
     _Inout_ PWDFDEVICE_INIT DeviceInit
 )
 {
@@ -179,6 +180,10 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
     //
 
     // BthEchoSrvDisconnectConnectionsOnRemove(devCtx);
+
+    //
+    // TODO: implement me!
+    // 
 
     return;
 }

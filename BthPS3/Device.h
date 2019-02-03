@@ -30,7 +30,7 @@ EXTERN_C_START
 // Function to initialize the device and its callbacks
 //
 NTSTATUS
-BthPS3CreateDevice(
+BthPS3_CreateDevice(
     _Inout_ PWDFDEVICE_INIT DeviceInit
     );
 

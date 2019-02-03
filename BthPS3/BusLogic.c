@@ -1,4 +1,5 @@
 #include "Driver.h"
+#include "buslogic.tmh"
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (PAGE, BthPS3_EvtWdfChildListCreateDevice)
@@ -12,11 +13,27 @@ BthPS3_EvtWdfChildListCreateDevice(
     PWDFDEVICE_INIT ChildInit
 )
 {
+    PPDO_IDENTIFICATION_DESCRIPTION pDesc;
+
     UNREFERENCED_PARAMETER(ChildList);
-    UNREFERENCED_PARAMETER(IdentificationDescription);
-    UNREFERENCED_PARAMETER(ChildInit);
 
     PAGED_CODE();
+
+
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_BUSLOGIC, "%!FUNC! Entry");
+
+    pDesc = CONTAINING_RECORD(
+        IdentificationDescription,
+        PDO_IDENTIFICATION_DESCRIPTION,
+        Header);
+
+    //
+    // PDO features
+    // 
+    WdfDeviceInitSetDeviceType(ChildInit, FILE_DEVICE_BUS_EXTENDER);
+    WdfPdoInitAllowForwardingRequestToParent(ChildInit);
+
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_BUSLOGIC, "%!FUNC! Exit");
 
     return STATUS_SUCCESS;
 }

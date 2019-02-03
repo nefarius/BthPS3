@@ -17,6 +17,9 @@
       <UniqueIdentifier>{8E41214B-6785-4CFE-B992-037D68949A14}</UniqueIdentifier>
       <Extensions>inf;inv;inx;mof;mc;</Extensions>
     </Filter>
+    <Filter Include="Header Files\Common">
+      <UniqueIdentifier>{8e998a83-0a36-486f-8a2d-f965df70ec44}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Inf Include="BthPS3.inf">
@@ -45,11 +48,11 @@
     <ClInclude Include="L2CAP.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\include\BthPS3.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="BusLogic.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\include\BthPS3.h">
+      <Filter>Header Files\Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -96,8 +96,9 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
 {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     PBTHPS3_FDO_PDO_REQUEST_CONTEXT reqCtx = NULL;
+    WDFDEVICE device = NULL;
+    PBTHPS3_SERVER_CONTEXT deviceCtx = NULL;
 
-    UNREFERENCED_PARAMETER(Queue);
     UNREFERENCED_PARAMETER(OutputBufferLength);
     UNREFERENCED_PARAMETER(InputBufferLength);
     UNREFERENCED_PARAMETER(IoControlCode);
@@ -112,6 +113,11 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
         WdfRequestComplete(Request, STATUS_INVALID_PARAMETER);
         return;
     }
+
+    device = WdfIoQueueGetDevice(Queue);
+    deviceCtx = GetServerDeviceContext(device);
+
+
 
     WdfRequestComplete(Request, status);
 }

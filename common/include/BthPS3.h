@@ -40,19 +40,19 @@ extern __declspec(selectany) PCWSTR BthPS3ServiceName = L"BthPS3Service";
 extern __declspec(selectany) PCWSTR BthPS3BusEnumeratorName = L"BTHPS3BUS";
 
 // {53F88889-1AAF-4353-A047-556B69EC6DA6}
-DEFINE_GUID(BTHPS3_BUSENUM_SIXAXIS ,
+DEFINE_GUID(BTHPS3_BUSENUM_SIXAXIS,
     0x53f88889, 0x1aaf, 0x4353, 0xa0, 0x47, 0x55, 0x6b, 0x69, 0xec, 0x6d, 0xa6);
 
 // {206F84FC-1615-4D9F-954D-21F5A5D388C5}
-DEFINE_GUID(BTHPS3_BUSENUM_NAVIGATION ,
+DEFINE_GUID(BTHPS3_BUSENUM_NAVIGATION,
     0x206f84fc, 0x1615, 0x4d9f, 0x95, 0x4d, 0x21, 0xf5, 0xa5, 0xd3, 0x88, 0xc5);
 
 // {84957238-D867-421F-89C1-67847A3B55B5}
-DEFINE_GUID(BTHPS3_BUSENUM_MOTION ,
+DEFINE_GUID(BTHPS3_BUSENUM_MOTION,
     0x84957238, 0xd867, 0x421f, 0x89, 0xc1, 0x67, 0x84, 0x7a, 0x3b, 0x55, 0xb5);
 
 // {13D12A06-D0B0-4D7E-8D1F-F55914A2ED7C}
-DEFINE_GUID(BTHPS3_BUSENUM_WIRELESS ,
+DEFINE_GUID(BTHPS3_BUSENUM_WIRELESS,
     0x13d12a06, 0xd0b0, 0x4d7e, 0x8d, 0x1f, 0xf5, 0x59, 0x14, 0xa2, 0xed, 0x7c);
 
 #pragma endregion
@@ -106,5 +106,95 @@ typedef enum _DS_DEVICE_TYPE
 #define IOCTL_BTHPS3_HID_CONTROL_WRITE          BUSENUM_W_IOCTL (IOCTL_BTHPS3_BASE + 0x200)
 #define IOCTL_BTHPS3_HID_INTERRUPT_READ         BUSENUM_R_IOCTL (IOCTL_BTHPS3_BASE + 0x201)
 #define IOCTL_BTHPS3_HID_INTERRUPT_WRITE        BUSENUM_W_IOCTL (IOCTL_BTHPS3_BASE + 0x202)
+
+typedef struct _BTHPS3_HID_CONTROL_WRITE
+{
+    //
+    // sizeof(struct _BTHPS3_HID_CONTROL_WRITE)
+    // 
+    ULONG Size;
+
+    //
+    // Payload buffer
+    // 
+    PVOID Buffer;
+
+    //
+    // Payload buffer size
+    // 
+    ULONG BufferLength;
+
+} BTHPS3_HID_CONTROL_WRITE, *PBTHPS3_HID_CONTROL_WRITE;
+
+VOID
+FORCEINLINE
+BTHPS3_HID_CONTROL_WRITE_INIT(
+    PBTHPS3_HID_CONTROL_WRITE Packet
+)
+{
+    RtlZeroMemory(Packet, sizeof(BTHPS3_HID_CONTROL_WRITE));
+
+    Packet->Size = sizeof(BTHPS3_HID_CONTROL_WRITE);
+}
+
+typedef struct _BTHPS3_HID_INTERRUPT_READ
+{
+    //
+    // sizeof(struct _BTHPS3_HID_INTERRUPT_READ)
+    // 
+    ULONG Size;
+
+    //
+    // Payload buffer
+    // 
+    PVOID Buffer;
+
+    //
+    // Payload buffer size
+    // 
+    ULONG BufferLength;
+
+} BTHPS3_HID_INTERRUPT_READ, *PBTHPS3_HID_INTERRUPT_READ;
+
+VOID
+FORCEINLINE
+BTHPS3_HID_INTERRUPT_READ_INIT(
+    PBTHPS3_HID_INTERRUPT_READ Packet
+)
+{
+    RtlZeroMemory(Packet, sizeof(BTHPS3_HID_INTERRUPT_READ));
+
+    Packet->Size = sizeof(BTHPS3_HID_INTERRUPT_READ);
+}
+
+typedef struct _BTHPS3_HID_INTERRUPT_WRITE
+{
+    //
+    // sizeof(struct _BTHPS3_HID_INTERRUPT_WRITE)
+    // 
+    ULONG Size;
+
+    //
+    // Payload buffer
+    // 
+    PVOID Buffer;
+
+    //
+    // Payload buffer size
+    // 
+    ULONG BufferLength;
+
+} BTHPS3_HID_INTERRUPT_WRITE, *PBTHPS3_HID_INTERRUPT_WRITE;
+
+VOID
+FORCEINLINE
+BTHPS3_HID_INTERRUPT_WRITE_INIT(
+    PBTHPS3_HID_INTERRUPT_WRITE Packet
+)
+{
+    RtlZeroMemory(Packet, sizeof(BTHPS3_HID_INTERRUPT_WRITE));
+
+    Packet->Size = sizeof(BTHPS3_HID_INTERRUPT_WRITE);
+}
 
 #pragma endregion

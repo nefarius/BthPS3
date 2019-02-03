@@ -693,6 +693,7 @@ L2CAP_PS3_ConnectionStateConnected(
 )
 {
     NTSTATUS status = STATUS_SUCCESS;
+    PDO_IDENTIFICATION_DESCRIPTION pdoDesc;
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
 
@@ -713,6 +714,32 @@ L2CAP_PS3_ConnectionStateConnected(
             status
         );
 
+        return status;
+    }
+
+    WDF_CHILD_IDENTIFICATION_DESCRIPTION_HEADER_INIT(
+        &pdoDesc.Header,
+        sizeof(PDO_IDENTIFICATION_DESCRIPTION)
+    );
+
+    pdoDesc.RemoteAddress = ClientConnection->RemoteAddress;
+    pdoDesc.DeviceType = ClientConnection->DeviceType;
+
+    //
+    // Invoke new child creation
+    // 
+    status = WdfChildListAddOrUpdateChildDescriptionAsPresent(
+        WdfFdoGetDefaultChildList(ClientConnection->DevCtxHdr->Device),
+        &pdoDesc.Header,
+        NULL
+    );
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_L2CAP,
+            "WdfChildListAddOrUpdateChildDescriptionAsPresent failed with status %!STATUS!",
+            status);
         return status;
     }
 

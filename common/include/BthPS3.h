@@ -18,7 +18,7 @@ extern __declspec(selectany) PCWSTR BthPS3ServiceName = L"BthPS3Service";
 
 #pragma region Bus children specifics
 
-extern __declspec(selectany) PCWSTR BthPS3BusEnumeratorName = L"BTHPS3BUSENUM";
+extern __declspec(selectany) PCWSTR BthPS3BusEnumeratorName = L"BTHPS3BUS";
 
 // {53F88889-1AAF-4353-A047-556B69EC6DA6}
 DEFINE_GUID(BTHPS3_BUSENUM_SIXAXIS ,

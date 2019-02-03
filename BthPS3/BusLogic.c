@@ -84,11 +84,9 @@ BthPS3_EvtWdfChildListCreateDevice(
 
     status = RtlUnicodeStringPrintf(
         &deviceId,
-        L"%ws\\%.*S&%I64u",
+        L"%ws\\%wZ",
         BthPS3BusEnumeratorName,
-        guidString.Length,
-        guidString.Buffer,
-        pDesc->RemoteAddress
+        guidString
     );
     if (!NT_SUCCESS(status)) {
         TraceEvents(TRACE_LEVEL_ERROR,
@@ -114,10 +112,9 @@ BthPS3_EvtWdfChildListCreateDevice(
 
     status = RtlUnicodeStringPrintf(
         &hardwareId,
-        L"%ws\\%.*S",
+        L"%ws\\%wZ",
         BthPS3BusEnumeratorName,
-        guidString.Length,
-        guidString.Buffer
+        guidString
     );
     if (!NT_SUCCESS(status)) {
         TraceEvents(TRACE_LEVEL_ERROR,
@@ -143,7 +140,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 
     status = RtlUnicodeStringPrintf(
         &instanceId,
-        L"%I64u",
+        L"%I64X",
         pDesc->RemoteAddress
     );
     if (!NT_SUCCESS(status)) {

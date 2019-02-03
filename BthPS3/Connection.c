@@ -80,7 +80,7 @@ ClientConnections_CreateAndInsert(
     attributes.ParentObject = connectionObject;
 
     status = WdfSpinLockCreate(
-        &attributes, 
+        &attributes,
         &connectionCtx->HidControlChannel.ConnectionStateLock
     );
     if (!NT_SUCCESS(status)) {
@@ -267,11 +267,33 @@ EvtClientConnectionsDestroyConnection(
     WDFOBJECT Object
 )
 {
+    NTSTATUS status;
+    PDO_IDENTIFICATION_DESCRIPTION pdoDesc;
     PBTHPS3_CLIENT_CONNECTION connection = NULL;
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CONNECTION, "%!FUNC! Entry");
 
     connection = GetClientConnection(Object);
+
+    WDF_CHILD_IDENTIFICATION_DESCRIPTION_HEADER_INIT(
+        &pdoDesc.Header,
+        sizeof(PDO_IDENTIFICATION_DESCRIPTION)
+    );
+
+    pdoDesc.RemoteAddress = connection->RemoteAddress;
+    pdoDesc.DeviceType = connection->DeviceType;
+
+    status = WdfChildListUpdateChildDescriptionAsMissing(
+        WdfFdoGetDefaultChildList(connection->DevCtxHdr->Device),
+        &pdoDesc.Header
+    );
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_CONNECTION,
+            "WdfChildListUpdateChildDescriptionAsMissing failed with status %!STATUS!",
+            status);
+    }
 
     WdfObjectDelete(connection->HidControlChannel.ConnectDisconnectRequest);
     WdfObjectDelete(connection->HidInterruptChannel.ConnectDisconnectRequest);

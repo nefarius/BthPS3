@@ -33,14 +33,9 @@ typedef struct _PDO_IDENTIFICATION_DESCRIPTION
     WDF_CHILD_IDENTIFICATION_DESCRIPTION_HEADER Header;
 
     //
-    // MAC address identifying this device
+    // Client connection context
     // 
-    BTH_ADDR RemoteAddress;
-
-    //
-    // Type (make, model) of remote device
-    // 
-    DS_DEVICE_TYPE DeviceType;
+    PBTHPS3_CLIENT_CONNECTION ClientConnection;
 
 } PDO_IDENTIFICATION_DESCRIPTION, *PPDO_IDENTIFICATION_DESCRIPTION;
 
@@ -50,18 +45,14 @@ typedef struct _PDO_IDENTIFICATION_DESCRIPTION
 typedef struct _BTHPS3_PDO_DEVICE_CONTEXT
 {
     //
-    // MAC address identifying this device
+    // Client connection context
     // 
-    BTH_ADDR RemoteAddress;
-
-    //
-    // Type (make, model) of remote device
-    // 
-    DS_DEVICE_TYPE DeviceType;
+    PBTHPS3_CLIENT_CONNECTION ClientConnection;
 
 } BTHPS3_PDO_DEVICE_CONTEXT, *PBTHPS3_PDO_DEVICE_CONTEXT;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_PDO_DEVICE_CONTEXT, GetPdoDeviceContext)
 
 EVT_WDF_CHILD_LIST_CREATE_DEVICE BthPS3_EvtWdfChildListCreateDevice;
+EVT_WDF_CHILD_LIST_IDENTIFICATION_DESCRIPTION_COMPARE BthPS3_PDO_EvtChildListIdentificationDescriptionCompare;
 EVT_WDF_IO_QUEUE_IO_INTERNAL_DEVICE_CONTROL BthPS3_PDO_EvtWdfIoQueueIoInternalDeviceControl;

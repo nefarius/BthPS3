@@ -38,6 +38,8 @@ BthPS3CreateDevice(
     PAGED_CODE();
 
 
+    WdfDeviceInitSetDeviceType(DeviceInit, FILE_DEVICE_BUS_EXTENDER);
+
     //
     // Prepare child list
     // 
@@ -46,9 +48,9 @@ BthPS3CreateDevice(
         sizeof(PDO_IDENTIFICATION_DESCRIPTION),
         BthPS3_EvtWdfChildListCreateDevice
     );
-
-    WdfDeviceInitSetDeviceType(DeviceInit, FILE_DEVICE_BUS_EXTENDER);
-
+    childListCfg.EvtChildListIdentificationDescriptionCompare =
+        BthPS3_PDO_EvtChildListIdentificationDescriptionCompare;
+    
     WdfFdoInitSetDefaultChildListConfig(DeviceInit,
         &childListCfg,
         WDF_NO_OBJECT_ATTRIBUTES

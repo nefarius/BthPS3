@@ -98,17 +98,20 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
     PBTHPS3_FDO_PDO_REQUEST_CONTEXT reqCtx = NULL;
     WDFDEVICE device = NULL;
     PBTHPS3_SERVER_CONTEXT deviceCtx = NULL;
+    PBTHPS3_CLIENT_CONNECTION clientConnection = NULL;
 
     UNREFERENCED_PARAMETER(OutputBufferLength);
     UNREFERENCED_PARAMETER(InputBufferLength);
     UNREFERENCED_PARAMETER(IoControlCode);
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_QUEUE, "%!FUNC! Entry");
 
     reqCtx = GetFdoPdoRequestContext(Request);
 
     //
     // This isn't supposed to happen, bail out
     // 
-    if (reqCtx->DeviceType == DS_DEVICE_TYPE_UNKNOWN)
+    if (reqCtx->ClientConnection == NULL)
     {
         WdfRequestComplete(Request, STATUS_INVALID_PARAMETER);
         return;
@@ -116,10 +119,14 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
 
     device = WdfIoQueueGetDevice(Queue);
     deviceCtx = GetServerDeviceContext(device);
+    clientConnection = reqCtx->ClientConnection;
 
+    
 
 
     WdfRequestComplete(Request, status);
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_QUEUE, "%!FUNC! Exit");
 }
 
 VOID

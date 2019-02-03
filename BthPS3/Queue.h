@@ -21,20 +21,17 @@
 
 EXTERN_C_START
 
+struct _BTHPS3_CLIENT_CONNECTION;
+
 //
 // Request context space for forwarded requests (PDO to FDO)
 // 
 typedef struct _BTHPS3_FDO_PDO_REQUEST_CONTEXT
 {
     //
-    // MAC address identifying this device
+    // Client connection context
     // 
-    BTH_ADDR RemoteAddress;
-
-    //
-    // Type (make, model) of remote device
-    // 
-    DS_DEVICE_TYPE DeviceType;
+    struct _BTHPS3_CLIENT_CONNECTION *ClientConnection;
 
 } BTHPS3_FDO_PDO_REQUEST_CONTEXT, *PBTHPS3_FDO_PDO_REQUEST_CONTEXT;
 

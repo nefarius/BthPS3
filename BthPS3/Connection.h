@@ -163,6 +163,9 @@ WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_CONNECTION, GetConnectionObjectContext
 /* The new stuff                                                        */
 /************************************************************************/
 
+//
+// State information for a single L2CAP channel
+// 
 typedef struct _BTHPS3_CLIENT_L2CAP_CHANNEL
 {
     BTHPS3_CONNECTION_STATE     ConnectionState;
@@ -179,6 +182,9 @@ typedef struct _BTHPS3_CLIENT_L2CAP_CHANNEL
 
 } BTHPS3_CLIENT_L2CAP_CHANNEL, *PBTHPS3_CLIENT_L2CAP_CHANNEL;
 
+//
+// State information for a remote device
+// 
 typedef struct _BTHPS3_CLIENT_CONNECTION
 {
     PBTHPS3_DEVICE_CONTEXT_HEADER       DevCtxHdr;

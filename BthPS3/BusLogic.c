@@ -74,7 +74,7 @@ BthPS3_EvtWdfChildListCreateDevice(
     //
     // Adjust properties depending on device type
     // 
-    switch (pDesc->DeviceType)
+    switch (pDesc->ClientConnection->DeviceType)
     {
     case DS_DEVICE_TYPE_SIXAXIS:
         status = RtlStringFromGUID(&BTHPS3_BUSENUM_SIXAXIS,
@@ -172,7 +172,7 @@ BthPS3_EvtWdfChildListCreateDevice(
     status = RtlUnicodeStringPrintf(
         &instanceId,
         L"%I64X",
-        pDesc->RemoteAddress
+        pDesc->ClientConnection->RemoteAddress
     );
     if (!NT_SUCCESS(status)) {
         TraceEvents(TRACE_LEVEL_ERROR,
@@ -239,8 +239,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 
     pdoCtx = GetPdoDeviceContext(hChild);
 
-    pdoCtx->RemoteAddress = pDesc->RemoteAddress;
-    pdoCtx->DeviceType = pDesc->DeviceType;
+    pdoCtx->ClientConnection = pDesc->ClientConnection;
 
 #pragma endregion
 
@@ -272,6 +271,26 @@ BthPS3_EvtWdfChildListCreateDevice(
                TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Exit");
 
                return status;
+}
+
+BOOLEAN BthPS3_PDO_EvtChildListIdentificationDescriptionCompare(
+    WDFCHILDLIST DeviceList,
+    PWDF_CHILD_IDENTIFICATION_DESCRIPTION_HEADER FirstIdentificationDescription,
+    PWDF_CHILD_IDENTIFICATION_DESCRIPTION_HEADER SecondIdentificationDescription)
+{
+    PPDO_IDENTIFICATION_DESCRIPTION lhs, rhs;
+
+    UNREFERENCED_PARAMETER(DeviceList);
+
+    lhs = CONTAINING_RECORD(FirstIdentificationDescription,
+        PDO_IDENTIFICATION_DESCRIPTION,
+        Header);
+    rhs = CONTAINING_RECORD(SecondIdentificationDescription,
+        PDO_IDENTIFICATION_DESCRIPTION,
+        Header);
+
+    return (lhs->ClientConnection->RemoteAddress ==
+        rhs->ClientConnection->RemoteAddress) ? TRUE : FALSE;
 }
 
 //
@@ -306,8 +325,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoInternalDeviceControl(
     // Establish relationship of PDO to BTH_ADDR so the parent bus
     // can pick the related device from connection list.
     // 
-    reqCtx->RemoteAddress = pdoCtx->RemoteAddress;
-    reqCtx->DeviceType = pdoCtx->DeviceType;
+    reqCtx->ClientConnection = pdoCtx->ClientConnection;
 
     WDF_REQUEST_FORWARD_OPTIONS_INIT(&forwardOptions);
     forwardOptions.Flags = WDF_REQUEST_FORWARD_OPTION_SEND_AND_FORGET;

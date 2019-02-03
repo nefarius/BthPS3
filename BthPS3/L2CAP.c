@@ -741,8 +741,7 @@ L2CAP_PS3_ConnectionStateConnected(
         sizeof(PDO_IDENTIFICATION_DESCRIPTION)
     );
 
-    pdoDesc.RemoteAddress = ClientConnection->RemoteAddress;
-    pdoDesc.DeviceType = ClientConnection->DeviceType;
+    pdoDesc.ClientConnection = ClientConnection;
 
     //
     // Invoke new child creation

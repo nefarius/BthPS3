@@ -301,8 +301,7 @@ EvtClientConnectionsDestroyConnection(
         sizeof(PDO_IDENTIFICATION_DESCRIPTION)
     );
 
-    pdoDesc.RemoteAddress = connection->RemoteAddress;
-    pdoDesc.DeviceType = connection->DeviceType;
+    pdoDesc.ClientConnection = connection;
 
     status = WdfChildListUpdateChildDescriptionAsMissing(
         WdfFdoGetDefaultChildList(connection->DevCtxHdr->Device),

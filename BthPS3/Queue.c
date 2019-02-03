@@ -94,12 +94,26 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
     ULONG IoControlCode
 )
 {
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    PBTHPS3_FDO_PDO_REQUEST_CONTEXT reqCtx = NULL;
+
     UNREFERENCED_PARAMETER(Queue);
     UNREFERENCED_PARAMETER(OutputBufferLength);
     UNREFERENCED_PARAMETER(InputBufferLength);
     UNREFERENCED_PARAMETER(IoControlCode);
 
-    WdfRequestComplete(Request, STATUS_UNSUCCESSFUL);
+    reqCtx = GetFdoPdoRequestContext(Request);
+
+    //
+    // This isn't supposed to happen, bail out
+    // 
+    if (reqCtx->DeviceType == DS_DEVICE_TYPE_UNKNOWN)
+    {
+        WdfRequestComplete(Request, STATUS_INVALID_PARAMETER);
+        return;
+    }
+
+    WdfRequestComplete(Request, status);
 }
 
 VOID

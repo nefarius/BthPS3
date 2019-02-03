@@ -59,7 +59,7 @@ BthPS3RetrieveLocalInfo(
         goto exit;
     }
 
-    status = BthPS3SendBrbSynchronously(
+    status = BthPS3_SendBrbSynchronously(
         DevCtxHdr->IoTarget,
         DevCtxHdr->HostInitRequest,
         (PBRB)brb,
@@ -112,7 +112,7 @@ BthPS3RegisterPSM(
         brb->Psm
     );
 
-    status = BthPS3SendBrbSynchronously(
+    status = BthPS3_SendBrbSynchronously(
         DevCtx->Header.IoTarget,
         DevCtx->Header.HostInitRequest,
         (PBRB)brb,
@@ -145,7 +145,7 @@ BthPS3RegisterPSM(
         brb->Psm
     );
 
-    status = BthPS3SendBrbSynchronously(
+    status = BthPS3_SendBrbSynchronously(
         DevCtx->Header.IoTarget,
         DevCtx->Header.HostInitRequest,
         (PBRB)brb,
@@ -200,7 +200,7 @@ BthPS3UnregisterPSM(
 
     brb->Psm = DevCtx->PsmHidControl;
 
-    status = BthPS3SendBrbSynchronously(
+    status = BthPS3_SendBrbSynchronously(
         DevCtx->Header.IoTarget,
         DevCtx->Header.HostInitRequest,
         (PBRB)brb,
@@ -230,7 +230,7 @@ BthPS3UnregisterPSM(
 
     brb->Psm = DevCtx->PsmHidInterrupt;
 
-    status = BthPS3SendBrbSynchronously(
+    status = BthPS3_SendBrbSynchronously(
         DevCtx->Header.IoTarget,
         DevCtx->Header.HostInitRequest,
         (PBRB)brb,
@@ -286,7 +286,7 @@ BthPS3RegisterL2CAPServer(
     brb->IndicationFlags = 0;
     brb->ReferenceObject = WdfDeviceWdmGetDeviceObject(DevCtx->Header.Device);
 
-    status = BthPS3SendBrbSynchronously(
+    status = BthPS3_SendBrbSynchronously(
         DevCtx->Header.IoTarget,
         DevCtx->Header.HostInitRequest,
         (PBRB)brb,
@@ -342,7 +342,7 @@ BthPS3UnregisterL2CAPServer(
     brb->Psm = 0; //since we will use unregister PSM to unregister.
     brb->ServerHandle = DevCtx->L2CAPServerHandle;
 
-    status = BthPS3SendBrbSynchronously(
+    status = BthPS3_SendBrbSynchronously(
         DevCtx->Header.IoTarget,
         DevCtx->Header.HostInitRequest,
         (PBRB)brb,
@@ -496,7 +496,7 @@ BthPS3IndicationCallback(
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-BthPS3SendBrbSynchronously(
+BthPS3_SendBrbSynchronously(
     _In_ WDFIOTARGET IoTarget,
     _In_ WDFREQUEST Request,
     _In_ PBRB Brb,
@@ -541,7 +541,7 @@ BthPS3SendBrbSynchronously(
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
-BthPS3SendBrbAsync(
+BthPS3_SendBrbAsync(
     _In_ WDFIOTARGET IoTarget,
     _In_ WDFREQUEST Request,
     _In_ PBRB Brb,

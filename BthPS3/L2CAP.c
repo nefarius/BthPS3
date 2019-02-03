@@ -204,7 +204,7 @@ L2CAP_PS3_HandleRemoteConnect(
     //
     // Submit response
     // 
-    status = BthPS3SendBrbAsync(
+    status = BthPS3_SendBrbAsync(
         DevCtx->Header.IoTarget,
         brbAsyncRequest,
         (PBRB)brb,
@@ -216,7 +216,7 @@ L2CAP_PS3_HandleRemoteConnect(
     if (!NT_SUCCESS(status))
     {
         TraceEvents(TRACE_LEVEL_ERROR, TRACE_L2CAP,
-            "BthPS3SendBrbAsync failed with status %!STATUS!", status);
+            "BthPS3_SendBrbAsync failed with status %!STATUS!", status);
     }
 
 exit:
@@ -303,7 +303,7 @@ L2CAP_PS3_DenyRemoteConnect(
     //
     // Submit response
     // 
-    status = BthPS3SendBrbAsync(
+    status = BthPS3_SendBrbAsync(
         DevCtx->Header.IoTarget,
         brbAsyncRequest,
         (PBRB)brb,
@@ -315,7 +315,7 @@ L2CAP_PS3_DenyRemoteConnect(
     if (!NT_SUCCESS(status))
     {
         TraceEvents(TRACE_LEVEL_ERROR, TRACE_L2CAP,
-            "BthPS3SendBrbAsync failed with status %!STATUS!", status);
+            "BthPS3_SendBrbAsync failed with status %!STATUS!", status);
 
         DevCtx->Header.ProfileDrvInterface.BthFreeBrb((PBRB)brb);
         WdfObjectDelete(brbAsyncRequest);
@@ -840,7 +840,7 @@ L2CAP_PS3_SendControlTransfer(
     //
     // Submit request
     // 
-    status = BthPS3SendBrbAsync(
+    status = BthPS3_SendBrbAsync(
         ClientConnection->DevCtxHdr->IoTarget,
         brbAsyncRequest,
         (PBRB)brb,
@@ -852,11 +852,177 @@ L2CAP_PS3_SendControlTransfer(
     if (!NT_SUCCESS(status))
     {
         TraceEvents(TRACE_LEVEL_ERROR, TRACE_L2CAP,
-            "BthPS3SendBrbAsync failed with status %!STATUS!", status);
+            "BthPS3_SendBrbAsync failed with status %!STATUS!", status);
 
         ClientConnection->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
         WdfObjectDelete(brbAsyncRequest);
     }
+
+    return status;
+}
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+NTSTATUS
+L2CAP_PS3_SendControlTransferAsync(
+    PBTHPS3_CLIENT_CONNECTION ClientConnection,
+    PVOID Buffer,
+    size_t BufferLength,
+    PFN_WDF_REQUEST_COMPLETION_ROUTINE CompletionRoutine,
+    PVOID CompletionContext
+)
+{
+    NTSTATUS status;
+    struct _BRB_L2CA_ACL_TRANSFER* brb = NULL;
+    WDFREQUEST brbAsyncRequest = NULL;
+
+    //
+    // Allocate request
+    // 
+    status = WdfRequestCreate(
+        WDF_NO_OBJECT_ATTRIBUTES,
+        ClientConnection->DevCtxHdr->IoTarget,
+        &brbAsyncRequest);
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_L2CAP,
+            "WdfRequestCreate failed with status %!STATUS!",
+            status
+        );
+
+        return status;
+    }
+
+    //
+    // Allocate BRB
+    // 
+    brb = (struct _BRB_L2CA_ACL_TRANSFER*)
+        ClientConnection->DevCtxHdr->ProfileDrvInterface.BthAllocateBrb(
+            BRB_L2CA_ACL_TRANSFER,
+            POOLTAG_BTHPS3
+        );
+
+    if (brb == NULL)
+    {
+        WdfObjectDelete(brbAsyncRequest);
+        return STATUS_INSUFFICIENT_RESOURCES;
+    }
+
+    //
+    // Used in completion routine to free BRB
+    // 
+    brb->Hdr.ClientContext[0] = ClientConnection->DevCtxHdr;
+    brb->Hdr.ClientContext[1] = CompletionContext;
+
+    //
+    // Set channel properties
+    // 
+    brb->BtAddress = ClientConnection->RemoteAddress;
+    brb->ChannelHandle = ClientConnection->HidControlChannel.ChannelHandle;
+    brb->TransferFlags = ACL_TRANSFER_DIRECTION_OUT;
+    brb->BufferMDL = NULL;
+    brb->Buffer = Buffer;
+    brb->BufferSize = (ULONG)BufferLength;
+
+    //
+    // Submit request
+    // 
+    status = BthPS3_SendBrbAsync(
+        ClientConnection->DevCtxHdr->IoTarget,
+        brbAsyncRequest,
+        (PBRB)brb,
+        sizeof(*brb),
+        CompletionRoutine,
+        brb
+    );
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, TRACE_L2CAP,
+            "BthPS3_SendBrbAsync failed with status %!STATUS!", status);
+
+        ClientConnection->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+        WdfObjectDelete(brbAsyncRequest);
+    }
+
+    return status;
+}
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+NTSTATUS
+L2CAP_PS3_SendControlTransferSync(
+    PBTHPS3_CLIENT_CONNECTION ClientConnection,
+    PVOID Buffer,
+    size_t BufferLength
+)
+{
+    NTSTATUS status;
+    struct _BRB_L2CA_ACL_TRANSFER* brb = NULL;
+    WDFREQUEST brbSyncRequest = NULL;
+
+    //
+    // Allocate request
+    // 
+    status = WdfRequestCreate(
+        WDF_NO_OBJECT_ATTRIBUTES,
+        ClientConnection->DevCtxHdr->IoTarget,
+        &brbSyncRequest);
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_L2CAP,
+            "WdfRequestCreate failed with status %!STATUS!",
+            status
+        );
+
+        return status;
+    }
+
+    //
+    // Allocate BRB
+    // 
+    brb = (struct _BRB_L2CA_ACL_TRANSFER*)
+        ClientConnection->DevCtxHdr->ProfileDrvInterface.BthAllocateBrb(
+            BRB_L2CA_ACL_TRANSFER,
+            POOLTAG_BTHPS3
+        );
+
+    if (brb == NULL)
+    {
+        WdfObjectDelete(brbSyncRequest);
+        return STATUS_INSUFFICIENT_RESOURCES;
+    }
+
+    //
+    // Set channel properties
+    // 
+    brb->BtAddress = ClientConnection->RemoteAddress;
+    brb->ChannelHandle = ClientConnection->HidControlChannel.ChannelHandle;
+    brb->TransferFlags = ACL_TRANSFER_DIRECTION_OUT;
+    brb->BufferMDL = NULL;
+    brb->Buffer = Buffer;
+    brb->BufferSize = (ULONG)BufferLength;
+
+    //
+    // Submit request
+    // 
+    status = BthPS3_SendBrbSynchronously(
+        ClientConnection->DevCtxHdr->IoTarget,
+        brbSyncRequest,
+        (PBRB)brb,
+        sizeof(*brb)
+    );
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, TRACE_L2CAP,
+            "BthPS3_SendBrbSynchronously failed with status %!STATUS!", status);
+    }
+
+    ClientConnection->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+    WdfObjectDelete(brbSyncRequest);
 
     return status;
 }

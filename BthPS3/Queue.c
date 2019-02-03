@@ -99,10 +99,17 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
     WDFDEVICE device = NULL;
     PBTHPS3_SERVER_CONTEXT deviceCtx = NULL;
     PBTHPS3_CLIENT_CONNECTION clientConnection = NULL;
+    size_t length = 0;
+
+    PBTHPS3_HID_CONTROL_WRITE pControlWrite = NULL;
+    PBTHPS3_HID_INTERRUPT_READ pInterruptRead = NULL;
+    PBTHPS3_HID_INTERRUPT_WRITE pInterruptWrite = NULL;
 
     UNREFERENCED_PARAMETER(OutputBufferLength);
     UNREFERENCED_PARAMETER(InputBufferLength);
-    UNREFERENCED_PARAMETER(IoControlCode);
+
+    UNREFERENCED_PARAMETER(pInterruptRead);
+    UNREFERENCED_PARAMETER(pInterruptWrite);
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_QUEUE, "%!FUNC! Entry");
 
@@ -113,6 +120,11 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
     // 
     if (reqCtx->ClientConnection == NULL)
     {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_QUEUE,
+            "Invalid client connection handle"
+        );
+
         WdfRequestComplete(Request, STATUS_INVALID_PARAMETER);
         return;
     }
@@ -121,8 +133,54 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
     deviceCtx = GetServerDeviceContext(device);
     clientConnection = reqCtx->ClientConnection;
 
-    
 
+    switch (IoControlCode)
+    {
+    case IOCTL_BTHPS3_HID_CONTROL_WRITE:
+
+        status = WdfRequestRetrieveInputBuffer(
+            Request,
+            sizeof(BTHPS3_HID_CONTROL_WRITE),
+            (PVOID)&pControlWrite,
+            &length
+        );
+
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_QUEUE,
+                "WdfRequestRetrieveInputBuffer failed with status %!STATUS!",
+                status
+            );
+            break;
+        }
+
+        if (pControlWrite->Size != sizeof(BTHPS3_HID_CONTROL_WRITE)) {
+            status = STATUS_INVALID_PARAMETER;
+            break;
+        }
+
+        //
+        // TODO: is it OK to call sync in this context?
+        // 
+        status = L2CAP_PS3_SendControlTransferSync(
+            clientConnection,
+            pControlWrite->Buffer,
+            pControlWrite->BufferLength
+        );
+
+        break;
+    case IOCTL_BTHPS3_HID_INTERRUPT_READ:
+        break;
+    case IOCTL_BTHPS3_HID_INTERRUPT_WRITE:
+        break;
+    default:
+        TraceEvents(TRACE_LEVEL_WARNING,
+            TRACE_QUEUE,
+            "Unknown IoControlCode received: 0x%X",
+            IoControlCode
+        );
+        break;
+    }
 
     WdfRequestComplete(Request, status);
 

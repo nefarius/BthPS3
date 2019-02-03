@@ -221,7 +221,7 @@ BthPS3IndicationCallback(
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-BthPS3SendBrbSynchronously(
+BthPS3_SendBrbSynchronously(
     _In_ WDFIOTARGET IoTarget,
     _In_ WDFREQUEST Request,
     _In_ PBRB Brb,
@@ -230,7 +230,7 @@ BthPS3SendBrbSynchronously(
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
-BthPS3SendBrbAsync(
+BthPS3_SendBrbAsync(
     _In_ WDFIOTARGET IoTarget,
     _In_ WDFREQUEST Request,
     _In_ PBRB Brb,

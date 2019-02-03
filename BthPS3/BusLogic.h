@@ -1,6 +1,8 @@
 #pragma once
 
 
+#define MAX_DEVICE_ID_LEN   200
+
 typedef struct _PDO_IDENTIFICATION_DESCRIPTION
 {
     //

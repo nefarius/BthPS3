@@ -13,7 +13,14 @@ BthPS3_EvtWdfChildListCreateDevice(
     PWDFDEVICE_INIT ChildInit
 )
 {
-    PPDO_IDENTIFICATION_DESCRIPTION pDesc;
+    NTSTATUS                            status = STATUS_UNSUCCESSFUL;
+    PPDO_IDENTIFICATION_DESCRIPTION     pDesc;
+    UNICODE_STRING                      guidString;
+    WDFDEVICE                           hChild = NULL;
+
+    DECLARE_UNICODE_STRING_SIZE(deviceId, MAX_DEVICE_ID_LEN);
+    DECLARE_UNICODE_STRING_SIZE(hardwareId, MAX_DEVICE_ID_LEN);
+    DECLARE_UNICODE_STRING_SIZE(instanceId, 12);
 
     UNREFERENCED_PARAMETER(ChildList);
 
@@ -33,7 +40,154 @@ BthPS3_EvtWdfChildListCreateDevice(
     WdfDeviceInitSetDeviceType(ChildInit, FILE_DEVICE_BUS_EXTENDER);
     WdfPdoInitAllowForwardingRequestToParent(ChildInit);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_BUSLOGIC, "%!FUNC! Exit");
+    //
+    // Adjust properties depending on device type
+    // 
+    switch (pDesc->DeviceType)
+    {
+    case DS_DEVICE_TYPE_SIXAXIS:
+        status = RtlStringFromGUID(&BTHPS3_BUSENUM_SIXAXIS,
+            &guidString
+        );
+        break;
+    case DS_DEVICE_TYPE_NAVIGATION:
+        status = RtlStringFromGUID(&BTHPS3_BUSENUM_NAVIGATION,
+            &guidString
+        );
+        break;
+    case DS_DEVICE_TYPE_MOTION:
+        status = RtlStringFromGUID(&BTHPS3_BUSENUM_MOTION,
+            &guidString
+        );
+        break;
+    case DS_DEVICE_TYPE_WIRELESS:
+        status = RtlStringFromGUID(&BTHPS3_BUSENUM_WIRELESS,
+            &guidString
+        );
+        break;
+    default:
+        // Doesn't happen
+        return status;
+    }
 
-    return STATUS_SUCCESS;
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_BUSLOGIC,
+            "RtlStringFromGUID failed with status %!STATUS!",
+            status
+        );
+        return status;
+    }
+
+#pragma region Build DeviceID
+
+    status = RtlUnicodeStringPrintf(
+        &deviceId,
+        L"%ws\\%.*S&%I64u",
+        BthPS3BusEnumeratorName,
+        guidString.Length,
+        guidString.Buffer,
+        pDesc->RemoteAddress
+    );
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_BUSLOGIC,
+            "RtlUnicodeStringPrintf failed for deviceId with status %!STATUS!",
+            status
+        );
+        goto freeAndExit;
+    }
+
+    status = WdfPdoInitAssignDeviceID(ChildInit, &deviceId);
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_BUSLOGIC,
+            "WdfPdoInitAssignDeviceID failed with status %!STATUS!",
+            status);
+        goto freeAndExit;
+    }
+
+#pragma endregion
+
+#pragma region Build HardwareID
+
+    status = RtlUnicodeStringPrintf(
+        &hardwareId,
+        L"%ws\\%.*S",
+        BthPS3BusEnumeratorName,
+        guidString.Length,
+        guidString.Buffer
+    );
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_BUSLOGIC,
+            "RtlUnicodeStringPrintf failed for hardwareId with status %!STATUS!",
+            status
+        );
+        goto freeAndExit;
+    }
+
+    status = WdfPdoInitAddHardwareID(ChildInit, &deviceId);
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_BUSLOGIC,
+            "WdfPdoInitAddHardwareID failed with status %!STATUS!",
+            status);
+        goto freeAndExit;
+    }
+
+#pragma endregion
+
+#pragma region Build InstanceID
+
+    status = RtlUnicodeStringPrintf(
+        &instanceId,
+        L"%I64u",
+        pDesc->RemoteAddress
+    );
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_BUSLOGIC,
+            "RtlUnicodeStringPrintf failed for instanceId with status %!STATUS!",
+            status
+        );
+        goto freeAndExit;
+    }
+
+    status = WdfPdoInitAssignInstanceID(ChildInit, &instanceId);
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_BUSLOGIC,
+            "WdfPdoInitAssignInstanceID failed with status %!STATUS!",
+            status);
+        goto freeAndExit;
+    }
+
+#pragma endregion
+
+#pragma region Child device creation
+
+    status = WdfDeviceCreate(
+        &ChildInit, 
+        WDF_NO_OBJECT_ATTRIBUTES, 
+        &hChild
+    );
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_BUSLOGIC,
+            "WdfDeviceCreate failed with status %!STATUS!",
+            status);
+        goto freeAndExit;
+    }
+
+#pragma endregion
+
+    freeAndExit:
+
+               RtlFreeUnicodeString(&guidString);
+
+               TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_BUSLOGIC, "%!FUNC! Exit");
+
+               return status;
 }

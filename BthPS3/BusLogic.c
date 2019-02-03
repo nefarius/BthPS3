@@ -331,7 +331,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoInternalDeviceControl(
     forwardOptions.Flags = WDF_REQUEST_FORWARD_OPTION_SEND_AND_FORGET;
 
     //
-    // FDO has all the state info so don't bother handing this ourself
+    // FDO has all the state info so don't bother handling this ourself
     // 
     status = WdfRequestForwardToParentDeviceIoQueue(
         Request,

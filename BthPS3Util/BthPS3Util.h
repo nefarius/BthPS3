@@ -51,4 +51,10 @@
 namespace winapi
 {
     BOOL AdjustProcessPrivileges();
+
+    BOOL CreateDriverService(PCSTR ServiceName, PCSTR DisplayName, PCSTR BinaryPath);
+
+    BOOL DeleteDriverService(PCSTR ServiceName);
+
+    std::string GetLastErrorStdStr();
 };

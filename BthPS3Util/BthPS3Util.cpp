@@ -13,9 +13,9 @@ using namespace colorwin;
 int main(int, char* argv[])
 {
     argh::parser cmdl;
-    cmdl.add_params({ "--inf-path" });
+    cmdl.add_params({ "--inf-path", "--bin-path" });
     cmdl.parse(argv);
-    std::string infPath;
+    std::string infPath, binPath;
 
     DWORD err = ERROR_SUCCESS;
     BLUETOOTH_LOCAL_SERVICE_INFO SvcInfo = { 0 };
@@ -25,7 +25,9 @@ int main(int, char* argv[])
     {
         if (FALSE == winapi::AdjustProcessPrivileges())
         {
-            std::cout << color(red) << "Failed to gain required privileges, error " << std::hex << GetLastError() << std::endl;
+            std::cout << color(red) <<
+                "Failed to gain required privileges, error: "
+                << winapi::GetLastErrorStdStr() << std::endl;
             return GetLastError();
         }
 
@@ -38,11 +40,13 @@ int main(int, char* argv[])
             &SvcInfo
         )))
         {
-            std::cout << color(red) << "BluetoothSetLocalServiceInfo failed, err " << err << std::endl;
+            std::cout << color(red) <<
+                "BluetoothSetLocalServiceInfo failed, error: "
+                << winapi::GetLastErrorStdStr() << std::endl;
             return GetLastError();
         }
 
-        std::cout << "Service enabled successfully" << std::endl;
+        std::cout << color(green) << "Service enabled successfully" << std::endl;
 
         return ERROR_SUCCESS;
     }
@@ -51,7 +55,9 @@ int main(int, char* argv[])
     {
         if (FALSE == winapi::AdjustProcessPrivileges())
         {
-            std::cout << color(red) << "Failed to gain required privileges, error " << std::hex << GetLastError() << std::endl;
+            std::cout << color(red) <<
+                "Failed to gain required privileges, error: "
+                << winapi::GetLastErrorStdStr() << std::endl;
             return GetLastError();
         }
 
@@ -64,31 +70,56 @@ int main(int, char* argv[])
             &SvcInfo
         )))
         {
-            std::cout << color(red) << "BluetoothSetLocalServiceInfo failed, err " << err << std::endl;
+            std::cout << color(red) <<
+                "BluetoothSetLocalServiceInfo failed, error: "
+                << winapi::GetLastErrorStdStr() << std::endl;
             return GetLastError();
         }
 
-        std::cout << "Service disabled successfully" << std::endl;
+        std::cout << color(green) << "Service disabled successfully" << std::endl;
 
         return ERROR_SUCCESS;
     }
 
-    if (cmdl[{ "--create-filter-device" }])
+    if (cmdl[{ "--create-filter-service" }])
     {
-        auto ret = devcon::create(
-            L"System",
-            &GUID_DEVCLASS_SYSTEM,
-            L"Nefarius\\{a3dc6d41-9e10-46d9-8be2-9b4a279841df}\0\0"
+        if (!(cmdl({ "--bin-path" }) >> binPath)) {
+            std::cout << color(red) << "SYS path missing" << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        auto ret = winapi::CreateDriverService(
+            BthPS3FilterServiceName,
+            "PlayStation(R) 3 Bluetooth Filter Service",
+            binPath.c_str()
         );
 
-        if (!ret)
-        {
-            std::cout << color(red) << "Failed to create device, error " << std::hex << GetLastError() << std::endl;
+        if (!ret) {
+            std::cout << color(red) <<
+                "Service creation failed, error: "
+                << winapi::GetLastErrorStdStr() << std::endl;
             return GetLastError();
         }
 
-        std::cout << "Device node created successfully" << std::endl;
-        return ERROR_SUCCESS;
+        std::cout << color(green) << "Service created successfully" << std::endl;
+        return EXIT_SUCCESS;
+    }
+
+    if (cmdl[{ "--delete-filter-service" }])
+    {
+        auto ret = winapi::DeleteDriverService(
+            BthPS3FilterServiceName
+        );
+
+        if (!ret) {
+            std::cout << color(red) <<
+                "Service deletion failed, error: "
+                << winapi::GetLastErrorStdStr() << std::endl;
+            return GetLastError();
+        }
+
+        std::cout << color(green) << "Service deleted successfully" << std::endl;
+        return EXIT_SUCCESS;
     }
 
     if (cmdl[{ "--install-driver" }])
@@ -108,11 +139,13 @@ int main(int, char* argv[])
 
         if (!ret)
         {
-            std::cout << color(red) << "Failed to install driver, error " << std::hex << GetLastError() << std::endl;
+            std::cout << color(red) << 
+                "Failed to install driver, error: "
+                << winapi::GetLastErrorStdStr() << std::endl;
             return GetLastError();
         }
 
-        std::cout << "Driver installed successfully" << std::endl;
+        std::cout << color(green) << "Driver installed successfully" << std::endl;
 
         return (rebootRequired) ? ERROR_RESTART_APPLICATION : ERROR_SUCCESS;
     }
@@ -123,7 +156,9 @@ int main(int, char* argv[])
 
         if (INVALID_HANDLE_VALUE == key)
         {
-            std::cout << "Couldn't open Class key, error " << std::hex << GetLastError() << std::endl;
+            std::cout << color(red) <<
+                "Couldn't open Class key, error: "
+                << winapi::GetLastErrorStdStr() << std::endl;
             return GetLastError();
         }
 
@@ -160,6 +195,7 @@ int main(int, char* argv[])
             return ERROR_SUCCESS;
         }
 
+        classKey.Close();
         return ERROR_SUCCESS;
     }
 
@@ -169,7 +205,9 @@ int main(int, char* argv[])
 
         if (INVALID_HANDLE_VALUE == key)
         {
-            std::cout << "Couldn't open Class key, error " << std::hex << GetLastError() << std::endl;
+            std::cout << color(red) <<
+                "Couldn't open Class key, error: "
+                << winapi::GetLastErrorStdStr() << std::endl;
             return GetLastError();
         }
 
@@ -209,7 +247,9 @@ int main(int, char* argv[])
     std::cout << "  options:" << std::endl;
     std::cout << "    --enable-service          Register BthPS3 service on Bluetooth radio" << std::endl;
     std::cout << "    --disable-service         De-Register BthPS3 service on Bluetooth radio" << std::endl;
-    std::cout << "    --create-filter-device    Create virtual device node for filter driver" << std::endl;
+    std::cout << "    --create-filter-service   Create service for BthPS3PSM filter driver" << std::endl;
+    std::cout << "      --bin-path              Path to the SYS file to install" << std::endl;
+    std::cout << "    --delete-filter-service   Delete service for BthPS3PSM filter driver" << std::endl;
     std::cout << "    --install-driver          Invoke the installation of a given PNP driver" << std::endl;
     std::cout << "      --inf-path              Path to the INF file to install" << std::endl;
     std::cout << "      --force                 Force using this driver (even if older)" << std::endl;
@@ -282,5 +322,113 @@ exit1:
     CloseHandle(procToken);
 exit:
     return bRetVal;
+}
+
+BOOL winapi::CreateDriverService(PCSTR ServiceName, PCSTR DisplayName, PCSTR BinaryPath)
+{
+    SC_HANDLE hSCManager;
+    SC_HANDLE hService;
+    SERVICE_STATUS ss;
+
+    hSCManager = OpenSCManagerA(
+        nullptr,
+        nullptr,
+        SC_MANAGER_CREATE_SERVICE
+    );
+
+    if (!hSCManager) {
+        return FALSE;
+    }
+
+    hService = CreateServiceA(
+        hSCManager,
+        ServiceName,
+        DisplayName,
+        SERVICE_START | DELETE | SERVICE_STOP,
+        SERVICE_KERNEL_DRIVER,
+        SERVICE_DEMAND_START,
+        SERVICE_ERROR_IGNORE,
+        BinaryPath,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr
+    );
+
+    if (!hService)
+    {
+        CloseServiceHandle(hSCManager);
+        return FALSE;
+    }
+
+    CloseServiceHandle(hService);
+    CloseServiceHandle(hSCManager);
+
+    return TRUE;
+}
+
+BOOL winapi::DeleteDriverService(PCSTR ServiceName)
+{
+    SC_HANDLE hSCManager;
+    SC_HANDLE hService;
+    SERVICE_STATUS ss;
+    BOOL ret;
+
+    hSCManager = OpenSCManagerA(
+        nullptr,
+        nullptr,
+        SC_MANAGER_CREATE_SERVICE
+    );
+
+    if (!hSCManager) {
+        return FALSE;
+    }
+
+    hService = OpenServiceA(
+        hSCManager,
+        ServiceName,
+        SERVICE_START | DELETE | SERVICE_STOP
+    );
+
+    if (!hService) {
+        CloseServiceHandle(hSCManager);
+        return FALSE;
+    }
+
+    ret = DeleteService(hService);
+
+    CloseServiceHandle(hService);
+    CloseServiceHandle(hSCManager);
+
+    return ret;
+}
+
+std::string winapi::GetLastErrorStdStr()
+{
+    DWORD error = GetLastError();
+    if (error)
+    {
+        LPVOID lpMsgBuf;
+        DWORD bufLen = FormatMessageA(
+            FORMAT_MESSAGE_ALLOCATE_BUFFER |
+            FORMAT_MESSAGE_FROM_SYSTEM |
+            FORMAT_MESSAGE_IGNORE_INSERTS,
+            nullptr,
+            error,
+            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+            (LPSTR)&lpMsgBuf,
+            0, nullptr);
+        if (bufLen)
+        {
+            auto lpMsgStr = (LPCSTR)lpMsgBuf;
+            std::string result(lpMsgStr, lpMsgStr + bufLen);
+
+            LocalFree(lpMsgBuf);
+
+            return result;
+        }
+    }
+    return std::string();
 }
 

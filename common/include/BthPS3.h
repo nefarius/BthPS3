@@ -28,6 +28,7 @@ DEFINE_GUID(GUID_DEVINTERFACE_BTHPS3PSM,
 // {1e1f8b68-eaa2-4d19-8b02-e8b0916c77db}
 
 extern __declspec(selectany) PCWSTR BthPS3FilterName = L"BthPS3PSM";
+extern __declspec(selectany) PCSTR BthPS3FilterServiceName = "BthPS3PSM";
 extern __declspec(selectany) PCWSTR BthPS3ServiceName = L"BthPS3Service";
 
 // 0x11 -> 0x5053

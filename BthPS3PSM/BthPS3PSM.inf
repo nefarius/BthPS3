@@ -74,5 +74,5 @@ KmdfLibraryVersion = $KMDFVERSION$
 SPSVCINST_ASSOCSERVICE= 0x00000002
 ManufacturerName="Nefarius Software Solutions e.U."
 DiskName = "BthPS3PSM Installation Disk"
-BthPS3PSM.DeviceDesc = "PlayStation 3 Bluetooth Filter Device"
-BthPS3PSM.SVCDESC = "PlayStation 3 Bluetooth Filter Service"
+BthPS3PSM.DeviceDesc = "PlayStation(R) 3 Bluetooth Filter Device"
+BthPS3PSM.SVCDESC = "PlayStation(R) 3 Bluetooth Filter Service"

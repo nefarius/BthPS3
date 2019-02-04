@@ -23,6 +23,10 @@
 #include <bthdef.h>
 #include <ntintsafe.h>
 
+
+//
+// Gets called when URB_FUNCTION_SELECT_CONFIGURATION is coming our way
+// 
 NTSTATUS
 ProxyUrbSelectConfiguration(
     PURB Urb,

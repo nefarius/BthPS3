@@ -272,6 +272,8 @@ int main(int, char* argv[])
         return EXIT_SUCCESS;
     }
 
+#pragma region Print usage
+
     std::cout << "usage: .\\BthPS3Util [options]" << std::endl << std::endl;
     std::cout << "  options:" << std::endl;
     std::cout << "    --enable-service          Register BthPS3 service on Bluetooth radio" << std::endl;
@@ -288,6 +290,8 @@ int main(int, char* argv[])
     std::cout << "                                Note: required only for testing and debugging" << std::endl;
     std::cout << "    -v, --version             Display version of this utility" << std::endl;
     std::cout << std::endl;
+
+#pragma endregion
 
     return EXIT_FAILURE;
 }

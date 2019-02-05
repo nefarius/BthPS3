@@ -182,6 +182,47 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
 #pragma endregion
 
     case IOCTL_BTHPS3_HID_INTERRUPT_READ:
+
+        status = WdfRequestRetrieveOutputBuffer(
+            Request,
+            sizeof(BTHPS3_HID_INTERRUPT_READ),
+            (PVOID)&pInterruptRead,
+            &length
+        );
+
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_QUEUE,
+                "WdfRequestRetrieveOutputBuffer failed with status %!STATUS!",
+                status
+            );
+            break;
+        }
+
+        if (pInterruptRead->Size != sizeof(BTHPS3_HID_INTERRUPT_READ)) {
+            status = STATUS_INVALID_PARAMETER;
+            break;
+        }
+
+        status = L2CAP_PS3_ReadInterruptTransferAsync(
+            clientConnection,
+            pInterruptRead->Buffer,
+            pInterruptRead->BufferLength,
+            L2CAP_PS3_ReadInterruptTransferCompleted,
+            Request // TODO: is this safe to do?
+        );
+
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_QUEUE,
+                "L2CAP_PS3_ReadInterruptTransferAsync failed with status %!STATUS!",
+                status
+            );
+            break;
+        }
+
+        status = STATUS_PENDING;
+
         break;
 
 #pragma region IOCTL_BTHPS3_HID_INTERRUPT_WRITE
@@ -239,7 +280,9 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
         break;
     }
 
-    WdfRequestComplete(Request, status);
+    if (status != STATUS_PENDING) {
+        WdfRequestComplete(Request, status);
+    }
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_QUEUE, "%!FUNC! Exit");
 }

@@ -169,6 +169,14 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
             pControlWrite->BufferLength
         );
 
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_QUEUE,
+                "L2CAP_PS3_SendControlTransferSync failed with status %!STATUS!",
+                status
+            );
+        }
+
         break;
 
 #pragma endregion
@@ -209,6 +217,14 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
             pInterruptWrite->Buffer,
             pInterruptWrite->BufferLength
         );
+
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_QUEUE,
+                "L2CAP_PS3_SendInterruptTransferSync failed with status %!STATUS!",
+                status
+            );
+        }
 
         break;
 

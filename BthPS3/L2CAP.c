@@ -1027,6 +1027,84 @@ L2CAP_PS3_SendControlTransferSync(
     return status;
 }
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
+NTSTATUS
+L2CAP_PS3_SendInterruptTransferSync(
+    PBTHPS3_CLIENT_CONNECTION ClientConnection,
+    PVOID Buffer,
+    size_t BufferLength
+)
+{
+    NTSTATUS status;
+    struct _BRB_L2CA_ACL_TRANSFER* brb = NULL;
+    WDFREQUEST brbSyncRequest = NULL;
+
+    //
+    // Allocate request
+    // 
+    status = WdfRequestCreate(
+        WDF_NO_OBJECT_ATTRIBUTES,
+        ClientConnection->DevCtxHdr->IoTarget,
+        &brbSyncRequest);
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_L2CAP,
+            "WdfRequestCreate failed with status %!STATUS!",
+            status
+        );
+
+        return status;
+    }
+
+    //
+    // Allocate BRB
+    // 
+    brb = (struct _BRB_L2CA_ACL_TRANSFER*)
+        ClientConnection->DevCtxHdr->ProfileDrvInterface.BthAllocateBrb(
+            BRB_L2CA_ACL_TRANSFER,
+            POOLTAG_BTHPS3
+        );
+
+    if (brb == NULL)
+    {
+        WdfObjectDelete(brbSyncRequest);
+        return STATUS_INSUFFICIENT_RESOURCES;
+    }
+
+    //
+    // Set channel properties
+    // 
+    brb->BtAddress = ClientConnection->RemoteAddress;
+    brb->ChannelHandle = ClientConnection->HidInterruptChannel.ChannelHandle;
+    brb->TransferFlags = ACL_TRANSFER_DIRECTION_OUT;
+    brb->BufferMDL = NULL;
+    brb->Buffer = Buffer;
+    brb->BufferSize = (ULONG)BufferLength;
+
+    //
+    // Submit request
+    // 
+    status = BthPS3_SendBrbSynchronously(
+        ClientConnection->DevCtxHdr->IoTarget,
+        brbSyncRequest,
+        (PBRB)brb,
+        sizeof(*brb)
+    );
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, TRACE_L2CAP,
+            "BthPS3_SendBrbSynchronously failed with status %!STATUS!", status);
+    }
+
+    ClientConnection->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+    WdfObjectDelete(brbSyncRequest);
+
+    return status;
+}
+
 //
 // Request sent to HID control channel got completed
 // 

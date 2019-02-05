@@ -109,7 +109,6 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
     UNREFERENCED_PARAMETER(InputBufferLength);
 
     UNREFERENCED_PARAMETER(pInterruptRead);
-    UNREFERENCED_PARAMETER(pInterruptWrite);
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_QUEUE, "%!FUNC! Entry");
 
@@ -136,6 +135,8 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
 
     switch (IoControlCode)
     {
+#pragma region IOCTL_BTHPS3_HID_CONTROL_WRITE
+
     case IOCTL_BTHPS3_HID_CONTROL_WRITE:
 
         status = WdfRequestRetrieveInputBuffer(
@@ -169,10 +170,50 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
         );
 
         break;
+
+#pragma endregion
+
     case IOCTL_BTHPS3_HID_INTERRUPT_READ:
         break;
+
+#pragma region IOCTL_BTHPS3_HID_INTERRUPT_WRITE
+
     case IOCTL_BTHPS3_HID_INTERRUPT_WRITE:
+
+        status = WdfRequestRetrieveInputBuffer(
+            Request,
+            sizeof(BTHPS3_HID_INTERRUPT_WRITE),
+            (PVOID)&pInterruptWrite,
+            &length
+        );
+
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_QUEUE,
+                "WdfRequestRetrieveInputBuffer failed with status %!STATUS!",
+                status
+            );
+            break;
+        }
+
+        if (pInterruptWrite->Size != sizeof(BTHPS3_HID_INTERRUPT_WRITE)) {
+            status = STATUS_INVALID_PARAMETER;
+            break;
+        }
+
+        //
+        // TODO: is it OK to call sync in this context?
+        // 
+        status = L2CAP_PS3_SendInterruptTransferSync(
+            clientConnection,
+            pInterruptWrite->Buffer,
+            pInterruptWrite->BufferLength
+        );
+
         break;
+
+#pragma endregion
+
     default:
         TraceEvents(TRACE_LEVEL_WARNING,
             TRACE_QUEUE,

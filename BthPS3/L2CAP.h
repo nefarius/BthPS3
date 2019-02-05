@@ -87,4 +87,12 @@ L2CAP_PS3_SendControlTransferSync(
     size_t BufferLength
 );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
+NTSTATUS
+L2CAP_PS3_SendInterruptTransferSync(
+    PBTHPS3_CLIENT_CONNECTION ClientConnection,
+    PVOID Buffer,
+    size_t BufferLength
+);
+
 EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_ControlTransferCompleted;

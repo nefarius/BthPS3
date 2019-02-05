@@ -1,4 +1,4 @@
-; BthPS3 - Windows kernel-mode Bluetooth profile and bus driver
+; BthPS3PSM - Windows kernel-mode BTHUSB lower filter driver
 ; Copyright (C) 2018-2019  Nefarius Software Solutions e.U. and Contributors
 ;
 ; This program is free software: you can redistribute it and/or modify

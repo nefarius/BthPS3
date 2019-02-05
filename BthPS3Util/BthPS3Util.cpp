@@ -180,6 +180,11 @@ int main(int, char* argv[])
         {
             classKey.SetMultiStringValue(LOWER_FILTERS, { BthPS3FilterName });
             classKey.Close();
+
+            std::cout << color(yellow) << 
+                "Filter enabled. Reconnect affected devices or reboot system to apply changes!" 
+                << std::endl;
+
             return EXIT_SUCCESS;
         }
 
@@ -192,10 +197,20 @@ int main(int, char* argv[])
             lowerFilters.emplace_back(BthPS3FilterName);
             classKey.SetMultiStringValue(LOWER_FILTERS, lowerFilters);
             classKey.Close();
+
+            std::cout << color(yellow) <<
+                "Filter enabled. Reconnect affected devices or reboot system to apply changes!"
+                << std::endl;
+
             return EXIT_SUCCESS;
         }
 
         classKey.Close();
+
+        std::cout << color(green) <<
+            "Filter already enabled. No changes were made"
+            << std::endl;
+
         return ERROR_SUCCESS;
     }
 
@@ -236,10 +251,20 @@ int main(int, char* argv[])
                 lowerFilters.end());
             classKey.SetMultiStringValue(LOWER_FILTERS, lowerFilters);
             classKey.Close();
+
+            std::cout << color(yellow) <<
+                "Filter disabled. Reconnect affected devices or reboot system to apply changes!"
+                << std::endl;
+
             return EXIT_SUCCESS;
         }
 
         classKey.Close();
+
+        std::cout << color(green) <<
+            "Filter already disabled. No changes were made"
+            << std::endl;
+
         return EXIT_SUCCESS;
     }
 

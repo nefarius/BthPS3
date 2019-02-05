@@ -48,7 +48,7 @@ int main(int, char* argv[])
 
         std::cout << color(green) << "Service enabled successfully" << std::endl;
 
-        return ERROR_SUCCESS;
+        return EXIT_SUCCESS;
     }
 
     if (cmdl[{ "--disable-service" }])
@@ -78,7 +78,7 @@ int main(int, char* argv[])
 
         std::cout << color(green) << "Service disabled successfully" << std::endl;
 
-        return ERROR_SUCCESS;
+        return EXIT_SUCCESS;
     }
 
     if (cmdl[{ "--create-filter-service" }])
@@ -139,7 +139,7 @@ int main(int, char* argv[])
 
         if (!ret)
         {
-            std::cout << color(red) << 
+            std::cout << color(red) <<
                 "Failed to install driver, error: "
                 << winapi::GetLastErrorStdStr() << std::endl;
             return GetLastError();
@@ -147,7 +147,7 @@ int main(int, char* argv[])
 
         std::cout << color(green) << "Driver installed successfully" << std::endl;
 
-        return (rebootRequired) ? ERROR_RESTART_APPLICATION : ERROR_SUCCESS;
+        return (rebootRequired) ? ERROR_RESTART_APPLICATION : EXIT_SUCCESS;
     }
 
     if (cmdl[{ "--enable-filter" }])
@@ -180,7 +180,7 @@ int main(int, char* argv[])
         {
             classKey.SetMultiStringValue(LOWER_FILTERS, { BthPS3FilterName });
             classKey.Close();
-            return ERROR_SUCCESS;
+            return EXIT_SUCCESS;
         }
 
         //
@@ -192,7 +192,7 @@ int main(int, char* argv[])
             lowerFilters.emplace_back(BthPS3FilterName);
             classKey.SetMultiStringValue(LOWER_FILTERS, lowerFilters);
             classKey.Close();
-            return ERROR_SUCCESS;
+            return EXIT_SUCCESS;
         }
 
         classKey.Close();
@@ -236,11 +236,40 @@ int main(int, char* argv[])
                 lowerFilters.end());
             classKey.SetMultiStringValue(LOWER_FILTERS, lowerFilters);
             classKey.Close();
-            return ERROR_SUCCESS;
+            return EXIT_SUCCESS;
         }
 
         classKey.Close();
-        return ERROR_SUCCESS;
+        return EXIT_SUCCESS;
+    }
+
+    if (cmdl[{ "--create-filter-device" }])
+    {
+        auto ret = devcon::create(
+            L"System",
+            &GUID_DEVCLASS_SYSTEM,
+            L"Nefarius\\{a3dc6d41-9e10-46d9-8be2-9b4a279841df}\0\0"
+        );
+
+        if (!ret)
+        {
+            std::cout << color(red) <<
+                "Failed to create device, error: "
+                << winapi::GetLastErrorStdStr() << std::endl;
+            return GetLastError();
+        }
+
+        std::cout << color(green) << "Device node created successfully" << std::endl;
+        return EXIT_SUCCESS;
+    }
+
+    if (cmdl[{ "-v", "--version" }])
+    {
+        std::cout << "BthPS3Util by version " << 
+            winapi::GetVersionFromFile(winapi::GetImageBasePath()) 
+            << " (C) Nefarius Software Solutions e.U."
+            << std::endl;
+        return EXIT_SUCCESS;
     }
 
     std::cout << "usage: .\\BthPS3Util [options]" << std::endl << std::endl;
@@ -248,17 +277,19 @@ int main(int, char* argv[])
     std::cout << "    --enable-service          Register BthPS3 service on Bluetooth radio" << std::endl;
     std::cout << "    --disable-service         De-Register BthPS3 service on Bluetooth radio" << std::endl;
     std::cout << "    --create-filter-service   Create service for BthPS3PSM filter driver" << std::endl;
-    std::cout << "      --bin-path              Path to the SYS file to install" << std::endl;
+    std::cout << "      --bin-path              Path to the SYS file to install (required)" << std::endl;
     std::cout << "    --delete-filter-service   Delete service for BthPS3PSM filter driver" << std::endl;
     std::cout << "    --install-driver          Invoke the installation of a given PNP driver" << std::endl;
-    std::cout << "      --inf-path              Path to the INF file to install" << std::endl;
-    std::cout << "      --force                 Force using this driver (even if older)" << std::endl;
+    std::cout << "      --inf-path              Path to the INF file to install (required)" << std::endl;
+    std::cout << "      --force                 Force using this driver even if lower ranked (optional)" << std::endl;
     std::cout << "    --enable-filter           Register BthPS3PSM as lower filter for Bluetooth Class" << std::endl;
     std::cout << "    --disable-filter          De-Register BthPS3PSM as lower filter for Bluetooth Class" << std::endl;
+    std::cout << "    --create-filter-device    Create virtual device node for filter driver" << std::endl;
+    std::cout << "                                Note: required only for testing and debugging" << std::endl;
     std::cout << "    -v, --version             Display version of this utility" << std::endl;
     std::cout << std::endl;
 
-    return ERROR_INVALID_PARAMETER;
+    return EXIT_FAILURE;
 }
 
 BOOL winapi::AdjustProcessPrivileges()
@@ -432,3 +463,51 @@ std::string winapi::GetLastErrorStdStr()
     return std::string();
 }
 
+std::string winapi::GetVersionFromFile(std::string FilePath)
+{
+    DWORD  verHandle = 0;
+    UINT   size = 0;
+    LPBYTE lpBuffer = nullptr;
+    DWORD  verSize = GetFileVersionInfoSizeA(FilePath.c_str(), &verHandle);
+    std::stringstream versionString;
+
+    if (verSize != NULL)
+    {
+        auto verData = new char[verSize];
+
+        if (GetFileVersionInfoA(FilePath.c_str(), verHandle, verSize, verData))
+        {
+            if (VerQueryValueA(verData, "\\", (VOID FAR* FAR*)&lpBuffer, &size))
+            {
+                if (size)
+                {
+                    auto *verInfo = (VS_FIXEDFILEINFO *)lpBuffer;
+                    if (verInfo->dwSignature == 0xfeef04bd)
+                    {
+                        versionString
+                            << static_cast<ULONG>(HIWORD(verInfo->dwProductVersionMS)) << "."
+                            << static_cast<ULONG>(LOWORD(verInfo->dwProductVersionMS)) << "."
+                            << static_cast<ULONG>(HIWORD(verInfo->dwProductVersionLS)) << "."
+                            << static_cast<ULONG>(LOWORD(verInfo->dwProductVersionLS));
+                    }
+                }
+            }
+        }
+        delete[] verData;
+    }
+
+    return versionString.str();
+}
+
+std::string winapi::GetImageBasePath()
+{
+    char myPath[MAX_PATH + 1] = { 0 };
+
+    GetModuleFileNameA(
+        reinterpret_cast<HINSTANCE>(&__ImageBase),
+        myPath,
+        MAX_PATH + 1
+    );
+
+    return std::string(myPath);
+}

@@ -48,6 +48,8 @@
 
 #include "Devcon.h"
 
+EXTERN_C IMAGE_DOS_HEADER __ImageBase;
+
 namespace winapi
 {
     BOOL AdjustProcessPrivileges();
@@ -57,4 +59,8 @@ namespace winapi
     BOOL DeleteDriverService(PCSTR ServiceName);
 
     std::string GetLastErrorStdStr();
+
+    std::string GetVersionFromFile(std::string FilePath);
+
+    std::string GetImageBasePath();
 };

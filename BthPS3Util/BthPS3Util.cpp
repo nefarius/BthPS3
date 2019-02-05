@@ -21,6 +21,8 @@ int main(int, char* argv[])
     BLUETOOTH_LOCAL_SERVICE_INFO SvcInfo = { 0 };
     wcscpy_s(SvcInfo.szName, sizeof(SvcInfo.szName) / sizeof(WCHAR), BthPS3ServiceName);
 
+#pragma region BTHENUM Profile Driver actions
+
     if (cmdl[{ "--enable-service" }])
     {
         if (FALSE == winapi::AdjustProcessPrivileges())
@@ -81,6 +83,10 @@ int main(int, char* argv[])
         return EXIT_SUCCESS;
     }
 
+#pragma endregion
+
+#pragma region BthPS3PSM Lower Filter Driver actions
+
     if (cmdl[{ "--create-filter-service" }])
     {
         if (!(cmdl({ "--bin-path" }) >> binPath)) {
@@ -122,34 +128,6 @@ int main(int, char* argv[])
         return EXIT_SUCCESS;
     }
 
-    if (cmdl[{ "--install-driver" }])
-    {
-        if (!(cmdl({ "--inf-path" }) >> infPath)) {
-            std::cout << color(red) << "INF path missing" << std::endl;
-            return EXIT_FAILURE;
-        }
-
-        BOOL rebootRequired;
-        auto ret = DiInstallDriverA(
-            nullptr,
-            infPath.c_str(),
-            (cmdl[{ "--force" }]) ? DIIRFLAG_FORCE_INF : 0,
-            &rebootRequired
-        );
-
-        if (!ret)
-        {
-            std::cout << color(red) <<
-                "Failed to install driver, error: "
-                << winapi::GetLastErrorStdStr() << std::endl;
-            return GetLastError();
-        }
-
-        std::cout << color(green) << "Driver installed successfully" << std::endl;
-
-        return (rebootRequired) ? ERROR_RESTART_APPLICATION : EXIT_SUCCESS;
-    }
-
     if (cmdl[{ "--enable-filter" }])
     {
         auto key = SetupDiOpenClassRegKey(&GUID_DEVCLASS_BLUETOOTH, KEY_ALL_ACCESS);
@@ -181,8 +159,8 @@ int main(int, char* argv[])
             classKey.SetMultiStringValue(LOWER_FILTERS, { BthPS3FilterName });
             classKey.Close();
 
-            std::cout << color(yellow) << 
-                "Filter enabled. Reconnect affected devices or reboot system to apply changes!" 
+            std::cout << color(yellow) <<
+                "Filter enabled. Reconnect affected devices or reboot system to apply changes!"
                 << std::endl;
 
             return EXIT_SUCCESS;
@@ -288,14 +266,52 @@ int main(int, char* argv[])
         return EXIT_SUCCESS;
     }
 
+#pragma endregion
+
+#pragma region Generic driver installer
+
+    if (cmdl[{ "--install-driver" }])
+    {
+        if (!(cmdl({ "--inf-path" }) >> infPath)) {
+            std::cout << color(red) << "INF path missing" << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        BOOL rebootRequired;
+        auto ret = DiInstallDriverA(
+            nullptr,
+            infPath.c_str(),
+            (cmdl[{ "--force" }]) ? DIIRFLAG_FORCE_INF : 0,
+            &rebootRequired
+        );
+
+        if (!ret)
+        {
+            std::cout << color(red) <<
+                "Failed to install driver, error: "
+                << winapi::GetLastErrorStdStr() << std::endl;
+            return GetLastError();
+        }
+
+        std::cout << color(green) << "Driver installed successfully" << std::endl;
+
+        return (rebootRequired) ? ERROR_RESTART_APPLICATION : EXIT_SUCCESS;
+    }
+
+#pragma endregion
+
+#pragma region Misc. actions
+
     if (cmdl[{ "-v", "--version" }])
     {
-        std::cout << "BthPS3Util by version " << 
-            winapi::GetVersionFromFile(winapi::GetImageBasePath()) 
+        std::cout << "BthPS3Util by version " <<
+            winapi::GetVersionFromFile(winapi::GetImageBasePath())
             << " (C) Nefarius Software Solutions e.U."
             << std::endl;
         return EXIT_SUCCESS;
     }
+
+#pragma endregion
 
 #pragma region Print usage
 

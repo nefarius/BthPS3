@@ -143,7 +143,6 @@ OutputReport_EvtTimerFunc(
     };
 
     static BOOLEAN toggle = FALSE;
-    //static ULONG counter = 0;
 
     toggle = !toggle;
     G_Ds3HidOutputReport[11] = (toggle) ? 0x02 : 0x04;

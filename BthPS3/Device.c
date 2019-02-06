@@ -103,6 +103,14 @@ BthPS3_CreateDevice(
         goto exit;
     }
 
+    status = BthPS3QueueInitialize(device);
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, TRACE_DEVICE,
+            "BthPS3QueueInitialize failed with status %!STATUS!", status);
+        goto exit;
+    }
+
     //
     // Query for interfaces and pre-allocate BRBs
     //

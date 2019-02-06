@@ -351,6 +351,8 @@ InputReport_EvtTimerFunc(
         &MemoryHandle,
         &buffer);
 
+    RtlZeroMemory(buffer, 0x27);
+
     WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(&MemoryDescriptor,
         MemoryHandle,
         NULL);
@@ -362,10 +364,8 @@ InputReport_EvtTimerFunc(
         NULL,
         &MemoryDescriptor,
         NULL,
-        NULL
+        &bufferLength
     );
-
-    buffer = WdfMemoryGetBuffer(MemoryHandle, &bufferLength);
 
     TraceDumpBuffer(buffer, (ULONG)bufferLength);
 
@@ -380,7 +380,7 @@ InputReport_EvtTimerFunc(
         return;
     }
 
-    WdfTimerStart(devCtx->OutputReportTimer, WDF_REL_TIMEOUT_IN_MS(0x01F4));
+    WdfTimerStart(devCtx->InputReportTimer, WDF_REL_TIMEOUT_IN_MS(0x01F4));
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Exit");
 }

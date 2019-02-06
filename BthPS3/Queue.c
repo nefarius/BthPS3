@@ -192,6 +192,8 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
             (ULONG)bufferLength
         );
 
+        if (TRUE) break;
+
         status = L2CAP_PS3_ReadInterruptTransferAsync(
             clientConnection,
             buffer,

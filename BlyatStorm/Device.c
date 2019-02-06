@@ -142,14 +142,31 @@ OutputReport_EvtTimerFunc(
     0x00, 0x00
     };
 
+    PBTHPS3_HID_CONTROL_WRITE controlWrite;
     NTSTATUS status;
-    WDF_MEMORY_DESCRIPTOR  MemoryDescriptor;
 
-    WDF_MEMORY_DESCRIPTOR_INIT_BUFFER(
-        &MemoryDescriptor,
-        (PVOID)G_Ds3HidOutputReport,
-        0x32
+    WDF_MEMORY_DESCRIPTOR  MemoryDescriptor;
+    WDFMEMORY  MemoryHandle = NULL;
+    status = WdfMemoryCreate(NULL,
+        NonPagedPool,
+        'aylB',
+        sizeof(BTHPS3_HID_CONTROL_WRITE),
+        &MemoryHandle,
+        &controlWrite);
+
+    BTHPS3_HID_CONTROL_WRITE_INIT(controlWrite);
+
+    controlWrite->BufferLength = 0x32;
+    controlWrite->Buffer = ExAllocatePoolWithTag(
+        NonPagedPoolNx,
+        0x32,
+        'aylB'
     );
+    RtlCopyMemory(controlWrite->Buffer, G_Ds3HidOutputReport, 0x32);
+
+    WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(&MemoryDescriptor,
+        MemoryHandle,
+        NULL);
 
     status = WdfIoTargetSendInternalIoctlSynchronously(
         ioTarget,
@@ -160,6 +177,8 @@ OutputReport_EvtTimerFunc(
         NULL,
         NULL
     );
+
+    ExFreePoolWithTag(controlWrite->Buffer, 'aylB');
 
     if (!NT_SUCCESS(status)) {
         TraceEvents(TRACE_LEVEL_ERROR,

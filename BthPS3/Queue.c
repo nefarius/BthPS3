@@ -99,14 +99,8 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
     WDFDEVICE device = NULL;
     PBTHPS3_SERVER_CONTEXT deviceCtx = NULL;
     PBTHPS3_CLIENT_CONNECTION clientConnection = NULL;
-    size_t length = 0;
-
-    PBTHPS3_HID_CONTROL_WRITE pControlWrite = NULL;
-    PBTHPS3_HID_INTERRUPT_READ pInterruptRead = NULL;
-    PBTHPS3_HID_INTERRUPT_WRITE pInterruptWrite = NULL;
-
-    UNREFERENCED_PARAMETER(OutputBufferLength);
-    UNREFERENCED_PARAMETER(InputBufferLength);
+    PVOID buffer = NULL;
+    size_t bufferLength = 0;
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_QUEUE, "%!FUNC! Entry");
 
@@ -139,9 +133,9 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
 
         status = WdfRequestRetrieveInputBuffer(
             Request,
-            sizeof(BTHPS3_HID_CONTROL_WRITE),
-            (PVOID)&pControlWrite,
-            &length
+            InputBufferLength,
+            &buffer,
+            &bufferLength
         );
 
         if (!NT_SUCCESS(status)) {
@@ -153,18 +147,13 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
             break;
         }
 
-        if (pControlWrite->Size != sizeof(BTHPS3_HID_CONTROL_WRITE)) {
-            status = STATUS_INVALID_BUFFER_SIZE;
-            break;
-        }
-
         //
         // TODO: is it OK to call sync in this context?
         // 
         status = L2CAP_PS3_SendControlTransferSync(
             clientConnection,
-            pControlWrite->Buffer,
-            pControlWrite->BufferLength
+            buffer,
+            bufferLength
         );
 
         if (!NT_SUCCESS(status)) {
@@ -183,9 +172,9 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
 
         status = WdfRequestRetrieveOutputBuffer(
             Request,
-            sizeof(BTHPS3_HID_INTERRUPT_READ),
-            (PVOID)&pInterruptRead,
-            &length
+            OutputBufferLength,
+            &buffer,
+            &bufferLength
         );
 
         if (!NT_SUCCESS(status)) {
@@ -199,27 +188,14 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
 
         TraceEvents(TRACE_LEVEL_ERROR,
             TRACE_QUEUE,
-            "BufferLength: %d",
-            pInterruptRead->BufferLength
+            "bufferLength: %d",
+            (ULONG)bufferLength
         );
-
-        if (pInterruptRead->Size != sizeof(BTHPS3_HID_INTERRUPT_READ)) {
-            TraceEvents(TRACE_LEVEL_ERROR,
-                TRACE_QUEUE,
-                "Buffer size mismatch: %d != %d (%d, %d)",
-                pInterruptRead->Size,
-                sizeof(BTHPS3_HID_INTERRUPT_READ),
-                (ULONG)OutputBufferLength,
-                (ULONG)length
-            );
-            status = STATUS_INVALID_BUFFER_SIZE;
-            break;
-        }
 
         status = L2CAP_PS3_ReadInterruptTransferAsync(
             clientConnection,
-            pInterruptRead->Buffer,
-            pInterruptRead->BufferLength,
+            buffer,
+            bufferLength,
             L2CAP_PS3_ReadInterruptTransferCompleted,
             Request // TODO: is this safe to do?
         );
@@ -243,9 +219,9 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
 
         status = WdfRequestRetrieveInputBuffer(
             Request,
-            sizeof(BTHPS3_HID_INTERRUPT_WRITE),
-            (PVOID)&pInterruptWrite,
-            &length
+            InputBufferLength,
+            &buffer,
+            &bufferLength
         );
 
         if (!NT_SUCCESS(status)) {
@@ -257,18 +233,13 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
             break;
         }
 
-        if (pInterruptWrite->Size != sizeof(BTHPS3_HID_INTERRUPT_WRITE)) {
-            status = STATUS_INVALID_BUFFER_SIZE;
-            break;
-        }
-
         //
         // TODO: is it OK to call sync in this context?
         // 
         status = L2CAP_PS3_SendInterruptTransferSync(
             clientConnection,
-            pInterruptWrite->Buffer,
-            pInterruptWrite->BufferLength
+            buffer,
+            bufferLength
         );
 
         if (!NT_SUCCESS(status)) {

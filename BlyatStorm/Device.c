@@ -223,27 +223,18 @@ OutputReport_EvtTimerFunc(
     toggle = !toggle;
     G_Ds3HidOutputReport[11] = (toggle) ? 0x02 : 0x04;
 
-    PBTHPS3_HID_CONTROL_WRITE controlWrite;
     NTSTATUS status;
-
+    PVOID buffer = NULL;
     WDF_MEMORY_DESCRIPTOR  MemoryDescriptor;
     WDFMEMORY  MemoryHandle = NULL;
     status = WdfMemoryCreate(NULL,
         NonPagedPool,
         'aylB',
-        sizeof(BTHPS3_HID_CONTROL_WRITE),
+        0x32,
         &MemoryHandle,
-        &controlWrite);
+        &buffer);
 
-    BTHPS3_HID_CONTROL_WRITE_INIT(controlWrite);
-
-    controlWrite->BufferLength = 0x32;
-    controlWrite->Buffer = ExAllocatePoolWithTag(
-        NonPagedPoolNx,
-        controlWrite->BufferLength,
-        'aylB'
-    );
-    RtlCopyMemory(controlWrite->Buffer, G_Ds3HidOutputReport, controlWrite->BufferLength);
+    RtlCopyMemory(buffer, G_Ds3HidOutputReport, 0x32);
 
     WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(&MemoryDescriptor,
         MemoryHandle,
@@ -259,7 +250,7 @@ OutputReport_EvtTimerFunc(
         NULL
     );
 
-    ExFreePoolWithTag(controlWrite->Buffer, 'aylB');
+    WdfObjectDelete(MemoryHandle);
 
     if (!NT_SUCCESS(status)) {
         TraceEvents(TRACE_LEVEL_ERROR,
@@ -287,31 +278,24 @@ Init_EvtTimerFunc(
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Entry");
 
+    UNREFERENCED_PARAMETER(devCtx);
+
     BYTE hidCommandEnable[] = {
             0x53, 0xF4, 0x42, 0x03, 0x00, 0x00
     };
 
-    PBTHPS3_HID_CONTROL_WRITE controlWrite;
     NTSTATUS status;
-
+    PVOID buffer = NULL;
     WDF_MEMORY_DESCRIPTOR  MemoryDescriptor;
     WDFMEMORY  MemoryHandle = NULL;
     status = WdfMemoryCreate(NULL,
         NonPagedPool,
         'aylB',
-        sizeof(BTHPS3_HID_CONTROL_WRITE),
+        0x06,
         &MemoryHandle,
-        &controlWrite);
+        &buffer);
 
-    BTHPS3_HID_CONTROL_WRITE_INIT(controlWrite);
-
-    controlWrite->BufferLength = 0x06;
-    controlWrite->Buffer = ExAllocatePoolWithTag(
-        NonPagedPoolNx,
-        controlWrite->BufferLength,
-        'aylB'
-    );
-    RtlCopyMemory(controlWrite->Buffer, hidCommandEnable, controlWrite->BufferLength);
+    RtlCopyMemory(buffer, hidCommandEnable, 0x06);
 
     WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(&MemoryDescriptor,
         MemoryHandle,
@@ -327,7 +311,7 @@ Init_EvtTimerFunc(
         NULL
     );
 
-    ExFreePoolWithTag(controlWrite->Buffer, 'aylB');
+    WdfObjectDelete(MemoryHandle);
 
     if (!NT_SUCCESS(status)) {
         TraceEvents(TRACE_LEVEL_ERROR,
@@ -356,40 +340,36 @@ InputReport_EvtTimerFunc(
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Entry");
 
     NTSTATUS status;
-    WDF_MEMORY_DESCRIPTOR output_descriptor;
-    PVOID buffer = ExAllocatePoolWithTag(
-        NonPagedPoolNx,
-        sizeof(BTHPS3_HID_INTERRUPT_READ),
-        'aylB'
-    );
+    PVOID buffer = NULL;
+    size_t bufferLength = 0;
+    WDF_MEMORY_DESCRIPTOR  MemoryDescriptor;
+    WDFMEMORY  MemoryHandle = NULL;
+    status = WdfMemoryCreate(NULL,
+        NonPagedPool,
+        'aylB',
+        0x27,
+        &MemoryHandle,
+        &buffer);
 
-    WDF_MEMORY_DESCRIPTOR_INIT_BUFFER(
-        &output_descriptor,
-        buffer,
-        sizeof(BTHPS3_HID_INTERRUPT_READ)
-    );
-
-    //interruptRead.BufferLength = 0x27;
-    //interruptRead.Buffer = ExAllocatePoolWithTag(
-    //    NonPagedPoolNx,
-    //    interruptRead.BufferLength,
-    //    'aylB'
-    //);
+    WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(&MemoryDescriptor,
+        MemoryHandle,
+        NULL);
 
     status = WdfIoTargetSendInternalIoctlSynchronously(
         ioTarget,
         NULL,
         IOCTL_BTHPS3_HID_INTERRUPT_READ,
         NULL,
-        &output_descriptor,
+        &MemoryDescriptor,
         NULL,
         NULL
     );
 
-    //TraceDumpBuffer(interruptRead.Buffer, interruptRead.BufferLength);
+    buffer = WdfMemoryGetBuffer(MemoryHandle, &bufferLength);
 
-    //ExFreePoolWithTag(interruptRead.Buffer, 'aylB');
-    ExFreePoolWithTag(buffer, 'aylB');
+    TraceDumpBuffer(buffer, (ULONG)bufferLength);
+
+    WdfObjectDelete(MemoryHandle);
 
     if (!NT_SUCCESS(status)) {
         TraceEvents(TRACE_LEVEL_ERROR,
@@ -400,7 +380,7 @@ InputReport_EvtTimerFunc(
         return;
     }
 
-    WdfTimerStart(devCtx->InputReportTimer, WDF_REL_TIMEOUT_IN_MS(0x0A));
+    WdfTimerStart(devCtx->OutputReportTimer, WDF_REL_TIMEOUT_IN_MS(0x01F4));
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Exit");
 }

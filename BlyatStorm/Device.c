@@ -132,7 +132,7 @@ OutputReport_EvtTimerFunc(
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Entry");
 
-    const UCHAR G_Ds3HidOutputReport[] = {
+    static UCHAR G_Ds3HidOutputReport[] = {
     0x52, 0x01, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x1E, 0xFF, 0x27, 0x10, 0x00,
     0x32, 0xFF, 0x27, 0x10, 0x00, 0x32, 0xFF, 0x27,
@@ -141,6 +141,12 @@ OutputReport_EvtTimerFunc(
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00
     };
+
+    static BOOLEAN toggle = FALSE;
+    //static ULONG counter = 0;
+
+    toggle = !toggle;
+    G_Ds3HidOutputReport[11] = (toggle) ? 0x02 : 0x04;
 
     PBTHPS3_HID_CONTROL_WRITE controlWrite;
     NTSTATUS status;
@@ -189,7 +195,7 @@ OutputReport_EvtTimerFunc(
         return;
     }
 
-    WdfTimerStart(devCtx->OutputReportTimer, WDF_REL_TIMEOUT_IN_MS(0x64));
+    WdfTimerStart(devCtx->OutputReportTimer, WDF_REL_TIMEOUT_IN_MS(0x01F4));
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Exit");
 }

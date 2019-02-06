@@ -24,7 +24,7 @@ EXTERN_C_START
 //
 typedef struct _DEVICE_CONTEXT
 {
-    ULONG PrivateDeviceData;  // just a placeholder
+    WDFTIMER OutputReportTimer;
 
 } DEVICE_CONTEXT, *PDEVICE_CONTEXT;
 
@@ -42,5 +42,7 @@ NTSTATUS
 BlyatStormCreateDevice(
     _Inout_ PWDFDEVICE_INIT DeviceInit
     );
+
+EVT_WDF_TIMER OutputReport_EvtTimerFunc;
 
 EXTERN_C_END

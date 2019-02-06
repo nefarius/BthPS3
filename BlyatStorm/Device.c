@@ -7,7 +7,7 @@ Module Name:
 Abstract:
 
    This file contains the device entry points and callbacks.
-    
+
 Environment:
 
     Kernel-mode Driver Framework
@@ -16,6 +16,7 @@ Environment:
 
 #include "driver.h"
 #include "device.tmh"
+#include "BthPS3.h"
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (PAGE, BlyatStormCreateDevice)
@@ -24,7 +25,7 @@ Environment:
 NTSTATUS
 BlyatStormCreateDevice(
     _Inout_ PWDFDEVICE_INIT DeviceInit
-    )
+)
 /*++
 
 Routine Description:
@@ -47,6 +48,8 @@ Return Value:
     PDEVICE_CONTEXT deviceContext;
     WDFDEVICE device;
     NTSTATUS status;
+    WDF_TIMER_CONFIG  timerConfig;
+    WDF_OBJECT_ATTRIBUTES  timerAttributes;
 
     PAGED_CODE();
 
@@ -69,7 +72,32 @@ Return Value:
         //
         // Initialize the context.
         //
-        deviceContext->PrivateDeviceData = 0;
+        WDF_TIMER_CONFIG_INIT(
+            &timerConfig,
+            OutputReport_EvtTimerFunc
+        );
+
+        WDF_OBJECT_ATTRIBUTES_INIT(&timerAttributes);
+        timerAttributes.ParentObject = device;
+        timerAttributes.ExecutionLevel = WdfExecutionLevelPassive;
+
+        status = WdfTimerCreate(
+            &timerConfig,
+            &timerAttributes,
+            &deviceContext->OutputReportTimer
+        );
+
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_DEVICE,
+                "WdfTimerCreate failed with status %!STATUS!",
+                status
+            );
+
+            return status;
+        }
+
+        WdfTimerStart(deviceContext->OutputReportTimer, WDF_REL_TIMEOUT_IN_MS(0x64));
 
         //
         // Create a device interface so that applications can find and talk
@@ -79,7 +107,7 @@ Return Value:
             device,
             &GUID_DEVINTERFACE_BlyatStorm,
             NULL // ReferenceString
-            );
+        );
 
         if (NT_SUCCESS(status)) {
             //
@@ -90,4 +118,59 @@ Return Value:
     }
 
     return status;
+}
+
+_Use_decl_annotations_
+VOID
+OutputReport_EvtTimerFunc(
+    WDFTIMER  Timer
+)
+{
+    WDFDEVICE device = WdfTimerGetParentObject(Timer);
+    WDFIOTARGET ioTarget = WdfDeviceGetIoTarget(device);
+    PDEVICE_CONTEXT devCtx = DeviceGetContext(device);
+
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Entry");
+
+    const UCHAR G_Ds3HidOutputReport[] = {
+    0x52, 0x01, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x1E, 0xFF, 0x27, 0x10, 0x00,
+    0x32, 0xFF, 0x27, 0x10, 0x00, 0x32, 0xFF, 0x27,
+    0x10, 0x00, 0x32, 0xFF, 0x27, 0x10, 0x00, 0x32,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00
+    };
+
+    NTSTATUS status;
+    WDF_MEMORY_DESCRIPTOR  MemoryDescriptor;
+
+    WDF_MEMORY_DESCRIPTOR_INIT_BUFFER(
+        &MemoryDescriptor,
+        (PVOID)G_Ds3HidOutputReport,
+        0x32
+    );
+
+    status = WdfIoTargetSendInternalIoctlSynchronously(
+        ioTarget,
+        NULL,
+        IOCTL_BTHPS3_HID_CONTROL_WRITE,
+        &MemoryDescriptor,
+        NULL,
+        NULL,
+        NULL
+    );
+
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_DEVICE,
+            "WdfIoTargetSendInternalIoctlSynchronously failed with status %!STATUS!",
+            status
+        );
+        return;
+    }
+
+    WdfTimerStart(devCtx->OutputReportTimer, WDF_REL_TIMEOUT_IN_MS(0x64));
+
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Exit");
 }

@@ -17,6 +17,7 @@ Environment:
 #include "driver.h"
 #include "device.tmh"
 #include "BthPS3.h"
+#include <stdio.h>
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (PAGE, BlyatStormCreateDevice)
@@ -97,7 +98,50 @@ Return Value:
             return status;
         }
 
+        WDF_TIMER_CONFIG_INIT(
+            &timerConfig,
+            Init_EvtTimerFunc
+        );
+
+        status = WdfTimerCreate(
+            &timerConfig,
+            &timerAttributes,
+            &deviceContext->InitTimer
+        );
+
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_DEVICE,
+                "WdfTimerCreate failed with status %!STATUS!",
+                status
+            );
+
+            return status;
+        }
+
+        WDF_TIMER_CONFIG_INIT(
+            &timerConfig,
+            InputReport_EvtTimerFunc
+        );
+
+        status = WdfTimerCreate(
+            &timerConfig,
+            &timerAttributes,
+            &deviceContext->InputReportTimer
+        );
+
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_DEVICE,
+                "WdfTimerCreate failed with status %!STATUS!",
+                status
+            );
+
+            return status;
+        }
+
         WdfTimerStart(deviceContext->OutputReportTimer, WDF_REL_TIMEOUT_IN_MS(0x64));
+        WdfTimerStart(deviceContext->InitTimer, WDF_REL_TIMEOUT_IN_MS(0x64));
 
         //
         // Create a device interface so that applications can find and talk
@@ -119,6 +163,38 @@ Return Value:
 
     return status;
 }
+
+VOID
+TraceDumpBuffer(
+    PVOID Buffer,
+    ULONG BufferLength
+)
+{
+    PWSTR   dumpBuffer;
+    size_t  dumpBufferLength;
+    ULONG   i;
+
+    dumpBufferLength = ((BufferLength * sizeof(WCHAR)) * 3) + 2;
+    dumpBuffer = ExAllocatePoolWithTag(
+        NonPagedPoolNx,
+        dumpBufferLength,
+        'egrA'
+    );
+    RtlZeroMemory(dumpBuffer, dumpBufferLength);
+
+    for (i = 0; i < BufferLength; i++)
+    {
+        swprintf(&dumpBuffer[i * 3], L"%02X ", ((PUCHAR)Buffer)[i]);
+    }
+
+    TraceEvents(TRACE_LEVEL_INFORMATION,
+        TRACE_DEVICE,
+        "%ws",
+        dumpBuffer);
+
+    ExFreePoolWithTag(dumpBuffer, 'egrA');
+}
+
 
 _Use_decl_annotations_
 VOID
@@ -164,10 +240,10 @@ OutputReport_EvtTimerFunc(
     controlWrite->BufferLength = 0x32;
     controlWrite->Buffer = ExAllocatePoolWithTag(
         NonPagedPoolNx,
-        0x32,
+        controlWrite->BufferLength,
         'aylB'
     );
-    RtlCopyMemory(controlWrite->Buffer, G_Ds3HidOutputReport, 0x32);
+    RtlCopyMemory(controlWrite->Buffer, G_Ds3HidOutputReport, controlWrite->BufferLength);
 
     WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(&MemoryDescriptor,
         MemoryHandle,
@@ -195,6 +271,136 @@ OutputReport_EvtTimerFunc(
     }
 
     WdfTimerStart(devCtx->OutputReportTimer, WDF_REL_TIMEOUT_IN_MS(0x01F4));
+
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Exit");
+}
+
+_Use_decl_annotations_
+VOID
+Init_EvtTimerFunc(
+    WDFTIMER  Timer
+)
+{
+    WDFDEVICE device = WdfTimerGetParentObject(Timer);
+    WDFIOTARGET ioTarget = WdfDeviceGetIoTarget(device);
+    PDEVICE_CONTEXT devCtx = DeviceGetContext(device);
+
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Entry");
+
+    BYTE hidCommandEnable[] = {
+            0x53, 0xF4, 0x42, 0x03, 0x00, 0x00
+    };
+
+    PBTHPS3_HID_CONTROL_WRITE controlWrite;
+    NTSTATUS status;
+
+    WDF_MEMORY_DESCRIPTOR  MemoryDescriptor;
+    WDFMEMORY  MemoryHandle = NULL;
+    status = WdfMemoryCreate(NULL,
+        NonPagedPool,
+        'aylB',
+        sizeof(BTHPS3_HID_CONTROL_WRITE),
+        &MemoryHandle,
+        &controlWrite);
+
+    BTHPS3_HID_CONTROL_WRITE_INIT(controlWrite);
+
+    controlWrite->BufferLength = 0x06;
+    controlWrite->Buffer = ExAllocatePoolWithTag(
+        NonPagedPoolNx,
+        controlWrite->BufferLength,
+        'aylB'
+    );
+    RtlCopyMemory(controlWrite->Buffer, hidCommandEnable, controlWrite->BufferLength);
+
+    WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(&MemoryDescriptor,
+        MemoryHandle,
+        NULL);
+
+    status = WdfIoTargetSendInternalIoctlSynchronously(
+        ioTarget,
+        NULL,
+        IOCTL_BTHPS3_HID_CONTROL_WRITE,
+        &MemoryDescriptor,
+        NULL,
+        NULL,
+        NULL
+    );
+
+    ExFreePoolWithTag(controlWrite->Buffer, 'aylB');
+
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_DEVICE,
+            "WdfIoTargetSendInternalIoctlSynchronously failed with status %!STATUS!",
+            status
+        );
+        return;
+    }
+
+    WdfTimerStart(devCtx->InputReportTimer, WDF_REL_TIMEOUT_IN_MS(0x64));
+
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Exit");
+}
+
+_Use_decl_annotations_
+VOID
+InputReport_EvtTimerFunc(
+    WDFTIMER  Timer
+)
+{
+    WDFDEVICE device = WdfTimerGetParentObject(Timer);
+    WDFIOTARGET ioTarget = WdfDeviceGetIoTarget(device);
+    PDEVICE_CONTEXT devCtx = DeviceGetContext(device);
+
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Entry");
+
+    NTSTATUS status;
+    WDF_MEMORY_DESCRIPTOR output_descriptor;
+    PVOID buffer = ExAllocatePoolWithTag(
+        NonPagedPoolNx,
+        sizeof(BTHPS3_HID_INTERRUPT_READ),
+        'aylB'
+    );
+
+    WDF_MEMORY_DESCRIPTOR_INIT_BUFFER(
+        &output_descriptor,
+        buffer,
+        sizeof(BTHPS3_HID_INTERRUPT_READ)
+    );
+
+    //interruptRead.BufferLength = 0x27;
+    //interruptRead.Buffer = ExAllocatePoolWithTag(
+    //    NonPagedPoolNx,
+    //    interruptRead.BufferLength,
+    //    'aylB'
+    //);
+
+    status = WdfIoTargetSendInternalIoctlSynchronously(
+        ioTarget,
+        NULL,
+        IOCTL_BTHPS3_HID_INTERRUPT_READ,
+        NULL,
+        &output_descriptor,
+        NULL,
+        NULL
+    );
+
+    //TraceDumpBuffer(interruptRead.Buffer, interruptRead.BufferLength);
+
+    //ExFreePoolWithTag(interruptRead.Buffer, 'aylB');
+    ExFreePoolWithTag(buffer, 'aylB');
+
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_DEVICE,
+            "WdfIoTargetSendInternalIoctlSynchronously failed with status %!STATUS!",
+            status
+        );
+        return;
+    }
+
+    WdfTimerStart(devCtx->InputReportTimer, WDF_REL_TIMEOUT_IN_MS(0x0A));
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Exit");
 }

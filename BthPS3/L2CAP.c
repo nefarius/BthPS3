@@ -1220,7 +1220,7 @@ L2CAP_PS3_ReadInterruptTransferCompleted(
     deviceCtxHdr = (PBTHPS3_DEVICE_CONTEXT_HEADER)brb->Hdr.ClientContext[0];
     pdoRequest = (WDFREQUEST)brb->Hdr.ClientContext[1];
 
-    WdfRequestComplete(pdoRequest, status);
+    WdfRequestCompleteWithInformation(pdoRequest, status, (brb->BufferSize - brb->RemainingBufferSize));
     deviceCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
     WdfObjectDelete(Request);
 }

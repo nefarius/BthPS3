@@ -26,6 +26,10 @@ typedef struct _DEVICE_CONTEXT
 {
     WDFTIMER OutputReportTimer;
 
+    WDFTIMER InitTimer;
+
+    WDFTIMER InputReportTimer;
+
 } DEVICE_CONTEXT, *PDEVICE_CONTEXT;
 
 //
@@ -43,6 +47,14 @@ BlyatStormCreateDevice(
     _Inout_ PWDFDEVICE_INIT DeviceInit
     );
 
+VOID
+TraceDumpBuffer(
+    PVOID Buffer,
+    ULONG BufferLength
+);
+
 EVT_WDF_TIMER OutputReport_EvtTimerFunc;
+EVT_WDF_TIMER Init_EvtTimerFunc;
+EVT_WDF_TIMER InputReport_EvtTimerFunc;
 
 EXTERN_C_END

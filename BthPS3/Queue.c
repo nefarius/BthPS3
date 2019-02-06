@@ -108,8 +108,6 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
     UNREFERENCED_PARAMETER(OutputBufferLength);
     UNREFERENCED_PARAMETER(InputBufferLength);
 
-    UNREFERENCED_PARAMETER(pInterruptRead);
-
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_QUEUE, "%!FUNC! Entry");
 
     reqCtx = GetFdoPdoRequestContext(Request);
@@ -156,7 +154,7 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
         }
 
         if (pControlWrite->Size != sizeof(BTHPS3_HID_CONTROL_WRITE)) {
-            status = STATUS_INVALID_PARAMETER;
+            status = STATUS_INVALID_BUFFER_SIZE;
             break;
         }
 
@@ -199,8 +197,22 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
             break;
         }
 
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_QUEUE,
+            "BufferLength: %d",
+            pInterruptRead->BufferLength
+        );
+
         if (pInterruptRead->Size != sizeof(BTHPS3_HID_INTERRUPT_READ)) {
-            status = STATUS_INVALID_PARAMETER;
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_QUEUE,
+                "Buffer size mismatch: %d != %d (%d, %d)",
+                pInterruptRead->Size,
+                sizeof(BTHPS3_HID_INTERRUPT_READ),
+                (ULONG)OutputBufferLength,
+                (ULONG)length
+            );
+            status = STATUS_INVALID_BUFFER_SIZE;
             break;
         }
 
@@ -246,7 +258,7 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
         }
 
         if (pInterruptWrite->Size != sizeof(BTHPS3_HID_INTERRUPT_WRITE)) {
-            status = STATUS_INVALID_PARAMETER;
+            status = STATUS_INVALID_BUFFER_SIZE;
             break;
         }
 

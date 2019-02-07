@@ -1204,7 +1204,7 @@ L2CAP_PS3_ReadInterruptTransferCompleted(
     NTSTATUS status;
     struct _BRB_L2CA_ACL_TRANSFER* brb = NULL;
     PBTHPS3_DEVICE_CONTEXT_HEADER deviceCtxHdr = NULL;
-    WDFREQUEST pdoRequest = NULL;
+    //WDFREQUEST pdoRequest = NULL;
 
     UNREFERENCED_PARAMETER(Target);
 
@@ -1218,9 +1218,9 @@ L2CAP_PS3_ReadInterruptTransferCompleted(
 
     brb = (struct _BRB_L2CA_ACL_TRANSFER*)Context;
     deviceCtxHdr = (PBTHPS3_DEVICE_CONTEXT_HEADER)brb->Hdr.ClientContext[0];
-    pdoRequest = (WDFREQUEST)brb->Hdr.ClientContext[1];
+    //pdoRequest = (WDFREQUEST)brb->Hdr.ClientContext[1];
 
-    WdfRequestCompleteWithInformation(pdoRequest, status, (brb->BufferSize - brb->RemainingBufferSize));
+    //WdfRequestCompleteWithInformation(pdoRequest, status, (brb->BufferSize - brb->RemainingBufferSize));
     deviceCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
     WdfObjectDelete(Request);
 }

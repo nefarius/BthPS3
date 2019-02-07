@@ -22,65 +22,6 @@
 #include <ntstrsafe.h>
 
 
-typedef struct _BTHPS3_CONNECTION * PBTHPS3_CONNECTION;
-
-#define BTHPS3_NUM_CONTINUOUS_READERS 2
-
-typedef VOID
-(*PFN_BTHPS3_CONNECTION_OBJECT_CONTREADER_READ_COMPLETE) (
-    _In_ PBTHPS3_DEVICE_CONTEXT_HEADER DevCtxHdr,
-    _In_ PBTHPS3_CONNECTION Connection,
-    _In_ PVOID Buffer,
-    _In_ size_t BufferSize
-    );
-
-typedef VOID
-(*PFN_BTHPS3_CONNECTION_OBJECT_CONTREADER_FAILED) (
-    _In_ PBTHPS3_DEVICE_CONTEXT_HEADER DevCtxHdr,
-    _In_ PBTHPS3_CONNECTION Connection
-    );
-
-
-typedef struct _BTHPS3_REPEAT_READER
-{
-    //
-    // BRB used for transfer
-    //
-    struct _BRB_L2CA_ACL_TRANSFER TransferBrb;
-
-    //
-    // WDF Request used for pending I/O
-    //
-    WDFREQUEST RequestPendingRead;
-
-    //
-    // Data buffer for pending read
-    //
-    WDFMEMORY MemoryPendingRead;
-
-    //
-    // Dpc for resubmitting pending read
-    //
-    KDPC ResubmitDpc;
-
-    //
-    // Whether the continuous reader is transitioning to stopped state
-    //
-
-    LONG Stopping;
-
-    //
-    // Event used to wait for read completion while stopping the continuos reader
-    //
-    KEVENT StopEvent;
-
-    //
-    // Back pointer to connection
-    //
-    PBTHPS3_CONNECTION Connection;
-
-} BTHPS3_REPEAT_READER, *PBTHPS3_REPEAT_READER;
-
 //
 // Connection state
 //
@@ -95,21 +36,6 @@ typedef enum _BTHPS3_CONNECTION_STATE {
     ConnectionStateDisconnected
 
 } BTHPS3_CONNECTION_STATE, *PBTHPS3_CONNECTION_STATE;
-
-typedef struct _BTHPS3_CONTINUOUS_READER {
-
-    BTHPS3_REPEAT_READER
-        RepeatReaders[BTHPS3_NUM_CONTINUOUS_READERS];
-
-    PFN_BTHPS3_CONNECTION_OBJECT_CONTREADER_READ_COMPLETE
-        BthEchoConnectionObjectContReaderReadCompleteCallback;
-
-    PFN_BTHPS3_CONNECTION_OBJECT_CONTREADER_FAILED
-        BthEchoConnectionObjectContReaderFailedCallback;
-
-    DWORD                                   InitializedReadersCount;
-
-} BTHPS3_CONTINUOUS_READER, *PBTHPS3_CONTINUOUS_READER;
 
 //
 // Connection data structure for L2Ca connection
@@ -147,11 +73,7 @@ typedef struct _BTHPS3_CONNECTION {
     //
     KEVENT                                  DisconnectEvent;
 
-    //
-    // Continuous readers (used only by server)
-    // PLEASE NOTE that KMDF USB Pipe Target uses a single continuous reader
-    //
-    BTHPS3_CONTINUOUS_READER               ContinuousReader;
+
 } BTHPS3_CONNECTION, *PBTHPS3_CONNECTION;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_CONNECTION, GetConnectionObjectContext)

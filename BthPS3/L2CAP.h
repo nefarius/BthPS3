@@ -42,7 +42,6 @@ L2CAP_PS3_ConnectionIndicationCallback(
     _In_ PINDICATION_PARAMETERS Parameters
 );
 
-EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_ConnectResponseCompleted;
 EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_DenyRemoteConnectCompleted;
 
 EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_ControlConnectResponseCompleted;

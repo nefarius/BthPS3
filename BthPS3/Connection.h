@@ -25,7 +25,6 @@
 //
 // Connection state
 //
-
 typedef enum _BTHPS3_CONNECTION_STATE {
     ConnectionStateUnitialized = 0,
     ConnectionStateInitialized,
@@ -37,53 +36,6 @@ typedef enum _BTHPS3_CONNECTION_STATE {
 
 } BTHPS3_CONNECTION_STATE, *PBTHPS3_CONNECTION_STATE;
 
-//
-// Connection data structure for L2Ca connection
-//
-
-typedef struct _BTHPS3_CONNECTION {
-
-    //
-    // List entry for connection list maintained at device level
-    //
-    LIST_ENTRY                              ConnectionListEntry;
-
-    PBTHPS3_DEVICE_CONTEXT_HEADER    DevCtxHdr;
-
-    BTHPS3_CONNECTION_STATE          ConnectionState;
-
-    //
-    // Connection lock, used to synchronize access to _BTHECHO_CONNECTION data structure
-    //
-    WDFSPINLOCK                             ConnectionLock;
-
-    L2CAP_CHANNEL_HANDLE                    ChannelHandle;
-    BTH_ADDR                                RemoteAddress;
-
-    //
-    // Preallocated Brb, Request used for connect/disconnect
-    //
-    struct _BRB                             ConnectDisconnectBrb;
-    WDFREQUEST                              ConnectDisconnectRequest;
-
-    //
-    // Event used to wait for disconnection
-    // It is non-signaled when connection is in ConnectionStateDisconnecting
-    // transitionary state and signaled otherwise
-    //
-    KEVENT                                  DisconnectEvent;
-
-
-} BTHPS3_CONNECTION, *PBTHPS3_CONNECTION;
-
-WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_CONNECTION, GetConnectionObjectContext)
-
-
-
-
-/************************************************************************/
-/* The new stuff                                                        */
-/************************************************************************/
 
 //
 // State information for a single L2CAP channel
@@ -122,6 +74,7 @@ typedef struct _BTHPS3_CLIENT_CONNECTION
 } BTHPS3_CLIENT_CONNECTION, *PBTHPS3_CLIENT_CONNECTION;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_CLIENT_CONNECTION, GetClientConnection)
+
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS

@@ -722,6 +722,10 @@ L2CAP_PS3_ConnectionStateConnected(
         NULL
     );
 
+    //
+    // PDO creation kicked off from here async
+    // 
+    
     if (!NT_SUCCESS(status))
     {
         TraceEvents(TRACE_LEVEL_ERROR,
@@ -729,104 +733,9 @@ L2CAP_PS3_ConnectionStateConnected(
             "WdfChildListAddOrUpdateChildDescriptionAsPresent failed with status %!STATUS!",
             status);
         return status;
-    }
+    }    
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
-
-    return status;
-}
-
-_IRQL_requires_max_(DISPATCH_LEVEL)
-NTSTATUS
-L2CAP_PS3_SendControlTransfer(
-    PBTHPS3_CLIENT_CONNECTION ClientConnection,
-    PVOID Buffer,
-    size_t BufferLength,
-    PFN_WDF_REQUEST_COMPLETION_ROUTINE CompletionRoutine
-)
-{
-    NTSTATUS status;
-    struct _BRB_L2CA_ACL_TRANSFER* brb = NULL;
-    WDFREQUEST brbAsyncRequest = NULL;
-
-    //
-    // Allocate request
-    // 
-    status = WdfRequestCreate(
-        WDF_NO_OBJECT_ATTRIBUTES,
-        ClientConnection->DevCtxHdr->IoTarget,
-        &brbAsyncRequest);
-
-    if (!NT_SUCCESS(status))
-    {
-        TraceEvents(TRACE_LEVEL_ERROR,
-            TRACE_L2CAP,
-            "WdfRequestCreate failed with status %!STATUS!",
-            status
-        );
-
-        return status;
-    }
-
-    //
-    // Allocate BRB
-    // 
-    brb = (struct _BRB_L2CA_ACL_TRANSFER*)
-        ClientConnection->DevCtxHdr->ProfileDrvInterface.BthAllocateBrb(
-            BRB_L2CA_ACL_TRANSFER,
-            POOLTAG_BTHPS3
-        );
-
-    if (brb == NULL)
-    {
-        WdfObjectDelete(brbAsyncRequest);
-        return STATUS_INSUFFICIENT_RESOURCES;
-    }
-
-    //
-    // Used in completion routine to free BRB
-    // 
-    brb->Hdr.ClientContext[0] = ClientConnection->DevCtxHdr;
-
-    //
-    // Set channel properties
-    // 
-    brb->BtAddress = ClientConnection->RemoteAddress;
-    brb->ChannelHandle = ClientConnection->HidControlChannel.ChannelHandle;
-    brb->TransferFlags = ACL_TRANSFER_DIRECTION_OUT;
-    brb->BufferMDL = NULL;
-
-    //
-    // Allocate and fill actual payload buffer
-    // 
-    brb->Buffer = ExAllocatePoolWithTag(
-        NonPagedPoolNx,
-        BufferLength,
-        POOLTAG_BTHPS3
-    );
-    RtlCopyMemory(brb->Buffer, Buffer, BufferLength);
-    brb->BufferSize = (ULONG)BufferLength;
-
-    //
-    // Submit request
-    // 
-    status = BthPS3_SendBrbAsync(
-        ClientConnection->DevCtxHdr->IoTarget,
-        brbAsyncRequest,
-        (PBRB)brb,
-        sizeof(*brb),
-        CompletionRoutine,
-        brb
-    );
-
-    if (!NT_SUCCESS(status))
-    {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_L2CAP,
-            "BthPS3_SendBrbAsync failed with status %!STATUS!", status);
-
-        ClientConnection->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
-        WdfObjectDelete(brbAsyncRequest);
-    }
 
     return status;
 }
@@ -1163,126 +1072,6 @@ L2CAP_PS3_ReadInterruptTransferSync(
     WdfObjectDelete(brbSyncRequest);
 
     return status;
-}
-
-_IRQL_requires_max_(DISPATCH_LEVEL)
-NTSTATUS
-L2CAP_PS3_ReadInterruptTransferAsync(
-    PBTHPS3_CLIENT_CONNECTION ClientConnection,
-    PVOID Buffer,
-    size_t BufferLength,
-    PFN_WDF_REQUEST_COMPLETION_ROUTINE CompletionRoutine,
-    WDFCONTEXT CompletionContext
-)
-{
-    NTSTATUS status;
-    struct _BRB_L2CA_ACL_TRANSFER* brb = NULL;
-    WDFREQUEST brbAsyncRequest = NULL;
-
-    //
-    // Allocate request
-    // 
-    status = WdfRequestCreate(
-        WDF_NO_OBJECT_ATTRIBUTES,
-        ClientConnection->DevCtxHdr->IoTarget,
-        &brbAsyncRequest);
-
-    if (!NT_SUCCESS(status))
-    {
-        TraceEvents(TRACE_LEVEL_ERROR,
-            TRACE_L2CAP,
-            "WdfRequestCreate failed with status %!STATUS!",
-            status
-        );
-
-        return status;
-    }
-
-    //
-    // Allocate BRB
-    // 
-    brb = (struct _BRB_L2CA_ACL_TRANSFER*)
-        ClientConnection->DevCtxHdr->ProfileDrvInterface.BthAllocateBrb(
-            BRB_L2CA_ACL_TRANSFER,
-            POOLTAG_BTHPS3
-        );
-
-    if (brb == NULL)
-    {
-        WdfObjectDelete(brbAsyncRequest);
-        return STATUS_INSUFFICIENT_RESOURCES;
-    }
-
-    //
-    // Used in completion routine to free BRB
-    // 
-    brb->Hdr.ClientContext[0] = ClientConnection->DevCtxHdr;
-    brb->Hdr.ClientContext[1] = CompletionContext;
-
-    //
-    // Set channel properties
-    // 
-    brb->BtAddress = ClientConnection->RemoteAddress;
-    brb->ChannelHandle = ClientConnection->HidControlChannel.ChannelHandle;
-    brb->TransferFlags = ACL_TRANSFER_DIRECTION_IN | ACL_SHORT_TRANSFER_OK;
-    brb->BufferMDL = NULL;
-    brb->Buffer = Buffer;
-    brb->BufferSize = (ULONG)BufferLength;
-
-    //
-    // Submit request
-    // 
-    status = BthPS3_SendBrbAsync(
-        ClientConnection->DevCtxHdr->IoTarget,
-        brbAsyncRequest,
-        (PBRB)brb,
-        sizeof(*brb),
-        CompletionRoutine,
-        brb
-    );
-
-    if (!NT_SUCCESS(status))
-    {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_L2CAP,
-            "BthPS3_SendBrbAsync failed with status %!STATUS!", status);
-
-        ClientConnection->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
-        WdfObjectDelete(brbAsyncRequest);
-    }
-
-    return status;
-}
-
-void
-L2CAP_PS3_ReadInterruptTransferCompleted(
-    _In_ WDFREQUEST  Request,
-    _In_ WDFIOTARGET  Target,
-    _In_ PWDF_REQUEST_COMPLETION_PARAMS  Params,
-    _In_ WDFCONTEXT  Context
-)
-{
-    NTSTATUS status;
-    struct _BRB_L2CA_ACL_TRANSFER* brb = NULL;
-    PBTHPS3_DEVICE_CONTEXT_HEADER deviceCtxHdr = NULL;
-    //WDFREQUEST pdoRequest = NULL;
-
-    UNREFERENCED_PARAMETER(Target);
-
-    status = Params->IoStatus.Status;
-
-    TraceEvents(TRACE_LEVEL_VERBOSE,
-        TRACE_L2CAP,
-        "Interrupt IN transfer request completed with status %!STATUS!",
-        status
-    );
-
-    brb = (struct _BRB_L2CA_ACL_TRANSFER*)Context;
-    deviceCtxHdr = (PBTHPS3_DEVICE_CONTEXT_HEADER)brb->Hdr.ClientContext[0];
-    //pdoRequest = (WDFREQUEST)brb->Hdr.ClientContext[1];
-
-    //WdfRequestCompleteWithInformation(pdoRequest, status, (brb->BufferSize - brb->RemainingBufferSize));
-    deviceCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
-    WdfObjectDelete(Request);
 }
 
 //

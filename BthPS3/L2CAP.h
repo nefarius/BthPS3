@@ -66,26 +66,26 @@ L2CAP_PS3_SendControlTransferAsync(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_SendControlTransferSync(
-    PBTHPS3_CLIENT_CONNECTION ClientConnection,
-    PVOID Buffer,
-    size_t BufferLength
+    _In_ PBTHPS3_CLIENT_CONNECTION ClientConnection,
+    _In_ PVOID Buffer,
+    _In_ size_t BufferLength
 );
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_SendInterruptTransferSync(
-    PBTHPS3_CLIENT_CONNECTION ClientConnection,
-    PVOID Buffer,
-    size_t BufferLength
+    _In_ PBTHPS3_CLIENT_CONNECTION ClientConnection,
+    _In_ PVOID Buffer,
+    _In_ size_t BufferLength
 );
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_ReadInterruptTransferSync(
-    PBTHPS3_CLIENT_CONNECTION ClientConnection,
-    PVOID Buffer,
-    size_t BufferLength,
-    PULONG_PTR BytesReturned
+    _In_ PBTHPS3_CLIENT_CONNECTION ClientConnection,
+    _In_ PVOID Buffer,
+    _In_ size_t BufferLength,
+    _Out_ PULONG_PTR BytesReturned
 );
 
 EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_ControlTransferCompleted;

@@ -38,7 +38,10 @@ WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1 ; make sure the number matches with
 %ManufacturerName%=Standard,NT$ARCH$
 
 [Standard.NT$ARCH$]
+; SIXAXIS
 %BlyatStorm.DeviceDesc%=BlyatStorm_Device, BTHPS3BUS\{53F88889-1AAF-4353-A047-556B69EC6DA6}
+; Navigation
+%BlyatStorm.DeviceDesc%=BlyatStorm_Device, BTHPS3BUS\{206F84FC-1615-4D9F-954D-21F5A5D388C5}
 
 [BlyatStorm_Device.NT]
 CopyFiles=Drivers_Dir

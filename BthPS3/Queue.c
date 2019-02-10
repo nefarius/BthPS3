@@ -19,6 +19,7 @@
 
 #include "driver.h"
 #include "queue.tmh"
+#include <stdio.h>
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (PAGE, BthPS3QueueInitialize)
@@ -83,6 +84,37 @@ Return Value:
     return status;
 }
 
+VOID
+TraceDumpBuffer(
+    PVOID Buffer,
+    ULONG BufferLength
+)
+{
+    PWSTR   dumpBuffer;
+    size_t  dumpBufferLength;
+    ULONG   i;
+
+    dumpBufferLength = ((BufferLength * sizeof(WCHAR)) * 3) + 2;
+    dumpBuffer = ExAllocatePoolWithTag(
+        NonPagedPoolNx,
+        dumpBufferLength,
+        'egrA'
+    );
+    RtlZeroMemory(dumpBuffer, dumpBufferLength);
+
+    for (i = 0; i < BufferLength; i++)
+    {
+        swprintf(&dumpBuffer[i * 3], L"%02X ", ((PUCHAR)Buffer)[i]);
+    }
+
+    TraceEvents(TRACE_LEVEL_INFORMATION,
+        TRACE_DEVICE,
+        "%ws",
+        dumpBuffer);
+
+    ExFreePoolWithTag(dumpBuffer, 'egrA');
+}
+
 //
 // Handle IRP_MJ_INTERNAL_DEVICE_CONTROL sent to FDO
 // 
@@ -101,6 +133,8 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
     PBTHPS3_CLIENT_CONNECTION clientConnection = NULL;
     PVOID buffer = NULL;
     size_t bufferLength = 0;
+
+    UNREFERENCED_PARAMETER(OutputBufferLength);
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_QUEUE, "%!FUNC! Entry");
 
@@ -170,6 +204,12 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
 
     case IOCTL_BTHPS3_HID_INTERRUPT_READ:
 
+        TraceEvents(TRACE_LEVEL_INFORMATION,
+            TRACE_QUEUE,
+            "IOCTL_BTHPS3_HID_INTERRUPT_READ"
+        );
+
+#ifdef LOL
         status = WdfRequestRetrieveOutputBuffer(
             Request,
             OutputBufferLength,
@@ -193,25 +233,27 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
         );
 
         if (TRUE) break;
+#endif
+        buffer = ExAllocatePoolWithTag(NonPagedPoolNx, 0x31, 'PhtB');
 
-        status = L2CAP_PS3_ReadInterruptTransferAsync(
+        status = L2CAP_PS3_ReadInterruptTransferSync(
             clientConnection,
             buffer,
-            bufferLength,
-            L2CAP_PS3_ReadInterruptTransferCompleted,
-            Request // TODO: is this safe to do?
+            0x31
         );
 
         if (!NT_SUCCESS(status)) {
             TraceEvents(TRACE_LEVEL_ERROR,
                 TRACE_QUEUE,
-                "L2CAP_PS3_ReadInterruptTransferAsync failed with status %!STATUS!",
+                "L2CAP_PS3_ReadInterruptTransferSync failed with status %!STATUS!",
                 status
             );
             break;
         }
 
-        status = STATUS_PENDING;
+        ExFreePoolWithTag(buffer, 'PhtB');
+
+        //status = STATUS_PENDING;
 
         break;
 

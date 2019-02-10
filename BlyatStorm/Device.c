@@ -347,11 +347,9 @@ InputReport_EvtTimerFunc(
     status = WdfMemoryCreate(NULL,
         NonPagedPool,
         'aylB',
-        0x27,
+        BTHPS3_SIXAXIS_HID_INPUT_REPORT_SIZE,
         &MemoryHandle,
         &buffer);
-
-    RtlZeroMemory(buffer, 0x27);
 
     WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(&MemoryDescriptor,
         MemoryHandle,
@@ -377,10 +375,10 @@ InputReport_EvtTimerFunc(
             "WdfIoTargetSendInternalIoctlSynchronously failed with status %!STATUS!",
             status
         );
-        return;
+        //return;
     }
 
-    WdfTimerStart(devCtx->InputReportTimer, WDF_REL_TIMEOUT_IN_MS(0x0A));
+    WdfTimerStart(devCtx->InputReportTimer, WDF_REL_TIMEOUT_IN_MS(0x01));
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Exit");
 }

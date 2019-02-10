@@ -1110,7 +1110,8 @@ NTSTATUS
 L2CAP_PS3_ReadInterruptTransferSync(
     PBTHPS3_CLIENT_CONNECTION ClientConnection,
     PVOID Buffer,
-    size_t BufferLength
+    size_t BufferLength,
+    PULONG_PTR BytesReturned
 )
 {
     NTSTATUS status;
@@ -1156,8 +1157,8 @@ L2CAP_PS3_ReadInterruptTransferSync(
     // 
     brb->BtAddress = ClientConnection->RemoteAddress;
     brb->ChannelHandle = ClientConnection->HidInterruptChannel.ChannelHandle;
-    brb->TransferFlags = ACL_TRANSFER_DIRECTION_IN | ACL_SHORT_TRANSFER_OK;
-    //brb->Timeout = 200;
+    brb->TransferFlags = ACL_TRANSFER_DIRECTION_IN | ACL_TRANSFER_TIMEOUT;
+    brb->Timeout = 200; // should be high enough
     brb->BufferMDL = NULL;
     brb->Buffer = Buffer;
     brb->BufferSize = (ULONG)BufferLength;
@@ -1180,12 +1181,14 @@ L2CAP_PS3_ReadInterruptTransferSync(
 
     TraceEvents(TRACE_LEVEL_VERBOSE,
         TRACE_L2CAP,
-        "brb->RemainingBufferSize: %d",
+        "brb->BufferSize: %d, brb->RemainingBufferSize: %d",
+        brb->BufferSize,
         brb->RemainingBufferSize
     );
 
     TraceDumpBuffer(brb->Buffer, brb->BufferSize);
 
+    *BytesReturned = brb->BufferSize;
     ClientConnection->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
     WdfObjectDelete(brbSyncRequest);
 

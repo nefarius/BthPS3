@@ -90,7 +90,7 @@ typedef enum _DS_DEVICE_TYPE
 
 } DS_DEVICE_TYPE, *PDS_DEVICE_TYPE;
 
-#define DS3_HID_INPUT_REPORT_SIZE       0x31
+#define BTHPS3_SIXAXIS_HID_INPUT_REPORT_SIZE       0x32
 #define DS3_HID_OUTPUT_REPORT_SIZE      0x32
 
 #pragma region I/O Control section

@@ -133,6 +133,7 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
     PBTHPS3_CLIENT_CONNECTION clientConnection = NULL;
     PVOID buffer = NULL;
     size_t bufferLength = 0;
+    size_t bytesReturned = 0;
 
     UNREFERENCED_PARAMETER(OutputBufferLength);
 
@@ -157,7 +158,6 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
     device = WdfIoQueueGetDevice(Queue);
     deviceCtx = GetServerDeviceContext(device);
     clientConnection = reqCtx->ClientConnection;
-
 
     switch (IoControlCode)
     {
@@ -202,14 +202,10 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
 
 #pragma endregion
 
+#pragma region IOCTL_BTHPS3_HID_INTERRUPT_READ
+
     case IOCTL_BTHPS3_HID_INTERRUPT_READ:
 
-        TraceEvents(TRACE_LEVEL_INFORMATION,
-            TRACE_QUEUE,
-            "IOCTL_BTHPS3_HID_INTERRUPT_READ"
-        );
-
-#ifdef LOL
         status = WdfRequestRetrieveOutputBuffer(
             Request,
             OutputBufferLength,
@@ -226,20 +222,17 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
             break;
         }
 
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceEvents(TRACE_LEVEL_VERBOSE,
             TRACE_QUEUE,
             "bufferLength: %d",
             (ULONG)bufferLength
         );
 
-        if (TRUE) break;
-#endif
-        buffer = ExAllocatePoolWithTag(NonPagedPoolNx, 0x31, 'PhtB');
-
         status = L2CAP_PS3_ReadInterruptTransferSync(
             clientConnection,
             buffer,
-            0x31
+            (ULONG)bufferLength,
+            &bytesReturned
         );
 
         if (!NT_SUCCESS(status)) {
@@ -251,11 +244,10 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
             break;
         }
 
-        ExFreePoolWithTag(buffer, 'PhtB');
+        WdfRequestCompleteWithInformation(Request, status, bytesReturned);
+        return;
 
-        //status = STATUS_PENDING;
-
-        break;
+#pragma endregion
 
 #pragma region IOCTL_BTHPS3_HID_INTERRUPT_WRITE
 

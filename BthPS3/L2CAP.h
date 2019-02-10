@@ -100,7 +100,8 @@ NTSTATUS
 L2CAP_PS3_ReadInterruptTransferSync(
     PBTHPS3_CLIENT_CONNECTION ClientConnection,
     PVOID Buffer,
-    size_t BufferLength
+    size_t BufferLength,
+    PULONG_PTR BytesReturned
 );
 
 _IRQL_requires_max_(DISPATCH_LEVEL)

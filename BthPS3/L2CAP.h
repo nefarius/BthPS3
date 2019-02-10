@@ -19,12 +19,6 @@
 
 #pragma once
 
-//
-// TODO: remove/port over to function driver
-// 
-#define DS3_HID_OUTPUT_REPORT_SIZE      0x32 // 50 bytes
-extern CONST UCHAR G_Ds3HidOutputReport[];
-
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS

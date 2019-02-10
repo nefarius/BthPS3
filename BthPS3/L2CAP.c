@@ -21,16 +21,6 @@
 #include "l2cap.tmh"
 
 
-const UCHAR G_Ds3HidOutputReport[] = {
-    0x52, 0x01, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x1E, 0xFF, 0x27, 0x10, 0x00,
-    0x32, 0xFF, 0x27, 0x10, 0x00, 0x32, 0xFF, 0x27,
-    0x10, 0x00, 0x32, 0xFF, 0x27, 0x10, 0x00, 0x32,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00
-};
-
 //
 // Incoming connection request, prepare and send response
 // 
@@ -715,26 +705,6 @@ L2CAP_PS3_ConnectionStateConnected(
     PDO_IDENTIFICATION_DESCRIPTION pdoDesc;
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
-
-    UNREFERENCED_PARAMETER(ClientConnection);
-
-    status = L2CAP_PS3_SendControlTransfer(
-        ClientConnection,
-        (PVOID)G_Ds3HidOutputReport,
-        DS3_HID_OUTPUT_REPORT_SIZE,
-        L2CAP_PS3_ControlTransferCompleted
-    );
-
-    if (!NT_SUCCESS(status))
-    {
-        TraceEvents(TRACE_LEVEL_ERROR,
-            TRACE_L2CAP,
-            "L2CAP_PS3_SendControlTransfer failed with status %!STATUS!",
-            status
-        );
-
-        return status;
-    }
 
     WDF_CHILD_IDENTIFICATION_DESCRIPTION_HEADER_INIT(
         &pdoDesc.Header,

@@ -39,6 +39,8 @@ BthPS3_CreateDevice(
     PAGED_CODE();
 
 
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "%!FUNC! Entry");
+
     WdfDeviceInitSetDeviceType(DeviceInit, FILE_DEVICE_BUS_EXTENDER);
 
     //
@@ -51,7 +53,7 @@ BthPS3_CreateDevice(
     );
     childListCfg.EvtChildListIdentificationDescriptionCompare =
         BthPS3_PDO_EvtChildListIdentificationDescriptionCompare;
-    
+
     WdfFdoInitSetDefaultChildListConfig(DeviceInit,
         &childListCfg,
         WDF_NO_OBJECT_ATTRIBUTES
@@ -122,6 +124,8 @@ BthPS3_CreateDevice(
     }
 
 exit:
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "%!FUNC! Exit");
+
     return status;
 }
 
@@ -133,6 +137,8 @@ BthPS3_EvtWdfDeviceSelfManagedIoInit(
 {
     NTSTATUS status;
     PBTHPS3_SERVER_CONTEXT devCtx = GetServerDeviceContext(Device);
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "%!FUNC! Entry");
 
     status = BthPS3RetrieveLocalInfo(&devCtx->Header);
     if (!NT_SUCCESS(status))
@@ -154,6 +160,8 @@ BthPS3_EvtWdfDeviceSelfManagedIoInit(
 
 exit:
 
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "%!FUNC! Exit");
+
     return status;
 }
 
@@ -166,6 +174,14 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
     PBTHPS3_SERVER_CONTEXT devCtx = GetServerDeviceContext(Device);
 
     PAGED_CODE();
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "%!FUNC! Entry");
+
+    //
+    // Drop children
+    // 
+    WdfChildListBeginScan(WdfFdoGetDefaultChildList(Device));
+    WdfChildListEndScan(WdfFdoGetDefaultChildList(Device));
 
     if (NULL != devCtx->L2CAPServerHandle)
     {
@@ -192,6 +208,8 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
     //
     // TODO: implement me!
     // 
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "%!FUNC! Exit");
 
     return;
 }

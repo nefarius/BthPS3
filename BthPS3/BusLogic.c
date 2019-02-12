@@ -44,6 +44,7 @@ BthPS3_EvtWdfChildListCreateDevice(
     WDFQUEUE                            defaultQueue;
     WDF_OBJECT_ATTRIBUTES               attributes;
     PBTHPS3_PDO_DEVICE_CONTEXT          pdoCtx = NULL;
+    WDF_DEVICE_PNP_CAPABILITIES         pnpCaps;
 
     DECLARE_UNICODE_STRING_SIZE(deviceId, MAX_DEVICE_ID_LEN);
     DECLARE_UNICODE_STRING_SIZE(hardwareId, MAX_DEVICE_ID_LEN);
@@ -240,6 +241,17 @@ BthPS3_EvtWdfChildListCreateDevice(
     pdoCtx = GetPdoDeviceContext(hChild);
 
     pdoCtx->ClientConnection = pDesc->ClientConnection;
+
+#pragma endregion
+
+#pragma region PNP/Power Caps
+
+    WDF_DEVICE_PNP_CAPABILITIES_INIT(&pnpCaps);
+    pnpCaps.Removable = WdfTrue;
+    //pnpCaps.EjectSupported = WdfTrue;
+    pnpCaps.SurpriseRemovalOK = WdfTrue;
+
+    WdfDeviceSetPnpCapabilities(hChild, &pnpCaps);
 
 #pragma endregion
 

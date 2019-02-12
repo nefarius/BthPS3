@@ -165,6 +165,11 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
 
     case IOCTL_BTHPS3_HID_CONTROL_WRITE:
 
+        TraceEvents(TRACE_LEVEL_VERBOSE,
+            TRACE_QUEUE, 
+            ">> IOCTL_BTHPS3_HID_CONTROL_WRITE"
+        );
+
         status = WdfRequestRetrieveInputBuffer(
             Request,
             InputBufferLength,
@@ -205,6 +210,11 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
 #pragma region IOCTL_BTHPS3_HID_INTERRUPT_READ
 
     case IOCTL_BTHPS3_HID_INTERRUPT_READ:
+
+        TraceEvents(TRACE_LEVEL_VERBOSE,
+            TRACE_QUEUE,
+            ">> IOCTL_BTHPS3_HID_INTERRUPT_READ"
+        );
 
         status = WdfRequestRetrieveOutputBuffer(
             Request,
@@ -252,6 +262,11 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
 #pragma region IOCTL_BTHPS3_HID_INTERRUPT_WRITE
 
     case IOCTL_BTHPS3_HID_INTERRUPT_WRITE:
+
+        TraceEvents(TRACE_LEVEL_VERBOSE,
+            TRACE_QUEUE,
+            ">> IOCTL_BTHPS3_HID_INTERRUPT_WRITE"
+        );
 
         status = WdfRequestRetrieveInputBuffer(
             Request,
@@ -303,7 +318,7 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
         WdfRequestComplete(Request, status);
     }
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_QUEUE, "%!FUNC! Exit");
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_QUEUE, "%!FUNC! Exit (status: %!STATUS!)", status);
 }
 
 VOID

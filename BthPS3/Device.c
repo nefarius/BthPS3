@@ -177,12 +177,6 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "%!FUNC! Entry");
 
-    //
-    // Drop children
-    // 
-    WdfChildListBeginScan(WdfFdoGetDefaultChildList(Device));
-    WdfChildListEndScan(WdfFdoGetDefaultChildList(Device));
-
     if (NULL != devCtx->L2CAPServerHandle)
     {
         BthPS3UnregisterL2CAPServer(devCtx);
@@ -208,6 +202,11 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
     //
     // TODO: implement me!
     // 
+
+    //
+    // Drop children
+    // 
+    ClientConnections_DropAndFreeAll(devCtx);
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "%!FUNC! Exit");
 

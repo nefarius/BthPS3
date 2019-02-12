@@ -98,7 +98,13 @@ ClientConnections_RetrieveByBthAddr(
     _Out_ PBTHPS3_CLIENT_CONNECTION *ClientConnection
 );
 
+VOID
+ClientConnections_DropAndFreeAll(
+    _In_ PBTHPS3_SERVER_CONTEXT Context
+);
+
 EVT_WDF_OBJECT_CONTEXT_CLEANUP EvtClientConnectionsDestroyConnection;
+EVT_WDF_REQUEST_COMPLETION_ROUTINE ClientConnections_DisconnectCompleted;
 
 VOID
 FORCEINLINE

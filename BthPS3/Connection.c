@@ -280,6 +280,41 @@ ClientConnections_RetrieveByBthAddr(
 }
 
 //
+// Drops all open connections and frees their resources
+// 
+VOID
+ClientConnections_DropAndFreeAll(
+    _In_ PBTHPS3_SERVER_CONTEXT Context
+)
+{
+    ULONG itemCount;
+    ULONG index;
+    WDFOBJECT currentItem;
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
+
+    WdfSpinLockAcquire(Context->ClientConnectionsLock);
+
+    itemCount = WdfCollectionGetCount(Context->ClientConnections);
+
+    for (index = 0; index < itemCount; index++)
+    {
+        currentItem = WdfCollectionGetItem(Context->ClientConnections, index);
+
+        WdfCollectionRemoveItem(Context->ClientConnections, index);
+        
+        //
+        // Triggers clean-up
+        // 
+        WdfObjectDelete(currentItem);
+    }
+
+    WdfSpinLockRelease(Context->ClientConnectionsLock);
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
+}
+
+//
 // Performs clean-up when a connection object is disposed
 // 
 _Use_decl_annotations_
@@ -291,6 +326,7 @@ EvtClientConnectionsDestroyConnection(
     NTSTATUS status;
     PDO_IDENTIFICATION_DESCRIPTION pdoDesc;
     PBTHPS3_CLIENT_CONNECTION connection = NULL;
+    struct _BRB_L2CA_CLOSE_CHANNEL *disconnectBrb = NULL;
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CONNECTION, "%!FUNC! Entry");
 
@@ -315,8 +351,74 @@ EvtClientConnectionsDestroyConnection(
             status);
     }
 
-    WdfObjectDelete(connection->HidControlChannel.ConnectDisconnectRequest);
-    WdfObjectDelete(connection->HidInterruptChannel.ConnectDisconnectRequest);
+#pragma region Disconnect HID Control Channel
+
+    CLIENT_CONNECTION_REQUEST_REUSE(connection->HidControlChannel.ConnectDisconnectRequest);
+    connection->DevCtxHdr->ProfileDrvInterface.BthReuseBrb(
+        &connection->HidControlChannel.ConnectDisconnectBrb,
+        BRB_L2CA_CLOSE_CHANNEL
+    );
+
+    disconnectBrb = (struct _BRB_L2CA_CLOSE_CHANNEL *) &(connection->HidControlChannel.ConnectDisconnectBrb);
+    disconnectBrb->BtAddress = connection->RemoteAddress;
+    disconnectBrb->ChannelHandle = connection->HidControlChannel.ChannelHandle;
+
+    (void)BthPS3_SendBrbSynchronously(
+        connection->DevCtxHdr->IoTarget,
+        connection->HidControlChannel.ConnectDisconnectRequest,
+        (PBRB)disconnectBrb,
+        sizeof(*disconnectBrb)
+    );
+
+    //WdfObjectDelete(connection->HidControlChannel.ConnectDisconnectRequest);
+
+#pragma endregion
+
+#pragma region Disconnect HID Interrupt Channel
+
+    CLIENT_CONNECTION_REQUEST_REUSE(connection->HidInterruptChannel.ConnectDisconnectRequest);
+    connection->DevCtxHdr->ProfileDrvInterface.BthReuseBrb(
+        &connection->HidInterruptChannel.ConnectDisconnectBrb,
+        BRB_L2CA_CLOSE_CHANNEL
+    );
+
+    disconnectBrb = (struct _BRB_L2CA_CLOSE_CHANNEL *) &(connection->HidInterruptChannel.ConnectDisconnectBrb);
+    disconnectBrb->BtAddress = connection->RemoteAddress;
+    disconnectBrb->ChannelHandle = connection->HidInterruptChannel.ChannelHandle;
+
+    (void)BthPS3_SendBrbSynchronously(
+        connection->DevCtxHdr->IoTarget,
+        connection->HidInterruptChannel.ConnectDisconnectRequest,
+        (PBRB)disconnectBrb,
+        sizeof(*disconnectBrb)
+    );
+
+    //WdfObjectDelete(connection->HidInterruptChannel.ConnectDisconnectRequest);
+
+#pragma endregion
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CONNECTION, "%!FUNC! Exit");
+}
+
+//
+// TODO: required?
+// 
+void
+ClientConnections_DisconnectCompleted(
+    _In_ WDFREQUEST  Request,
+    _In_ WDFIOTARGET  Target,
+    _In_ PWDF_REQUEST_COMPLETION_PARAMS  Params,
+    _In_ WDFCONTEXT  Context
+)
+{
+    UNREFERENCED_PARAMETER(Request);
+    UNREFERENCED_PARAMETER(Target);
+    UNREFERENCED_PARAMETER(Params);
+    UNREFERENCED_PARAMETER(Context);
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CONNECTION, "%!FUNC! Entry");
+
+    //WdfObjectDelete(Request);
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CONNECTION, "%!FUNC! Exit");
 }

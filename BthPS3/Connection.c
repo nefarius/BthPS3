@@ -302,7 +302,7 @@ ClientConnections_DropAndFreeAll(
         currentItem = WdfCollectionGetItem(Context->ClientConnections, index);
 
         WdfCollectionRemoveItem(Context->ClientConnections, index);
-        
+
         //
         // Triggers clean-up
         // 
@@ -351,29 +351,6 @@ EvtClientConnectionsDestroyConnection(
             status);
     }
 
-#pragma region Disconnect HID Control Channel
-
-    CLIENT_CONNECTION_REQUEST_REUSE(connection->HidControlChannel.ConnectDisconnectRequest);
-    connection->DevCtxHdr->ProfileDrvInterface.BthReuseBrb(
-        &connection->HidControlChannel.ConnectDisconnectBrb,
-        BRB_L2CA_CLOSE_CHANNEL
-    );
-
-    disconnectBrb = (struct _BRB_L2CA_CLOSE_CHANNEL *) &(connection->HidControlChannel.ConnectDisconnectBrb);
-    disconnectBrb->BtAddress = connection->RemoteAddress;
-    disconnectBrb->ChannelHandle = connection->HidControlChannel.ChannelHandle;
-
-    (void)BthPS3_SendBrbSynchronously(
-        connection->DevCtxHdr->IoTarget,
-        connection->HidControlChannel.ConnectDisconnectRequest,
-        (PBRB)disconnectBrb,
-        sizeof(*disconnectBrb)
-    );
-
-    //WdfObjectDelete(connection->HidControlChannel.ConnectDisconnectRequest);
-
-#pragma endregion
-
 #pragma region Disconnect HID Interrupt Channel
 
     CLIENT_CONNECTION_REQUEST_REUSE(connection->HidInterruptChannel.ConnectDisconnectRequest);
@@ -394,6 +371,29 @@ EvtClientConnectionsDestroyConnection(
     );
 
     //WdfObjectDelete(connection->HidInterruptChannel.ConnectDisconnectRequest);
+
+#pragma endregion
+
+#pragma region Disconnect HID Control Channel
+
+    CLIENT_CONNECTION_REQUEST_REUSE(connection->HidControlChannel.ConnectDisconnectRequest);
+    connection->DevCtxHdr->ProfileDrvInterface.BthReuseBrb(
+        &connection->HidControlChannel.ConnectDisconnectBrb,
+        BRB_L2CA_CLOSE_CHANNEL
+    );
+
+    disconnectBrb = (struct _BRB_L2CA_CLOSE_CHANNEL *) &(connection->HidControlChannel.ConnectDisconnectBrb);
+    disconnectBrb->BtAddress = connection->RemoteAddress;
+    disconnectBrb->ChannelHandle = connection->HidControlChannel.ChannelHandle;
+
+    (void)BthPS3_SendBrbSynchronously(
+        connection->DevCtxHdr->IoTarget,
+        connection->HidControlChannel.ConnectDisconnectRequest,
+        (PBRB)disconnectBrb,
+        sizeof(*disconnectBrb)
+    );
+
+    //WdfObjectDelete(connection->HidControlChannel.ConnectDisconnectRequest);
 
 #pragma endregion
 

@@ -133,9 +133,7 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
     PBTHPS3_CLIENT_CONNECTION clientConnection = NULL;
     PVOID buffer = NULL;
     size_t bufferLength = 0;
-    size_t bytesReturned = 0;
 
-    UNREFERENCED_PARAMETER(OutputBufferLength);
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_QUEUE, "%!FUNC! Entry");
 
@@ -242,24 +240,28 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
             (ULONG)bufferLength
         );
 
-        status = L2CAP_PS3_ReadInterruptTransferSync(
+        status = L2CAP_PS3_ReadInterruptTransferAsync(
             clientConnection,
+            Request,
             buffer,
-            (ULONG)bufferLength,
-            &bytesReturned
+            bufferLength,
+            L2CAP_PS3_AsyncReadInterruptTransferCompleted,
+            NULL
         );
 
         if (!NT_SUCCESS(status)) {
             TraceEvents(TRACE_LEVEL_ERROR,
                 TRACE_QUEUE,
-                "L2CAP_PS3_ReadInterruptTransferSync failed with status %!STATUS!",
+                "L2CAP_PS3_ReadInterruptTransferAsync failed with status %!STATUS!",
                 status
             );
-            break;
+        }
+        else
+        {
+            status = STATUS_PENDING;
         }
 
-        WdfRequestCompleteWithInformation(Request, status, bytesReturned);
-        return;
+        break;
 
 #pragma endregion
 
@@ -354,6 +356,8 @@ Return Value:
 
 --*/
 {
+    BOOLEAN ret;
+
     TraceEvents(TRACE_LEVEL_INFORMATION,
         TRACE_QUEUE,
         "%!FUNC! Queue 0x%p, Request 0x%p ActionFlags %d",
@@ -396,6 +400,14 @@ Return Value:
     // or another low system power state. In extreme cases, it can cause the system
     // to crash with bugcheck code 9F.
     //
+
+    ret = WdfRequestCancelSentRequest(Request);
+
+    TraceEvents(TRACE_LEVEL_INFORMATION,
+        TRACE_QUEUE,
+        "WdfRequestCancelSentRequest returned %d",
+        ret
+    );
 
     return;
 }

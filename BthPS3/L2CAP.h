@@ -89,5 +89,18 @@ L2CAP_PS3_ReadInterruptTransferSync(
     _Out_ PULONG_PTR BytesReturned
 );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
+NTSTATUS
+L2CAP_PS3_ReadInterruptTransferAsync(
+    _In_ PBTHPS3_CLIENT_CONNECTION ClientConnection,
+    _In_ WDFREQUEST Request,
+    _In_ PVOID Buffer,
+    _In_ size_t BufferLength,
+    _In_ PFN_WDF_REQUEST_COMPLETION_ROUTINE CompletionRoutine,
+    _In_opt_ PVOID CompletionContext
+);
+
 EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_ControlTransferCompleted;
+
 EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_AsyncControlTransferCompleted;
+EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_AsyncReadInterruptTransferCompleted;

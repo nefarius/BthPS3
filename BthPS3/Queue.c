@@ -166,7 +166,7 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
     case IOCTL_BTHPS3_HID_CONTROL_WRITE:
 
         TraceEvents(TRACE_LEVEL_VERBOSE,
-            TRACE_QUEUE, 
+            TRACE_QUEUE,
             ">> IOCTL_BTHPS3_HID_CONTROL_WRITE"
         );
 
@@ -186,21 +186,25 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
             break;
         }
 
-        //
-        // TODO: is it OK to call sync in this context?
-        // 
-        status = L2CAP_PS3_SendControlTransferSync(
+        status = L2CAP_PS3_SendControlTransferAsync(
             clientConnection,
+            Request,
             buffer,
-            bufferLength
+            bufferLength,
+            L2CAP_PS3_AsyncControlTransferCompleted,
+            NULL
         );
 
         if (!NT_SUCCESS(status)) {
             TraceEvents(TRACE_LEVEL_ERROR,
                 TRACE_QUEUE,
-                "L2CAP_PS3_SendControlTransferSync failed with status %!STATUS!",
+                "L2CAP_PS3_SendControlTransferAsync failed with status %!STATUS!",
                 status
             );
+        }
+        else
+        {
+            status = STATUS_PENDING;
         }
 
         break;

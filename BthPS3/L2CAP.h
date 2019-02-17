@@ -57,6 +57,7 @@ _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_SendControlTransferAsync(
     PBTHPS3_CLIENT_CONNECTION ClientConnection,
+    WDFREQUEST Request,
     PVOID Buffer,
     size_t BufferLength,
     PFN_WDF_REQUEST_COMPLETION_ROUTINE CompletionRoutine,
@@ -89,3 +90,4 @@ L2CAP_PS3_ReadInterruptTransferSync(
 );
 
 EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_ControlTransferCompleted;
+EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_AsyncControlTransferCompleted;

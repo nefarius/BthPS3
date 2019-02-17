@@ -140,7 +140,7 @@ Return Value:
             return status;
         }
 
-        //WdfTimerStart(deviceContext->OutputReportTimer, WDF_REL_TIMEOUT_IN_MS(0x64));
+        WdfTimerStart(deviceContext->OutputReportTimer, WDF_REL_TIMEOUT_IN_MS(0x64));
         //WdfTimerStart(deviceContext->InitTimer, WDF_REL_TIMEOUT_IN_MS(0x64));
 
         //
@@ -205,6 +205,8 @@ OutputReport_EvtTimerFunc(
     WDFDEVICE device = WdfTimerGetParentObject(Timer);
     WDFIOTARGET ioTarget = WdfDeviceGetIoTarget(device);
     PDEVICE_CONTEXT devCtx = DeviceGetContext(device);
+
+    UNREFERENCED_PARAMETER(devCtx);
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Entry");
 

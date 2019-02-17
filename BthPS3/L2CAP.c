@@ -596,7 +596,7 @@ L2CAP_PS3_ConnectionStateConnected(
     //
     // PDO creation kicked off from here async
     // 
-    
+
     if (!NT_SUCCESS(status))
     {
         TraceEvents(TRACE_LEVEL_ERROR,
@@ -604,7 +604,7 @@ L2CAP_PS3_ConnectionStateConnected(
             "WdfChildListAddOrUpdateChildDescriptionAsPresent failed with status %!STATUS!",
             status);
         return status;
-    }    
+    }
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
 
@@ -615,6 +615,7 @@ _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_SendControlTransferAsync(
     PBTHPS3_CLIENT_CONNECTION ClientConnection,
+    WDFREQUEST Request,
     PVOID Buffer,
     size_t BufferLength,
     PFN_WDF_REQUEST_COMPLETION_ROUTINE CompletionRoutine,
@@ -623,26 +624,6 @@ L2CAP_PS3_SendControlTransferAsync(
 {
     NTSTATUS status;
     struct _BRB_L2CA_ACL_TRANSFER* brb = NULL;
-    WDFREQUEST brbAsyncRequest = NULL;
-
-    //
-    // Allocate request
-    // 
-    status = WdfRequestCreate(
-        WDF_NO_OBJECT_ATTRIBUTES,
-        ClientConnection->DevCtxHdr->IoTarget,
-        &brbAsyncRequest);
-
-    if (!NT_SUCCESS(status))
-    {
-        TraceEvents(TRACE_LEVEL_ERROR,
-            TRACE_L2CAP,
-            "WdfRequestCreate failed with status %!STATUS!",
-            status
-        );
-
-        return status;
-    }
 
     //
     // Allocate BRB
@@ -655,7 +636,6 @@ L2CAP_PS3_SendControlTransferAsync(
 
     if (brb == NULL)
     {
-        WdfObjectDelete(brbAsyncRequest);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -680,7 +660,7 @@ L2CAP_PS3_SendControlTransferAsync(
     // 
     status = BthPS3_SendBrbAsync(
         ClientConnection->DevCtxHdr->IoTarget,
-        brbAsyncRequest,
+        Request,
         (PBRB)brb,
         sizeof(*brb),
         CompletionRoutine,
@@ -693,7 +673,6 @@ L2CAP_PS3_SendControlTransferAsync(
             "BthPS3_SendBrbAsync failed with status %!STATUS!", status);
 
         ClientConnection->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
-        WdfObjectDelete(brbAsyncRequest);
     }
 
     return status;
@@ -972,4 +951,32 @@ L2CAP_PS3_ControlTransferCompleted(
     ExFreePoolWithTag(brb->Buffer, POOLTAG_BTHPS3);
     deviceCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
     WdfObjectDelete(Request);
+}
+
+//
+// Outgoing control transfer has been completed
+// 
+void
+L2CAP_PS3_AsyncControlTransferCompleted(
+    _In_ WDFREQUEST Request,
+    _In_ WDFIOTARGET Target,
+    _In_ PWDF_REQUEST_COMPLETION_PARAMS Params,
+    _In_ WDFCONTEXT Context
+)
+{
+    struct _BRB_L2CA_ACL_TRANSFER* brb =
+        (struct _BRB_L2CA_ACL_TRANSFER*)Context;
+    PBTHPS3_DEVICE_CONTEXT_HEADER deviceCtxHdr =
+        (PBTHPS3_DEVICE_CONTEXT_HEADER)brb->Hdr.ClientContext[0];
+
+    UNREFERENCED_PARAMETER(Target);
+
+    TraceEvents(TRACE_LEVEL_VERBOSE,
+        TRACE_L2CAP,
+        "Control transfer request completed with status %!STATUS!",
+        Params->IoStatus.Status
+    );
+
+    deviceCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+    WdfRequestComplete(Request, Params->IoStatus.Status);
 }

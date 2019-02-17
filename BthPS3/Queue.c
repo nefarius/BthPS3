@@ -189,8 +189,7 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
             Request,
             buffer,
             bufferLength,
-            L2CAP_PS3_AsyncControlTransferCompleted,
-            NULL
+            L2CAP_PS3_AsyncControlTransferCompleted
         );
 
         if (!NT_SUCCESS(status)) {
@@ -245,8 +244,7 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
             Request,
             buffer,
             bufferLength,
-            L2CAP_PS3_AsyncReadInterruptTransferCompleted,
-            NULL
+            L2CAP_PS3_AsyncReadInterruptTransferCompleted
         );
 
         if (!NT_SUCCESS(status)) {

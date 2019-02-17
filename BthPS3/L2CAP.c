@@ -618,8 +618,7 @@ L2CAP_PS3_SendControlTransferAsync(
     WDFREQUEST Request,
     PVOID Buffer,
     size_t BufferLength,
-    PFN_WDF_REQUEST_COMPLETION_ROUTINE CompletionRoutine,
-    PVOID CompletionContext
+    PFN_WDF_REQUEST_COMPLETION_ROUTINE CompletionRoutine
 )
 {
     NTSTATUS status;
@@ -643,7 +642,6 @@ L2CAP_PS3_SendControlTransferAsync(
     // Used in completion routine to free BRB
     // 
     brb->Hdr.ClientContext[0] = ClientConnection->DevCtxHdr;
-    brb->Hdr.ClientContext[1] = CompletionContext;
 
     //
     // Set channel properties
@@ -870,8 +868,7 @@ L2CAP_PS3_ReadInterruptTransferAsync(
     _In_ WDFREQUEST Request,
     _In_ PVOID Buffer,
     _In_ size_t BufferLength,
-    _In_ PFN_WDF_REQUEST_COMPLETION_ROUTINE CompletionRoutine,
-    _In_opt_ PVOID CompletionContext
+    _In_ PFN_WDF_REQUEST_COMPLETION_ROUTINE CompletionRoutine
 )
 {
     NTSTATUS status;
@@ -895,7 +892,6 @@ L2CAP_PS3_ReadInterruptTransferAsync(
     // Used in completion routine to free BRB
     // 
     brb->Hdr.ClientContext[0] = ClientConnection->DevCtxHdr;
-    brb->Hdr.ClientContext[1] = CompletionContext;
 
     //
     // Set channel properties

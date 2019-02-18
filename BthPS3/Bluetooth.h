@@ -27,7 +27,7 @@
 #include <bthsdpddi.h>
 #include <bthsdpdef.h>
 
-#define POOLTAG_BTHPS3                  'PhtB'
+#define POOLTAG_BTHPS3                  '3SPB'
 #define BTH_DEVICE_INFO_MAX_COUNT       0x0A
 #define BTH_DEVICE_INFO_MAX_RETRIES     0x05
 

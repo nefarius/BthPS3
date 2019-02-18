@@ -89,7 +89,5 @@ L2CAP_PS3_ReadInterruptTransferAsync(
     _In_ PFN_WDF_REQUEST_COMPLETION_ROUTINE CompletionRoutine
 );
 
-EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_ControlTransferCompleted;
-
 EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_AsyncControlTransferCompleted;
 EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_AsyncReadInterruptTransferCompleted;

@@ -184,6 +184,16 @@ L2CAP_PS3_HandleRemoteConnect(
     brb->ConfigIn.Mtu.Preferred = brb->ConfigOut.Mtu.Max;
 
     //
+    // Remaining L2CAP defaults
+    // 
+    brb->ConfigOut.FlushTO.Max = L2CAP_DEFAULT_FLUSHTO;
+    brb->ConfigOut.FlushTO.Min = L2CAP_MIN_FLUSHTO;
+    brb->ConfigOut.FlushTO.Preferred = L2CAP_DEFAULT_FLUSHTO;
+    brb->ConfigOut.ExtraOptions = 0;
+    brb->ConfigOut.NumExtraOptions = 0;
+    brb->ConfigOut.LinkTO = 0;
+
+    //
     // Get notifications about disconnect and QOS
     //
     brb->CallbackFlags = CALLBACK_DISCONNECT | CALLBACK_CONFIG_QOS;

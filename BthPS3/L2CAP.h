@@ -67,6 +67,7 @@ _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_SendControlTransferSync(
     _In_ PBTHPS3_CLIENT_CONNECTION ClientConnection,
+    _In_ WDFREQUEST Request,
     _In_ PVOID Buffer,
     _In_ size_t BufferLength
 );

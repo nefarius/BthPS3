@@ -692,32 +692,13 @@ _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_SendControlTransferSync(
     _In_ PBTHPS3_CLIENT_CONNECTION ClientConnection,
+    _In_ WDFREQUEST Request,
     _In_ PVOID Buffer,
     _In_ size_t BufferLength
 )
 {
     NTSTATUS status;
     struct _BRB_L2CA_ACL_TRANSFER* brb = NULL;
-    WDFREQUEST brbSyncRequest = NULL;
-
-    //
-    // Allocate request
-    // 
-    status = WdfRequestCreate(
-        WDF_NO_OBJECT_ATTRIBUTES,
-        ClientConnection->DevCtxHdr->IoTarget,
-        &brbSyncRequest);
-
-    if (!NT_SUCCESS(status))
-    {
-        TraceEvents(TRACE_LEVEL_ERROR,
-            TRACE_L2CAP,
-            "WdfRequestCreate failed with status %!STATUS!",
-            status
-        );
-
-        return status;
-    }
 
     //
     // Allocate BRB
@@ -730,7 +711,6 @@ L2CAP_PS3_SendControlTransferSync(
 
     if (brb == NULL)
     {
-        WdfObjectDelete(brbSyncRequest);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -749,7 +729,7 @@ L2CAP_PS3_SendControlTransferSync(
     // 
     status = BthPS3_SendBrbSynchronously(
         ClientConnection->DevCtxHdr->IoTarget,
-        brbSyncRequest,
+        Request,
         (PBRB)brb,
         sizeof(*brb)
     );
@@ -761,7 +741,6 @@ L2CAP_PS3_SendControlTransferSync(
     }
 
     ClientConnection->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
-    WdfObjectDelete(brbSyncRequest);
 
     return status;
 }

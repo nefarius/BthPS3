@@ -652,6 +652,8 @@ L2CAP_PS3_SendControlTransferAsync(
     brb->BufferMDL = NULL;
     brb->Buffer = Buffer;
     brb->BufferSize = (ULONG)BufferLength;
+    brb->Timeout = 0;
+    brb->RemainingBufferSize = 0;
 
     //
     // Submit request

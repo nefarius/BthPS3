@@ -23,6 +23,16 @@ Environment:
 #pragma alloc_text (PAGE, BlyatStormCreateDevice)
 #endif
 
+static UCHAR G_Ds3HidOutputReport[] = {
+    0x52, 0x01, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x02, 0xFF, 0x27, 0x10, 0x00,
+    0x32, 0xFF, 0x27, 0x10, 0x00, 0x32, 0xFF, 0x27,
+    0x10, 0x00, 0x32, 0xFF, 0x27, 0x10, 0x00, 0x32,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00
+};
+
 NTSTATUS
 BlyatStormCreateDevice(
     _Inout_ PWDFDEVICE_INIT DeviceInit
@@ -69,6 +79,23 @@ Return Value:
         // run under framework verifier mode.
         //
         deviceContext = DeviceGetContext(device);
+
+        status = WdfMemoryCreatePreallocated(
+            NULL,
+            G_Ds3HidOutputReport,
+            0x32,
+            &deviceContext->OutputReportMemory
+        );
+
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_DEVICE,
+                "WdfMemoryCreatePreallocated failed with status %!STATUS!",
+                status
+            );
+
+            return status;
+        }
 
         //
         // Initialize the context.
@@ -210,36 +237,12 @@ OutputReport_EvtTimerFunc(
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Entry");
 
-    static UCHAR G_Ds3HidOutputReport[] = {
-    0x52, 0x01, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x1E, 0xFF, 0x27, 0x10, 0x00,
-    0x32, 0xFF, 0x27, 0x10, 0x00, 0x32, 0xFF, 0x27,
-    0x10, 0x00, 0x32, 0xFF, 0x27, 0x10, 0x00, 0x32,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00
-    };
-
-    static BOOLEAN toggle = FALSE;
-
-    toggle = !toggle;
-    G_Ds3HidOutputReport[11] = (toggle) ? 0x02 : 0x04;
 
     NTSTATUS status;
-    PVOID buffer = NULL;
     WDF_MEMORY_DESCRIPTOR  MemoryDescriptor;
-    WDFMEMORY  MemoryHandle = NULL;
-    status = WdfMemoryCreate(NULL,
-        NonPagedPool,
-        'aylB',
-        0x32,
-        &MemoryHandle,
-        &buffer);
-
-    RtlCopyMemory(buffer, G_Ds3HidOutputReport, 0x32);
 
     WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(&MemoryDescriptor,
-        MemoryHandle,
+        devCtx->OutputReportMemory,
         NULL);
 
     status = WdfIoTargetSendInternalIoctlSynchronously(
@@ -251,8 +254,6 @@ OutputReport_EvtTimerFunc(
         NULL,
         NULL
     );
-
-    WdfObjectDelete(MemoryHandle);
 
     if (!NT_SUCCESS(status)) {
         TraceEvents(TRACE_LEVEL_ERROR,

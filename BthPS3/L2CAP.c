@@ -194,6 +194,11 @@ L2CAP_PS3_HandleRemoteConnect(
     brb->ConfigOut.LinkTO = 0;
 
     //
+    // Max count of MTUs to stay buffered until discarded
+    // 
+    brb->IncomingQueueDepth = 10;
+
+    //
     // Get notifications about disconnect and QOS
     //
     brb->CallbackFlags = CALLBACK_DISCONNECT | CALLBACK_CONFIG_QOS;

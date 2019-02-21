@@ -288,21 +288,24 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
             break;
         }
 
-        //
-        // TODO: is it OK to call sync in this context?
-        // 
-        status = L2CAP_PS3_SendInterruptTransferSync(
+        status = L2CAP_PS3_SendInterruptTransferAsync(
             clientConnection,
+            Request,
             buffer,
-            bufferLength
+            bufferLength,
+            L2CAP_PS3_AsyncSendInterruptTransferCompleted
         );
 
         if (!NT_SUCCESS(status)) {
             TraceEvents(TRACE_LEVEL_ERROR,
                 TRACE_QUEUE,
-                "L2CAP_PS3_SendInterruptTransferSync failed with status %!STATUS!",
+                "L2CAP_PS3_SendInterruptTransferAsync failed with status %!STATUS!",
                 status
             );
+        }
+        else
+        {
+            status = STATUS_PENDING;
         }
 
         break;

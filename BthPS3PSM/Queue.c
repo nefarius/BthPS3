@@ -135,7 +135,7 @@ BthPS3PSMEvtIoInternalDeviceControl(
 
             TraceEvents(TRACE_LEVEL_VERBOSE,
                 TRACE_QUEUE,
-                ">> >> URB_FUNCTION_SELECT_CONFIGURATION");
+                "<< URB_FUNCTION_SELECT_CONFIGURATION");
 
             //
             // "Hijack" this URB from the upper function driver and

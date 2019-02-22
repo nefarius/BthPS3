@@ -142,7 +142,7 @@ ProxyUrbSelectConfiguration(
     }
 
     //
-    // If we didn't find all 3 pipes, fail to start.
+    // If we didn't find all 3 pipes, fail the request
     //
     if (!(Context->BulkWritePipe
         && Context->BulkReadPipe && Context->InterruptPipe)) {
@@ -173,7 +173,6 @@ UrbFunctionBulkInTransferCompleted(
 {
     PIRP                                    pIrp;
     PURB                                    pUrb;
-    PIO_STACK_LOCATION                      pStack;
     PUCHAR                                  buffer;
     ULONG                                   bufferLength;
     L2CAP_SIGNALLING_COMMAND_CODE           code;
@@ -185,7 +184,6 @@ UrbFunctionBulkInTransferCompleted(
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_FILTER, "%!FUNC! Entry");
 
     pIrp = WdfRequestWdmGetIrp(Request);
-    pStack = IoGetCurrentIrpStackLocation(pIrp);
     pUrb = (PURB)URB_FROM_IRP(pIrp);
 
     struct _URB_BULK_OR_INTERRUPT_TRANSFER *pTransfer = &pUrb->UrbBulkOrInterruptTransfer;
@@ -213,7 +211,7 @@ UrbFunctionBulkInTransferCompleted(
 
                     TraceEvents(TRACE_LEVEL_INFORMATION,
                         TRACE_FILTER,
-                        "++ Patching PSM to 0x%04X",
+                        "++ Patching HID Control PSM to 0x%04X",
                         pConReq->PSM);
                 }
 
@@ -223,7 +221,7 @@ UrbFunctionBulkInTransferCompleted(
 
                     TraceEvents(TRACE_LEVEL_INFORMATION,
                         TRACE_FILTER,
-                        "++ Patching PSM to 0x%04X",
+                        "++ Patching HID Interrupt PSM to 0x%04X",
                         pConReq->PSM);
                 }
             }

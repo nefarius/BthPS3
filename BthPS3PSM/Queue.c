@@ -107,7 +107,6 @@ BthPS3PSMEvtIoInternalDeviceControl(
     BOOLEAN                     ret;
     PIRP                        irp;
     PURB                        urb;
-    PIO_STACK_LOCATION          irpStack;
     WDFDEVICE                   device;
     PDEVICE_CONTEXT             pContext;
 
@@ -119,12 +118,9 @@ BthPS3PSMEvtIoInternalDeviceControl(
     pContext = DeviceGetContext(device);
 
     irp = WdfRequestWdmGetIrp(Request);
-    irpStack = IoGetCurrentIrpStackLocation(irp);
 
-    switch (IoControlCode)
+    if (IoControlCode == IOCTL_INTERNAL_USB_SUBMIT_URB)
     {
-    case IOCTL_INTERNAL_USB_SUBMIT_URB:
-
         urb = (PURB)URB_FROM_IRP(irp);
 
         switch (urb->UrbHeader.Function)
@@ -201,10 +197,6 @@ BthPS3PSMEvtIoInternalDeviceControl(
         default:
             break;
         }
-
-        break;
-    default:
-        break;
     }
 
     //

@@ -82,9 +82,9 @@ Return Value:
     );
 
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR, 
-            TRACE_QUEUE, 
-            "WdfIoQueueCreate failed with %!STATUS!", 
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_QUEUE,
+            "WdfIoQueueCreate failed with %!STATUS!",
             status
         );
         return status;
@@ -125,10 +125,6 @@ BthPS3PSMEvtIoInternalDeviceControl(
     {
     case IOCTL_INTERNAL_USB_SUBMIT_URB:
 
-        TraceEvents(TRACE_LEVEL_VERBOSE,
-            TRACE_QUEUE,
-            ">> IOCTL_INTERNAL_USB_SUBMIT_URB");
-
         urb = (PURB)URB_FROM_IRP(irp);
 
         switch (urb->UrbHeader.Function)
@@ -160,11 +156,6 @@ BthPS3PSMEvtIoInternalDeviceControl(
 
         case URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER:
 
-            TraceEvents(TRACE_LEVEL_VERBOSE,
-                TRACE_QUEUE,
-                ">> >> URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER (PipeHandle: %p)",
-                urb->UrbBulkOrInterruptTransfer.PipeHandle);
-
             //
             // This URB targets the bulk IN pipe so we attach a completion
             // routine to it so we can grab the incoming data once coming
@@ -175,7 +166,8 @@ BthPS3PSMEvtIoInternalDeviceControl(
             {
                 TraceEvents(TRACE_LEVEL_VERBOSE,
                     TRACE_QUEUE,
-                    "Bulk IN transfer"
+                    ">> Bulk IN transfer (PipeHandle: %p)",
+                    urb->UrbBulkOrInterruptTransfer.PipeHandle
                 );
 
                 WdfRequestFormatRequestUsingCurrentType(Request);
@@ -183,7 +175,7 @@ BthPS3PSMEvtIoInternalDeviceControl(
                 WdfRequestSetCompletionRoutine(
                     Request,
                     UrbFunctionBulkInTransferCompleted,
-                    NULL // TODO: what makes sense to pass here?
+                    NULL
                 );
 
                 ret = WdfRequestSend(
@@ -209,10 +201,6 @@ BthPS3PSMEvtIoInternalDeviceControl(
         default:
             break;
         }
-
-        TraceEvents(TRACE_LEVEL_VERBOSE,
-            TRACE_QUEUE,
-            "<<");
 
         break;
     default:

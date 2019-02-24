@@ -117,7 +117,7 @@ BthPS3_CreateDevice(
     // Query for interfaces and pre-allocate BRBs
     //
 
-    status = BthPS3Initialize(GetServerDeviceContext(device));
+    status = BthPS3_Initialize(GetServerDeviceContext(device));
     if (!NT_SUCCESS(status))
     {
         goto exit;
@@ -140,19 +140,19 @@ BthPS3_EvtWdfDeviceSelfManagedIoInit(
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "%!FUNC! Entry");
 
-    status = BthPS3RetrieveLocalInfo(&devCtx->Header);
+    status = BthPS3_RetrieveLocalInfo(&devCtx->Header);
     if (!NT_SUCCESS(status))
     {
         goto exit;
     }
 
-    status = BthPS3RegisterPSM(devCtx);
+    status = BthPS3_RegisterPSM(devCtx);
     if (!NT_SUCCESS(status))
     {
         goto exit;
     }
 
-    status = BthPS3RegisterL2CAPServer(devCtx);
+    status = BthPS3_RegisterL2CAPServer(devCtx);
     if (!NT_SUCCESS(status))
     {
         goto exit;
@@ -179,12 +179,12 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
 
     if (NULL != devCtx->L2CAPServerHandle)
     {
-        BthPS3UnregisterL2CAPServer(devCtx);
+        BthPS3_UnregisterL2CAPServer(devCtx);
     }
 
     if (0 != devCtx->PsmHidControl)
     {
-        BthPS3UnregisterPSM(devCtx);
+        BthPS3_UnregisterPSM(devCtx);
     }
 
     //

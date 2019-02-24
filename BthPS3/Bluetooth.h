@@ -110,7 +110,7 @@ WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_SERVER_CONTEXT, GetServerDeviceContext
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-BthPS3RetrieveLocalInfo(
+BthPS3_RetrieveLocalInfo(
     _In_ PBTHPS3_DEVICE_CONTEXT_HEADER DevCtxHdr
 );
 
@@ -118,13 +118,13 @@ BthPS3RetrieveLocalInfo(
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-BthPS3RegisterPSM(
+BthPS3_RegisterPSM(
     _In_ PBTHPS3_SERVER_CONTEXT DevCtx
 );
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 VOID
-BthPS3UnregisterPSM(
+BthPS3_UnregisterPSM(
     _In_ PBTHPS3_SERVER_CONTEXT DevCtx
 );
 
@@ -134,13 +134,13 @@ BthPS3UnregisterPSM(
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-BthPS3RegisterL2CAPServer(
+BthPS3_RegisterL2CAPServer(
     _In_ PBTHPS3_SERVER_CONTEXT DevCtx
 );
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 VOID
-BthPS3UnregisterL2CAPServer(
+BthPS3_UnregisterL2CAPServer(
     _In_ PBTHPS3_SERVER_CONTEXT DevCtx
 );
 
@@ -148,7 +148,7 @@ BthPS3UnregisterL2CAPServer(
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
-BthPS3DeviceContextHeaderInit(
+BthPS3_DeviceContextHeaderInit(
     PBTHPS3_DEVICE_CONTEXT_HEADER Header,
     WDFDEVICE Device
 );
@@ -163,7 +163,7 @@ BTHPS3_SERVER_CONTEXT_INIT(
     NTSTATUS status;
     WDF_OBJECT_ATTRIBUTES attributes;
 
-    status = BthPS3DeviceContextHeaderInit(&Context->Header, Device);
+    status = BthPS3_DeviceContextHeaderInit(&Context->Header, Device);
     if (!NT_SUCCESS(status))
     {
         goto exit;
@@ -199,19 +199,19 @@ exit:
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-BthPS3QueryInterfaces(
+BthPS3_QueryInterfaces(
     _In_ PBTHPS3_SERVER_CONTEXT DevCtx
 );
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-BthPS3Initialize(
+BthPS3_Initialize(
     _In_ PBTHPS3_SERVER_CONTEXT DevCtx
 );
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 void
-BthPS3IndicationCallback(
+BthPS3_IndicationCallback(
     _In_ PVOID Context,
     _In_ INDICATION_CODE Indication,
     _In_ PINDICATION_PARAMETERS Parameters

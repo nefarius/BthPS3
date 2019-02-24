@@ -23,15 +23,18 @@
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text (PAGE, BthPS3UnregisterPSM)
-#pragma alloc_text (PAGE, BthPS3UnregisterL2CAPServer)
-#pragma alloc_text (PAGE, BthPS3QueryInterfaces)
-#pragma alloc_text (PAGE, BthPS3Initialize)
+#pragma alloc_text (PAGE, BthPS3_UnregisterPSM)
+#pragma alloc_text (PAGE, BthPS3_UnregisterL2CAPServer)
+#pragma alloc_text (PAGE, BthPS3_QueryInterfaces)
+#pragma alloc_text (PAGE, BthPS3_Initialize)
 #endif
 
+//
+// Requests information about underlying radio
+// 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-BthPS3RetrieveLocalInfo(
+BthPS3_RetrieveLocalInfo(
     _In_ PBTHPS3_DEVICE_CONTEXT_HEADER DevCtxHdr
 )
 {
@@ -85,9 +88,12 @@ exit:
     return status;
 }
 
+//
+// Register custom PSMs
+// 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-BthPS3RegisterPSM(
+BthPS3_RegisterPSM(
     _In_ PBTHPS3_SERVER_CONTEXT DevCtx
 )
 {
@@ -103,6 +109,10 @@ BthPS3RegisterPSM(
 
     brb = (struct _BRB_PSM *)
         &(DevCtx->RegisterUnregisterBrb);
+
+    //
+    // Register PSM_DS3_HID_CONTROL
+    // 
 
     brb->Psm = PSM_DS3_HID_CONTROL;
 
@@ -137,6 +147,25 @@ BthPS3RegisterPSM(
         brb->Psm
     );
 
+    // 
+    // Shouldn't happen but validate anyway
+    // 
+    if (brb->Psm != PSM_DS3_HID_CONTROL)
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
+            "Requested PSM 0x%04X but got 0x%04X instead",
+            PSM_DS3_HID_CONTROL,
+            brb->Psm
+        );
+
+        status = STATUS_INVALID_PARAMETER_1;
+        goto exit;
+    }
+
+    //
+    // Register PSM_DS3_HID_CONTROL
+    // 
+
     brb->Psm = PSM_DS3_HID_INTERRUPT;
 
     TraceEvents(TRACE_LEVEL_INFORMATION,
@@ -170,6 +199,20 @@ BthPS3RegisterPSM(
         brb->Psm
     );
 
+    // 
+    // Shouldn't happen but validate anyway
+    // 
+    if (brb->Psm != PSM_DS3_HID_INTERRUPT)
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
+            "Requested PSM 0x%04X but got 0x%04X instead",
+            PSM_DS3_HID_INTERRUPT,
+            brb->Psm
+        );
+
+        status = STATUS_INVALID_PARAMETER_2;
+    }
+
 exit:
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Exit");
@@ -179,7 +222,7 @@ exit:
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 VOID
-BthPS3UnregisterPSM(
+BthPS3_UnregisterPSM(
     _In_ PBTHPS3_SERVER_CONTEXT DevCtx
 )
 {
@@ -259,7 +302,7 @@ exit:
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-BthPS3RegisterL2CAPServer(
+BthPS3_RegisterL2CAPServer(
     _In_ PBTHPS3_SERVER_CONTEXT DevCtx
 )
 {
@@ -281,7 +324,7 @@ BthPS3RegisterL2CAPServer(
     //
     brb->BtAddress = BTH_ADDR_NULL;
     brb->PSM = 0; //we have already registered the PSMs
-    brb->IndicationCallback = &BthPS3IndicationCallback;
+    brb->IndicationCallback = &BthPS3_IndicationCallback;
     brb->IndicationCallbackContext = DevCtx;
     brb->IndicationFlags = 0;
     brb->ReferenceObject = WdfDeviceWdmGetDeviceObject(DevCtx->Header.Device);
@@ -313,7 +356,7 @@ BthPS3RegisterL2CAPServer(
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 VOID
-BthPS3UnregisterL2CAPServer(
+BthPS3_UnregisterL2CAPServer(
     _In_ PBTHPS3_SERVER_CONTEXT DevCtx
 )
 {
@@ -369,7 +412,7 @@ BthPS3UnregisterL2CAPServer(
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
-BthPS3DeviceContextHeaderInit(
+BthPS3_DeviceContextHeaderInit(
     PBTHPS3_DEVICE_CONTEXT_HEADER Header,
     WDFDEVICE Device
 )
@@ -411,7 +454,7 @@ BthPS3DeviceContextHeaderInit(
 // 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-BthPS3QueryInterfaces(
+BthPS3_QueryInterfaces(
     _In_ PBTHPS3_SERVER_CONTEXT DevCtx
 )
 {
@@ -444,13 +487,13 @@ BthPS3QueryInterfaces(
 // 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-BthPS3Initialize(
+BthPS3_Initialize(
     _In_ PBTHPS3_SERVER_CONTEXT DevCtx
 )
 {
     PAGED_CODE();
 
-    return BthPS3QueryInterfaces(DevCtx);
+    return BthPS3_QueryInterfaces(DevCtx);
 }
 
 //
@@ -458,7 +501,7 @@ BthPS3Initialize(
 // 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 void
-BthPS3IndicationCallback(
+BthPS3_IndicationCallback(
     _In_ PVOID Context,
     _In_ INDICATION_CODE Indication,
     _In_ PINDICATION_PARAMETERS Parameters

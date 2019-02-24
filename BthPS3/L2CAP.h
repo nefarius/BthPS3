@@ -110,7 +110,14 @@ L2CAP_PS3_SendInterruptTransferAsync(
     _In_ PFN_WDF_REQUEST_COMPLETION_ROUTINE CompletionRoutine
 );
 
+//
+// HID Control Channel Completion Routines
+// 
 EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_AsyncReadControlTransferCompleted;
-EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_AsyncControlTransferCompleted;
+EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_AsyncSendControlTransferCompleted;
+
+//
+// HID Interrupt Channel Completion Routines
+// 
 EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_AsyncReadInterruptTransferCompleted;
 EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_AsyncSendInterruptTransferCompleted;

@@ -244,7 +244,7 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
             Request,
             buffer,
             bufferLength,
-            L2CAP_PS3_AsyncControlTransferCompleted
+            L2CAP_PS3_AsyncSendControlTransferCompleted
         );
 
         if (!NT_SUCCESS(status)) {

@@ -1030,7 +1030,7 @@ L2CAP_PS3_SendInterruptTransferAsync(
 // Outgoing control transfer has been completed
 // 
 void
-L2CAP_PS3_AsyncControlTransferCompleted(
+L2CAP_PS3_AsyncSendControlTransferCompleted(
     _In_ WDFREQUEST Request,
     _In_ WDFIOTARGET Target,
     _In_ PWDF_REQUEST_COMPLETION_PARAMS Params,

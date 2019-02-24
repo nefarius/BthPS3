@@ -236,6 +236,8 @@ exit:
     return status;
 }
 
+#pragma region Deny an L2CAP connection request
+
 //
 // Deny an L2CAP connection request
 // 
@@ -358,6 +360,8 @@ L2CAP_PS3_DenyRemoteConnectCompleted(
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
 }
+
+#pragma endregion
 
 //
 // Control channel connection result
@@ -626,6 +630,11 @@ L2CAP_PS3_ConnectionStateConnected(
     return status;
 }
 
+#pragma region L2CAP data transfer (incoming and outgoing)
+
+//
+// Submits an outgoing control request
+// 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_SendControlTransferAsync(
@@ -667,8 +676,6 @@ L2CAP_PS3_SendControlTransferAsync(
     brb->BufferMDL = NULL;
     brb->Buffer = Buffer;
     brb->BufferSize = (ULONG)BufferLength;
-    brb->Timeout = 0;
-    brb->RemainingBufferSize = 0;
 
     //
     // Submit request
@@ -693,6 +700,9 @@ L2CAP_PS3_SendControlTransferAsync(
     return status;
 }
 
+//
+// Submits an incoming control request
+// 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_ReadControlTransferAsync(
@@ -757,6 +767,268 @@ L2CAP_PS3_ReadControlTransferAsync(
 
     return status;
 }
+
+//
+// Submits an incoming interrupt request
+// 
+_IRQL_requires_max_(DISPATCH_LEVEL)
+NTSTATUS
+L2CAP_PS3_ReadInterruptTransferAsync(
+    _In_ PBTHPS3_CLIENT_CONNECTION ClientConnection,
+    _In_ WDFREQUEST Request,
+    _In_ PVOID Buffer,
+    _In_ size_t BufferLength,
+    _In_ PFN_WDF_REQUEST_COMPLETION_ROUTINE CompletionRoutine
+)
+{
+    NTSTATUS status;
+    struct _BRB_L2CA_ACL_TRANSFER* brb = NULL;
+
+    //
+    // Allocate BRB
+    // 
+    brb = (struct _BRB_L2CA_ACL_TRANSFER*)
+        ClientConnection->DevCtxHdr->ProfileDrvInterface.BthAllocateBrb(
+            BRB_L2CA_ACL_TRANSFER,
+            POOLTAG_BTHPS3
+        );
+
+    if (brb == NULL)
+    {
+        return STATUS_INSUFFICIENT_RESOURCES;
+    }
+
+    //
+    // Used in completion routine to free BRB
+    // 
+    brb->Hdr.ClientContext[0] = ClientConnection->DevCtxHdr;
+
+    //
+    // Set channel properties
+    // 
+    brb->BtAddress = ClientConnection->RemoteAddress;
+    brb->ChannelHandle = ClientConnection->HidInterruptChannel.ChannelHandle;
+    brb->TransferFlags = ACL_TRANSFER_DIRECTION_IN;
+    //brb->Timeout = 200;
+    brb->BufferMDL = NULL;
+    brb->Buffer = Buffer;
+    brb->BufferSize = (ULONG)BufferLength;
+
+    //
+    // Submit request
+    // 
+    status = BthPS3_SendBrbAsync(
+        ClientConnection->DevCtxHdr->IoTarget,
+        Request,
+        (PBRB)brb,
+        sizeof(*brb),
+        CompletionRoutine,
+        brb
+    );
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, TRACE_L2CAP,
+            "BthPS3_SendBrbAsync failed with status %!STATUS!", status);
+
+        ClientConnection->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+    }
+
+    return status;
+}
+
+//
+// Submits an outgoing interrupt transfer
+// 
+_IRQL_requires_max_(DISPATCH_LEVEL)
+NTSTATUS
+L2CAP_PS3_SendInterruptTransferAsync(
+    _In_ PBTHPS3_CLIENT_CONNECTION ClientConnection,
+    _In_ WDFREQUEST Request,
+    _In_ PVOID Buffer,
+    _In_ size_t BufferLength,
+    _In_ PFN_WDF_REQUEST_COMPLETION_ROUTINE CompletionRoutine
+)
+{
+    NTSTATUS status;
+    struct _BRB_L2CA_ACL_TRANSFER* brb = NULL;
+
+    //
+    // Allocate BRB
+    // 
+    brb = (struct _BRB_L2CA_ACL_TRANSFER*)
+        ClientConnection->DevCtxHdr->ProfileDrvInterface.BthAllocateBrb(
+            BRB_L2CA_ACL_TRANSFER,
+            POOLTAG_BTHPS3
+        );
+
+    if (brb == NULL)
+    {
+        return STATUS_INSUFFICIENT_RESOURCES;
+    }
+
+    //
+    // Used in completion routine to free BRB
+    // 
+    brb->Hdr.ClientContext[0] = ClientConnection->DevCtxHdr;
+
+    //
+    // Set channel properties
+    // 
+    brb->BtAddress = ClientConnection->RemoteAddress;
+    brb->ChannelHandle = ClientConnection->HidInterruptChannel.ChannelHandle;
+    brb->TransferFlags = ACL_TRANSFER_DIRECTION_OUT;
+    brb->BufferMDL = NULL;
+    brb->Buffer = Buffer;
+    brb->BufferSize = (ULONG)BufferLength;
+    brb->Timeout = 0;
+    brb->RemainingBufferSize = 0;
+
+    //
+    // Submit request
+    // 
+    status = BthPS3_SendBrbAsync(
+        ClientConnection->DevCtxHdr->IoTarget,
+        Request,
+        (PBRB)brb,
+        sizeof(*brb),
+        CompletionRoutine,
+        brb
+    );
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, TRACE_L2CAP,
+            "BthPS3_SendBrbAsync failed with status %!STATUS!", status);
+
+        ClientConnection->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+    }
+
+    return status;
+}
+
+//
+// Outgoing control transfer has been completed
+// 
+void
+L2CAP_PS3_AsyncSendControlTransferCompleted(
+    _In_ WDFREQUEST Request,
+    _In_ WDFIOTARGET Target,
+    _In_ PWDF_REQUEST_COMPLETION_PARAMS Params,
+    _In_ WDFCONTEXT Context
+)
+{
+    struct _BRB_L2CA_ACL_TRANSFER* brb =
+        (struct _BRB_L2CA_ACL_TRANSFER*)Context;
+    PBTHPS3_DEVICE_CONTEXT_HEADER deviceCtxHdr =
+        (PBTHPS3_DEVICE_CONTEXT_HEADER)brb->Hdr.ClientContext[0];
+
+    UNREFERENCED_PARAMETER(Target);
+
+    TraceEvents(TRACE_LEVEL_VERBOSE,
+        TRACE_L2CAP,
+        "Control transfer request completed with status %!STATUS!",
+        Params->IoStatus.Status
+    );
+
+    deviceCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+    WdfRequestComplete(Request, Params->IoStatus.Status);
+}
+
+//
+// Incoming control transfer has been completed
+// 
+void
+L2CAP_PS3_AsyncReadControlTransferCompleted(
+    _In_ WDFREQUEST Request,
+    _In_ WDFIOTARGET Target,
+    _In_ PWDF_REQUEST_COMPLETION_PARAMS Params,
+    _In_ WDFCONTEXT Context
+)
+{
+    struct _BRB_L2CA_ACL_TRANSFER* brb =
+        (struct _BRB_L2CA_ACL_TRANSFER*)Context;
+    PBTHPS3_DEVICE_CONTEXT_HEADER deviceCtxHdr =
+        (PBTHPS3_DEVICE_CONTEXT_HEADER)brb->Hdr.ClientContext[0];
+
+    UNREFERENCED_PARAMETER(Target);
+
+    TraceEvents(TRACE_LEVEL_VERBOSE,
+        TRACE_L2CAP,
+        "Control read transfer request completed with status %!STATUS!",
+        Params->IoStatus.Status
+    );
+
+    deviceCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+    WdfRequestCompleteWithInformation(
+        Request,
+        Params->IoStatus.Status,
+        brb->BufferSize
+    );
+}
+
+//
+// Incoming interrupt transfer has been completed
+// 
+void
+L2CAP_PS3_AsyncReadInterruptTransferCompleted(
+    _In_ WDFREQUEST Request,
+    _In_ WDFIOTARGET Target,
+    _In_ PWDF_REQUEST_COMPLETION_PARAMS Params,
+    _In_ WDFCONTEXT Context
+)
+{
+    struct _BRB_L2CA_ACL_TRANSFER* brb =
+        (struct _BRB_L2CA_ACL_TRANSFER*)Context;
+    PBTHPS3_DEVICE_CONTEXT_HEADER deviceCtxHdr =
+        (PBTHPS3_DEVICE_CONTEXT_HEADER)brb->Hdr.ClientContext[0];
+
+    UNREFERENCED_PARAMETER(Target);
+
+    TraceEvents(TRACE_LEVEL_VERBOSE,
+        TRACE_L2CAP,
+        "Interrupt read transfer request completed with status %!STATUS! (remaining: %d)",
+        Params->IoStatus.Status,
+        brb->RemainingBufferSize
+    );
+
+    deviceCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+    WdfRequestCompleteWithInformation(
+        Request,
+        Params->IoStatus.Status,
+        brb->BufferSize
+    );
+}
+
+//
+// Outgoing interrupt transfer has been completed
+// 
+void
+L2CAP_PS3_AsyncSendInterruptTransferCompleted(
+    _In_ WDFREQUEST Request,
+    _In_ WDFIOTARGET Target,
+    _In_ PWDF_REQUEST_COMPLETION_PARAMS Params,
+    _In_ WDFCONTEXT Context
+)
+{
+    struct _BRB_L2CA_ACL_TRANSFER* brb =
+        (struct _BRB_L2CA_ACL_TRANSFER*)Context;
+    PBTHPS3_DEVICE_CONTEXT_HEADER deviceCtxHdr =
+        (PBTHPS3_DEVICE_CONTEXT_HEADER)brb->Hdr.ClientContext[0];
+
+    UNREFERENCED_PARAMETER(Target);
+
+    TraceEvents(TRACE_LEVEL_VERBOSE,
+        TRACE_L2CAP,
+        "Interrupt OUT transfer request completed with status %!STATUS!",
+        Params->IoStatus.Status
+    );
+
+    deviceCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+    WdfRequestComplete(Request, Params->IoStatus.Status);
+}
+
+#pragma endregion
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
@@ -891,255 +1163,4 @@ L2CAP_PS3_SendInterruptTransferSync(
     WdfObjectDelete(brbSyncRequest);
 
     return status;
-}
-
-_IRQL_requires_max_(DISPATCH_LEVEL)
-NTSTATUS
-L2CAP_PS3_ReadInterruptTransferAsync(
-    _In_ PBTHPS3_CLIENT_CONNECTION ClientConnection,
-    _In_ WDFREQUEST Request,
-    _In_ PVOID Buffer,
-    _In_ size_t BufferLength,
-    _In_ PFN_WDF_REQUEST_COMPLETION_ROUTINE CompletionRoutine
-)
-{
-    NTSTATUS status;
-    struct _BRB_L2CA_ACL_TRANSFER* brb = NULL;
-
-    //
-    // Allocate BRB
-    // 
-    brb = (struct _BRB_L2CA_ACL_TRANSFER*)
-        ClientConnection->DevCtxHdr->ProfileDrvInterface.BthAllocateBrb(
-            BRB_L2CA_ACL_TRANSFER,
-            POOLTAG_BTHPS3
-        );
-
-    if (brb == NULL)
-    {
-        return STATUS_INSUFFICIENT_RESOURCES;
-    }
-
-    //
-    // Used in completion routine to free BRB
-    // 
-    brb->Hdr.ClientContext[0] = ClientConnection->DevCtxHdr;
-
-    //
-    // Set channel properties
-    // 
-    brb->BtAddress = ClientConnection->RemoteAddress;
-    brb->ChannelHandle = ClientConnection->HidInterruptChannel.ChannelHandle;
-    brb->TransferFlags = ACL_TRANSFER_DIRECTION_IN;
-    //brb->Timeout = 200;
-    brb->BufferMDL = NULL;
-    brb->Buffer = Buffer;
-    brb->BufferSize = (ULONG)BufferLength;
-
-    //
-    // Submit request
-    // 
-    status = BthPS3_SendBrbAsync(
-        ClientConnection->DevCtxHdr->IoTarget,
-        Request,
-        (PBRB)brb,
-        sizeof(*brb),
-        CompletionRoutine,
-        brb
-    );
-
-    if (!NT_SUCCESS(status))
-    {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_L2CAP,
-            "BthPS3_SendBrbAsync failed with status %!STATUS!", status);
-
-        ClientConnection->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
-    }
-
-    return status;
-}
-
-_IRQL_requires_max_(DISPATCH_LEVEL)
-NTSTATUS
-L2CAP_PS3_SendInterruptTransferAsync(
-    _In_ PBTHPS3_CLIENT_CONNECTION ClientConnection,
-    _In_ WDFREQUEST Request,
-    _In_ PVOID Buffer,
-    _In_ size_t BufferLength,
-    _In_ PFN_WDF_REQUEST_COMPLETION_ROUTINE CompletionRoutine
-)
-{
-    NTSTATUS status;
-    struct _BRB_L2CA_ACL_TRANSFER* brb = NULL;
-
-    //
-    // Allocate BRB
-    // 
-    brb = (struct _BRB_L2CA_ACL_TRANSFER*)
-        ClientConnection->DevCtxHdr->ProfileDrvInterface.BthAllocateBrb(
-            BRB_L2CA_ACL_TRANSFER,
-            POOLTAG_BTHPS3
-        );
-
-    if (brb == NULL)
-    {
-        return STATUS_INSUFFICIENT_RESOURCES;
-    }
-
-    //
-    // Used in completion routine to free BRB
-    // 
-    brb->Hdr.ClientContext[0] = ClientConnection->DevCtxHdr;
-
-    //
-    // Set channel properties
-    // 
-    brb->BtAddress = ClientConnection->RemoteAddress;
-    brb->ChannelHandle = ClientConnection->HidInterruptChannel.ChannelHandle;
-    brb->TransferFlags = ACL_TRANSFER_DIRECTION_OUT;
-    brb->BufferMDL = NULL;
-    brb->Buffer = Buffer;
-    brb->BufferSize = (ULONG)BufferLength;
-    brb->Timeout = 0;
-    brb->RemainingBufferSize = 0;
-
-    //
-    // Submit request
-    // 
-    status = BthPS3_SendBrbAsync(
-        ClientConnection->DevCtxHdr->IoTarget,
-        Request,
-        (PBRB)brb,
-        sizeof(*brb),
-        CompletionRoutine,
-        brb
-    );
-
-    if (!NT_SUCCESS(status))
-    {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_L2CAP,
-            "BthPS3_SendBrbAsync failed with status %!STATUS!", status);
-
-        ClientConnection->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
-    }
-
-    return status;
-}
-
-//
-// Outgoing control transfer has been completed
-// 
-void
-L2CAP_PS3_AsyncSendControlTransferCompleted(
-    _In_ WDFREQUEST Request,
-    _In_ WDFIOTARGET Target,
-    _In_ PWDF_REQUEST_COMPLETION_PARAMS Params,
-    _In_ WDFCONTEXT Context
-)
-{
-    struct _BRB_L2CA_ACL_TRANSFER* brb =
-        (struct _BRB_L2CA_ACL_TRANSFER*)Context;
-    PBTHPS3_DEVICE_CONTEXT_HEADER deviceCtxHdr =
-        (PBTHPS3_DEVICE_CONTEXT_HEADER)brb->Hdr.ClientContext[0];
-
-    UNREFERENCED_PARAMETER(Target);
-
-    TraceEvents(TRACE_LEVEL_VERBOSE,
-        TRACE_L2CAP,
-        "Control transfer request completed with status %!STATUS!",
-        Params->IoStatus.Status
-    );
-
-    deviceCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
-    WdfRequestComplete(Request, Params->IoStatus.Status);
-}
-
-void
-L2CAP_PS3_AsyncReadControlTransferCompleted(
-    _In_ WDFREQUEST Request,
-    _In_ WDFIOTARGET Target,
-    _In_ PWDF_REQUEST_COMPLETION_PARAMS Params,
-    _In_ WDFCONTEXT Context
-)
-{
-    struct _BRB_L2CA_ACL_TRANSFER* brb =
-        (struct _BRB_L2CA_ACL_TRANSFER*)Context;
-    PBTHPS3_DEVICE_CONTEXT_HEADER deviceCtxHdr =
-        (PBTHPS3_DEVICE_CONTEXT_HEADER)brb->Hdr.ClientContext[0];
-
-    UNREFERENCED_PARAMETER(Target);
-
-    TraceEvents(TRACE_LEVEL_VERBOSE,
-        TRACE_L2CAP,
-        "Control read transfer request completed with status %!STATUS!",
-        Params->IoStatus.Status
-    );
-
-    deviceCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
-    WdfRequestCompleteWithInformation(
-        Request,
-        Params->IoStatus.Status,
-        brb->BufferSize
-    );
-}
-
-//
-// Incoming interrupt transfer has been completed
-// 
-void
-L2CAP_PS3_AsyncReadInterruptTransferCompleted(
-    _In_ WDFREQUEST Request,
-    _In_ WDFIOTARGET Target,
-    _In_ PWDF_REQUEST_COMPLETION_PARAMS Params,
-    _In_ WDFCONTEXT Context
-)
-{
-    struct _BRB_L2CA_ACL_TRANSFER* brb =
-        (struct _BRB_L2CA_ACL_TRANSFER*)Context;
-    PBTHPS3_DEVICE_CONTEXT_HEADER deviceCtxHdr =
-        (PBTHPS3_DEVICE_CONTEXT_HEADER)brb->Hdr.ClientContext[0];
-
-    UNREFERENCED_PARAMETER(Target);
-
-    TraceEvents(TRACE_LEVEL_VERBOSE,
-        TRACE_L2CAP,
-        "Interrupt read transfer request completed with status %!STATUS! (remaining: %d)",
-        Params->IoStatus.Status,
-        brb->RemainingBufferSize
-    );
-
-    deviceCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
-    WdfRequestCompleteWithInformation(
-        Request,
-        Params->IoStatus.Status,
-        brb->BufferSize
-    );
-}
-
-//
-// Outgoing interrupt transfer has been completed
-// 
-void
-L2CAP_PS3_AsyncSendInterruptTransferCompleted(
-    _In_ WDFREQUEST Request,
-    _In_ WDFIOTARGET Target,
-    _In_ PWDF_REQUEST_COMPLETION_PARAMS Params,
-    _In_ WDFCONTEXT Context
-)
-{
-    struct _BRB_L2CA_ACL_TRANSFER* brb =
-        (struct _BRB_L2CA_ACL_TRANSFER*)Context;
-    PBTHPS3_DEVICE_CONTEXT_HEADER deviceCtxHdr =
-        (PBTHPS3_DEVICE_CONTEXT_HEADER)brb->Hdr.ClientContext[0];
-
-    UNREFERENCED_PARAMETER(Target);
-
-    TraceEvents(TRACE_LEVEL_VERBOSE,
-        TRACE_L2CAP,
-        "Interrupt OUT transfer request completed with status %!STATUS!",
-        Params->IoStatus.Status
-    );
-
-    deviceCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
-    WdfRequestComplete(Request, Params->IoStatus.Status);
 }

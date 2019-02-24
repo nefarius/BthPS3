@@ -128,6 +128,9 @@ L2CAP_PS3_HandleRemoteConnect(
         }
     }
 
+    //
+    // Store device type (required to later spawn the right PDO)
+    // 
     clientConnection->DeviceType = deviceType;
 
     //
@@ -161,7 +164,7 @@ L2CAP_PS3_HandleRemoteConnect(
     brb->Hdr.ClientContext[0] = clientConnection;
 
     brb->BtAddress = ConnectParams->BtAddress;
-    brb->Psm = ConnectParams->Parameters.Connect.Request.PSM;
+    brb->Psm = psm;
     brb->ChannelHandle = ConnectParams->ConnectionHandle;
     brb->Response = CONNECT_RSP_RESULT_SUCCESS;
 

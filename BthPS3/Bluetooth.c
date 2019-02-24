@@ -406,6 +406,9 @@ BthPS3DeviceContextHeaderInit(
     return status;
 }
 
+//
+// Grabs driver-to-driver interface
+// 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3QueryInterfaces(
@@ -436,6 +439,9 @@ BthPS3QueryInterfaces(
     return status;
 }
 
+//
+// Initialize Bluetooth driver-to-driver interface
+// 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3Initialize(
@@ -447,6 +453,9 @@ BthPS3Initialize(
     return BthPS3QueryInterfaces(DevCtx);
 }
 
+//
+// Gets invoked by parent bus if there's work for our driver
+// 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 void
 BthPS3IndicationCallback(
@@ -471,6 +480,9 @@ BthPS3IndicationCallback(
             Parameters->Parameters.Connect.Request.PSM,
             Parameters->BtAddress);
 
+        //
+        // Main entry point for a new connection, decides if valid etc.
+        // 
         L2CAP_PS3_HandleRemoteConnect(devCtx, Parameters);
 
         break;

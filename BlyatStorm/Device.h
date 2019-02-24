@@ -30,6 +30,8 @@ typedef struct _DEVICE_CONTEXT
 
     WDFTIMER InputReportTimer;
 
+    WDFTIMER ControlReadTimer;
+
     WDFMEMORY OutputReportMemory;
 
 } DEVICE_CONTEXT, *PDEVICE_CONTEXT;
@@ -58,5 +60,6 @@ TraceDumpBuffer(
 EVT_WDF_TIMER OutputReport_EvtTimerFunc;
 EVT_WDF_TIMER Init_EvtTimerFunc;
 EVT_WDF_TIMER InputReport_EvtTimerFunc;
+EVT_WDF_TIMER ControlRead_EvtTimerFunc;
 
 EXTERN_C_END

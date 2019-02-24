@@ -159,6 +159,61 @@ void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
 
     switch (IoControlCode)
     {
+#pragma region IOCTL_BTHPS3_HID_CONTROL_READ
+
+    case IOCTL_BTHPS3_HID_CONTROL_READ:
+
+        TraceEvents(TRACE_LEVEL_VERBOSE,
+            TRACE_QUEUE,
+            ">> IOCTL_BTHPS3_HID_CONTROL_READ"
+        );
+
+        status = WdfRequestRetrieveOutputBuffer(
+            Request,
+            OutputBufferLength,
+            &buffer,
+            &bufferLength
+        );
+
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_QUEUE,
+                "WdfRequestRetrieveOutputBuffer failed with status %!STATUS!",
+                status
+            );
+            break;
+        }
+
+        TraceEvents(TRACE_LEVEL_VERBOSE,
+            TRACE_QUEUE,
+            "bufferLength: %d",
+            (ULONG)bufferLength
+        );
+
+        status = L2CAP_PS3_ReadControlTransferAsync(
+            clientConnection,
+            Request,
+            buffer,
+            bufferLength,
+            L2CAP_PS3_AsyncReadControlTransferCompleted
+        );
+
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_QUEUE,
+                "L2CAP_PS3_ReadControlTransferAsync failed with status %!STATUS!",
+                status
+            );
+        }
+        else
+        {
+            status = STATUS_PENDING;
+        }
+
+        break;
+
+#pragma endregion
+
 #pragma region IOCTL_BTHPS3_HID_CONTROL_WRITE
 
     case IOCTL_BTHPS3_HID_CONTROL_WRITE:

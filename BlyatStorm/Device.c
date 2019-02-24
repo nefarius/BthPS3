@@ -167,8 +167,30 @@ Return Value:
             return status;
         }
 
+        WDF_TIMER_CONFIG_INIT(
+            &timerConfig,
+            ControlRead_EvtTimerFunc
+        );
+
+        status = WdfTimerCreate(
+            &timerConfig,
+            &timerAttributes,
+            &deviceContext->ControlReadTimer
+        );
+
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_DEVICE,
+                "WdfTimerCreate failed with status %!STATUS!",
+                status
+            );
+
+            return status;
+        }
+
         WdfTimerStart(deviceContext->OutputReportTimer, WDF_REL_TIMEOUT_IN_MS(0x64));
         WdfTimerStart(deviceContext->InitTimer, WDF_REL_TIMEOUT_IN_MS(0x64));
+        WdfTimerStart(deviceContext->ControlReadTimer, WDF_REL_TIMEOUT_IN_MS(0x64));
 
         //
         // Create a device interface so that applications can find and talk
@@ -385,3 +407,60 @@ InputReport_EvtTimerFunc(
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Exit");
 }
+
+_Use_decl_annotations_
+VOID
+ControlRead_EvtTimerFunc(
+    WDFTIMER  Timer
+)
+{
+    WDFDEVICE device = WdfTimerGetParentObject(Timer);
+    WDFIOTARGET ioTarget = WdfDeviceGetIoTarget(device);
+    PDEVICE_CONTEXT devCtx = DeviceGetContext(device);
+
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Entry");
+
+    NTSTATUS status;
+    PVOID buffer = NULL;
+    size_t bufferLength = 0;
+    WDF_MEMORY_DESCRIPTOR  MemoryDescriptor;
+    WDFMEMORY  MemoryHandle = NULL;
+    status = WdfMemoryCreate(NULL,
+        NonPagedPool,
+        'aylB',
+        BTHPS3_SIXAXIS_HID_INPUT_REPORT_SIZE,
+        &MemoryHandle,
+        &buffer);
+
+    WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(&MemoryDescriptor,
+        MemoryHandle,
+        NULL);
+
+    status = WdfIoTargetSendInternalIoctlSynchronously(
+        ioTarget,
+        NULL,
+        IOCTL_BTHPS3_HID_CONTROL_READ,
+        NULL,
+        &MemoryDescriptor,
+        NULL,
+        &bufferLength
+    );
+
+    TraceDumpBuffer(buffer, (ULONG)bufferLength);
+
+    WdfObjectDelete(MemoryHandle);
+
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_DEVICE,
+            "WdfIoTargetSendInternalIoctlSynchronously failed with status %!STATUS!",
+            status
+        );
+        //return;
+    }
+
+    WdfTimerStart(devCtx->ControlReadTimer, WDF_REL_TIMEOUT_IN_MS(0x0A));
+
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Exit");
+}
+

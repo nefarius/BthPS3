@@ -104,7 +104,6 @@ ClientConnections_DropAndFreeAll(
 );
 
 EVT_WDF_OBJECT_CONTEXT_CLEANUP EvtClientConnectionsDestroyConnection;
-EVT_WDF_REQUEST_COMPLETION_ROUTINE ClientConnections_DisconnectCompleted;
 
 VOID
 FORCEINLINE

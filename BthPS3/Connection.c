@@ -339,6 +339,9 @@ EvtClientConnectionsDestroyConnection(
 
     pdoDesc.ClientConnection = connection;
 
+    //
+    // Init PDO destruction
+    // 
     status = WdfChildListUpdateChildDescriptionAsMissing(
         WdfFdoGetDefaultChildList(connection->DevCtxHdr->Device),
         &pdoDesc.Header
@@ -350,6 +353,10 @@ EvtClientConnectionsDestroyConnection(
             "WdfChildListUpdateChildDescriptionAsMissing failed with status %!STATUS!",
             status);
     }
+
+    //
+    // Invoke clean channel disconnect - if possible at this stage
+    // 
 
 #pragma region Disconnect HID Interrupt Channel
 
@@ -363,14 +370,15 @@ EvtClientConnectionsDestroyConnection(
     disconnectBrb->BtAddress = connection->RemoteAddress;
     disconnectBrb->ChannelHandle = connection->HidInterruptChannel.ChannelHandle;
 
+    //
+    // May fail if radio got surprise-removed, so don't check return value
+    // 
     (void)BthPS3_SendBrbSynchronously(
         connection->DevCtxHdr->IoTarget,
         connection->HidInterruptChannel.ConnectDisconnectRequest,
         (PBRB)disconnectBrb,
         sizeof(*disconnectBrb)
     );
-
-    //WdfObjectDelete(connection->HidInterruptChannel.ConnectDisconnectRequest);
 
 #pragma endregion
 
@@ -386,6 +394,9 @@ EvtClientConnectionsDestroyConnection(
     disconnectBrb->BtAddress = connection->RemoteAddress;
     disconnectBrb->ChannelHandle = connection->HidControlChannel.ChannelHandle;
 
+    //
+    // May fail if radio got surprise-removed, so don't check return value
+    // 
     (void)BthPS3_SendBrbSynchronously(
         connection->DevCtxHdr->IoTarget,
         connection->HidControlChannel.ConnectDisconnectRequest,
@@ -393,32 +404,7 @@ EvtClientConnectionsDestroyConnection(
         sizeof(*disconnectBrb)
     );
 
-    //WdfObjectDelete(connection->HidControlChannel.ConnectDisconnectRequest);
-
 #pragma endregion
-
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CONNECTION, "%!FUNC! Exit");
-}
-
-//
-// TODO: required?
-// 
-void
-ClientConnections_DisconnectCompleted(
-    _In_ WDFREQUEST  Request,
-    _In_ WDFIOTARGET  Target,
-    _In_ PWDF_REQUEST_COMPLETION_PARAMS  Params,
-    _In_ WDFCONTEXT  Context
-)
-{
-    UNREFERENCED_PARAMETER(Request);
-    UNREFERENCED_PARAMETER(Target);
-    UNREFERENCED_PARAMETER(Params);
-    UNREFERENCED_PARAMETER(Context);
-
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CONNECTION, "%!FUNC! Entry");
-
-    //WdfObjectDelete(Request);
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CONNECTION, "%!FUNC! Exit");
 }

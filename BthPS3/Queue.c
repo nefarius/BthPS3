@@ -19,7 +19,6 @@
 
 #include "driver.h"
 #include "queue.tmh"
-#include <stdio.h>
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (PAGE, BthPS3QueueInitialize)
@@ -82,37 +81,6 @@ Return Value:
     }
 
     return status;
-}
-
-VOID
-TraceDumpBuffer(
-    PVOID Buffer,
-    ULONG BufferLength
-)
-{
-    PWSTR   dumpBuffer;
-    size_t  dumpBufferLength;
-    ULONG   i;
-
-    dumpBufferLength = ((BufferLength * sizeof(WCHAR)) * 3) + 2;
-    dumpBuffer = ExAllocatePoolWithTag(
-        NonPagedPoolNx,
-        dumpBufferLength,
-        'egrA'
-    );
-    RtlZeroMemory(dumpBuffer, dumpBufferLength);
-
-    for (i = 0; i < BufferLength; i++)
-    {
-        swprintf(&dumpBuffer[i * 3], L"%02X ", ((PUCHAR)Buffer)[i]);
-    }
-
-    TraceEvents(TRACE_LEVEL_INFORMATION,
-        TRACE_DEVICE,
-        "%ws",
-        dumpBuffer);
-
-    ExFreePoolWithTag(dumpBuffer, 'egrA');
 }
 
 //

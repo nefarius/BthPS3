@@ -48,10 +48,4 @@ BthPS3QueueInitialize(
 EVT_WDF_IO_QUEUE_IO_STOP BthPS3_EvtIoStop;
 EVT_WDF_IO_QUEUE_IO_INTERNAL_DEVICE_CONTROL BthPS3_EvtWdfIoQueueIoInternalDeviceControl;
 
-VOID
-TraceDumpBuffer(
-    PVOID Buffer,
-    ULONG BufferLength
-);
-
 EXTERN_C_END

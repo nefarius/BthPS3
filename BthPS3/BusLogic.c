@@ -195,7 +195,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 #pragma endregion
 
-#pragma region Add request context shared with PDOs
+#pragma region Add FDO-shared request context
 
     WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(
         &attributes,
@@ -248,7 +248,6 @@ BthPS3_EvtWdfChildListCreateDevice(
 
     WDF_DEVICE_PNP_CAPABILITIES_INIT(&pnpCaps);
     pnpCaps.Removable = WdfTrue;
-    //pnpCaps.EjectSupported = WdfTrue;
     pnpCaps.SurpriseRemovalOK = WdfTrue;
 
     WdfDeviceSetPnpCapabilities(hChild, &pnpCaps);
@@ -257,6 +256,10 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 #pragma region Default I/O Queue creation
 
+    //
+    // All of the heavy lifting is done by a function driver
+    // which communicates via IRP_MJ_INTERNAL_DEVICE_CONTROL
+    // 
     WDF_IO_QUEUE_CONFIG_INIT_DEFAULT_QUEUE(&defaultQueueCfg, WdfIoQueueDispatchParallel);
     defaultQueueCfg.EvtIoInternalDeviceControl = BthPS3_PDO_EvtWdfIoQueueIoInternalDeviceControl;
 
@@ -285,6 +288,9 @@ BthPS3_EvtWdfChildListCreateDevice(
                return status;
 }
 
+//
+// Used to compare two bus children
+// 
 BOOLEAN BthPS3_PDO_EvtChildListIdentificationDescriptionCompare(
     WDFCHILDLIST DeviceList,
     PWDF_CHILD_IDENTIFICATION_DESCRIPTION_HEADER FirstIdentificationDescription,
@@ -300,7 +306,9 @@ BOOLEAN BthPS3_PDO_EvtChildListIdentificationDescriptionCompare(
     rhs = CONTAINING_RECORD(SecondIdentificationDescription,
         PDO_IDENTIFICATION_DESCRIPTION,
         Header);
-
+    //
+    // BTH_ADDR of remote device is used to distinguish between children
+    // 
     return (lhs->ClientConnection->RemoteAddress ==
         rhs->ClientConnection->RemoteAddress) ? TRUE : FALSE;
 }
@@ -334,8 +342,8 @@ void BthPS3_PDO_EvtWdfIoQueueIoInternalDeviceControl(
     pdoCtx = GetPdoDeviceContext(device);
 
     //
-    // Establish relationship of PDO to BTH_ADDR so the parent bus
-    // can pick the related device from connection list.
+    // Establish relationship of PDO to connection object so the parent 
+    // bus doesn't need to lookup the device from connection list.
     // 
     reqCtx->ClientConnection = pdoCtx->ClientConnection;
 
@@ -343,7 +351,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoInternalDeviceControl(
     forwardOptions.Flags = WDF_REQUEST_FORWARD_OPTION_SEND_AND_FORGET;
 
     //
-    // FDO has all the state info so don't bother handling this ourself
+    // FDO has all the state info so don't bother handling this in the PDO
     // 
     status = WdfRequestForwardToParentDeviceIoQueue(
         Request,

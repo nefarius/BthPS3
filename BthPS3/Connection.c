@@ -358,6 +358,10 @@ EvtClientConnectionsDestroyConnection(
     // Invoke clean channel disconnect - if possible at this stage
     // 
 
+    //
+    // TODO: add proper locking!
+    // 
+
 #pragma region Disconnect HID Interrupt Channel
 
     CLIENT_CONNECTION_REQUEST_REUSE(connection->HidInterruptChannel.ConnectDisconnectRequest);

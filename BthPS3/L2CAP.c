@@ -429,6 +429,7 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
     NTSTATUS status;
     struct _BRB_L2CA_OPEN_CHANNEL *brb = NULL;
     PBTHPS3_CLIENT_CONNECTION clientConnection = NULL;
+    BTHPS3_CONNECTION_STATE controlState;
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
 
@@ -460,10 +461,45 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
             "HID Interrupt Channel connection established"
         );
 
+        //
+        // Control channel is expected to be established by now
+        // 
+        WdfSpinLockAcquire(clientConnection->HidControlChannel.ConnectionStateLock);
+        controlState = clientConnection->HidInterruptChannel.ConnectionState;
+        WdfSpinLockRelease(clientConnection->HidControlChannel.ConnectionStateLock);
+
+        if (controlState != ConnectionStateConnected)
+        {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_L2CAP,
+                "HID Control Channel in invalid state (0x%02X), dropping connection",
+                controlState
+            );
+
+            goto failedDrop;
+        }
+
+        //
+        // All expected channel ready to operate, continue child initialization
+        // 
         L2CAP_PS3_ConnectionStateConnected(clientConnection);
+    }
+    else
+    {
+        goto failedDrop;
     }
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
+
+    return;
+
+failedDrop:
+
+    //
+    // TODO: implement me!
+    // 
+
+    return;
 }
 
 //

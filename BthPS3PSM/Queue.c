@@ -61,7 +61,7 @@ Return Value:
 
     //
     // Configure a default queue so that requests that are not
-    // configure-fowarded using WdfDeviceConfigureRequestDispatching to goto
+    // configure-forwarded using WdfDeviceConfigureRequestDispatching to goto
     // other queues get dispatched here.
     //
     WDF_IO_QUEUE_CONFIG_INIT_DEFAULT_QUEUE(
@@ -93,6 +93,9 @@ Return Value:
     return status;
 }
 
+//
+// Handle IRP_MJ_INTERNAL_DEVICE_CONTROL requests
+// 
 VOID
 BthPS3PSMEvtIoInternalDeviceControl(
     _In_ WDFQUEUE Queue,
@@ -116,9 +119,11 @@ BthPS3PSMEvtIoInternalDeviceControl(
 
     device = WdfIoQueueGetDevice(Queue);
     pContext = DeviceGetContext(device);
-
     irp = WdfRequestWdmGetIrp(Request);
 
+    //
+    // As a BTHUSB lower filter driver we expect USB/URB traffic
+    // 
     if (IoControlCode == IOCTL_INTERNAL_USB_SUBMIT_URB)
     {
         urb = (PURB)URB_FROM_IRP(irp);

@@ -78,7 +78,7 @@ ProxyUrbSelectConfiguration(
     //
     // There could be multiple interfaces although every 
     // tested and compatible host device uses the first
-    // interface so we can get away with a bit of lazyness ;)
+    // interface so we can get away with a bit of laziness ;)
     // 
     Context->UsbInterface = WdfUsbTargetDeviceGetInterface(
         Context->UsbDevice,

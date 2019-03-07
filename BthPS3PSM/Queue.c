@@ -155,6 +155,8 @@ BthPS3PSMEvtIoInternalDeviceControl(
 
 #pragma endregion
 
+#pragma region URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER
+
         case URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER:
 
             //
@@ -198,6 +200,8 @@ BthPS3PSMEvtIoInternalDeviceControl(
             }
 
             break;
+
+#pragma endregion
 
         default:
             break;

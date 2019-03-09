@@ -411,6 +411,12 @@ L2CAP_PS3_ControlConnectResponseCompleted(
             "HID Control Channel connection established"
         );
     }
+    else
+    {
+        //
+        // TODO: implement me!
+        // 
+    }
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
 }

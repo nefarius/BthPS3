@@ -88,9 +88,8 @@ exit:
     return status;
 }
 
-//
-// Register custom PSMs
-// 
+#pragma region PSM
+
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_RegisterPSM(
@@ -300,6 +299,10 @@ exit:
     return;
 }
 
+#pragma endregion
+
+#pragma region L2CAP
+
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_RegisterL2CAPServer(
@@ -409,6 +412,8 @@ BthPS3_UnregisterL2CAPServer(
 
     return;
 }
+
+#pragma endregion
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS

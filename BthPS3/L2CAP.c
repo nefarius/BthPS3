@@ -854,7 +854,6 @@ L2CAP_PS3_ReadInterruptTransferAsync(
     brb->BtAddress = ClientConnection->RemoteAddress;
     brb->ChannelHandle = ClientConnection->HidInterruptChannel.ChannelHandle;
     brb->TransferFlags = ACL_TRANSFER_DIRECTION_IN;
-    //brb->Timeout = 200;
     brb->BufferMDL = NULL;
     brb->Buffer = Buffer;
     brb->BufferSize = (ULONG)BufferLength;

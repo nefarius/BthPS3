@@ -87,6 +87,8 @@ Return Value:
 //
 // Handle IRP_MJ_DEVICE_CONTROL sent to FDO
 // 
+// Just pass this stuff to the underlying radio (IOCTL_BTH_*)
+// 
 _Use_decl_annotations_
 VOID
 BthPS3_EvtWdfIoQueueIoDeviceControl(
@@ -97,12 +99,37 @@ BthPS3_EvtWdfIoQueueIoDeviceControl(
     ULONG  IoControlCode
 )
 {
-    UNREFERENCED_PARAMETER(Queue);
+    NTSTATUS                    status = STATUS_UNSUCCESSFUL;
+    WDF_REQUEST_SEND_OPTIONS    options;
+    BOOLEAN                     ret = FALSE;
+    WDFDEVICE                   device = NULL;
+    PBTHPS3_SERVER_CONTEXT      deviceCtx = NULL;
+
     UNREFERENCED_PARAMETER(OutputBufferLength);
     UNREFERENCED_PARAMETER(InputBufferLength);
     UNREFERENCED_PARAMETER(IoControlCode);
 
-    WdfRequestComplete(Request, STATUS_UNSUCCESSFUL);
+    device = WdfIoQueueGetDevice(Queue);
+    deviceCtx = GetServerDeviceContext(device);
+
+    WdfRequestFormatRequestUsingCurrentType(Request);
+
+    WDF_REQUEST_SEND_OPTIONS_INIT(&options,
+        WDF_REQUEST_SEND_OPTION_SEND_AND_FORGET);
+
+    ret = WdfRequestSend(
+        Request,
+        deviceCtx->Header.IoTarget,
+        &options
+    );
+
+    if (ret == FALSE) {
+        status = WdfRequestGetStatus(Request);
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_QUEUE,
+            "WdfRequestSend failed with status %!STATUS!", status);
+        WdfRequestComplete(Request, status);
+    }
 }
 
 //

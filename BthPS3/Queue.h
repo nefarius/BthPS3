@@ -46,6 +46,7 @@ BthPS3QueueInitialize(
 // Events from the IoQueue object
 //
 EVT_WDF_IO_QUEUE_IO_STOP BthPS3_EvtIoStop;
+EVT_WDF_IO_QUEUE_IO_DEVICE_CONTROL BthPS3_EvtWdfIoQueueIoDeviceControl;
 EVT_WDF_IO_QUEUE_IO_INTERNAL_DEVICE_CONTROL BthPS3_EvtWdfIoQueueIoInternalDeviceControl;
 
 EXTERN_C_END

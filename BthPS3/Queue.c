@@ -66,6 +66,7 @@ Return Value:
     );
 
     queueConfig.EvtIoStop = BthPS3_EvtIoStop;
+    queueConfig.EvtIoDeviceControl = BthPS3_EvtWdfIoQueueIoDeviceControl;
     queueConfig.EvtIoInternalDeviceControl = BthPS3_EvtWdfIoQueueIoInternalDeviceControl;
 
     status = WdfIoQueueCreate(
@@ -81,6 +82,24 @@ Return Value:
     }
 
     return status;
+}
+
+_Use_decl_annotations_
+VOID
+BthPS3_EvtWdfIoQueueIoDeviceControl(
+    IN WDFQUEUE  Queue,
+    WDFREQUEST  Request,
+    size_t  OutputBufferLength,
+    size_t  InputBufferLength,
+    ULONG  IoControlCode
+)
+{
+    UNREFERENCED_PARAMETER(Queue);
+    UNREFERENCED_PARAMETER(OutputBufferLength);
+    UNREFERENCED_PARAMETER(InputBufferLength);
+    UNREFERENCED_PARAMETER(IoControlCode);
+
+    WdfRequestComplete(Request, STATUS_UNSUCCESSFUL);
 }
 
 //

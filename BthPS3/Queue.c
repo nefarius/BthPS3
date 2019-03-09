@@ -84,6 +84,9 @@ Return Value:
     return status;
 }
 
+//
+// Handle IRP_MJ_DEVICE_CONTROL sent to FDO
+// 
 _Use_decl_annotations_
 VOID
 BthPS3_EvtWdfIoQueueIoDeviceControl(

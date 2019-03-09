@@ -241,6 +241,9 @@ BthPS3_SendBrbAsync(
 
 #pragma endregion
 
+//
+// TODO: why is this inline, you drunk f--? xD
+// 
 NTSTATUS
 FORCEINLINE
 BTHPS3_GET_DEVICE_NAME(

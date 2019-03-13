@@ -31,7 +31,7 @@ L2CAP_PS3_HandleRemoteConnect(
     _In_ PINDICATION_PARAMETERS ConnectParams
 )
 {
-    NTSTATUS status;
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
     struct _BRB_L2CA_OPEN_CHANNEL *brb = NULL;
     PFN_WDF_REQUEST_COMPLETION_ROUTINE completionRoutine = NULL;
     USHORT psm = ConnectParams->Parameters.Connect.Request.PSM;
@@ -42,62 +42,6 @@ L2CAP_PS3_HandleRemoteConnect(
 
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
-
-    //
-    // Request remote name from radio for device identification
-    // 
-    status = BTHPS3_GET_DEVICE_NAME(
-        DevCtx->Header.IoTarget,
-        ConnectParams->BtAddress,
-        remoteName
-    );
-
-    if (NT_SUCCESS(status))
-    {
-        TraceEvents(TRACE_LEVEL_INFORMATION,
-            TRACE_L2CAP,
-            "++ Device %llX name: %s",
-            ConnectParams->BtAddress,
-            remoteName
-        );
-    }
-    else
-    {
-        TraceEvents(TRACE_LEVEL_ERROR,
-            TRACE_L2CAP,
-            "BTHPS3_GET_DEVICE_NAME failed with status %!STATUS!, dropping connection",
-            status
-        );
-
-        //
-        // Name couldn't be resolved, drop connection
-        // 
-        return L2CAP_PS3_DenyRemoteConnect(DevCtx, ConnectParams);
-    }
-
-    //
-    // Distinguish device type based on reported remote name
-    // 
-    switch (remoteName[0])
-    {
-    case 'P': // First letter in PLAYSTATION(R)3 Controller ('P')
-        deviceType = DS_DEVICE_TYPE_SIXAXIS;
-        break;
-    case 'N': // First letter in Navigation Controller ('N')
-        deviceType = DS_DEVICE_TYPE_NAVIGATION;
-        break;
-    case 'M': // First letter in Motion Controller ('M')
-        deviceType = DS_DEVICE_TYPE_MOTION;
-        break;
-    case 'W': // First letter in Wireless Controller ('W')
-        deviceType = DS_DEVICE_TYPE_WIRELESS;
-        break;
-    default:
-        //
-        // Unsupported device, drop connection
-        // 
-        return L2CAP_PS3_DenyRemoteConnect(DevCtx, ConnectParams);
-    }
 
     //
     // Look for an existing connection object and reuse that
@@ -113,6 +57,65 @@ L2CAP_PS3_HandleRemoteConnect(
     // 
     if (status == STATUS_NOT_FOUND)
     {
+        //
+        // Request remote name from radio for device identification
+        // 
+        status = BTHPS3_GET_DEVICE_NAME(
+            DevCtx->Header.IoTarget,
+            ConnectParams->BtAddress,
+            remoteName
+        );
+
+        if (NT_SUCCESS(status))
+        {
+            TraceEvents(TRACE_LEVEL_INFORMATION,
+                TRACE_L2CAP,
+                "++ Device %llX name: %s",
+                ConnectParams->BtAddress,
+                remoteName
+            );
+        }
+        else
+        {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_L2CAP,
+                "BTHPS3_GET_DEVICE_NAME failed with status %!STATUS!, dropping connection",
+                status
+            );
+
+            //
+            // Name couldn't be resolved, drop connection
+            // 
+            return L2CAP_PS3_DenyRemoteConnect(DevCtx, ConnectParams);
+        }
+
+        //
+        // Distinguish device type based on reported remote name
+        // 
+        switch (remoteName[0])
+        {
+        case 'P': // First letter in PLAYSTATION(R)3 Controller ('P')
+            deviceType = DS_DEVICE_TYPE_SIXAXIS;
+            break;
+        case 'N': // First letter in Navigation Controller ('N')
+            deviceType = DS_DEVICE_TYPE_NAVIGATION;
+            break;
+        case 'M': // First letter in Motion Controller ('M')
+            deviceType = DS_DEVICE_TYPE_MOTION;
+            break;
+        case 'W': // First letter in Wireless Controller ('W')
+            deviceType = DS_DEVICE_TYPE_WIRELESS;
+            break;
+        default:
+            //
+            // Unsupported device, drop connection
+            // 
+            return L2CAP_PS3_DenyRemoteConnect(DevCtx, ConnectParams);
+        }
+
+        //
+        // Allocate new connection object
+        // 
         status = ClientConnections_CreateAndInsert(
             DevCtx,
             ConnectParams->BtAddress,
@@ -126,12 +129,12 @@ L2CAP_PS3_HandleRemoteConnect(
                 "ClientConnections_CreateAndInsert failed with status %!STATUS!", status);
             goto exit;
         }
-    }
 
-    //
-    // Store device type (required to later spawn the right PDO)
-    // 
-    clientConnection->DeviceType = deviceType;
+        //
+        // Store device type (required to later spawn the right PDO)
+        // 
+        clientConnection->DeviceType = deviceType;
+    }
 
     //
     // Adjust control flow depending on PSM
@@ -229,6 +232,9 @@ L2CAP_PS3_HandleRemoteConnect(
 
 exit:
 
+    //
+    // TODO: handle intermediate disconnects
+    // 
     if (!NT_SUCCESS(status) && clientConnection)
     {
         ClientConnections_RemoveAndDestroy(DevCtx, clientConnection);
@@ -237,6 +243,30 @@ exit:
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit (%!STATUS!)", status);
 
     return status;
+}
+
+//
+// Calls L2CAP_PS3_HandleRemoteConnect at PASSIVE_LEVEL
+// 
+VOID 
+L2CAP_PS3_HandleRemoteConnectAsync(
+    _In_ WDFWORKITEM WorkItem
+)
+{
+    PBTHPS3_REMOTE_CONNECT_CONTEXT connectCtx = NULL;
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
+
+    connectCtx = GetRemoteConnectContext(WorkItem);
+
+    L2CAP_PS3_HandleRemoteConnect(
+        connectCtx->ServerContext,
+        &connectCtx->IndicationParameters
+    );
+
+    WdfObjectDelete(WorkItem);
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
 }
 
 #pragma region Deny an L2CAP connection request
@@ -550,6 +580,9 @@ L2CAP_PS3_ConnectionIndicationCallback(
             Parameters->ConnectionHandle);
 
         connection = (PBTHPS3_CLIENT_CONNECTION)Context;
+        //
+        // TODO: this can lead to a crash, validate context!
+        // 
         deviceCtx = GetServerDeviceContext(connection->DevCtxHdr->Device);
 
         //

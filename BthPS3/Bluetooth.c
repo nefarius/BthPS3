@@ -512,6 +512,12 @@ BthPS3_IndicationCallback(
     _In_ PINDICATION_PARAMETERS Parameters
 )
 {
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    WDFWORKITEM asyncRemoteConnect;
+    WDF_WORKITEM_CONFIG asyncConfig;
+    WDF_OBJECT_ATTRIBUTES asyncAttribs;
+    PBTHPS3_REMOTE_CONNECT_CONTEXT connectCtx = NULL;
+
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Entry");
 
     switch (Indication)
@@ -528,10 +534,59 @@ BthPS3_IndicationCallback(
             Parameters->Parameters.Connect.Request.PSM,
             Parameters->BtAddress);
 
+        if (KeGetCurrentIrql() <= PASSIVE_LEVEL)
+        {
+            //
+            // Main entry point for a new connection, decides if valid etc.
+            // 
+            L2CAP_PS3_HandleRemoteConnect(devCtx, Parameters);
+
+            break;
+        }
+
         //
-        // Main entry point for a new connection, decides if valid etc.
+        // Can be DPC level, enqueue work item
         // 
-        L2CAP_PS3_HandleRemoteConnect(devCtx, Parameters);
+
+        TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH,
+            "IRQL %!irql! too high, preparing async call",
+            KeGetCurrentIrql()
+        );
+
+        WDF_WORKITEM_CONFIG_INIT(
+            &asyncConfig,
+            L2CAP_PS3_HandleRemoteConnectAsync
+        );
+        WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&asyncAttribs, BTHPS3_REMOTE_CONNECT_CONTEXT);
+        asyncAttribs.ParentObject = devCtx->Header.Device;
+
+        status = WdfWorkItemCreate(
+            &asyncConfig,
+            &asyncAttribs,
+            &asyncRemoteConnect
+        );
+
+        if (!NT_SUCCESS(status))
+        {
+            TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
+                "WdfWorkItemCreate failed with status %!STATUS!",
+                status
+            );
+
+            break;
+        }
+
+        //
+        // Pass on parameters as work item context
+        // 
+        connectCtx = GetRemoteConnectContext(asyncRemoteConnect);
+        connectCtx->ServerContext = devCtx;
+        connectCtx->IndicationParameters = *Parameters;
+
+        //
+        // Kick off async call
+        // 
+        WdfWorkItemEnqueue(asyncRemoteConnect);
 
         break;
     }

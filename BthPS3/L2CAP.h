@@ -112,6 +112,16 @@ L2CAP_PS3_SendInterruptTransferAsync(
     _In_ PFN_WDF_REQUEST_COMPLETION_ROUTINE CompletionRoutine
 );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
+BOOLEAN
+L2CAP_PS3_RemoteDisconnect(
+    _In_ PBTHPS3_DEVICE_CONTEXT_HEADER CtxHdr,
+    _In_ BTH_ADDR RemoteAddress,
+    _In_ PBTHPS3_CLIENT_L2CAP_CHANNEL Channel
+);
+
+EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_ChannelDisconnectCompleted;
+
 //
 // HID Control Channel Completion Routines
 // 

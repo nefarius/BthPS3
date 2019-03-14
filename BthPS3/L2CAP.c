@@ -21,6 +21,8 @@
 #include "l2cap.tmh"
 
 
+#pragma region L2CAP remote connection handling
+
 //
 // Incoming connection request, prepare and send response
 // 
@@ -248,6 +250,7 @@ exit:
 //
 // Calls L2CAP_PS3_HandleRemoteConnect at PASSIVE_LEVEL
 // 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 L2CAP_PS3_HandleRemoteConnectAsync(
     _In_ WDFWORKITEM WorkItem
@@ -259,7 +262,7 @@ L2CAP_PS3_HandleRemoteConnectAsync(
 
     connectCtx = GetRemoteConnectContext(WorkItem);
 
-    L2CAP_PS3_HandleRemoteConnect(
+    (void)L2CAP_PS3_HandleRemoteConnect(
         connectCtx->ServerContext,
         &connectCtx->IndicationParameters
     );
@@ -268,133 +271,6 @@ L2CAP_PS3_HandleRemoteConnectAsync(
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
 }
-
-#pragma region Deny an L2CAP connection request
-
-//
-// Deny an L2CAP connection request
-// 
-_IRQL_requires_max_(DISPATCH_LEVEL)
-NTSTATUS
-L2CAP_PS3_DenyRemoteConnect(
-    _In_ PBTHPS3_SERVER_CONTEXT DevCtx,
-    _In_ PINDICATION_PARAMETERS ConnectParams
-)
-{
-    NTSTATUS status = STATUS_SUCCESS;
-    WDFREQUEST brbAsyncRequest = NULL;
-    struct _BRB_L2CA_OPEN_CHANNEL *brb = NULL;
-
-
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
-
-    status = WdfRequestCreate(
-        WDF_NO_OBJECT_ATTRIBUTES,
-        DevCtx->Header.IoTarget,
-        &brbAsyncRequest);
-
-    if (!NT_SUCCESS(status))
-    {
-        TraceEvents(TRACE_LEVEL_ERROR,
-            TRACE_L2CAP,
-            "WdfRequestCreate failed with status %!STATUS!",
-            status
-        );
-
-        return status;
-    }
-
-    brb = (struct _BRB_L2CA_OPEN_CHANNEL*)
-        DevCtx->Header.ProfileDrvInterface.BthAllocateBrb(
-            BRB_L2CA_OPEN_CHANNEL_RESPONSE,
-            POOLTAG_BTHPS3
-        );
-
-    if (brb == NULL)
-    {
-        status = STATUS_INSUFFICIENT_RESOURCES;
-
-        TraceEvents(TRACE_LEVEL_ERROR,
-            TRACE_L2CAP,
-            "Failed to allocate brb BRB_L2CA_OPEN_CHANNEL_RESPONSE with status %!STATUS!",
-            status
-        );
-
-        WdfObjectDelete(brbAsyncRequest);
-        return status;
-    }
-
-    brb->Hdr.ClientContext[0] = DevCtx;
-
-    brb->BtAddress = ConnectParams->BtAddress;
-    brb->Psm = ConnectParams->Parameters.Connect.Request.PSM;
-    brb->ChannelHandle = ConnectParams->ConnectionHandle;
-
-    //
-    // Drop connection
-    // 
-    brb->Response = CONNECT_RSP_RESULT_PSM_NEG;
-
-    brb->ChannelFlags = CF_ROLE_EITHER;
-
-    brb->ConfigOut.Flags = 0;
-    brb->ConfigIn.Flags = 0;
-
-    //
-    // Submit response
-    // 
-    status = BthPS3_SendBrbAsync(
-        DevCtx->Header.IoTarget,
-        brbAsyncRequest,
-        (PBRB)brb,
-        sizeof(*brb),
-        L2CAP_PS3_DenyRemoteConnectCompleted,
-        brb
-    );
-
-    if (!NT_SUCCESS(status))
-    {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_L2CAP,
-            "BthPS3_SendBrbAsync failed with status %!STATUS!", status);
-
-        DevCtx->Header.ProfileDrvInterface.BthFreeBrb((PBRB)brb);
-        WdfObjectDelete(brbAsyncRequest);
-    }
-
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
-
-    return status;
-}
-
-//
-// Free resources used by deny connection response
-// 
-void
-L2CAP_PS3_DenyRemoteConnectCompleted(
-    _In_ WDFREQUEST  Request,
-    _In_ WDFIOTARGET  Target,
-    _In_ PWDF_REQUEST_COMPLETION_PARAMS  Params,
-    _In_ WDFCONTEXT  Context
-)
-{
-    PBTHPS3_SERVER_CONTEXT deviceCtx = NULL;
-    struct _BRB_L2CA_OPEN_CHANNEL *brb = NULL;
-
-    UNREFERENCED_PARAMETER(Target);
-
-
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry (%!STATUS!)",
-        Params->IoStatus.Status);
-
-    brb = (struct _BRB_L2CA_OPEN_CHANNEL*)Context;
-    deviceCtx = (PBTHPS3_SERVER_CONTEXT)brb->Hdr.ClientContext[0];
-    deviceCtx->Header.ProfileDrvInterface.BthFreeBrb((PBRB)brb);
-    WdfObjectDelete(Request);
-
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
-}
-
-#pragma endregion
 
 //
 // Control channel connection result
@@ -551,6 +427,137 @@ failedDrop:
 
     return;
 }
+
+#pragma endregion
+
+#pragma region L2CAP deny connection request
+
+//
+// Deny an L2CAP connection request
+// 
+_IRQL_requires_max_(DISPATCH_LEVEL)
+NTSTATUS
+L2CAP_PS3_DenyRemoteConnect(
+    _In_ PBTHPS3_SERVER_CONTEXT DevCtx,
+    _In_ PINDICATION_PARAMETERS ConnectParams
+)
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    WDFREQUEST brbAsyncRequest = NULL;
+    struct _BRB_L2CA_OPEN_CHANNEL *brb = NULL;
+
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
+
+    status = WdfRequestCreate(
+        WDF_NO_OBJECT_ATTRIBUTES,
+        DevCtx->Header.IoTarget,
+        &brbAsyncRequest);
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_L2CAP,
+            "WdfRequestCreate failed with status %!STATUS!",
+            status
+        );
+
+        return status;
+    }
+
+    brb = (struct _BRB_L2CA_OPEN_CHANNEL*)
+        DevCtx->Header.ProfileDrvInterface.BthAllocateBrb(
+            BRB_L2CA_OPEN_CHANNEL_RESPONSE,
+            POOLTAG_BTHPS3
+        );
+
+    if (brb == NULL)
+    {
+        status = STATUS_INSUFFICIENT_RESOURCES;
+
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_L2CAP,
+            "Failed to allocate brb BRB_L2CA_OPEN_CHANNEL_RESPONSE with status %!STATUS!",
+            status
+        );
+
+        WdfObjectDelete(brbAsyncRequest);
+        return status;
+    }
+
+    brb->Hdr.ClientContext[0] = DevCtx;
+
+    brb->BtAddress = ConnectParams->BtAddress;
+    brb->Psm = ConnectParams->Parameters.Connect.Request.PSM;
+    brb->ChannelHandle = ConnectParams->ConnectionHandle;
+
+    //
+    // Drop connection
+    // 
+    brb->Response = CONNECT_RSP_RESULT_PSM_NEG;
+
+    brb->ChannelFlags = CF_ROLE_EITHER;
+
+    brb->ConfigOut.Flags = 0;
+    brb->ConfigIn.Flags = 0;
+
+    //
+    // Submit response
+    // 
+    status = BthPS3_SendBrbAsync(
+        DevCtx->Header.IoTarget,
+        brbAsyncRequest,
+        (PBRB)brb,
+        sizeof(*brb),
+        L2CAP_PS3_DenyRemoteConnectCompleted,
+        brb
+    );
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, TRACE_L2CAP,
+            "BthPS3_SendBrbAsync failed with status %!STATUS!", status);
+
+        DevCtx->Header.ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+        WdfObjectDelete(brbAsyncRequest);
+    }
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
+
+    return status;
+}
+
+//
+// Free resources used by deny connection response
+// 
+void
+L2CAP_PS3_DenyRemoteConnectCompleted(
+    _In_ WDFREQUEST  Request,
+    _In_ WDFIOTARGET  Target,
+    _In_ PWDF_REQUEST_COMPLETION_PARAMS  Params,
+    _In_ WDFCONTEXT  Context
+)
+{
+    PBTHPS3_SERVER_CONTEXT deviceCtx = NULL;
+    struct _BRB_L2CA_OPEN_CHANNEL *brb = NULL;
+
+    UNREFERENCED_PARAMETER(Target);
+
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry (%!STATUS!)",
+        Params->IoStatus.Status);
+
+    brb = (struct _BRB_L2CA_OPEN_CHANNEL*)Context;
+    deviceCtx = (PBTHPS3_SERVER_CONTEXT)brb->Hdr.ClientContext[0];
+    deviceCtx->Header.ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+    WdfObjectDelete(Request);
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
+}
+
+#pragma endregion
+
+#pragma region L2CAP channel state changes
 
 //
 // Gets invoked on remote disconnect or configuration request
@@ -734,6 +741,120 @@ L2CAP_PS3_ConnectionStateConnected(
 
     return status;
 }
+
+#pragma endregion
+
+#pragma region L2CAP remote disconnect
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+BOOLEAN
+L2CAP_PS3_RemoteDisconnect(
+    _In_ PBTHPS3_DEVICE_CONTEXT_HEADER CtxHdr,
+    _In_ BTH_ADDR RemoteAddress,
+    _In_ PBTHPS3_CLIENT_L2CAP_CHANNEL Channel
+)
+{
+    struct _BRB_L2CA_CLOSE_CHANNEL *disconnectBrb = NULL;
+
+    WdfSpinLockAcquire(Channel->ConnectionStateLock);
+
+    if (Channel->ConnectionState == ConnectionStateConnecting)
+    {
+        //
+        // If the connection is not completed yet set the state 
+        // to disconnecting.
+        // In such case we should send CLOSE_CHANNEL Brb down after 
+        // we receive connect completion.
+        //
+
+        Channel->ConnectionState = ConnectionStateDisconnecting;
+
+        //
+        // Clear event to indicate that we are in disconnecting
+        // state. It will be set when disconnect is completed
+        //
+        KeClearEvent(&Channel->DisconnectEvent);
+
+        WdfSpinLockRelease(Channel->ConnectionStateLock);
+        return TRUE;
+    }
+    
+    if (Channel->ConnectionState != ConnectionStateConnected)
+    {
+        //
+        // Do nothing if we are not connected
+        //
+
+        WdfSpinLockRelease(Channel->ConnectionStateLock);
+        return FALSE;
+    }
+
+    Channel->ConnectionState = ConnectionStateDisconnecting;
+    WdfSpinLockRelease(Channel->ConnectionStateLock);
+
+    //
+    // We are now sending the disconnect, so clear the event.
+    //
+
+    KeClearEvent(&Channel->DisconnectEvent);
+
+    CtxHdr->ProfileDrvInterface.BthReuseBrb(&Channel->ConnectDisconnectBrb, BRB_L2CA_CLOSE_CHANNEL);
+
+    disconnectBrb = (struct _BRB_L2CA_CLOSE_CHANNEL *) &(Channel->ConnectDisconnectBrb);
+
+    disconnectBrb->BtAddress = RemoteAddress;
+    disconnectBrb->ChannelHandle = Channel->ChannelHandle;
+
+    //
+    // The BRB can fail with STATUS_DEVICE_DISCONNECT if the device is already
+    // disconnected, hence we don't assert for success
+    //
+
+    (void)BthPS3_SendBrbAsync(
+        CtxHdr->IoTarget,
+        Channel->ConnectDisconnectRequest,
+        (PBRB)disconnectBrb,
+        sizeof(*disconnectBrb),
+        L2CAP_PS3_ChannelDisconnectCompleted,
+        Channel
+    );
+
+    return TRUE;
+}
+
+//
+// Gets called once a channel disconnect request has been completed
+// 
+void
+L2CAP_PS3_ChannelDisconnectCompleted(
+    _In_ WDFREQUEST Request,
+    _In_ WDFIOTARGET Target,
+    _In_ PWDF_REQUEST_COMPLETION_PARAMS Params,
+    _In_ WDFCONTEXT Context
+)
+{
+    PBTHPS3_CLIENT_L2CAP_CHANNEL channel = (PBTHPS3_CLIENT_L2CAP_CHANNEL)Context;
+
+    UNREFERENCED_PARAMETER(Request);
+    UNREFERENCED_PARAMETER(Target);
+    UNREFERENCED_PARAMETER(Params);
+
+    WdfSpinLockAcquire(channel->ConnectionStateLock);
+    channel->ConnectionState = ConnectionStateDisconnected;
+    WdfSpinLockRelease(channel->ConnectionStateLock);
+
+    //
+    // Disconnect complete, set the event
+    //
+
+    KeSetEvent(
+        &channel->DisconnectEvent,
+        0,
+        FALSE
+        );    
+}
+
+#pragma endregion
 
 #pragma region L2CAP data transfer (incoming and outgoing)
 
@@ -1009,114 +1130,6 @@ L2CAP_PS3_SendInterruptTransferAsync(
     }
 
     return status;
-}
-
-_IRQL_requires_max_(DISPATCH_LEVEL)
-BOOLEAN
-L2CAP_PS3_RemoteDisconnect(
-    _In_ PBTHPS3_DEVICE_CONTEXT_HEADER CtxHdr,
-    _In_ BTH_ADDR RemoteAddress,
-    _In_ PBTHPS3_CLIENT_L2CAP_CHANNEL Channel
-)
-{
-    struct _BRB_L2CA_CLOSE_CHANNEL *disconnectBrb = NULL;
-
-    WdfSpinLockAcquire(Channel->ConnectionStateLock);
-
-    if (Channel->ConnectionState == ConnectionStateConnecting)
-    {
-        //
-        // If the connection is not completed yet set the state 
-        // to disconnecting.
-        // In such case we should send CLOSE_CHANNEL Brb down after 
-        // we receive connect completion.
-        //
-
-        Channel->ConnectionState = ConnectionStateDisconnecting;
-
-        //
-        // Clear event to indicate that we are in disconnecting
-        // state. It will be set when disconnect is completed
-        //
-        KeClearEvent(&Channel->DisconnectEvent);
-
-        WdfSpinLockRelease(Channel->ConnectionStateLock);
-        return TRUE;
-    }
-    
-    if (Channel->ConnectionState != ConnectionStateConnected)
-    {
-        //
-        // Do nothing if we are not connected
-        //
-
-        WdfSpinLockRelease(Channel->ConnectionStateLock);
-        return FALSE;
-    }
-
-    Channel->ConnectionState = ConnectionStateDisconnecting;
-    WdfSpinLockRelease(Channel->ConnectionStateLock);
-
-    //
-    // We are now sending the disconnect, so clear the event.
-    //
-
-    KeClearEvent(&Channel->DisconnectEvent);
-
-    CtxHdr->ProfileDrvInterface.BthReuseBrb(&Channel->ConnectDisconnectBrb, BRB_L2CA_CLOSE_CHANNEL);
-
-    disconnectBrb = (struct _BRB_L2CA_CLOSE_CHANNEL *) &(Channel->ConnectDisconnectBrb);
-
-    disconnectBrb->BtAddress = RemoteAddress;
-    disconnectBrb->ChannelHandle = Channel->ChannelHandle;
-
-    //
-    // The BRB can fail with STATUS_DEVICE_DISCONNECT if the device is already
-    // disconnected, hence we don't assert for success
-    //
-
-    (void)BthPS3_SendBrbAsync(
-        CtxHdr->IoTarget,
-        Channel->ConnectDisconnectRequest,
-        (PBRB)disconnectBrb,
-        sizeof(*disconnectBrb),
-        L2CAP_PS3_ChannelDisconnectCompleted,
-        Channel
-    );
-
-    return TRUE;
-}
-
-//
-// Gets called once a channel disconnect request has been completed
-// 
-void
-L2CAP_PS3_ChannelDisconnectCompleted(
-    _In_ WDFREQUEST Request,
-    _In_ WDFIOTARGET Target,
-    _In_ PWDF_REQUEST_COMPLETION_PARAMS Params,
-    _In_ WDFCONTEXT Context
-)
-{
-    PBTHPS3_CLIENT_L2CAP_CHANNEL channel = (PBTHPS3_CLIENT_L2CAP_CHANNEL)Context;
-
-    UNREFERENCED_PARAMETER(Request);
-    UNREFERENCED_PARAMETER(Target);
-    UNREFERENCED_PARAMETER(Params);
-
-    WdfSpinLockAcquire(channel->ConnectionStateLock);
-    channel->ConnectionState = ConnectionStateDisconnected;
-    WdfSpinLockRelease(channel->ConnectionStateLock);
-
-    //
-    // Disconnect complete, set the event
-    //
-
-    KeSetEvent(
-        &channel->DisconnectEvent,
-        0,
-        FALSE
-        );    
 }
 
 //

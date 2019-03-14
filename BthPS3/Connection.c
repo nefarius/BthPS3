@@ -90,6 +90,9 @@ ClientConnections_CreateAndInsert(
         goto exitFailure;
     }
 
+    //
+    // Initialize signaled, will be cleared once a connection is established
+    // 
     KeInitializeEvent(&connectionCtx->HidControlChannel.DisconnectEvent,
         NotificationEvent,
         TRUE
@@ -133,6 +136,9 @@ ClientConnections_CreateAndInsert(
         goto exitFailure;
     }
 
+    //
+    // Initialize signaled, will be cleared once a connection is established
+    // 
     KeInitializeEvent(&connectionCtx->HidInterruptChannel.DisconnectEvent,
         NotificationEvent,
         TRUE
@@ -384,6 +390,14 @@ EvtClientConnectionsDestroyConnection(
         sizeof(*disconnectBrb)
     );
 
+    KeWaitForSingleObject(
+        &connection->HidInterruptChannel.DisconnectEvent,
+        Executive,
+        KernelMode,
+        FALSE,
+        NULL
+    );
+
 #pragma endregion
 
 #pragma region Disconnect HID Control Channel
@@ -406,6 +420,14 @@ EvtClientConnectionsDestroyConnection(
         connection->HidControlChannel.ConnectDisconnectRequest,
         (PBRB)disconnectBrb,
         sizeof(*disconnectBrb)
+    );
+
+    KeWaitForSingleObject(
+        &connection->HidControlChannel.DisconnectEvent,
+        Executive,
+        KernelMode,
+        FALSE,
+        NULL
     );
 
 #pragma endregion

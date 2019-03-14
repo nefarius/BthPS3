@@ -172,6 +172,8 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
 )
 {
     PBTHPS3_SERVER_CONTEXT devCtx = GetServerDeviceContext(Device);
+    WDFOBJECT currentItem;
+    PBTHPS3_CLIENT_CONNECTION connection = NULL;
 
     PAGED_CODE();
 
@@ -188,25 +190,43 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
     }
 
     //
-    // Disconnect any open connections, after this point no more
-    // connections can come because we have unregistered server
-    //
-    // BthEchoSrvDisconnectConnectionsOnRemove does not wait for disconnect
-    // to complete. Connection object's cleanup callback waits on that. Since 
-    // connection objects are children of device, they will be cleaned up and
-    // disconnect would complete before device object is cleaned up.
-    //
-
-    // BthEchoSrvDisconnectConnectionsOnRemove(devCtx);
-
-    //
-    // TODO: implement me!
-    // 
-
-    //
     // Drop children
     // 
-    //ClientConnections_DropAndFreeAll(devCtx);
+    while ((currentItem = WdfCollectionGetFirstItem(devCtx->ClientConnections)) != NULL)
+    {
+        WdfCollectionRemoveItem(devCtx->ClientConnections, 0);
+        connection = GetClientConnection(currentItem);
+
+        L2CAP_PS3_RemoteDisconnect(
+            &devCtx->Header,
+            connection->RemoteAddress,
+            &connection->HidInterruptChannel
+        );
+
+        KeWaitForSingleObject(
+            &connection->HidInterruptChannel.DisconnectEvent,
+            Executive,
+            KernelMode,
+            FALSE,
+            NULL
+        );
+
+        L2CAP_PS3_RemoteDisconnect(
+            &devCtx->Header,
+            connection->RemoteAddress,
+            &connection->HidControlChannel
+        );
+
+        KeWaitForSingleObject(
+            &connection->HidControlChannel.DisconnectEvent,
+            Executive,
+            KernelMode,
+            FALSE,
+            NULL
+        );
+
+        WdfObjectDelete(currentItem);
+    }
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "%!FUNC! Exit");
 

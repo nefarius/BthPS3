@@ -290,41 +290,6 @@ ClientConnections_RetrieveByBthAddr(
 }
 
 //
-// Drops all open connections and frees their resources
-// 
-VOID
-ClientConnections_DropAndFreeAll(
-    _In_ PBTHPS3_SERVER_CONTEXT Context
-)
-{
-    ULONG itemCount;
-    ULONG index;
-    WDFOBJECT currentItem;
-
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
-
-    WdfSpinLockAcquire(Context->ClientConnectionsLock);
-
-    itemCount = WdfCollectionGetCount(Context->ClientConnections);
-
-    for (index = 0; index < itemCount; index++)
-    {
-        currentItem = WdfCollectionGetItem(Context->ClientConnections, index);
-
-        WdfCollectionRemoveItem(Context->ClientConnections, index);
-
-        //
-        // Triggers clean-up
-        // 
-        WdfObjectDelete(currentItem);
-    }
-
-    WdfSpinLockRelease(Context->ClientConnectionsLock);
-
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
-}
-
-//
 // Performs clean-up when a connection object is disposed
 // 
 _Use_decl_annotations_
@@ -355,7 +320,13 @@ EvtClientConnectionsDestroyConnection(
         WdfFdoGetDefaultChildList(connection->DevCtxHdr->Device),
         &pdoDesc.Header
     );
-    if (!NT_SUCCESS(status))
+
+    //
+    // STATUS_NO_SUCH_DEVICE can happen on parent shutdown
+    // as the framework will reap all children faster than
+    // this clean-up callback can get to it
+    // 
+    if (!NT_SUCCESS(status) && status != STATUS_NO_SUCH_DEVICE)
     {
         TraceEvents(TRACE_LEVEL_ERROR,
             TRACE_CONNECTION,

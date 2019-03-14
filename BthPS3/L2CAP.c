@@ -72,7 +72,7 @@ L2CAP_PS3_HandleRemoteConnect(
         {
             TraceEvents(TRACE_LEVEL_INFORMATION,
                 TRACE_L2CAP,
-                "++ Device %llX name: %s",
+                "++ Device %012llX name: %s",
                 ConnectParams->BtAddress,
                 remoteName
             );

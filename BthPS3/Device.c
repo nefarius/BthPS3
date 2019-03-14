@@ -206,7 +206,7 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
     //
     // Drop children
     // 
-    ClientConnections_DropAndFreeAll(devCtx);
+    //ClientConnections_DropAndFreeAll(devCtx);
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "%!FUNC! Exit");
 

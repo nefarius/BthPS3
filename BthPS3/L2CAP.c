@@ -248,7 +248,7 @@ exit:
 //
 // Calls L2CAP_PS3_HandleRemoteConnect at PASSIVE_LEVEL
 // 
-VOID 
+VOID
 L2CAP_PS3_HandleRemoteConnectAsync(
     _In_ WDFWORKITEM WorkItem
 )
@@ -433,7 +433,14 @@ L2CAP_PS3_ControlConnectResponseCompleted(
     if (NT_SUCCESS(status))
     {
         WdfSpinLockAcquire(clientConnection->HidControlChannel.ConnectionStateLock);
+
         clientConnection->HidControlChannel.ConnectionState = ConnectionStateConnected;
+
+        //
+        // This will be set again once disconnect has occurred
+        // 
+        //KeClearEvent(&clientConnection->HidControlChannel.DisconnectEvent);
+
         WdfSpinLockRelease(clientConnection->HidControlChannel.ConnectionStateLock);
 
         TraceEvents(TRACE_LEVEL_INFORMATION,
@@ -489,7 +496,14 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
     if (NT_SUCCESS(status))
     {
         WdfSpinLockAcquire(clientConnection->HidInterruptChannel.ConnectionStateLock);
+
         clientConnection->HidInterruptChannel.ConnectionState = ConnectionStateConnected;
+
+        //
+        // This will be set again once disconnect has occurred
+        // 
+        //KeClearEvent(&clientConnection->HidInterruptChannel.DisconnectEvent);
+
         WdfSpinLockRelease(clientConnection->HidInterruptChannel.ConnectionStateLock);
 
         TraceEvents(TRACE_LEVEL_INFORMATION,
@@ -580,9 +594,6 @@ L2CAP_PS3_ConnectionIndicationCallback(
             Parameters->ConnectionHandle);
 
         connection = (PBTHPS3_CLIENT_CONNECTION)Context;
-        //
-        // TODO: this can lead to a crash, validate context!
-        // 
         deviceCtx = GetServerDeviceContext(connection->DevCtxHdr->Device);
 
         //
@@ -597,7 +608,15 @@ L2CAP_PS3_ConnectionIndicationCallback(
                 Parameters->ConnectionHandle);
 
             WdfSpinLockAcquire(connection->HidControlChannel.ConnectionStateLock);
+
             connection->HidControlChannel.ConnectionState = ConnectionStateDisconnected;
+
+            KeSetEvent(
+                &connection->HidControlChannel.DisconnectEvent,
+                0,
+                FALSE
+            );
+
             WdfSpinLockRelease(connection->HidControlChannel.ConnectionStateLock);
         }
 
@@ -613,7 +632,15 @@ L2CAP_PS3_ConnectionIndicationCallback(
                 Parameters->ConnectionHandle);
 
             WdfSpinLockAcquire(connection->HidInterruptChannel.ConnectionStateLock);
+            
             connection->HidInterruptChannel.ConnectionState = ConnectionStateDisconnected;
+
+            KeSetEvent(
+                &connection->HidInterruptChannel.DisconnectEvent,
+                0,
+                FALSE
+            );
+
             WdfSpinLockRelease(connection->HidInterruptChannel.ConnectionStateLock);
         }
 

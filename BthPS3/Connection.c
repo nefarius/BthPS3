@@ -210,7 +210,7 @@ ClientConnections_RemoveAndDestroy(
     WDFOBJECT item, currentItem;
 
     TraceEvents(TRACE_LEVEL_VERBOSE,
-        TRACE_L2CAP,
+        TRACE_CONNECTION,
         "%!FUNC! Entry (ClientConnection: 0x%p)",
         ClientConnection
     );
@@ -258,6 +258,8 @@ ClientConnections_RetrieveByBthAddr(
     WDFOBJECT currentItem;
     PBTHPS3_CLIENT_CONNECTION connection;
 
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CONNECTION, "%!FUNC! Entry");
+
     WdfSpinLockAcquire(Context->ClientConnectionsLock);
 
     itemCount = WdfCollectionGetCount(Context->ClientConnections);
@@ -281,6 +283,8 @@ ClientConnections_RetrieveByBthAddr(
     }
 
     WdfSpinLockRelease(Context->ClientConnectionsLock);
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CONNECTION, "%!FUNC! Exit (%!STATUS!)", status);
 
     return status;
 }
@@ -383,12 +387,17 @@ EvtClientConnectionsDestroyConnection(
     //
     // May fail if radio got surprise-removed, so don't check return value
     // 
-    (void)BthPS3_SendBrbSynchronously(
+    status = BthPS3_SendBrbSynchronously(
         connection->DevCtxHdr->IoTarget,
         connection->HidInterruptChannel.ConnectDisconnectRequest,
         (PBRB)disconnectBrb,
         sizeof(*disconnectBrb)
     );
+
+    TraceEvents(TRACE_LEVEL_VERBOSE,
+        TRACE_CONNECTION,
+        "BthPS3_SendBrbSynchronously (HidInterruptChannel) returned status %!STATUS!",
+        status);
 
     KeWaitForSingleObject(
         &connection->HidInterruptChannel.DisconnectEvent,
@@ -415,12 +424,17 @@ EvtClientConnectionsDestroyConnection(
     //
     // May fail if radio got surprise-removed, so don't check return value
     // 
-    (void)BthPS3_SendBrbSynchronously(
+    status = BthPS3_SendBrbSynchronously(
         connection->DevCtxHdr->IoTarget,
         connection->HidControlChannel.ConnectDisconnectRequest,
         (PBRB)disconnectBrb,
         sizeof(*disconnectBrb)
     );
+
+    TraceEvents(TRACE_LEVEL_VERBOSE,
+        TRACE_CONNECTION,
+        "BthPS3_SendBrbSynchronously (HidControlChannel) returned status %!STATUS!",
+        status);
 
     KeWaitForSingleObject(
         &connection->HidControlChannel.DisconnectEvent,

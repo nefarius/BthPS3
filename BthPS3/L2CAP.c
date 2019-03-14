@@ -810,6 +810,8 @@ L2CAP_PS3_RemoteDisconnect(
     // disconnected, hence we don't assert for success
     //
 
+    CLIENT_CONNECTION_REQUEST_REUSE(Channel->ConnectDisconnectRequest);
+
     (void)BthPS3_SendBrbAsync(
         CtxHdr->IoTarget,
         Channel->ConnectDisconnectRequest,

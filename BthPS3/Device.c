@@ -192,17 +192,25 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
     //
     // Drop children
     // 
+    // At this stage nobody is updating the connection list so no locking required
+    // 
     while ((currentItem = WdfCollectionGetFirstItem(devCtx->ClientConnections)) != NULL)
     {
         WdfCollectionRemoveItem(devCtx->ClientConnections, 0);
         connection = GetClientConnection(currentItem);
 
+        //
+        // Disconnect HID Interrupt Channel first
+        // 
         L2CAP_PS3_RemoteDisconnect(
             &devCtx->Header,
             connection->RemoteAddress,
             &connection->HidInterruptChannel
         );
 
+        //
+        // Wait until BTHPORT.SYS has completely dropped the connection
+        // 
         KeWaitForSingleObject(
             &connection->HidInterruptChannel.DisconnectEvent,
             Executive,
@@ -211,12 +219,18 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
             NULL
         );
 
+        //
+        // Disconnect HID Control Channel last
+        // 
         L2CAP_PS3_RemoteDisconnect(
             &devCtx->Header,
             connection->RemoteAddress,
             &connection->HidControlChannel
         );
 
+        //
+        // Wait until BTHPORT.SYS has completely dropped the connection
+        // 
         KeWaitForSingleObject(
             &connection->HidControlChannel.DisconnectEvent,
             Executive,
@@ -225,6 +239,9 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
             NULL
         );
 
+        //
+        // Invokes freeing memory
+        // 
         WdfObjectDelete(currentItem);
     }
 

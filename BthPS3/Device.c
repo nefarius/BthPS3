@@ -25,6 +25,10 @@
 #pragma alloc_text (PAGE, BthPS3_EvtWdfDeviceSelfManagedIoCleanup)
 #endif
 
+
+//
+// Framework device creation entry point
+// 
 NTSTATUS
 BthPS3_CreateDevice(
     _Inout_ PWDFDEVICE_INIT DeviceInit
@@ -129,6 +133,9 @@ exit:
     return status;
 }
 
+//
+// Gets invoked on device power-up
+// 
 _Use_decl_annotations_
 NTSTATUS
 BthPS3_EvtWdfDeviceSelfManagedIoInit(
@@ -165,6 +172,9 @@ exit:
     return status;
 }
 
+//
+// Gets invoked on device shutdown
+// 
 _Use_decl_annotations_
 VOID
 BthPS3_EvtWdfDeviceSelfManagedIoCleanup(

@@ -530,7 +530,7 @@ BthPS3_IndicationCallback(
         PBTHPS3_SERVER_CONTEXT devCtx = (PBTHPS3_SERVER_CONTEXT)Context;
 
         TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_BTH,
-            "New connection for PSM 0x%04X from %llX arrived",
+            "New connection for PSM 0x%04X from %012llX arrived",
             Parameters->Parameters.Connect.Request.PSM,
             Parameters->BtAddress);
 

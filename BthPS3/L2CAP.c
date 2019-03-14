@@ -614,17 +614,11 @@ L2CAP_PS3_ConnectionIndicationCallback(
                 "++ HID Control Channel 0x%p disconnected",
                 Parameters->ConnectionHandle);
 
-            WdfSpinLockAcquire(connection->HidControlChannel.ConnectionStateLock);
-
-            connection->HidControlChannel.ConnectionState = ConnectionStateDisconnected;
-
-            KeSetEvent(
-                &connection->HidControlChannel.DisconnectEvent,
-                0,
-                FALSE
+            L2CAP_PS3_RemoteDisconnect(
+                connection->DevCtxHdr,
+                connection->RemoteAddress,
+                &connection->HidControlChannel
             );
-
-            WdfSpinLockRelease(connection->HidControlChannel.ConnectionStateLock);
         }
 
         //
@@ -638,17 +632,11 @@ L2CAP_PS3_ConnectionIndicationCallback(
                 "++ HID Interrupt Channel 0x%p disconnected",
                 Parameters->ConnectionHandle);
 
-            WdfSpinLockAcquire(connection->HidInterruptChannel.ConnectionStateLock);
-
-            connection->HidInterruptChannel.ConnectionState = ConnectionStateDisconnected;
-
-            KeSetEvent(
-                &connection->HidInterruptChannel.DisconnectEvent,
-                0,
-                FALSE
+            L2CAP_PS3_RemoteDisconnect(
+                connection->DevCtxHdr,
+                connection->RemoteAddress,
+                &connection->HidInterruptChannel
             );
-
-            WdfSpinLockRelease(connection->HidInterruptChannel.ConnectionStateLock);
         }
 
         //
@@ -657,6 +645,27 @@ L2CAP_PS3_ConnectionIndicationCallback(
         if (connection->HidControlChannel.ConnectionState == ConnectionStateDisconnected
             && connection->HidInterruptChannel.ConnectionState == ConnectionStateDisconnected)
         {
+            TraceEvents(TRACE_LEVEL_VERBOSE,
+                TRACE_L2CAP,
+                "++ Both channels are gone, awaiting clean-up"
+            );
+
+            KeWaitForSingleObject(
+                &connection->HidControlChannel.DisconnectEvent,
+                Executive,
+                KernelMode,
+                FALSE,
+                NULL
+            );
+
+            KeWaitForSingleObject(
+                &connection->HidInterruptChannel.DisconnectEvent,
+                Executive,
+                KernelMode,
+                FALSE,
+                NULL
+            );
+
             ClientConnections_RemoveAndDestroy(deviceCtx, connection);
         }
 
@@ -778,7 +787,7 @@ L2CAP_PS3_RemoteDisconnect(
         WdfSpinLockRelease(Channel->ConnectionStateLock);
         return TRUE;
     }
-    
+
     if (Channel->ConnectionState != ConnectionStateConnected)
     {
         //
@@ -839,7 +848,9 @@ L2CAP_PS3_ChannelDisconnectCompleted(
 
     UNREFERENCED_PARAMETER(Request);
     UNREFERENCED_PARAMETER(Target);
-    UNREFERENCED_PARAMETER(Params);
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry (%!STATUS!)",
+        Params->IoStatus.Status);
 
     WdfSpinLockAcquire(channel->ConnectionStateLock);
     channel->ConnectionState = ConnectionStateDisconnected;
@@ -853,7 +864,9 @@ L2CAP_PS3_ChannelDisconnectCompleted(
         &channel->DisconnectEvent,
         0,
         FALSE
-        );    
+    );
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
 }
 
 #pragma endregion

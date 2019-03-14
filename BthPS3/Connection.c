@@ -336,7 +336,6 @@ EvtClientConnectionsDestroyConnection(
     NTSTATUS status;
     PDO_IDENTIFICATION_DESCRIPTION pdoDesc;
     PBTHPS3_CLIENT_CONNECTION connection = NULL;
-    struct _BRB_L2CA_CLOSE_CHANNEL *disconnectBrb = NULL;
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CONNECTION, "%!FUNC! Entry");
 

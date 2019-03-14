@@ -26,7 +26,7 @@
 // Connection state
 //
 typedef enum _BTHPS3_CONNECTION_STATE {
-    ConnectionStateUnitialized = 0,
+    ConnectionStateUninitialized = 0,
     ConnectionStateInitialized,
     ConnectionStateConnecting,
     ConnectionStateConnected,

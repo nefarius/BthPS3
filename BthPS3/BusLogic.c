@@ -261,6 +261,8 @@ BthPS3_EvtWdfChildListCreateDevice(
     // which communicates via IRP_MJ_INTERNAL_DEVICE_CONTROL
     // 
     WDF_IO_QUEUE_CONFIG_INIT_DEFAULT_QUEUE(&defaultQueueCfg, WdfIoQueueDispatchParallel);
+
+    defaultQueueCfg.EvtIoDeviceControl = BthPS3_PDO_EvtWdfIoQueueIoDeviceControl;
     defaultQueueCfg.EvtIoInternalDeviceControl = BthPS3_PDO_EvtWdfIoQueueIoInternalDeviceControl;
 
     status = WdfIoQueueCreate(
@@ -311,6 +313,22 @@ BOOLEAN BthPS3_PDO_EvtChildListIdentificationDescriptionCompare(
     // 
     return (lhs->ClientConnection->RemoteAddress ==
         rhs->ClientConnection->RemoteAddress) ? TRUE : FALSE;
+}
+
+void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
+    WDFQUEUE Queue,
+    WDFREQUEST Request,
+    size_t OutputBufferLength,
+    size_t InputBufferLength,
+    ULONG IoControlCode
+)
+{
+    UNREFERENCED_PARAMETER(Queue);
+    UNREFERENCED_PARAMETER(OutputBufferLength);
+    UNREFERENCED_PARAMETER(InputBufferLength);
+    UNREFERENCED_PARAMETER(IoControlCode);
+
+    WdfRequestComplete(Request, STATUS_UNSUCCESSFUL);
 }
 
 //

@@ -112,6 +112,67 @@ BthPS3_EvtWdfChildListCreateDevice(
         return status;
     }
 
+    //
+    // Assign RAW PDO Device Class GUID depending on device type
+    // 
+    // In raw device mode, user-land applications can talk to our
+    // PDO as well with no function driver attached.
+    // 
+    switch (pDesc->ClientConnection->DeviceType)
+    {
+    case DS_DEVICE_TYPE_SIXAXIS:
+        status = WdfPdoInitAssignRawDevice(ChildInit,
+            &BTHPS3_DEVCLASS_SIXAXIS
+        );
+        break;
+    case DS_DEVICE_TYPE_NAVIGATION:
+        status = WdfPdoInitAssignRawDevice(ChildInit,
+            &BTHPS3_DEVCLASS_NAVIGATION
+        );
+        break;
+    case DS_DEVICE_TYPE_MOTION:
+        status = WdfPdoInitAssignRawDevice(ChildInit,
+            &BTHPS3_DEVCLASS_MOTION
+        );
+        break;
+    case DS_DEVICE_TYPE_WIRELESS:
+        status = WdfPdoInitAssignRawDevice(ChildInit,
+            &BTHPS3_DEVCLASS_WIRELESS
+        );
+        break;
+    default:
+        // Doesn't happen
+        return status;
+    }
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_BUSLOGIC,
+            "WdfPdoInitAssignRawDevice failed with status %!STATUS!",
+            status
+        );
+        return status;
+    }
+
+    //
+    // Let the world talk to us
+    // 
+    status = WdfDeviceInitAssignSDDLString(ChildInit,
+        &SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_RWX_RES_RWX
+    );
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_BUSLOGIC,
+            "WdfDeviceInitAssignSDDLString failed with status %!STATUS!",
+            status
+        );
+
+        return status;
+    }
+
 #pragma region Build DeviceID
 
     status = RtlUnicodeStringPrintf(

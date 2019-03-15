@@ -380,6 +380,9 @@ BOOLEAN BthPS3_PDO_EvtChildListIdentificationDescriptionCompare(
         rhs->ClientConnection->RemoteAddress) ? TRUE : FALSE;
 }
 
+//
+// Handle IRP_MJ_DEVICE_CONTROL sent to PDO
+// 
 void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
     WDFQUEUE Queue,
     WDFREQUEST Request,
@@ -388,12 +391,45 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
     ULONG IoControlCode
 )
 {
-    UNREFERENCED_PARAMETER(Queue);
+    WDFDEVICE                       device, parentDevice;
+    WDF_REQUEST_FORWARD_OPTIONS     forwardOptions;
+    NTSTATUS                        status = STATUS_UNSUCCESSFUL;
+    PBTHPS3_FDO_PDO_REQUEST_CONTEXT reqCtx = NULL;
+    PBTHPS3_PDO_DEVICE_CONTEXT      pdoCtx = NULL;
+
     UNREFERENCED_PARAMETER(OutputBufferLength);
     UNREFERENCED_PARAMETER(InputBufferLength);
     UNREFERENCED_PARAMETER(IoControlCode);
 
-    WdfRequestComplete(Request, STATUS_UNSUCCESSFUL);
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Entry");
+
+    device = WdfIoQueueGetDevice(Queue);
+    parentDevice = WdfPdoGetParent(device);
+    reqCtx = GetFdoPdoRequestContext(Request);
+    pdoCtx = GetPdoDeviceContext(device);
+
+    //
+    // Establish relationship of PDO to connection object so the parent 
+    // bus doesn't need to lookup the device from connection list.
+    // 
+    reqCtx->ClientConnection = pdoCtx->ClientConnection;
+
+    WDF_REQUEST_FORWARD_OPTIONS_INIT(&forwardOptions);
+    forwardOptions.Flags = WDF_REQUEST_FORWARD_OPTION_SEND_AND_FORGET;
+
+    //
+    // FDO has all the state info so don't bother handling this in the PDO
+    // 
+    status = WdfRequestForwardToParentDeviceIoQueue(
+        Request,
+        WdfDeviceGetDefaultQueue(parentDevice),
+        &forwardOptions
+    );
+    if (!NT_SUCCESS(status)) {
+        WdfRequestComplete(Request, status);
+    }
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Exit");
 }
 
 //

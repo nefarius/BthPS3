@@ -112,6 +112,8 @@ BthPS3_EvtWdfChildListCreateDevice(
         return status;
     }
 
+#pragma region Raw PDO properties
+
     //
     // Assign RAW PDO Device Class GUID depending on device type
     // 
@@ -172,6 +174,8 @@ BthPS3_EvtWdfChildListCreateDevice(
 
         return status;
     }
+
+#pragma endregion
 
 #pragma region Build DeviceID
 

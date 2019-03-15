@@ -43,18 +43,22 @@ extern __declspec(selectany) PCWSTR BthPS3ServiceName = L"BthPS3Service";
 
 extern __declspec(selectany) PCWSTR BthPS3BusEnumeratorName = L"BTHPS3BUS";
 
+// SIXAXIS/DualShock Hardware ID
 // {53F88889-1AAF-4353-A047-556B69EC6DA6}
 DEFINE_GUID(BTHPS3_BUSENUM_SIXAXIS,
     0x53f88889, 0x1aaf, 0x4353, 0xa0, 0x47, 0x55, 0x6b, 0x69, 0xec, 0x6d, 0xa6);
 
+// Navigation Hardware ID
 // {206F84FC-1615-4D9F-954D-21F5A5D388C5}
 DEFINE_GUID(BTHPS3_BUSENUM_NAVIGATION,
     0x206f84fc, 0x1615, 0x4d9f, 0x95, 0x4d, 0x21, 0xf5, 0xa5, 0xd3, 0x88, 0xc5);
 
+// Motion Hardware ID
 // {84957238-D867-421F-89C1-67847A3B55B5}
 DEFINE_GUID(BTHPS3_BUSENUM_MOTION,
     0x84957238, 0xd867, 0x421f, 0x89, 0xc1, 0x67, 0x84, 0x7a, 0x3b, 0x55, 0xb5);
 
+// DualShock 4 Rev.1/2 Hardware ID
 // {13D12A06-D0B0-4D7E-8D1F-F55914A2ED7C}
 DEFINE_GUID(BTHPS3_BUSENUM_WIRELESS,
     0x13d12a06, 0xd0b0, 0x4d7e, 0x8d, 0x1f, 0xf5, 0x59, 0x14, 0xa2, 0xed, 0x7c);

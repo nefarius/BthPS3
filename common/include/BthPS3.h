@@ -101,12 +101,12 @@ typedef enum _DS_DEVICE_TYPE
     DS_DEVICE_TYPE_SIXAXIS,
 
     //
-    // PlayStation Move Navigation Controller
+    // PlayStation(R) Move Navigation Controller
     // 
     DS_DEVICE_TYPE_NAVIGATION,
 
     //
-    // PlayStation Move Motion Controller
+    // PlayStation(R) Move Motion Controller
     // 
     DS_DEVICE_TYPE_MOTION,
 
@@ -134,11 +134,19 @@ typedef enum _DS_DEVICE_TYPE
 // I/O control codes for function-to-bus-driver communication
 // 
 
+// Read from control channel
 #define IOCTL_BTHPS3_HID_CONTROL_READ           BUSENUM_R_IOCTL (IOCTL_BTHPS3_BASE + 0x200)
+
+// Write to control channel
 #define IOCTL_BTHPS3_HID_CONTROL_WRITE          BUSENUM_W_IOCTL (IOCTL_BTHPS3_BASE + 0x201)
+
+// Read from interrupt channel
 #define IOCTL_BTHPS3_HID_INTERRUPT_READ         BUSENUM_R_IOCTL (IOCTL_BTHPS3_BASE + 0x202)
+
+// Write to interrupt channel
 #define IOCTL_BTHPS3_HID_INTERRUPT_WRITE        BUSENUM_W_IOCTL (IOCTL_BTHPS3_BASE + 0x203)
 
+// Instruct bus to drop connection
 #define IOCTL_BTHPS3_DEVICE_DISCONNECT          BUSENUM_W_IOCTL (IOCTL_BTHPS3_BASE + 0x300)
 
 #pragma endregion

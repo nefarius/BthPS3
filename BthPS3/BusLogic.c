@@ -328,7 +328,7 @@ BthPS3_EvtWdfChildListCreateDevice(
     WDF_IO_QUEUE_CONFIG_INIT_DEFAULT_QUEUE(&defaultQueueCfg, WdfIoQueueDispatchParallel);
 
     defaultQueueCfg.EvtIoDeviceControl = BthPS3_PDO_EvtWdfIoQueueIoDeviceControl;
-    defaultQueueCfg.EvtIoInternalDeviceControl = BthPS3_PDO_EvtWdfIoQueueIoInternalDeviceControl;
+    //defaultQueueCfg.EvtIoInternalDeviceControl = BthPS3_PDO_EvtWdfIoQueueIoInternalDeviceControl;
 
     status = WdfIoQueueCreate(
         hChild,

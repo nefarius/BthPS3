@@ -570,8 +570,10 @@ L2CAP_PS3_ConnectionIndicationCallback(
     _In_ PINDICATION_PARAMETERS Parameters
 )
 {
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
     PBTHPS3_SERVER_CONTEXT deviceCtx = NULL;
     PBTHPS3_CLIENT_CONNECTION connection = NULL;
+    PDO_IDENTIFICATION_DESCRIPTION pdoDesc;
 
     TraceEvents(TRACE_LEVEL_VERBOSE,
         TRACE_L2CAP,
@@ -665,6 +667,29 @@ L2CAP_PS3_ConnectionIndicationCallback(
                 FALSE,
                 NULL
             );
+
+            WDF_CHILD_IDENTIFICATION_DESCRIPTION_HEADER_INIT(
+                &pdoDesc.Header,
+                sizeof(PDO_IDENTIFICATION_DESCRIPTION)
+            );
+
+            pdoDesc.ClientConnection = connection;
+
+            //
+            // Init PDO destruction
+            // 
+            status = WdfChildListUpdateChildDescriptionAsMissing(
+                WdfFdoGetDefaultChildList(connection->DevCtxHdr->Device),
+                &pdoDesc.Header
+            );
+
+            if (!NT_SUCCESS(status))
+            {
+                TraceEvents(TRACE_LEVEL_ERROR,
+                    TRACE_CONNECTION,
+                    "WdfChildListUpdateChildDescriptionAsMissing failed with status %!STATUS!",
+                    status);
+            }
 
             ClientConnections_RemoveAndDestroy(deviceCtx, connection);
         }
@@ -1186,6 +1211,7 @@ L2CAP_PS3_AsyncReadControlTransferCompleted(
     _In_ WDFCONTEXT Context
 )
 {
+    size_t length = 0;
     struct _BRB_L2CA_ACL_TRANSFER* brb =
         (struct _BRB_L2CA_ACL_TRANSFER*)Context;
     PBTHPS3_DEVICE_CONTEXT_HEADER deviceCtxHdr =
@@ -1199,11 +1225,12 @@ L2CAP_PS3_AsyncReadControlTransferCompleted(
         Params->IoStatus.Status
     );
 
+    length = brb->BufferSize;
     deviceCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
     WdfRequestCompleteWithInformation(
         Request,
         Params->IoStatus.Status,
-        brb->BufferSize
+        length
     );
 }
 
@@ -1218,6 +1245,7 @@ L2CAP_PS3_AsyncReadInterruptTransferCompleted(
     _In_ WDFCONTEXT Context
 )
 {
+    size_t length = 0;
     struct _BRB_L2CA_ACL_TRANSFER* brb =
         (struct _BRB_L2CA_ACL_TRANSFER*)Context;
     PBTHPS3_DEVICE_CONTEXT_HEADER deviceCtxHdr =
@@ -1232,11 +1260,12 @@ L2CAP_PS3_AsyncReadInterruptTransferCompleted(
         brb->RemainingBufferSize
     );
 
+    length = brb->BufferSize;
     deviceCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
     WdfRequestCompleteWithInformation(
         Request,
         Params->IoStatus.Status,
-        brb->BufferSize
+        length
     );
 }
 
@@ -1269,6 +1298,10 @@ L2CAP_PS3_AsyncSendInterruptTransferCompleted(
 }
 
 #pragma endregion
+
+//
+// TODO: obsolete
+// 
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS

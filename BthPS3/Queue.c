@@ -87,6 +87,8 @@ Return Value:
 //
 // Handle IRP_MJ_DEVICE_CONTROL sent to FDO
 // 
+// Just pass this stuff to the underlying radio (IOCTL_BTH_*)
+// 
 _Use_decl_annotations_
 VOID
 BthPS3_EvtWdfIoQueueIoDeviceControl(
@@ -136,6 +138,8 @@ BthPS3_EvtWdfIoQueueIoDeviceControl(
 
 //
 // Handle IRP_MJ_INTERNAL_DEVICE_CONTROL sent to FDO
+// 
+// TODO: obsolete
 // 
 void BthPS3_EvtWdfIoQueueIoInternalDeviceControl(
     WDFQUEUE Queue,

@@ -327,6 +327,7 @@ BthPS3_EvtWdfChildListCreateDevice(
     // 
     WDF_IO_QUEUE_CONFIG_INIT_DEFAULT_QUEUE(&defaultQueueCfg, WdfIoQueueDispatchParallel);
 
+    defaultQueueCfg.EvtIoStop = BthPS3_EvtIoStop;
     defaultQueueCfg.EvtIoDeviceControl = BthPS3_PDO_EvtWdfIoQueueIoDeviceControl;
     //defaultQueueCfg.EvtIoInternalDeviceControl = BthPS3_PDO_EvtWdfIoQueueIoInternalDeviceControl;
 
@@ -391,45 +392,246 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
     ULONG IoControlCode
 )
 {
-    WDFDEVICE                       device, parentDevice;
-    WDF_REQUEST_FORWARD_OPTIONS     forwardOptions;
-    NTSTATUS                        status = STATUS_UNSUCCESSFUL;
-    PBTHPS3_FDO_PDO_REQUEST_CONTEXT reqCtx = NULL;
-    PBTHPS3_PDO_DEVICE_CONTEXT      pdoCtx = NULL;
-
-    UNREFERENCED_PARAMETER(OutputBufferLength);
-    UNREFERENCED_PARAMETER(InputBufferLength);
-    UNREFERENCED_PARAMETER(IoControlCode);
+    NTSTATUS                    status = STATUS_UNSUCCESSFUL;
+    WDFDEVICE                   child = NULL;
+    PBTHPS3_PDO_DEVICE_CONTEXT  childCtx = NULL;
+    PBTHPS3_CLIENT_CONNECTION   clientConnection = NULL;
+    PVOID                       buffer = NULL;
+    size_t                      bufferLength = 0;
+    
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Entry");
 
-    device = WdfIoQueueGetDevice(Queue);
-    parentDevice = WdfPdoGetParent(device);
-    reqCtx = GetFdoPdoRequestContext(Request);
-    pdoCtx = GetPdoDeviceContext(device);
+    child = WdfIoQueueGetDevice(Queue);
+    childCtx = GetPdoDeviceContext(child);
+    clientConnection = childCtx->ClientConnection;
 
-    //
-    // Establish relationship of PDO to connection object so the parent 
-    // bus doesn't need to lookup the device from connection list.
-    // 
-    reqCtx->ClientConnection = pdoCtx->ClientConnection;
+    switch (IoControlCode)
+    {
+#pragma region IOCTL_BTHPS3_HID_CONTROL_READ
 
-    WDF_REQUEST_FORWARD_OPTIONS_INIT(&forwardOptions);
-    forwardOptions.Flags = WDF_REQUEST_FORWARD_OPTION_SEND_AND_FORGET;
+    case IOCTL_BTHPS3_HID_CONTROL_READ:
 
-    //
-    // FDO has all the state info so don't bother handling this in the PDO
-    // 
-    status = WdfRequestForwardToParentDeviceIoQueue(
-        Request,
-        WdfDeviceGetDefaultQueue(parentDevice),
-        &forwardOptions
-    );
-    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_VERBOSE,
+            TRACE_BUSLOGIC,
+            ">> IOCTL_BTHPS3_HID_CONTROL_READ"
+        );
+
+        status = WdfRequestRetrieveOutputBuffer(
+            Request,
+            OutputBufferLength,
+            &buffer,
+            &bufferLength
+        );
+
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_BUSLOGIC,
+                "WdfRequestRetrieveOutputBuffer failed with status %!STATUS!",
+                status
+            );
+            break;
+        }
+
+        TraceEvents(TRACE_LEVEL_VERBOSE,
+            TRACE_BUSLOGIC,
+            "bufferLength: %d",
+            (ULONG)bufferLength
+        );
+
+        status = L2CAP_PS3_ReadControlTransferAsync(
+            clientConnection,
+            Request,
+            buffer,
+            bufferLength,
+            L2CAP_PS3_AsyncReadControlTransferCompleted
+        );
+
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_BUSLOGIC,
+                "L2CAP_PS3_ReadControlTransferAsync failed with status %!STATUS!",
+                status
+            );
+        }
+        else
+        {
+            status = STATUS_PENDING;
+        }
+
+        break;
+
+#pragma endregion
+
+#pragma region IOCTL_BTHPS3_HID_CONTROL_WRITE
+
+    case IOCTL_BTHPS3_HID_CONTROL_WRITE:
+
+        TraceEvents(TRACE_LEVEL_VERBOSE,
+            TRACE_BUSLOGIC,
+            ">> IOCTL_BTHPS3_HID_CONTROL_WRITE"
+        );
+
+        status = WdfRequestRetrieveInputBuffer(
+            Request,
+            InputBufferLength,
+            &buffer,
+            &bufferLength
+        );
+
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_BUSLOGIC,
+                "WdfRequestRetrieveInputBuffer failed with status %!STATUS!",
+                status
+            );
+            break;
+        }
+
+        status = L2CAP_PS3_SendControlTransferAsync(
+            clientConnection,
+            Request,
+            buffer,
+            bufferLength,
+            L2CAP_PS3_AsyncSendControlTransferCompleted
+        );
+
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_BUSLOGIC,
+                "L2CAP_PS3_SendControlTransferAsync failed with status %!STATUS!",
+                status
+            );
+        }
+        else
+        {
+            status = STATUS_PENDING;
+        }
+
+        break;
+
+#pragma endregion
+
+#pragma region IOCTL_BTHPS3_HID_INTERRUPT_READ
+
+    case IOCTL_BTHPS3_HID_INTERRUPT_READ:
+
+        TraceEvents(TRACE_LEVEL_VERBOSE,
+            TRACE_BUSLOGIC,
+            ">> IOCTL_BTHPS3_HID_INTERRUPT_READ"
+        );
+
+        status = WdfRequestRetrieveOutputBuffer(
+            Request,
+            OutputBufferLength,
+            &buffer,
+            &bufferLength
+        );
+
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_BUSLOGIC,
+                "WdfRequestRetrieveOutputBuffer failed with status %!STATUS!",
+                status
+            );
+            break;
+        }
+
+        TraceEvents(TRACE_LEVEL_VERBOSE,
+            TRACE_BUSLOGIC,
+            "bufferLength: %d",
+            (ULONG)bufferLength
+        );
+
+        status = L2CAP_PS3_ReadInterruptTransferAsync(
+            clientConnection,
+            Request,
+            buffer,
+            bufferLength,
+            L2CAP_PS3_AsyncReadInterruptTransferCompleted
+        );
+
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_BUSLOGIC,
+                "L2CAP_PS3_ReadInterruptTransferAsync failed with status %!STATUS!",
+                status
+            );
+        }
+        else
+        {
+            status = STATUS_PENDING;
+        }
+
+        break;
+
+#pragma endregion
+
+#pragma region IOCTL_BTHPS3_HID_INTERRUPT_WRITE
+
+    case IOCTL_BTHPS3_HID_INTERRUPT_WRITE:
+
+        TraceEvents(TRACE_LEVEL_VERBOSE,
+            TRACE_BUSLOGIC,
+            ">> IOCTL_BTHPS3_HID_INTERRUPT_WRITE"
+        );
+
+        status = WdfRequestRetrieveInputBuffer(
+            Request,
+            InputBufferLength,
+            &buffer,
+            &bufferLength
+        );
+
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_BUSLOGIC,
+                "WdfRequestRetrieveInputBuffer failed with status %!STATUS!",
+                status
+            );
+            break;
+        }
+
+        status = L2CAP_PS3_SendInterruptTransferAsync(
+            clientConnection,
+            Request,
+            buffer,
+            bufferLength,
+            L2CAP_PS3_AsyncSendInterruptTransferCompleted
+        );
+
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_BUSLOGIC,
+                "L2CAP_PS3_SendInterruptTransferAsync failed with status %!STATUS!",
+                status
+            );
+        }
+        else
+        {
+            status = STATUS_PENDING;
+        }
+
+        break;
+
+#pragma endregion
+
+    default:
+        TraceEvents(TRACE_LEVEL_WARNING,
+            TRACE_BUSLOGIC,
+            "Unknown IoControlCode received: 0x%X",
+            IoControlCode
+        );
+
+        status = STATUS_INVALID_PARAMETER;
+        break;
+    }
+
+    if (status != STATUS_PENDING) {
         WdfRequestComplete(Request, status);
     }
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Exit");
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Exit (status: %!STATUS!)", status);
 }
 
 //

@@ -780,6 +780,9 @@ L2CAP_PS3_ConnectionStateConnected(
 
 #pragma region L2CAP remote disconnect
 
+//
+// Instructs a channel to disconnect
+// 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 BOOLEAN
 L2CAP_PS3_RemoteDisconnect(
@@ -832,7 +835,11 @@ L2CAP_PS3_RemoteDisconnect(
 
     KeClearEvent(&Channel->DisconnectEvent);
 
-    CtxHdr->ProfileDrvInterface.BthReuseBrb(&Channel->ConnectDisconnectBrb, BRB_L2CA_CLOSE_CHANNEL);
+    CLIENT_CONNECTION_REQUEST_REUSE(Channel->ConnectDisconnectRequest);
+    CtxHdr->ProfileDrvInterface.BthReuseBrb(
+        &Channel->ConnectDisconnectBrb, 
+        BRB_L2CA_CLOSE_CHANNEL
+    );
 
     disconnectBrb = (struct _BRB_L2CA_CLOSE_CHANNEL *) &(Channel->ConnectDisconnectBrb);
 
@@ -843,9 +850,6 @@ L2CAP_PS3_RemoteDisconnect(
     // The BRB can fail with STATUS_DEVICE_DISCONNECT if the device is already
     // disconnected, hence we don't assert for success
     //
-
-    CLIENT_CONNECTION_REQUEST_REUSE(Channel->ConnectDisconnectRequest);
-
     (void)BthPS3_SendBrbAsync(
         CtxHdr->IoTarget,
         Channel->ConnectDisconnectRequest,
@@ -884,7 +888,6 @@ L2CAP_PS3_ChannelDisconnectCompleted(
     //
     // Disconnect complete, set the event
     //
-
     KeSetEvent(
         &channel->DisconnectEvent,
         0,

@@ -279,6 +279,7 @@ BthPS3_EvtWdfChildListCreateDevice(
         &attributes,
         BTHPS3_PDO_DEVICE_CONTEXT
     );
+    attributes.EvtCleanupCallback = BthPS3_PDO_EvtDeviceContextCleanup;
 
     status = WdfDeviceCreate(
         &ChildInit,
@@ -307,6 +308,13 @@ BthPS3_EvtWdfChildListCreateDevice(
 
     pdoCtx->ClientConnection = pDesc->ClientConnection;
 
+    //
+    // PDO relies on the connection object context so 
+    // we increase the reference count to protect from
+    // it getting freed to soon. See BthPS3_PDO_EvtDeviceContextCleanup
+    // 
+    WdfObjectReference(WdfObjectContextGetObject(pDesc->ClientConnection));
+
 #pragma endregion
 
 #pragma region PNP/Power Caps
@@ -329,7 +337,6 @@ BthPS3_EvtWdfChildListCreateDevice(
 
     defaultQueueCfg.EvtIoStop = BthPS3_EvtIoStop;
     defaultQueueCfg.EvtIoDeviceControl = BthPS3_PDO_EvtWdfIoQueueIoDeviceControl;
-    //defaultQueueCfg.EvtIoInternalDeviceControl = BthPS3_PDO_EvtWdfIoQueueIoInternalDeviceControl;
 
     status = WdfIoQueueCreate(
         hChild,
@@ -382,6 +389,28 @@ BOOLEAN BthPS3_PDO_EvtChildListIdentificationDescriptionCompare(
 }
 
 //
+// Gets called on PDO removal
+// 
+VOID
+BthPS3_PDO_EvtDeviceContextCleanup(
+    IN WDFOBJECT Device
+)
+{
+    PBTHPS3_PDO_DEVICE_CONTEXT devCtx = NULL;
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Entry");
+
+    devCtx = GetPdoDeviceContext(Device);
+
+    //
+    // At this point it's safe (for us, the PDO) to dispose the connection object
+    // 
+    WdfObjectDereference(WdfObjectContextGetObject(devCtx->ClientConnection));
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Exit");
+}
+
+//
 // Handle IRP_MJ_DEVICE_CONTROL sent to PDO
 // 
 void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
@@ -398,7 +427,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
     PBTHPS3_CLIENT_CONNECTION   clientConnection = NULL;
     PVOID                       buffer = NULL;
     size_t                      bufferLength = 0;
-    
+
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Entry");
 
@@ -632,56 +661,4 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
     }
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Exit (status: %!STATUS!)", status);
-}
-
-//
-// Handle IRP_MJ_INTERNAL_DEVICE_CONTROL sent to PDO
-// 
-void BthPS3_PDO_EvtWdfIoQueueIoInternalDeviceControl(
-    WDFQUEUE Queue,
-    WDFREQUEST Request,
-    size_t OutputBufferLength,
-    size_t InputBufferLength,
-    ULONG IoControlCode
-)
-{
-    WDFDEVICE device, parentDevice;
-    WDF_REQUEST_FORWARD_OPTIONS forwardOptions;
-    NTSTATUS status;
-    PBTHPS3_FDO_PDO_REQUEST_CONTEXT reqCtx = NULL;
-    PBTHPS3_PDO_DEVICE_CONTEXT pdoCtx = NULL;
-
-    UNREFERENCED_PARAMETER(OutputBufferLength);
-    UNREFERENCED_PARAMETER(InputBufferLength);
-    UNREFERENCED_PARAMETER(IoControlCode);
-
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Entry");
-
-    device = WdfIoQueueGetDevice(Queue);
-    parentDevice = WdfPdoGetParent(device);
-    reqCtx = GetFdoPdoRequestContext(Request);
-    pdoCtx = GetPdoDeviceContext(device);
-
-    //
-    // Establish relationship of PDO to connection object so the parent 
-    // bus doesn't need to lookup the device from connection list.
-    // 
-    reqCtx->ClientConnection = pdoCtx->ClientConnection;
-
-    WDF_REQUEST_FORWARD_OPTIONS_INIT(&forwardOptions);
-    forwardOptions.Flags = WDF_REQUEST_FORWARD_OPTION_SEND_AND_FORGET;
-
-    //
-    // FDO has all the state info so don't bother handling this in the PDO
-    // 
-    status = WdfRequestForwardToParentDeviceIoQueue(
-        Request,
-        WdfDeviceGetDefaultQueue(parentDevice),
-        &forwardOptions
-    );
-    if (!NT_SUCCESS(status)) {
-        WdfRequestComplete(Request, status);
-    }
-
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Exit");
 }

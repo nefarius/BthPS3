@@ -302,7 +302,10 @@ EvtClientConnectionsDestroyConnection(
     PDO_IDENTIFICATION_DESCRIPTION pdoDesc;
     PBTHPS3_CLIENT_CONNECTION connection = NULL;
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CONNECTION, "%!FUNC! Entry");
+    TraceEvents(TRACE_LEVEL_INFORMATION, 
+        TRACE_CONNECTION, 
+        "%!FUNC! Entry (DISPOSING CONNECTION MEMORY)"
+    );
 
     connection = GetClientConnection(Object);
 

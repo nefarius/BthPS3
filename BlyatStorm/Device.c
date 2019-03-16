@@ -189,8 +189,8 @@ Return Value:
         }
 
         WdfTimerStart(deviceContext->OutputReportTimer, WDF_REL_TIMEOUT_IN_MS(0x64));
-        WdfTimerStart(deviceContext->InitTimer, WDF_REL_TIMEOUT_IN_MS(0x64));
-        WdfTimerStart(deviceContext->ControlReadTimer, WDF_REL_TIMEOUT_IN_MS(0x64));
+        //WdfTimerStart(deviceContext->InitTimer, WDF_REL_TIMEOUT_IN_MS(0x64));
+        //WdfTimerStart(deviceContext->ControlReadTimer, WDF_REL_TIMEOUT_IN_MS(0x64));
 
         //
         // Create a device interface so that applications can find and talk
@@ -267,7 +267,7 @@ OutputReport_EvtTimerFunc(
         devCtx->OutputReportMemory,
         NULL);
 
-    status = WdfIoTargetSendInternalIoctlSynchronously(
+    status = WdfIoTargetSendIoctlSynchronously(
         ioTarget,
         NULL,
         IOCTL_BTHPS3_HID_CONTROL_WRITE,
@@ -286,7 +286,7 @@ OutputReport_EvtTimerFunc(
         return;
     }
 
-    WdfTimerStart(devCtx->OutputReportTimer, WDF_REL_TIMEOUT_IN_MS(0x0A));
+    //WdfTimerStart(devCtx->OutputReportTimer, WDF_REL_TIMEOUT_IN_MS(0x0A));
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Exit");
 }

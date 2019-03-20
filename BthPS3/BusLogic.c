@@ -237,7 +237,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 
     status = RtlUnicodeStringPrintf(
         &instanceId,
-        L"%I64X",
+        L"%012llX",
         pDesc->ClientConnection->RemoteAddress
     );
     if (!NT_SUCCESS(status)) {

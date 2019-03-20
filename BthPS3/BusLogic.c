@@ -296,6 +296,51 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 #pragma endregion
 
+#pragma region Expose device interface
+
+    switch (pDesc->ClientConnection->DeviceType)
+    {
+    case DS_DEVICE_TYPE_SIXAXIS:
+        status = WdfDeviceCreateDeviceInterface(hChild,
+            &GUID_DEVINTERFACE_BTHPS3_SIXAXIS,
+            NULL
+        );
+        break;
+    case DS_DEVICE_TYPE_NAVIGATION:
+        status = WdfDeviceCreateDeviceInterface(hChild,
+            &GUID_DEVINTERFACE_BTHPS3_NAVIGATION,
+            NULL
+        );
+        break;
+    case DS_DEVICE_TYPE_MOTION:
+        status = WdfDeviceCreateDeviceInterface(hChild,
+            &GUID_DEVINTERFACE_BTHPS3_MOTION,
+            NULL
+        );
+        break;
+    case DS_DEVICE_TYPE_WIRELESS:
+        status = WdfDeviceCreateDeviceInterface(hChild,
+            &GUID_DEVINTERFACE_BTHPS3_WIRELESS,
+            NULL
+        );
+        break;
+    default:
+        // Doesn't happen
+        return status;
+    }
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_BUSLOGIC,
+            "WdfDeviceCreateDeviceInterface failed with status %!STATUS!",
+            status
+        );
+        return status;
+    }
+
+#pragma endregion
+
 #pragma region Fill device context
 
     //

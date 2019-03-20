@@ -66,6 +66,16 @@ Return Value:
 
     WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&deviceAttributes, DEVICE_CONTEXT);
 
+    TraceEvents(TRACE_LEVEL_INFORMATION,
+        TRACE_DEVICE,
+        "0x%X, 0x%X, 0x%X, 0x%X, 0x%X",
+        IOCTL_BTHPS3_HID_CONTROL_READ,
+        IOCTL_BTHPS3_HID_CONTROL_WRITE,
+        IOCTL_BTHPS3_HID_INTERRUPT_READ,
+        IOCTL_BTHPS3_HID_INTERRUPT_WRITE,
+        IOCTL_BTHPS3_DEVICE_DISCONNECT
+    );
+
     status = WdfDeviceCreate(&DeviceInit, &deviceAttributes, &device);
 
     if (NT_SUCCESS(status)) {

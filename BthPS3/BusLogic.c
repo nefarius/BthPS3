@@ -78,22 +78,22 @@ BthPS3_EvtWdfChildListCreateDevice(
     switch (pDesc->ClientConnection->DeviceType)
     {
     case DS_DEVICE_TYPE_SIXAXIS:
-        status = RtlStringFromGUID(&BTHPS3_BUSENUM_SIXAXIS,
+        status = RtlStringFromGUID(&GUID_BUSENUM_BTHPS3_SIXAXIS,
             &guidString
         );
         break;
     case DS_DEVICE_TYPE_NAVIGATION:
-        status = RtlStringFromGUID(&BTHPS3_BUSENUM_NAVIGATION,
+        status = RtlStringFromGUID(&GUID_BUSENUM_BTHPS3_NAVIGATION,
             &guidString
         );
         break;
     case DS_DEVICE_TYPE_MOTION:
-        status = RtlStringFromGUID(&BTHPS3_BUSENUM_MOTION,
+        status = RtlStringFromGUID(&GUID_BUSENUM_BTHPS3_MOTION,
             &guidString
         );
         break;
     case DS_DEVICE_TYPE_WIRELESS:
-        status = RtlStringFromGUID(&BTHPS3_BUSENUM_WIRELESS,
+        status = RtlStringFromGUID(&GUID_BUSENUM_BTHPS3_WIRELESS,
             &guidString
         );
         break;
@@ -124,22 +124,22 @@ BthPS3_EvtWdfChildListCreateDevice(
     {
     case DS_DEVICE_TYPE_SIXAXIS:
         status = WdfPdoInitAssignRawDevice(ChildInit,
-            &BTHPS3_DEVCLASS_SIXAXIS
+            &GUID_DEVCLASS_BTHPS3_SIXAXIS
         );
         break;
     case DS_DEVICE_TYPE_NAVIGATION:
         status = WdfPdoInitAssignRawDevice(ChildInit,
-            &BTHPS3_DEVCLASS_NAVIGATION
+            &GUID_DEVCLASS_BTHPS3_NAVIGATION
         );
         break;
     case DS_DEVICE_TYPE_MOTION:
         status = WdfPdoInitAssignRawDevice(ChildInit,
-            &BTHPS3_DEVCLASS_MOTION
+            &GUID_DEVCLASS_BTHPS3_MOTION
         );
         break;
     case DS_DEVICE_TYPE_WIRELESS:
         status = WdfPdoInitAssignRawDevice(ChildInit,
-            &BTHPS3_DEVCLASS_WIRELESS
+            &GUID_DEVCLASS_BTHPS3_WIRELESS
         );
         break;
     default:

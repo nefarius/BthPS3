@@ -306,19 +306,6 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 #pragma endregion
 
-#pragma region Add FDO-shared request context
-
-    WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(
-        &attributes,
-        BTHPS3_FDO_PDO_REQUEST_CONTEXT
-    );
-    WdfDeviceInitSetRequestAttributes(
-        ChildInit,
-        &attributes
-    );
-
-#pragma endregion
-
 #pragma region Child device creation
 
     WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(

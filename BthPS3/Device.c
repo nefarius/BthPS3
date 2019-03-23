@@ -64,18 +64,6 @@ BthPS3_CreateDevice(
     );
 
     //
-    // Add request context shared with PDOs
-    // 
-    WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(
-        &attributes,
-        BTHPS3_FDO_PDO_REQUEST_CONTEXT
-    );
-    WdfDeviceInitSetRequestAttributes(
-        DeviceInit,
-        &attributes
-    );
-
-    //
     // Configure PNP/power callbacks
     //
     WDF_PNPPOWER_EVENT_CALLBACKS_INIT(&pnpPowerCallbacks);

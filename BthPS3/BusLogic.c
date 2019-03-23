@@ -468,15 +468,18 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 {
     NTSTATUS                    status = STATUS_UNSUCCESSFUL;
     WDFDEVICE                   child = NULL;
+    WDFDEVICE                   parent = NULL;
     PBTHPS3_PDO_DEVICE_CONTEXT  childCtx = NULL;
     PBTHPS3_CLIENT_CONNECTION   clientConnection = NULL;
     PVOID                       buffer = NULL;
     size_t                      bufferLength = 0;
+    WDF_REQUEST_FORWARD_OPTIONS forwardOptions;
 
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Entry");
 
     child = WdfIoQueueGetDevice(Queue);
+    parent = WdfPdoGetParent(child);
     childCtx = GetPdoDeviceContext(child);
     clientConnection = childCtx->ClientConnection;
 
@@ -697,8 +700,26 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
             IoControlCode
         );
 
-        status = STATUS_INVALID_PARAMETER;
-        break;
+        WDF_REQUEST_FORWARD_OPTIONS_INIT(&forwardOptions);
+        forwardOptions.Flags = WDF_REQUEST_FORWARD_OPTION_SEND_AND_FORGET;
+
+        status = WdfRequestForwardToParentDeviceIoQueue(
+            Request,
+            WdfDeviceGetDefaultQueue(parent),
+            &forwardOptions
+        );
+
+        if (!NT_SUCCESS(status))
+        {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_BUSLOGIC,
+                "WdfRequestForwardToParentDeviceIoQueue failed with status %!STATUS!",
+                status
+            );
+            WdfRequestComplete(Request, status);
+        }
+
+        return;
     }
 
     if (status != STATUS_PENDING) {

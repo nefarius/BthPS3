@@ -45,10 +45,15 @@ BthPS3_EvtWdfChildListCreateDevice(
     WDF_OBJECT_ATTRIBUTES               attributes;
     PBTHPS3_PDO_DEVICE_CONTEXT          pdoCtx = NULL;
     WDF_DEVICE_PNP_CAPABILITIES         pnpCaps;
+    WDFKEY                              hKey = NULL;
+    ULONG                               rawPdo = 0;
+    ULONG                               hidePdo = 0;
 
     DECLARE_UNICODE_STRING_SIZE(deviceId, MAX_DEVICE_ID_LEN);
     DECLARE_UNICODE_STRING_SIZE(hardwareId, MAX_DEVICE_ID_LEN);
     DECLARE_UNICODE_STRING_SIZE(instanceId, BTH_ADDR_HEX_LEN);
+    DECLARE_CONST_UNICODE_STRING(rawPdoValue, L"RawPDO");
+    DECLARE_CONST_UNICODE_STRING(hidePdoValue, L"HidePDO");
 
     UNREFERENCED_PARAMETER(ChildList);
 
@@ -61,6 +66,44 @@ BthPS3_EvtWdfChildListCreateDevice(
         IdentificationDescription,
         PDO_IDENTIFICATION_DESCRIPTION,
         Header);
+
+    //
+    // Open
+    //   HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\BthPS3\Parameters
+    // key
+    // 
+    status = WdfDriverOpenParametersRegistryKey(
+        WdfGetDriver(),
+        STANDARD_RIGHTS_ALL,
+        WDF_NO_OBJECT_ATTRIBUTES,
+        &hKey
+    );
+
+    //
+    // On success, read configuration values
+    // 
+    if (NT_SUCCESS(status))
+    {
+        //
+        // Don't care, if it fails, keep default value
+        // 
+        (void)WdfRegistryQueryULong(
+            hKey,
+            &rawPdoValue,
+            &rawPdo
+        );
+
+        //
+        // Don't care, if it fails, keep default value
+        // 
+        (void)WdfRegistryQueryULong(
+            hKey,
+            &hidePdoValue,
+            &hidePdo
+        );
+
+        WdfRegistryClose(hKey);
+    }
 
     //
     // PDO features
@@ -114,65 +157,68 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 #pragma region Raw PDO properties
 
-    //
-    // Assign RAW PDO Device Class GUID depending on device type
-    // 
-    // In raw device mode, user-land applications can talk to our
-    // PDO as well with no function driver attached.
-    // 
-    switch (pDesc->ClientConnection->DeviceType)
+    if (rawPdo)
     {
-    case DS_DEVICE_TYPE_SIXAXIS:
-        status = WdfPdoInitAssignRawDevice(ChildInit,
-            &GUID_DEVCLASS_BTHPS3_SIXAXIS
-        );
-        break;
-    case DS_DEVICE_TYPE_NAVIGATION:
-        status = WdfPdoInitAssignRawDevice(ChildInit,
-            &GUID_DEVCLASS_BTHPS3_NAVIGATION
-        );
-        break;
-    case DS_DEVICE_TYPE_MOTION:
-        status = WdfPdoInitAssignRawDevice(ChildInit,
-            &GUID_DEVCLASS_BTHPS3_MOTION
-        );
-        break;
-    case DS_DEVICE_TYPE_WIRELESS:
-        status = WdfPdoInitAssignRawDevice(ChildInit,
-            &GUID_DEVCLASS_BTHPS3_WIRELESS
-        );
-        break;
-    default:
-        // Doesn't happen
-        return status;
-    }
+        //
+        // Assign RAW PDO Device Class GUID depending on device type
+        // 
+        // In raw device mode, user-land applications can talk to our
+        // PDO as well with no function driver attached.
+        // 
+        switch (pDesc->ClientConnection->DeviceType)
+        {
+        case DS_DEVICE_TYPE_SIXAXIS:
+            status = WdfPdoInitAssignRawDevice(ChildInit,
+                &GUID_DEVCLASS_BTHPS3_SIXAXIS
+            );
+            break;
+        case DS_DEVICE_TYPE_NAVIGATION:
+            status = WdfPdoInitAssignRawDevice(ChildInit,
+                &GUID_DEVCLASS_BTHPS3_NAVIGATION
+            );
+            break;
+        case DS_DEVICE_TYPE_MOTION:
+            status = WdfPdoInitAssignRawDevice(ChildInit,
+                &GUID_DEVCLASS_BTHPS3_MOTION
+            );
+            break;
+        case DS_DEVICE_TYPE_WIRELESS:
+            status = WdfPdoInitAssignRawDevice(ChildInit,
+                &GUID_DEVCLASS_BTHPS3_WIRELESS
+            );
+            break;
+        default:
+            // Doesn't happen
+            return status;
+        }
 
-    if (!NT_SUCCESS(status))
-    {
-        TraceEvents(TRACE_LEVEL_ERROR,
-            TRACE_BUSLOGIC,
-            "WdfPdoInitAssignRawDevice failed with status %!STATUS!",
-            status
-        );
-        return status;
-    }
+        if (!NT_SUCCESS(status))
+        {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_BUSLOGIC,
+                "WdfPdoInitAssignRawDevice failed with status %!STATUS!",
+                status
+            );
+            return status;
+        }
 
-    //
-    // Let the world talk to us
-    // 
-    status = WdfDeviceInitAssignSDDLString(ChildInit,
-        &SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_RWX_RES_RWX
-    );
-
-    if (!NT_SUCCESS(status))
-    {
-        TraceEvents(TRACE_LEVEL_ERROR,
-            TRACE_BUSLOGIC,
-            "WdfDeviceInitAssignSDDLString failed with status %!STATUS!",
-            status
+        //
+        // Let the world talk to us
+        // 
+        status = WdfDeviceInitAssignSDDLString(ChildInit,
+            &SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_RWX_RES_RWX
         );
 
-        return status;
+        if (!NT_SUCCESS(status))
+        {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_BUSLOGIC,
+                "WdfDeviceInitAssignSDDLString failed with status %!STATUS!",
+                status
+            );
+
+            return status;
+        }
     }
 
 #pragma endregion
@@ -181,7 +227,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 
     status = RtlUnicodeStringPrintf(
         &deviceId,
-        L"%ws\\%wZ",
+        L"%ws\\%wZ", // e.g. "BTHPS3BUS\{53f88889-1aaf-4353-a047-556b69ec6da6}"
         BthPS3BusEnumeratorName,
         guidString
     );
@@ -209,7 +255,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 
     status = RtlUnicodeStringPrintf(
         &hardwareId,
-        L"%ws\\%wZ",
+        L"%ws\\%wZ", // e.g. "BTHPS3BUS\{53f88889-1aaf-4353-a047-556b69ec6da6}"
         BthPS3BusEnumeratorName,
         guidString
     );
@@ -237,7 +283,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 
     status = RtlUnicodeStringPrintf(
         &instanceId,
-        L"%012llX",
+        L"%012llX", // e.g. "AC7A4D2819AC"
         pDesc->ClientConnection->RemoteAddress
     );
     if (!NT_SUCCESS(status)) {
@@ -298,45 +344,48 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 #pragma region Expose device interface
 
-    switch (pDesc->ClientConnection->DeviceType)
+    if (rawPdo)
     {
-    case DS_DEVICE_TYPE_SIXAXIS:
-        status = WdfDeviceCreateDeviceInterface(hChild,
-            &GUID_DEVINTERFACE_BTHPS3_SIXAXIS,
-            NULL
-        );
-        break;
-    case DS_DEVICE_TYPE_NAVIGATION:
-        status = WdfDeviceCreateDeviceInterface(hChild,
-            &GUID_DEVINTERFACE_BTHPS3_NAVIGATION,
-            NULL
-        );
-        break;
-    case DS_DEVICE_TYPE_MOTION:
-        status = WdfDeviceCreateDeviceInterface(hChild,
-            &GUID_DEVINTERFACE_BTHPS3_MOTION,
-            NULL
-        );
-        break;
-    case DS_DEVICE_TYPE_WIRELESS:
-        status = WdfDeviceCreateDeviceInterface(hChild,
-            &GUID_DEVINTERFACE_BTHPS3_WIRELESS,
-            NULL
-        );
-        break;
-    default:
-        // Doesn't happen
-        return status;
-    }
+        switch (pDesc->ClientConnection->DeviceType)
+        {
+        case DS_DEVICE_TYPE_SIXAXIS:
+            status = WdfDeviceCreateDeviceInterface(hChild,
+                &GUID_DEVINTERFACE_BTHPS3_SIXAXIS,
+                NULL
+            );
+            break;
+        case DS_DEVICE_TYPE_NAVIGATION:
+            status = WdfDeviceCreateDeviceInterface(hChild,
+                &GUID_DEVINTERFACE_BTHPS3_NAVIGATION,
+                NULL
+            );
+            break;
+        case DS_DEVICE_TYPE_MOTION:
+            status = WdfDeviceCreateDeviceInterface(hChild,
+                &GUID_DEVINTERFACE_BTHPS3_MOTION,
+                NULL
+            );
+            break;
+        case DS_DEVICE_TYPE_WIRELESS:
+            status = WdfDeviceCreateDeviceInterface(hChild,
+                &GUID_DEVINTERFACE_BTHPS3_WIRELESS,
+                NULL
+            );
+            break;
+        default:
+            // Doesn't happen
+            return status;
+        }
 
-    if (!NT_SUCCESS(status))
-    {
-        TraceEvents(TRACE_LEVEL_ERROR,
-            TRACE_BUSLOGIC,
-            "WdfDeviceCreateDeviceInterface failed with status %!STATUS!",
-            status
-        );
-        return status;
+        if (!NT_SUCCESS(status))
+        {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_BUSLOGIC,
+                "WdfDeviceCreateDeviceInterface failed with status %!STATUS!",
+                status
+            );
+            return status;
+        }
     }
 
 #pragma endregion
@@ -367,12 +416,7 @@ BthPS3_EvtWdfChildListCreateDevice(
     WDF_DEVICE_PNP_CAPABILITIES_INIT(&pnpCaps);
     pnpCaps.Removable = WdfTrue;
     pnpCaps.SurpriseRemovalOK = WdfTrue;
-
-    //
-    // TODO: make this depend on configuration
-    // If in Raw PDO mode, this should be true, false otherwise
-    //  
-    pnpCaps.NoDisplayInUI = WdfTrue;
+    pnpCaps.NoDisplayInUI = (hidePdo) ? WdfTrue : WdfFalse;
 
     WdfDeviceSetPnpCapabilities(hChild, &pnpCaps);
 

@@ -166,7 +166,4 @@ typedef enum _DS_DEVICE_TYPE
 // Write to interrupt channel
 #define IOCTL_BTHPS3_HID_INTERRUPT_WRITE        BUSENUM_W_IOCTL (IOCTL_BTHPS3_BASE + 0x203)
 
-// Instruct bus to drop connection
-#define IOCTL_BTHPS3_DEVICE_DISCONNECT          BUSENUM_W_IOCTL (IOCTL_BTHPS3_BASE + 0x300)
-
 #pragma endregion

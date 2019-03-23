@@ -368,6 +368,12 @@ BthPS3_EvtWdfChildListCreateDevice(
     pnpCaps.Removable = WdfTrue;
     pnpCaps.SurpriseRemovalOK = WdfTrue;
 
+    //
+    // TODO: make this depend on configuration
+    // If in Raw PDO mode, this should be true, false otherwise
+    //  
+    pnpCaps.NoDisplayInUI = WdfTrue;
+
     WdfDeviceSetPnpCapabilities(hChild, &pnpCaps);
 
 #pragma endregion

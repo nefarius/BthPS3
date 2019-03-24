@@ -22,8 +22,8 @@
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (INIT, DriverEntry)
-#pragma alloc_text (PAGE, BthPS3PSMEvtDeviceAdd)
-#pragma alloc_text (PAGE, BthPS3PSMEvtDriverContextCleanup)
+#pragma alloc_text (PAGE, BthPS3PSM_EvtDeviceAdd)
+#pragma alloc_text (PAGE, BthPS3PSM_EvtDriverContextCleanup)
 #endif
 
 NTSTATUS
@@ -73,10 +73,10 @@ Return Value:
     // the framework driver object is deleted during driver unload.
     //
     WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
-    attributes.EvtCleanupCallback = BthPS3PSMEvtDriverContextCleanup;
+    attributes.EvtCleanupCallback = BthPS3PSM_EvtDriverContextCleanup;
 
     WDF_DRIVER_CONFIG_INIT(&config,
-                           BthPS3PSMEvtDeviceAdd
+                           BthPS3PSM_EvtDeviceAdd
                            );
 
     status = WdfDriverCreate(DriverObject,
@@ -98,7 +98,7 @@ Return Value:
 }
 
 NTSTATUS
-BthPS3PSMEvtDeviceAdd(
+BthPS3PSM_EvtDeviceAdd(
     _In_    WDFDRIVER       Driver,
     _Inout_ PWDFDEVICE_INIT DeviceInit
     )
@@ -129,7 +129,7 @@ Return Value:
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Entry");
 
-    status = BthPS3PSMCreateDevice(DeviceInit);
+    status = BthPS3PSM_CreateDevice(DeviceInit);
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Exit");
 
@@ -137,7 +137,7 @@ Return Value:
 }
 
 VOID
-BthPS3PSMEvtDriverContextCleanup(
+BthPS3PSM_EvtDriverContextCleanup(
     _In_ WDFOBJECT DriverObject
     )
 /*++

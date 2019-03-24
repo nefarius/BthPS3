@@ -25,12 +25,12 @@
 #include <wdfusb.h>
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text (PAGE, BthPS3PSMCreateDevice)
+#pragma alloc_text (PAGE, BthPS3PSM_CreateDevice)
 #pragma alloc_text (PAGE, BthPS3PSM_EvtDevicePrepareHardware)
 #endif
 
 NTSTATUS
-BthPS3PSMCreateDevice(
+BthPS3PSM_CreateDevice(
     _Inout_ PWDFDEVICE_INIT DeviceInit
 )
 /*++

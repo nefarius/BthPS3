@@ -50,7 +50,7 @@ WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(DEVICE_CONTEXT, DeviceGetContext)
 // Function to initialize the device and its callbacks
 //
 NTSTATUS
-BthPS3PSMCreateDevice(
+BthPS3PSM_CreateDevice(
     _Inout_ PWDFDEVICE_INIT DeviceInit
     );
 

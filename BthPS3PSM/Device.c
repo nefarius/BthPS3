@@ -26,6 +26,7 @@
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (PAGE, BthPS3PSMCreateDevice)
+#pragma alloc_text (PAGE, BthPS3PSM_EvtDevicePrepareHardware)
 #endif
 
 NTSTATUS
@@ -51,15 +52,18 @@ Return Value:
 --*/
 {
     WDF_OBJECT_ATTRIBUTES           deviceAttributes;
-    PDEVICE_CONTEXT                 deviceContext;
     WDFDEVICE                       device;
     NTSTATUS                        status;
-    WDF_USB_DEVICE_CREATE_CONFIG    usbConfig;
+    WDF_PNPPOWER_EVENT_CALLBACKS    pnpPowerCallbacks;
 
 
     PAGED_CODE();
 
     WdfFdoInitSetFilter(DeviceInit);
+
+    WDF_PNPPOWER_EVENT_CALLBACKS_INIT(&pnpPowerCallbacks);
+    pnpPowerCallbacks.EvtDevicePrepareHardware = BthPS3PSM_EvtDevicePrepareHardware;
+    WdfDeviceInitSetPnpPowerEventCallbacks(DeviceInit, &pnpPowerCallbacks);
 
     WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&deviceAttributes, DEVICE_CONTEXT);
 
@@ -80,53 +84,66 @@ Return Value:
             return STATUS_INVALID_DEVICE_REQUEST;
         }
 
-        deviceContext = DeviceGetContext(device);
-
-        //
-        // Initialize the USB config context.
-        //
-        WDF_USB_DEVICE_CREATE_CONFIG_INIT(
-            &usbConfig,
-            USBD_CLIENT_CONTRACT_VERSION_602
-        );
-
-        //
-        // Allocate framework USB device object
-        // 
-        // Since we're a filter we _must not_ blindly
-        // call WdfUsb* functions but "abuse" the URBs
-        // coming from the upper function driver.
-        // 
-        status = WdfUsbTargetDeviceCreateWithParameters(
-            device,
-            &usbConfig,
-            WDF_NO_OBJECT_ATTRIBUTES,
-            &deviceContext->UsbDevice
-        );
-
-        //
-        // This will typically fail with either
-        // - STATUS_INVALID_DEVICE_REQUEST
-        // - STATUS_NO_SUCH_DEVICE
-        // if getting attached to a non-USB device
-        // which will then conveniently cause 
-        // unloading the filter automatically.
-        // 
-        if (!NT_SUCCESS(status)) {
-
-            TraceEvents(TRACE_LEVEL_ERROR,
-                TRACE_QUEUE,
-                "WdfUsbTargetDeviceCreateWithParameters failed with status %!STATUS!",
-                status);
-
-            return status;
-        }
-
         //
         // Initialize the I/O Package and any Queues
         //
         status = BthPS3PSMQueueInitialize(device);
     }
+
+    return status;
+}
+
+NTSTATUS
+BthPS3PSM_EvtDevicePrepareHardware(
+    WDFDEVICE Device,
+    WDFCMRESLIST ResourcesRaw,
+    WDFCMRESLIST ResourcesTranslated
+)
+{
+    WDF_USB_DEVICE_CREATE_CONFIG    usbConfig;
+    NTSTATUS                        status;
+    PDEVICE_CONTEXT                 deviceContext;
+
+    UNREFERENCED_PARAMETER(ResourcesRaw);
+    UNREFERENCED_PARAMETER(ResourcesTranslated);
+
+    PAGED_CODE();
+
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Entry");
+
+    deviceContext = DeviceGetContext(Device);
+
+    //
+    // Initialize the USB config context.
+    //
+    WDF_USB_DEVICE_CREATE_CONFIG_INIT(
+        &usbConfig,
+        USBD_CLIENT_CONTRACT_VERSION_602
+    );
+
+    //
+    // Allocate framework USB device object
+    // 
+    // Since we're a filter we _must not_ blindly
+    // call WdfUsb* functions but "abuse" the URBs
+    // coming from the upper function driver.
+    // 
+    status = WdfUsbTargetDeviceCreateWithParameters(
+        Device,
+        &usbConfig,
+        WDF_NO_OBJECT_ATTRIBUTES,
+        &deviceContext->UsbDevice
+    );
+
+    if (!NT_SUCCESS(status)) {
+
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_QUEUE,
+            "WdfUsbTargetDeviceCreateWithParameters failed with status %!STATUS!",
+            status);
+    }
+
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Exit");
 
     return status;
 }

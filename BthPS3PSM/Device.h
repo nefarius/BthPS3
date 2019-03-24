@@ -54,4 +54,6 @@ BthPS3PSMCreateDevice(
     _Inout_ PWDFDEVICE_INIT DeviceInit
     );
 
+EVT_WDF_DEVICE_PREPARE_HARDWARE BthPS3PSM_EvtDevicePrepareHardware;
+
 EXTERN_C_END

@@ -19,8 +19,8 @@
 
 #pragma once
 
-static 
-PVOID 
+static
+PVOID
 USBPcapURBGetBufferPointer(
     ULONG length,
     PVOID buffer,
@@ -52,15 +52,12 @@ USBPcapURBGetBufferPointer(
 }
 
 //
-// Helper to query the underlying bus about a specific PDO property.
+// Helper to query the underlying bus about Compatible IDs
 // 
-static 
-NTSTATUS 
-BusQueryId(
-    WDFDEVICE Device,
-    BUS_QUERY_ID_TYPE IdType,
-    PWCHAR Buffer,
-    ULONG BufferLength
+static
+BOOLEAN
+IsCompatibleDevice(
+    WDFDEVICE Device
 )
 {
     NTSTATUS            status;
@@ -69,19 +66,22 @@ BusQueryId(
     IO_STATUS_BLOCK     iosb;
     PIRP                irp;
     PIO_STACK_LOCATION  stack;
+    BOOLEAN             ret = FALSE;
+    PCWSTR              szIter = NULL;
 
     pdo = WdfDeviceWdmGetPhysicalDevice(Device);
     KeInitializeEvent(&ke, NotificationEvent, FALSE);
 
     RtlZeroMemory(&iosb, sizeof(IO_STATUS_BLOCK));
-    irp = IoBuildSynchronousFsdRequest(IRP_MJ_PNP, pdo,
+    irp = IoBuildSynchronousFsdRequest(
+        IRP_MJ_PNP, pdo,
         NULL, 0, NULL,
         &ke, &iosb
     );
     irp->IoStatus.Status = STATUS_NOT_SUPPORTED; // required initialize
     stack = IoGetNextIrpStackLocation(irp);
     stack->MinorFunction = IRP_MN_QUERY_ID;
-    stack->Parameters.QueryId.IdType = IdType;
+    stack->Parameters.QueryId.IdType = BusQueryCompatibleIDs;
 
     status = IoCallDriver(pdo, irp);
 
@@ -97,16 +97,24 @@ BusQueryId(
     {
         WCHAR *retval = (WCHAR*)iosb.Information;
 
-        if (wcslen(retval) > BufferLength)
+        //
+        // Walk through devices Compatible IDs
+        // 
+        for (szIter = retval; *szIter; szIter += wcslen(szIter) + 1)
         {
-            ExFreePool(retval); // IRP_MN_QUERY_ID requires this
-            return STATUS_BUFFER_TOO_SMALL;
+            //
+            // Match against Wireless Controller (E0h)
+            // 
+            if (0 == wcscmp(szIter, L"USB\\Class_E0&SubClass_01&Prot_01"))
+            {
+                ret = TRUE;
+                break;
+            }
         }
 
-        wcscpy(Buffer, retval);
         ExFreePool(retval); // IRP_MN_QUERY_ID requires this
     }
 
-    return status;
+    return ret;
 }
 

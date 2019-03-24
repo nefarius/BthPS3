@@ -65,8 +65,21 @@ Return Value:
 
     status = WdfDeviceCreate(&DeviceInit, &deviceAttributes, &device);
 
-    if (NT_SUCCESS(status)) 
+    if (NT_SUCCESS(status))
     {
+        //
+        // Query for Compatible IDs and opt-out on unsupported devices
+        // 
+        if (!IsCompatibleDevice(device))
+        {
+            TraceEvents(TRACE_LEVEL_WARNING,
+                TRACE_QUEUE,
+                "It appears we're not loaded within a USB stack, aborting initialization"
+            );
+
+            return STATUS_INVALID_DEVICE_REQUEST;
+        }
+
         deviceContext = DeviceGetContext(device);
 
         //
@@ -101,7 +114,7 @@ Return Value:
         // 
         if (!NT_SUCCESS(status)) {
 
-            TraceEvents(TRACE_LEVEL_WARNING,
+            TraceEvents(TRACE_LEVEL_ERROR,
                 TRACE_QUEUE,
                 "WdfUsbTargetDeviceCreateWithParameters failed with status %!STATUS!",
                 status);

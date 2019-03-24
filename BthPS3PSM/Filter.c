@@ -195,35 +195,36 @@ UrbFunctionBulkInTransferCompleted(
         pTransfer->TransferBufferMDL
     );
 
-    if (bufferLength >= L2CAP_MIN_BUFFER_LEN && L2CAP_IS_CONTROL_CHANNEL(buffer))
+    if (
+        bufferLength >= L2CAP_MIN_BUFFER_LEN
+        && L2CAP_IS_CONTROL_CHANNEL(buffer)
+        && L2CAP_IS_SIGNALLING_COMMAND_CODE(buffer)
+        )
     {
-        if (L2CAP_IS_SIGNALLING_COMMAND_CODE(buffer))
+        code = L2CAP_GET_SIGNALLING_COMMAND_CODE(buffer);
+
+        if (code == L2CAP_Connection_Request)
         {
-            code = L2CAP_GET_SIGNALLING_COMMAND_CODE(buffer);
+            pConReq = (PL2CAP_SIGNALLING_CONNECTION_REQUEST)&buffer[8];
 
-            if (code == L2CAP_Connection_Request)
+            if (pConReq->PSM == PSM_HID_CONTROL)
             {
-                pConReq = (PL2CAP_SIGNALLING_CONNECTION_REQUEST)&buffer[8];
+                pConReq->PSM = PSM_DS3_HID_CONTROL;
 
-                if (pConReq->PSM == PSM_HID_CONTROL)
-                {
-                    pConReq->PSM = PSM_DS3_HID_CONTROL;
+                TraceEvents(TRACE_LEVEL_INFORMATION,
+                    TRACE_FILTER,
+                    "++ Patching HID Control PSM to 0x%04X",
+                    pConReq->PSM);
+            }
 
-                    TraceEvents(TRACE_LEVEL_INFORMATION,
-                        TRACE_FILTER,
-                        "++ Patching HID Control PSM to 0x%04X",
-                        pConReq->PSM);
-                }
+            if (pConReq->PSM == PSM_HID_INTERRUPT)
+            {
+                pConReq->PSM = PSM_DS3_HID_INTERRUPT;
 
-                if (pConReq->PSM == PSM_HID_INTERRUPT)
-                {
-                    pConReq->PSM = PSM_DS3_HID_INTERRUPT;
-
-                    TraceEvents(TRACE_LEVEL_INFORMATION,
-                        TRACE_FILTER,
-                        "++ Patching HID Interrupt PSM to 0x%04X",
-                        pConReq->PSM);
-                }
+                TraceEvents(TRACE_LEVEL_INFORMATION,
+                    TRACE_FILTER,
+                    "++ Patching HID Interrupt PSM to 0x%04X",
+                    pConReq->PSM);
             }
         }
     }

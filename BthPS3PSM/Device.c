@@ -56,6 +56,8 @@ Return Value:
     NTSTATUS                        status;
     WDF_PNPPOWER_EVENT_CALLBACKS    pnpPowerCallbacks;
 
+    PDEVICE_CONTEXT                 deviceContext;
+
 
     PAGED_CODE();
 
@@ -71,6 +73,19 @@ Return Value:
 
     if (NT_SUCCESS(status))
     {
+        deviceContext = DeviceGetContext(device);
+
+        if (IsDummyDevice(device))
+        {
+            TraceEvents(TRACE_LEVEL_INFORMATION,
+                TRACE_QUEUE,
+                "It appears we're loaded onto a dummy device, remaining silent"
+            );
+
+            deviceContext->IsDummyDevice = TRUE;
+            return STATUS_SUCCESS;
+        }
+
         //
         // Query for Compatible IDs and opt-out on unsupported devices
         // 
@@ -100,8 +115,8 @@ BthPS3PSM_EvtDevicePrepareHardware(
     WDFCMRESLIST ResourcesTranslated
 )
 {
+    NTSTATUS                        status = STATUS_SUCCESS;
     WDF_USB_DEVICE_CREATE_CONFIG    usbConfig;
-    NTSTATUS                        status;
     PDEVICE_CONTEXT                 deviceContext;
 
     UNREFERENCED_PARAMETER(ResourcesRaw);
@@ -112,6 +127,14 @@ BthPS3PSM_EvtDevicePrepareHardware(
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Entry");
 
     deviceContext = DeviceGetContext(Device);
+
+    //
+    // We're DUT, don't move!
+    // 
+    if (deviceContext->IsDummyDevice)
+    {
+        goto exit;
+    }
 
     //
     // Initialize the USB config context.
@@ -142,6 +165,8 @@ BthPS3PSM_EvtDevicePrepareHardware(
             "WdfUsbTargetDeviceCreateWithParameters failed with status %!STATUS!",
             status);
     }
+
+exit:
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Exit");
 

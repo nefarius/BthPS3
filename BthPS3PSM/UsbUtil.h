@@ -118,3 +118,39 @@ IsCompatibleDevice(
     return ret;
 }
 
+static
+BOOLEAN
+IsDummyDevice(
+    WDFDEVICE Device
+)
+{
+    NTSTATUS                status;
+    WDFMEMORY               propertyHWIDMemory;
+    WDF_OBJECT_ATTRIBUTES   attributes;
+    BOOLEAN                 ret = FALSE;
+
+    DECLARE_UNICODE_STRING_SIZE(currentHwId, 200);
+    DECLARE_CONST_UNICODE_STRING(hardwareId, BTHPS3PSM_FILTER_HARDWARE_ID);
+
+    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+    attributes.ParentObject = Device;
+
+    status = WdfDeviceAllocAndQueryProperty(
+        Device,
+        DevicePropertyHardwareID,
+        NonPagedPoolNx,
+        &attributes,
+        &propertyHWIDMemory
+    );
+
+    if (NT_SUCCESS(status))
+    {
+        RtlInitUnicodeString(&currentHwId, WdfMemoryGetBuffer(propertyHWIDMemory, NULL));
+
+        ret = (0 == RtlCompareUnicodeString(&currentHwId, &hardwareId, TRUE));
+
+        WdfObjectDelete(propertyHWIDMemory);
+    }
+
+    return ret;
+}

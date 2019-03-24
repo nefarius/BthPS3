@@ -27,6 +27,8 @@ EXTERN_C_START
 //
 typedef struct _DEVICE_CONTEXT
 {
+    BOOLEAN IsDummyDevice;
+
     WDFUSBDEVICE UsbDevice;
 
     WDFUSBINTERFACE UsbInterface;

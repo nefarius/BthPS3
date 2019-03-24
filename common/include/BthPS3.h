@@ -35,6 +35,11 @@ DEFINE_GUID(GUID_DEVINTERFACE_BTHPS3PSM,
 // 
 #define BTHPS3PSM_FILTER_COMPATIBLE_ID      L"USB\\Class_E0&SubClass_01&Prot_01"
 
+//
+// Hardware ID of virtual filter device
+// 
+#define BTHPS3PSM_FILTER_HARDWARE_ID        L"Nefarius\\{a3dc6d41-9e10-46d9-8be2-9b4a279841df}"
+
 extern __declspec(selectany) PCWSTR BthPS3FilterName = L"BthPS3PSM";
 extern __declspec(selectany) PCSTR BthPS3FilterServiceName = "BthPS3PSM";
 extern __declspec(selectany) PCWSTR BthPS3ServiceName = L"BthPS3Service";

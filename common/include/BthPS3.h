@@ -30,6 +30,11 @@ DEFINE_GUID(GUID_DEVINTERFACE_BTHPS3PSM,
     0x1e1f8b68, 0xeaa2, 0x4d19, 0x8b, 0x02, 0xe8, 0xb0, 0x91, 0x6c, 0x77, 0xdb);
 // {1e1f8b68-eaa2-4d19-8b02-e8b0916c77db}
 
+//
+// Compatible ID to load filter driver on
+// 
+#define BTHPS3PSM_FILTER_COMPATIBLE_ID      L"USB\\Class_E0&SubClass_01&Prot_01"
+
 extern __declspec(selectany) PCWSTR BthPS3FilterName = L"BthPS3PSM";
 extern __declspec(selectany) PCSTR BthPS3FilterServiceName = "BthPS3PSM";
 extern __declspec(selectany) PCWSTR BthPS3ServiceName = L"BthPS3Service";

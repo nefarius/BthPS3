@@ -105,7 +105,7 @@ IsCompatibleDevice(
             //
             // Match against Wireless Controller (E0h)
             // 
-            if (0 == wcscmp(szIter, L"USB\\Class_E0&SubClass_01&Prot_01"))
+            if (0 == wcscmp(szIter, BTHPS3PSM_FILTER_COMPATIBLE_ID))
             {
                 ret = TRUE;
                 break;

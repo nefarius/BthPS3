@@ -24,6 +24,7 @@
 #include "device.h"
 #include "queue.h"
 #include "trace.h"
+#include "BthPS3.h"
 #include "UsbUtil.h"
 #include "Filter.h"
 #include "L2CAP.h"

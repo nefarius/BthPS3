@@ -42,6 +42,7 @@
     <ClCompile Include="Sideband.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\include\BthPS3.h" />
     <ClInclude Include="Device.h" />
     <ClInclude Include="Driver.h" />
     <ClInclude Include="Filter.h" />

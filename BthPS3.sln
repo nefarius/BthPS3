@@ -21,6 +21,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "App", "App", "{51B50044-086
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Function", "Function", "{2081D159-2BB5-4A74-9423-3017304039DB}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "_build", "build\_build.csproj", "{3F50F473-B720-4C19-A302-6D51AD1D4448}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM

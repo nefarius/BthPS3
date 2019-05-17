@@ -19,12 +19,15 @@
 
 #pragma once
 
+//
+// Service GUID for BTHENUM to expose
+// 
 DEFINE_GUID(BTHPS3_SERVICE_GUID,
     0x1cb831ea, 0x79cd, 0x4508, 0xb0, 0xfc, 0x85, 0xf7, 0xc8, 0x5a, 0xe8, 0xe0);
 // {1cb831ea-79cd-4508-b0fc-85f7c85ae8e0}
 
 //
-// TODO: deprecated, use sideband device instead!
+// Filter control device interface GUID
 // 
 DEFINE_GUID(GUID_DEVINTERFACE_BTHPS3PSM,
     0x1e1f8b68, 0xeaa2, 0x4d19, 0x8b, 0x02, 0xe8, 0xb0, 0x91, 0x6c, 0x77, 0xdb);
@@ -155,6 +158,7 @@ typedef enum _DS_DEVICE_TYPE
     // DualShock 4 compatible
     // 
     DS_DEVICE_TYPE_WIRELESS
+
 } DS_DEVICE_TYPE, *PDS_DEVICE_TYPE;
 
 #define BTHPS3_SIXAXIS_HID_INPUT_REPORT_SIZE        0x32

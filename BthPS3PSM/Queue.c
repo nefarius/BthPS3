@@ -25,33 +25,14 @@
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text (PAGE, BthPS3PSMQueueInitialize)
+#pragma alloc_text (PAGE, BthPS3PSM_QueueInitialize)
 #endif
 
+
 NTSTATUS
-BthPS3PSMQueueInitialize(
+BthPS3PSM_QueueInitialize(
     _In_ WDFDEVICE Device
 )
-/*++
-
-Routine Description:
-
-     The I/O dispatch callbacks for the frameworks device object
-     are configured in this function.
-
-     A single default I/O Queue is configured for parallel request
-     processing, and a driver context memory allocation is created
-     to hold our structure QUEUE_CONTEXT.
-
-Arguments:
-
-    Device - Handle to a framework device object.
-
-Return Value:
-
-    VOID
-
---*/
 {
     WDFQUEUE queue;
     NTSTATUS status;

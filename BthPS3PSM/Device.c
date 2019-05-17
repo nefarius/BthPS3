@@ -24,32 +24,19 @@
 #include <usbdlib.h>
 #include <wdfusb.h>
 
+extern WDFCOLLECTION   FilterDeviceCollection;
+extern WDFWAITLOCK     FilterDeviceCollectionLock;
+
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (PAGE, BthPS3PSM_CreateDevice)
 #pragma alloc_text (PAGE, BthPS3PSM_EvtDevicePrepareHardware)
 #endif
 
+
 NTSTATUS
 BthPS3PSM_CreateDevice(
     _Inout_ PWDFDEVICE_INIT DeviceInit
 )
-/*++
-
-Routine Description:
-
-    Worker routine called to create a device and its software resources.
-
-Arguments:
-
-    DeviceInit - Pointer to an opaque init structure. Memory for this
-                    structure will be freed by the framework when the WdfDeviceCreate
-                    succeeds. So don't access the structure after that point.
-
-Return Value:
-
-    NTSTATUS
-
---*/
 {
     WDF_OBJECT_ATTRIBUTES           deviceAttributes;
     WDFDEVICE                       device;
@@ -78,7 +65,7 @@ Return Value:
         if (IsDummyDevice(device))
         {
             TraceEvents(TRACE_LEVEL_INFORMATION,
-                TRACE_QUEUE,
+                TRACE_DEVICE,
                 "It appears we're loaded onto a dummy device, remaining silent"
             );
 
@@ -92,22 +79,69 @@ Return Value:
         if (!IsCompatibleDevice(device))
         {
             TraceEvents(TRACE_LEVEL_WARNING,
-                TRACE_QUEUE,
+                TRACE_DEVICE,
                 "It appears we're not loaded within a USB stack, aborting initialization"
             );
 
             return STATUS_INVALID_DEVICE_REQUEST;
         }
 
+#pragma region Add this device to global collection
+
+        //
+        // Add this device to the FilterDevice collection.
+        //
+        WdfWaitLockAcquire(FilterDeviceCollectionLock, NULL);
+        //
+        // WdfCollectionAdd takes a reference on the item object and removes
+        // it when you call WdfCollectionRemove.
+        //
+        status = WdfCollectionAdd(FilterDeviceCollection, device);
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_QUEUE,
+                "WdfCollectionAdd failed with status %!STATUS!",
+                status
+            );
+        }
+        WdfWaitLockRelease(FilterDeviceCollectionLock);
+
+        if (!NT_SUCCESS(status)) {
+            return status;
+        }
+
+#pragma endregion
+
+#pragma region Create control device
+
+        //
+        // Create a control device
+        //
+        status = BthPS3PSM_CreateControlDevice(device);
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_QUEUE,
+                "BthPS3PSM_CreateControlDevice failed with status %!STATUS!",
+                status
+            );
+
+            return status;
+        }
+
+#pragma endregion
+
         //
         // Initialize the I/O Package and any Queues
         //
-        status = BthPS3PSMQueueInitialize(device);
+        status = BthPS3PSM_QueueInitialize(device);
     }
 
     return status;
 }
 
+//
+// Called upon powering up
+// 
 NTSTATUS
 BthPS3PSM_EvtDevicePrepareHardware(
     WDFDEVICE Device,

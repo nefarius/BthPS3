@@ -17,27 +17,32 @@
 */
 
 
-#include <ntddk.h>
-#include <wdf.h>
-#include <initguid.h>
+#pragma once
 
-#include "device.h"
-#include "queue.h"
-#include "trace.h"
-#include "BthPS3.h"
-#include "UsbUtil.h"
-#include "Filter.h"
-#include "L2CAP.h"
-#include "SIdeband.h"
+typedef struct _CONTROL_DEVICE_CONTEXT
+{
+    //
+    // TODO: turn into useful
+    // 
+    ULONG Placeholder;
 
-EXTERN_C_START
+} CONTROL_DEVICE_CONTEXT, *PCONTROL_DEVICE_CONTEXT;
 
-//
-// WDFDRIVER Events
-//
+WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(CONTROL_DEVICE_CONTEXT, ControlDeviceGetContext)
 
-DRIVER_INITIALIZE DriverEntry;
-EVT_WDF_DRIVER_DEVICE_ADD BthPS3PSM_EvtDeviceAdd;
-EVT_WDF_OBJECT_CONTEXT_CLEANUP BthPS3PSM_EvtDriverContextCleanup;
 
-EXTERN_C_END
+EVT_WDF_IO_QUEUE_IO_DEVICE_CONTROL BthPS3PSM_SidebandIoDeviceControl;
+
+_Must_inspect_result_
+_Success_(return == STATUS_SUCCESS)
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS
+BthPS3PSM_CreateControlDevice(
+    WDFDEVICE Device
+);
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+VOID
+BthPS3PSM_DeleteControlDevice(
+    WDFDEVICE Device
+);

@@ -20,6 +20,9 @@
 #include "driver.h"
 #include "driver.tmh"
 
+extern WDFCOLLECTION   FilterDeviceCollection;
+extern WDFWAITLOCK     FilterDeviceCollectionLock;
+
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (INIT, DriverEntry)
 #pragma alloc_text (PAGE, BthPS3PSM_EvtDeviceAdd)
@@ -88,6 +91,36 @@ Return Value:
 
     if (!NT_SUCCESS(status)) {
         TraceEvents(TRACE_LEVEL_ERROR, TRACE_DRIVER, "WdfDriverCreate failed %!STATUS!", status);
+        WPP_CLEANUP(DriverObject);
+        return status;
+    }
+
+    status = WdfCollectionCreate(WDF_NO_OBJECT_ATTRIBUTES,
+        &FilterDeviceCollection);
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, 
+            TRACE_DRIVER, 
+            "WdfCollectionCreate failed with %!STATUS!", 
+            status
+        );
+        WPP_CLEANUP(DriverObject);
+        return status;
+    }
+
+    //
+    // The wait-lock object has the driver object as a default parent.
+    //
+
+    status = WdfWaitLockCreate(WDF_NO_OBJECT_ATTRIBUTES,
+        &FilterDeviceCollectionLock);
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_DRIVER,
+            "WdfWaitLockCreate failed with %!STATUS!",
+            status
+        );
         WPP_CLEANUP(DriverObject);
         return status;
     }

@@ -33,6 +33,7 @@
         WPP_DEFINE_BIT(TRACE_QUEUE)                                    \
         WPP_DEFINE_BIT(TRACE_FILTER)                                   \
         WPP_DEFINE_BIT(TRACE_DIAG)                                     \
+        WPP_DEFINE_BIT(TRACE_SIDEBAND)                                 \
         )                             
 
 #define WPP_FLAG_LEVEL_LOGGER(flag, level)                                  \

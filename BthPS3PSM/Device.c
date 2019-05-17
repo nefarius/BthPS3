@@ -34,6 +34,9 @@ extern WDFWAITLOCK     FilterDeviceCollectionLock;
 #endif
 
 
+//
+// Called upon device creation
+// 
 NTSTATUS
 BthPS3PSM_CreateDevice(
     _Inout_ PWDFDEVICE_INIT DeviceInit
@@ -50,10 +53,16 @@ BthPS3PSM_CreateDevice(
 
     WdfFdoInitSetFilter(DeviceInit);
 
+    //
+    // PNP/Power callbacks
+    // 
     WDF_PNPPOWER_EVENT_CALLBACKS_INIT(&pnpPowerCallbacks);
     pnpPowerCallbacks.EvtDevicePrepareHardware = BthPS3PSM_EvtDevicePrepareHardware;
     WdfDeviceInitSetPnpPowerEventCallbacks(DeviceInit, &pnpPowerCallbacks);
 
+    //
+    // Device object attributes
+    // 
     WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&deviceAttributes, DEVICE_CONTEXT);
     deviceAttributes.EvtCleanupCallback = BthPS3PSM_EvtDeviceContextCleanup;
 
@@ -208,6 +217,9 @@ exit:
     return status;
 }
 
+//
+// Called upon device context clean-up
+// 
 #pragma warning(push)
 #pragma warning(disable:28118) // this callback will run at IRQL=PASSIVE_LEVEL
 _Use_decl_annotations_

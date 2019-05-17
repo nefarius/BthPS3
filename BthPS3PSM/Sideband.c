@@ -115,6 +115,28 @@ BthPS3PSM_CreateControlDevice(
         &queue // pointer to default queue
     );
     if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_SIDEBAND,
+            "WdfIoQueueCreate failed with %!STATUS!", 
+            status
+        );
+        goto Error;
+    }
+
+    //
+    // Expose device interface
+    // 
+    status = WdfDeviceCreateDeviceInterface(
+        Device,
+        (LPGUID)&GUID_DEVINTERFACE_BTHPS3PSM,
+        NULL
+    );
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_SIDEBAND,
+            "WdfDeviceCreateDeviceInterface failed with %!STATUS!",
+            status
+        );
         goto Error;
     }
 
@@ -150,6 +172,9 @@ Error:
     return status;
 }
 
+//
+// Tear down control device
+// 
 _Use_decl_annotations_
 VOID
 BthPS3PSM_DeleteControlDevice(

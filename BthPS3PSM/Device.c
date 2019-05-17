@@ -70,32 +70,6 @@ BthPS3PSM_CreateDevice(
 
     if (NT_SUCCESS(status))
     {
-        deviceContext = DeviceGetContext(device);
-
-        if (IsDummyDevice(device))
-        {
-            TraceEvents(TRACE_LEVEL_INFORMATION,
-                TRACE_DEVICE,
-                "It appears we're loaded onto a dummy device, remaining silent"
-            );
-
-            deviceContext->IsDummyDevice = TRUE;
-            return STATUS_SUCCESS;
-        }
-
-        //
-        // Query for Compatible IDs and opt-out on unsupported devices
-        // 
-        if (!IsCompatibleDevice(device))
-        {
-            TraceEvents(TRACE_LEVEL_WARNING,
-                TRACE_DEVICE,
-                "It appears we're not loaded within a USB stack, aborting initialization"
-            );
-
-            return STATUS_INVALID_DEVICE_REQUEST;
-        }
-
 #pragma region Add this device to global collection
 
         //
@@ -121,6 +95,32 @@ BthPS3PSM_CreateDevice(
         }
 
 #pragma endregion
+
+        deviceContext = DeviceGetContext(device);
+
+        if (IsDummyDevice(device))
+        {
+            TraceEvents(TRACE_LEVEL_INFORMATION,
+                TRACE_DEVICE,
+                "It appears we're loaded onto a dummy device, remaining silent"
+            );
+
+            deviceContext->IsDummyDevice = TRUE;
+            return STATUS_SUCCESS;
+        }
+
+        //
+        // Query for Compatible IDs and opt-out on unsupported devices
+        // 
+        if (!IsCompatibleDevice(device))
+        {
+            TraceEvents(TRACE_LEVEL_WARNING,
+                TRACE_DEVICE,
+                "It appears we're not loaded within a USB stack, aborting initialization"
+            );
+
+            return STATUS_INVALID_DEVICE_REQUEST;
+        }
 
 #pragma region Create control device
 

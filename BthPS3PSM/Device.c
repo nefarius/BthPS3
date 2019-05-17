@@ -30,6 +30,7 @@ extern WDFWAITLOCK     FilterDeviceCollectionLock;
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (PAGE, BthPS3PSM_CreateDevice)
 #pragma alloc_text (PAGE, BthPS3PSM_EvtDevicePrepareHardware)
+#pragma alloc_text (PAGE, BthPS3PSM_EvtDeviceContextCleanup)
 #endif
 
 
@@ -42,7 +43,6 @@ BthPS3PSM_CreateDevice(
     WDFDEVICE                       device;
     NTSTATUS                        status;
     WDF_PNPPOWER_EVENT_CALLBACKS    pnpPowerCallbacks;
-
     PDEVICE_CONTEXT                 deviceContext;
 
 
@@ -55,6 +55,7 @@ BthPS3PSM_CreateDevice(
     WdfDeviceInitSetPnpPowerEventCallbacks(DeviceInit, &pnpPowerCallbacks);
 
     WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&deviceAttributes, DEVICE_CONTEXT);
+    deviceAttributes.EvtCleanupCallback = BthPS3PSM_EvtDeviceContextCleanup;
 
     status = WdfDeviceCreate(&DeviceInit, &deviceAttributes, &device);
 
@@ -206,3 +207,43 @@ exit:
 
     return status;
 }
+
+#pragma warning(push)
+#pragma warning(disable:28118) // this callback will run at IRQL=PASSIVE_LEVEL
+_Use_decl_annotations_
+VOID
+BthPS3PSM_EvtDeviceContextCleanup(
+    WDFOBJECT Device
+)
+{
+    ULONG   count;
+
+    PAGED_CODE();
+
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Entry");
+
+    WdfWaitLockAcquire(FilterDeviceCollectionLock, NULL);
+
+    count = WdfCollectionGetCount(FilterDeviceCollection);
+
+    if (count == 1)
+    {
+        //
+        // We are the last instance. So let us delete the control-device
+        // so that driver can unload when the FilterDevice is deleted.
+        // We absolutely have to do the deletion of control device with
+        // the collection lock acquired because we implicitly use this
+        // lock to protect ControlDevice global variable. We need to make
+        // sure another thread doesn't attempt to create while we are
+        // deleting the device.
+        //
+        BthPS3PSM_DeleteControlDevice((WDFDEVICE)Device);
+    }
+
+    WdfCollectionRemove(FilterDeviceCollection, Device);
+
+    WdfWaitLockRelease(FilterDeviceCollectionLock);
+
+    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Exit");
+}
+#pragma warning(pop) // enable 28118 again

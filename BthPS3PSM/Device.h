@@ -56,6 +56,7 @@ BthPS3PSM_CreateDevice(
     _Inout_ PWDFDEVICE_INIT DeviceInit
     );
 
+EVT_WDF_DEVICE_CONTEXT_CLEANUP BthPS3PSM_EvtDeviceContextCleanup;
 EVT_WDF_DEVICE_PREPARE_HARDWARE BthPS3PSM_EvtDevicePrepareHardware;
 
 EXTERN_C_END

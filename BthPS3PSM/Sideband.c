@@ -84,6 +84,7 @@ BthPS3PSM_CreateControlDevice(
 
     pInit = WdfControlDeviceInitAllocate(
         WdfDeviceGetDriver(Device),
+        /* only system services and elevated users may access us */
         &SDDL_DEVOBJ_SYS_ALL_ADM_ALL
     );
 
@@ -95,6 +96,9 @@ BthPS3PSM_CreateControlDevice(
         goto Error;
     }
 
+    //
+    // Exclusive access isn't required
+    // 
     WdfDeviceInitSetExclusive(pInit, FALSE);
 
     //

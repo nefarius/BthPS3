@@ -277,6 +277,13 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
             pDevCtx = DeviceGetContext(device);
             pDevCtx->IsPsmHidControlPatchingEnabled = TRUE;
             pDevCtx->IsPsmHidInterruptPatchingEnabled = TRUE;
+
+            TraceEvents(
+                TRACE_LEVEL_VERBOSE,
+                TRACE_SIDEBAND,
+                "PSM patch enabled for device %d",
+                pEnable->DeviceIndex
+            );
         }
 
         WdfWaitLockRelease(FilterDeviceCollectionLock);
@@ -317,6 +324,13 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
             pDevCtx = DeviceGetContext(device);
             pDevCtx->IsPsmHidControlPatchingEnabled = FALSE;
             pDevCtx->IsPsmHidInterruptPatchingEnabled = FALSE;
+
+            TraceEvents(
+                TRACE_LEVEL_VERBOSE,
+                TRACE_SIDEBAND,
+                "PSM patch disabled for device %d",
+                pDisable->DeviceIndex
+            );
         }
 
         WdfWaitLockRelease(FilterDeviceCollectionLock);

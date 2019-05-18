@@ -57,7 +57,7 @@ extern __declspec(selectany) PCWSTR BthPS3ServiceName = L"BthPS3Service";
 // 
 extern __declspec(selectany) PCWSTR BthPS3BusEnumeratorName = L"BTHPS3BUS";
 
-#define BTHPS3PSM_CONTROL_DEVICE_PATH         "\\\\.\\BthPS3PSMControl"
+#define BTHPS3PSM_CONTROL_DEVICE_PATH         L"\\\\.\\BthPS3PSMControl"
 #define BTHPS3PSM_NTDEVICE_NAME_STRING        L"\\Device\\BthPS3PSMControl"
 #define BTHPS3PSM_SYMBOLIC_NAME_STRING        L"\\DosDevices\\BthPS3PSMControl"
 

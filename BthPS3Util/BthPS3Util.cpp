@@ -13,9 +13,10 @@ using namespace colorwin;
 int main(int, char* argv[])
 {
     argh::parser cmdl;
-    cmdl.add_params({ "--inf-path", "--bin-path" });
+    cmdl.add_params({ "--inf-path", "--bin-path", "--device-index" });
     cmdl.parse(argv);
     std::string infPath, binPath;
+    ULONG deviceIndex;
 
     DWORD err = ERROR_SUCCESS;
     BLUETOOTH_LOCAL_SERVICE_INFO SvcInfo = { 0 };
@@ -300,6 +301,82 @@ int main(int, char* argv[])
 
 #pragma endregion
 
+#pragma region Filter settings
+
+    if (cmdl[{ "--enable-psm-patch" }])
+    {
+        if (!(cmdl({ "--device-index" }) >> deviceIndex)) {
+            std::cout << color(red) << "Device index missing" << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        const auto hDevice = CreateFile(
+            BTHPS3PSM_CONTROL_DEVICE_PATH,
+            GENERIC_READ | GENERIC_WRITE,
+            FILE_SHARE_READ | FILE_SHARE_WRITE,
+            nullptr,
+            OPEN_EXISTING,
+            FILE_ATTRIBUTE_NORMAL,
+            nullptr
+        );
+
+        BTHPS3PSM_ENABLE_PSM_PATCHING req;
+        req.DeviceIndex = deviceIndex;
+
+        const auto ret = DeviceIoControl(
+            hDevice,
+            IOCTL_BTHPS3PSM_ENABLE_PSM_PATCHING,
+            &req,
+            sizeof(BTHPS3PSM_ENABLE_PSM_PATCHING),
+            nullptr,
+            0,
+            nullptr,
+            nullptr
+        );
+
+        CloseHandle(hDevice);
+
+        return EXIT_SUCCESS;
+    }
+
+    if (cmdl[{ "--disable-psm-patch" }])
+    {
+        if (!(cmdl({ "--device-index" }) >> deviceIndex)) {
+            std::cout << color(red) << "Device index missing" << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        const auto hDevice = CreateFile(
+            BTHPS3PSM_CONTROL_DEVICE_PATH,
+            GENERIC_READ | GENERIC_WRITE,
+            FILE_SHARE_READ | FILE_SHARE_WRITE,
+            nullptr,
+            OPEN_EXISTING,
+            FILE_ATTRIBUTE_NORMAL,
+            nullptr
+        );
+
+        BTHPS3PSM_DISABLE_PSM_PATCHING req;
+        req.DeviceIndex = deviceIndex;
+
+        const auto ret = DeviceIoControl(
+            hDevice,
+            IOCTL_BTHPS3PSM_DISABLE_PSM_PATCHING,
+            &req,
+            sizeof(BTHPS3PSM_DISABLE_PSM_PATCHING),
+            nullptr,
+            0,
+            nullptr,
+            nullptr
+        );
+
+        CloseHandle(hDevice);
+
+        return EXIT_SUCCESS;
+    }
+
+#pragma endregion
+
 #pragma region Misc. actions
 
     if (cmdl[{ "-v", "--version" }])
@@ -329,6 +406,10 @@ int main(int, char* argv[])
     std::cout << "    --disable-filter          De-Register BthPS3PSM as lower filter for Bluetooth Class" << std::endl;
     std::cout << "    --create-filter-device    Create virtual device node for filter driver" << std::endl;
     std::cout << "                                Note: required only for testing and debugging" << std::endl;
+    std::cout << "    --enable-psm-patch        XXX" << std::endl;
+    std::cout << "      --device-index          XXX" << std::endl;
+    std::cout << "    --disable-psm-patch       XXX" << std::endl;
+    std::cout << "      --device-index          XXX" << std::endl;
     std::cout << "    -v, --version             Display version of this utility" << std::endl;
     std::cout << std::endl;
 

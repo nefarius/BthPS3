@@ -275,8 +275,7 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
         else
         {
             pDevCtx = DeviceGetContext(device);
-            pDevCtx->IsPsmHidControlPatchingEnabled = TRUE;
-            pDevCtx->IsPsmHidInterruptPatchingEnabled = TRUE;
+            pDevCtx->IsPsmPatchingEnabled = TRUE;
 
             TraceEvents(
                 TRACE_LEVEL_VERBOSE,
@@ -322,8 +321,7 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
         else
         {
             pDevCtx = DeviceGetContext(device);
-            pDevCtx->IsPsmHidControlPatchingEnabled = FALSE;
-            pDevCtx->IsPsmHidInterruptPatchingEnabled = FALSE;
+            pDevCtx->IsPsmPatchingEnabled = FALSE;
 
             TraceEvents(
                 TRACE_LEVEL_VERBOSE,

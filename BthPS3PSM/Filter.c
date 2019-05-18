@@ -218,7 +218,7 @@ UrbFunctionBulkInTransferCompleted(
                     ">> Connection request for HID Control PSM 0x%04X arrived",
                     pConReq->PSM);
 
-                if (pDevCtx->IsPsmHidControlPatchingEnabled)
+                if (pDevCtx->IsPsmPatchingEnabled)
                 {
                     pConReq->PSM = PSM_DS3_HID_CONTROL;
 
@@ -243,7 +243,7 @@ UrbFunctionBulkInTransferCompleted(
                     ">> Connection request for HID Interrupt PSM 0x%04X arrived",
                     pConReq->PSM);
 
-                if (pDevCtx->IsPsmHidInterruptPatchingEnabled)
+                if (pDevCtx->IsPsmPatchingEnabled)
                 {
                     pConReq->PSM = PSM_DS3_HID_INTERRUPT;
 

@@ -21,6 +21,8 @@
 
 EXTERN_C_START
 
+#define G_PatchPSMRegValue  L"BthPS3PSMPatchEnabled"
+
 //
 // The device context performs the same job as
 // a WDM device extension in the driver frameworks
@@ -39,9 +41,9 @@ typedef struct _DEVICE_CONTEXT
 
     WDFUSBPIPE BulkWritePipe;
 
-    BOOLEAN IsPsmHidControlPatchingEnabled;
+    ULONG IsPsmPatchingEnabled;
 
-    BOOLEAN IsPsmHidInterruptPatchingEnabled;
+    BOOLEAN IsCompatible;
 
 } DEVICE_CONTEXT, *PDEVICE_CONTEXT;
 

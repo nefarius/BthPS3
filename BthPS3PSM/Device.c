@@ -49,6 +49,9 @@ BthPS3PSM_CreateDevice(
     NTSTATUS                        status;
     WDF_PNPPOWER_EVENT_CALLBACKS    pnpPowerCallbacks;
     PDEVICE_CONTEXT                 deviceContext;
+    WDFKEY                          key;
+
+    DECLARE_CONST_UNICODE_STRING(patchPSMRegValue, G_PatchPSMRegValue);
 
 
     PAGED_CODE();
@@ -127,9 +130,56 @@ BthPS3PSM_CreateDevice(
 
             return STATUS_INVALID_DEVICE_REQUEST;
         }
+        else
+        {
+            deviceContext->IsCompatible = TRUE;
+
+            status = WdfDeviceOpenRegistryKey(
+                device,
+                PLUGPLAY_REGKEY_DEVICE,
+                KEY_READ,
+                WDF_NO_OBJECT_ATTRIBUTES,
+                &key
+            );
+
+            if (NT_SUCCESS(status))
+            {
+                status = WdfRegistryQueryULong(
+                    key,
+                    &patchPSMRegValue,
+                    &deviceContext->IsPsmPatchingEnabled
+                );
+
+                if (!NT_SUCCESS(status))
+                {
+                    TraceEvents(TRACE_LEVEL_ERROR,
+                        TRACE_DEVICE,
+                        "WdfRegistryQueryULong failed with status %!STATUS!",
+                        status
+                    );
+                }
+                else
+                {
+                    TraceEvents(TRACE_LEVEL_VERBOSE,
+                        TRACE_DEVICE,
+                        "Settings retrieved"
+                    );
+                }
+
+                WdfRegistryClose(key);
+            }
+            else
+            {
+                TraceEvents(TRACE_LEVEL_ERROR,
+                    TRACE_DEVICE,
+                    "WdfDeviceOpenRegistryKey failed with status %!STATUS!",
+                    status
+                );
+            }
+        }
 
 #ifndef BTHPS3PSM_WITH_CONTROL_DEVICE
-        deviceContext->IsPsmHidControlPatchingEnabled = TRUE;
+        deviceContext->IsPsmPatchingEnabled = TRUE;
         deviceContext->IsPsmHidInterruptPatchingEnabled = TRUE;
 #else
 
@@ -246,8 +296,14 @@ BthPS3PSM_EvtDeviceContextCleanup(
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Entry");
 
 #ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
-    
-    ULONG   count;
+
+    ULONG               count;
+    WDFKEY              key;
+    NTSTATUS            status;
+    PDEVICE_CONTEXT     pDevCtx;
+
+    DECLARE_CONST_UNICODE_STRING(patchPSMRegValue, G_PatchPSMRegValue);
+
 
     WdfWaitLockAcquire(FilterDeviceCollectionLock, NULL);
 
@@ -270,6 +326,59 @@ BthPS3PSM_EvtDeviceContextCleanup(
     WdfCollectionRemove(FilterDeviceCollection, Device);
 
     WdfWaitLockRelease(FilterDeviceCollectionLock);
+
+#pragma region Store settings in Registry Hardware Key
+
+    pDevCtx = DeviceGetContext(Device);
+
+    if (pDevCtx->IsCompatible)
+    {
+        status = WdfDeviceOpenRegistryKey(
+            Device,
+            PLUGPLAY_REGKEY_DEVICE,
+            KEY_WRITE,
+            WDF_NO_OBJECT_ATTRIBUTES,
+            &key
+        );
+
+        if (NT_SUCCESS(status))
+        {
+            status = WdfRegistryAssignULong(
+                key,
+                &patchPSMRegValue,
+                pDevCtx->IsPsmPatchingEnabled
+            );
+
+            if (!NT_SUCCESS(status))
+            {
+                TraceEvents(TRACE_LEVEL_ERROR,
+                    TRACE_DEVICE,
+                    "WdfRegistryAssignULong failed with status %!STATUS!",
+                    status
+                );
+            }
+            else
+            {
+                TraceEvents(TRACE_LEVEL_VERBOSE,
+                    TRACE_DEVICE,
+                    "Settings stored"
+                );
+            }
+
+            WdfRegistryClose(key);
+        }
+        else
+        {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_DEVICE,
+                "WdfDeviceOpenRegistryKey failed with status %!STATUS!",
+                status
+            );
+        }
+    }
+
+#pragma endregion
+
 #else
     UNREFERENCED_PARAMETER(Device);
 #endif

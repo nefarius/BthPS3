@@ -177,12 +177,16 @@ UrbFunctionBulkInTransferCompleted(
     ULONG                                   bufferLength;
     L2CAP_SIGNALLING_COMMAND_CODE           code;
     PL2CAP_SIGNALLING_CONNECTION_REQUEST    pConReq;
+    WDFDEVICE                               device;
+    PDEVICE_CONTEXT                         pDevCtx;
+
 
     UNREFERENCED_PARAMETER(Target);
-    UNREFERENCED_PARAMETER(Context);
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_FILTER, "%!FUNC! Entry");
 
+    device = (WDFDEVICE)Context;
+    pDevCtx = DeviceGetContext(device);
     pIrp = WdfRequestWdmGetIrp(Request);
     pUrb = (PURB)URB_FROM_IRP(pIrp);
 
@@ -209,22 +213,52 @@ UrbFunctionBulkInTransferCompleted(
 
             if (pConReq->PSM == PSM_HID_CONTROL)
             {
-                pConReq->PSM = PSM_DS3_HID_CONTROL;
-
-                TraceEvents(TRACE_LEVEL_INFORMATION,
+                TraceEvents(TRACE_LEVEL_VERBOSE,
                     TRACE_FILTER,
-                    "++ Patching HID Control PSM to 0x%04X",
+                    ">> Connection request for HID Control PSM 0x%04X arrived",
                     pConReq->PSM);
+
+                if (pDevCtx->IsPsmHidControlPatchingEnabled)
+                {
+                    pConReq->PSM = PSM_DS3_HID_CONTROL;
+
+                    TraceEvents(TRACE_LEVEL_INFORMATION,
+                        TRACE_FILTER,
+                        "++ Patching HID Control PSM to 0x%04X",
+                        pConReq->PSM);
+                }
+                else
+                {
+                    TraceEvents(TRACE_LEVEL_VERBOSE,
+                        TRACE_FILTER,
+                        "-- NOT Patching HID Control PSM"
+                    );
+                }
             }
 
             if (pConReq->PSM == PSM_HID_INTERRUPT)
             {
-                pConReq->PSM = PSM_DS3_HID_INTERRUPT;
-
-                TraceEvents(TRACE_LEVEL_INFORMATION,
+                TraceEvents(TRACE_LEVEL_VERBOSE,
                     TRACE_FILTER,
-                    "++ Patching HID Interrupt PSM to 0x%04X",
+                    ">> Connection request for HID Interrupt PSM 0x%04X arrived",
                     pConReq->PSM);
+
+                if (pDevCtx->IsPsmHidInterruptPatchingEnabled)
+                {
+                    pConReq->PSM = PSM_DS3_HID_INTERRUPT;
+
+                    TraceEvents(TRACE_LEVEL_INFORMATION,
+                        TRACE_FILTER,
+                        "++ Patching HID Interrupt PSM to 0x%04X",
+                        pConReq->PSM);
+                }
+                else
+                {
+                    TraceEvents(TRACE_LEVEL_VERBOSE,
+                        TRACE_FILTER,
+                        "-- NOT Patching HID Interrupt PSM"
+                    );
+                }
             }
         }
     }

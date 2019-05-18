@@ -159,7 +159,7 @@ BthPS3PSMEvtIoInternalDeviceControl(
                 WdfRequestSetCompletionRoutine(
                     Request,
                     UrbFunctionBulkInTransferCompleted,
-                    NULL
+                    device
                 );
 
                 ret = WdfRequestSend(

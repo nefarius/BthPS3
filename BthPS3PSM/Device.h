@@ -39,6 +39,10 @@ typedef struct _DEVICE_CONTEXT
 
     WDFUSBPIPE BulkWritePipe;
 
+    BOOLEAN IsPsmHidControlPatchingEnabled;
+
+    BOOLEAN IsPsmHidInterruptPatchingEnabled;
+
 } DEVICE_CONTEXT, *PDEVICE_CONTEXT;
 
 //

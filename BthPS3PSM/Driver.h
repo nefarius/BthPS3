@@ -21,7 +21,11 @@
 #include <wdf.h>
 #include <initguid.h>
 
-//#define BTHPS3PSM_WITH_CONTROL_DEVICE
+//
+// Comment out to build without control device feature
+// > If disabled, falls back to using default settings
+// 
+#define BTHPS3PSM_WITH_CONTROL_DEVICE
 
 #include "device.h"
 #include "queue.h"

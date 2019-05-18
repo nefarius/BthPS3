@@ -50,6 +50,9 @@ BthPS3PSM_CreateControlDevice(
     WDF_IO_QUEUE_CONFIG     ioQueueConfig;
     WDFQUEUE                queue;
 
+    DECLARE_CONST_UNICODE_STRING(ntDeviceName, BTHPS3PSM_NTDEVICE_NAME_STRING);
+    DECLARE_CONST_UNICODE_STRING(symbolicLinkName, BTHPS3PSM_SYMBOLIC_NAME_STRING);
+
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_SIDEBAND, "%!FUNC! Entry");
 
 
@@ -94,12 +97,39 @@ BthPS3PSM_CreateControlDevice(
 
     WdfDeviceInitSetExclusive(pInit, FALSE);
 
+    //
+    // Assign name to expose
+    // 
+    status = WdfDeviceInitAssignName(pInit, &ntDeviceName);
+
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_SIDEBAND,
+            "WdfDeviceInitAssignName failed with %!STATUS!", status);
+        goto Error;
+    }
+
     WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&controlAttributes,
         CONTROL_DEVICE_CONTEXT);
     status = WdfDeviceCreate(&pInit,
         &controlAttributes,
         &controlDevice);
     if (!NT_SUCCESS(status)) {
+        goto Error;
+    }
+
+    //
+    // Create a symbolic link for the control object so that user-mode can open
+    // the device.
+    //
+
+    status = WdfDeviceCreateSymbolicLink(controlDevice,
+        &symbolicLinkName);
+
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_SIDEBAND,
+            "WdfDeviceCreateSymbolicLink failed with %!STATUS!", status);
         goto Error;
     }
 
@@ -121,23 +151,6 @@ BthPS3PSM_CreateControlDevice(
         TraceEvents(TRACE_LEVEL_ERROR,
             TRACE_SIDEBAND,
             "WdfIoQueueCreate failed with %!STATUS!", 
-            status
-        );
-        goto Error;
-    }
-
-    //
-    // Expose device interface
-    // 
-    status = WdfDeviceCreateDeviceInterface(
-        Device,
-        (LPGUID)&GUID_DEVINTERFACE_BTHPS3PSM,
-        NULL
-    );
-    if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR,
-            TRACE_SIDEBAND,
-            "WdfDeviceCreateDeviceInterface failed with %!STATUS!",
             status
         );
         goto Error;

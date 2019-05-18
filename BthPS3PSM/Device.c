@@ -24,8 +24,10 @@
 #include <usbdlib.h>
 #include <wdfusb.h>
 
+#ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
 extern WDFCOLLECTION   FilterDeviceCollection;
 extern WDFWAITLOCK     FilterDeviceCollectionLock;
+#endif
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (PAGE, BthPS3PSM_CreateDevice)
@@ -72,6 +74,8 @@ BthPS3PSM_CreateDevice(
     {
 #pragma region Add this device to global collection
 
+#ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
+
         //
         // Add this device to the FilterDevice collection.
         //
@@ -93,6 +97,8 @@ BthPS3PSM_CreateDevice(
         if (!NT_SUCCESS(status)) {
             return status;
         }
+
+#endif
 
 #pragma endregion
 
@@ -122,6 +128,11 @@ BthPS3PSM_CreateDevice(
             return STATUS_INVALID_DEVICE_REQUEST;
         }
 
+#ifndef BTHPS3PSM_WITH_CONTROL_DEVICE
+        deviceContext->IsPsmHidControlPatchingEnabled = TRUE;
+        deviceContext->IsPsmHidInterruptPatchingEnabled = TRUE;
+#else
+
 #pragma region Create control device
 
         //
@@ -139,6 +150,8 @@ BthPS3PSM_CreateDevice(
         }
 
 #pragma endregion
+
+#endif
 
         //
         // Initialize the I/O Package and any Queues
@@ -228,11 +241,13 @@ BthPS3PSM_EvtDeviceContextCleanup(
     WDFOBJECT Device
 )
 {
-    ULONG   count;
-
     PAGED_CODE();
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Entry");
+
+#ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
+    
+    ULONG   count;
 
     WdfWaitLockAcquire(FilterDeviceCollectionLock, NULL);
 
@@ -255,6 +270,9 @@ BthPS3PSM_EvtDeviceContextCleanup(
     WdfCollectionRemove(FilterDeviceCollection, Device);
 
     WdfWaitLockRelease(FilterDeviceCollectionLock);
+#else
+    UNREFERENCED_PARAMETER(Device);
+#endif
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Exit");
 }

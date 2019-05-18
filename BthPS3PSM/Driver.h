@@ -21,6 +21,8 @@
 #include <wdf.h>
 #include <initguid.h>
 
+//#define BTHPS3PSM_WITH_CONTROL_DEVICE
+
 #include "device.h"
 #include "queue.h"
 #include "trace.h"
@@ -28,7 +30,9 @@
 #include "UsbUtil.h"
 #include "Filter.h"
 #include "L2CAP.h"
-#include "SIdeband.h"
+#ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
+#include "Sideband.h"
+#endif
 
 EXTERN_C_START
 

@@ -21,6 +21,9 @@
 #include "Sideband.tmh"
 #include <wdmsec.h>
 
+
+#ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
+
 WDFCOLLECTION   FilterDeviceCollection;
 WDFWAITLOCK     FilterDeviceCollectionLock;
 WDFDEVICE       ControlDevice = NULL;
@@ -221,3 +224,4 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
 }
 #pragma warning(pop) // enable 28118 again
 
+#endif

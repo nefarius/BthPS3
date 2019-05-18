@@ -19,6 +19,8 @@
 
 #pragma once
 
+#ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
+
 typedef struct _CONTROL_DEVICE_CONTEXT
 {
     //
@@ -46,3 +48,5 @@ VOID
 BthPS3PSM_DeleteControlDevice(
     WDFDEVICE Device
 );
+
+#endif

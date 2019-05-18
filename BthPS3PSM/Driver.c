@@ -20,8 +20,10 @@
 #include "driver.h"
 #include "driver.tmh"
 
+#ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
 extern WDFCOLLECTION   FilterDeviceCollection;
 extern WDFWAITLOCK     FilterDeviceCollectionLock;
+#endif
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (INIT, DriverEntry)
@@ -95,6 +97,8 @@ Return Value:
         return status;
     }
 
+#ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
+
     status = WdfCollectionCreate(WDF_NO_OBJECT_ATTRIBUTES,
         &FilterDeviceCollection);
     if (!NT_SUCCESS(status))
@@ -124,6 +128,8 @@ Return Value:
         WPP_CLEANUP(DriverObject);
         return status;
     }
+
+#endif
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Exit");
 

@@ -228,11 +228,12 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
 )
 {
     NTSTATUS                            status = STATUS_UNSUCCESSFUL;
-    PBTHPS3PSM_ENABLE_PSM_PATCHING      pEnable = NULL;
-    PBTHPS3PSM_DISABLE_PSM_PATCHING     pDisable = NULL;
     size_t                              length = 0;
     WDFDEVICE                           device;
     PDEVICE_CONTEXT                     pDevCtx = NULL;
+    PBTHPS3PSM_ENABLE_PSM_PATCHING      pEnable = NULL;
+    PBTHPS3PSM_DISABLE_PSM_PATCHING     pDisable = NULL;
+    PBTHPS3PSM_GET_PSM_PATCHING         pGet = NULL;
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_SIDEBAND, "%!FUNC! Entry");
 
@@ -243,6 +244,8 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
 
     switch (IoControlCode)
     {
+#pragma region IOCTL_BTHPS3PSM_ENABLE_PSM_PATCHING
+
     case IOCTL_BTHPS3PSM_ENABLE_PSM_PATCHING:
 
         status = WdfRequestRetrieveInputBuffer(
@@ -289,6 +292,10 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
 
         break;
 
+#pragma endregion
+
+#pragma region IOCTL_BTHPS3PSM_DISABLE_PSM_PATCHING
+
     case IOCTL_BTHPS3PSM_DISABLE_PSM_PATCHING:
 
         status = WdfRequestRetrieveInputBuffer(
@@ -334,6 +341,72 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
         WdfWaitLockRelease(FilterDeviceCollectionLock);
 
         break;
+
+#pragma endregion
+
+#pragma region IOCTL_BTHPS3PSM_GET_PSM_PATCHING
+
+    case IOCTL_BTHPS3PSM_GET_PSM_PATCHING:
+
+        status = WdfRequestRetrieveInputBuffer(
+            Request,
+            sizeof(PBTHPS3PSM_GET_PSM_PATCHING),
+            (void*)&pGet,
+            &length
+        );
+
+        if (!NT_SUCCESS(status) || length != sizeof(PBTHPS3PSM_GET_PSM_PATCHING))
+        {
+            TraceEvents(
+                TRACE_LEVEL_ERROR,
+                TRACE_SIDEBAND,
+                "WdfRequestRetrieveInputBuffer failed with status %!STATUS!",
+                status
+            );
+
+            break;
+        }
+
+        WdfWaitLockAcquire(FilterDeviceCollectionLock, NULL);
+
+        device = WdfCollectionGetItem(FilterDeviceCollection, pGet->DeviceIndex);
+
+        if (device == NULL)
+        {
+            status = STATUS_INVALID_PARAMETER;
+        }
+        else
+        {
+            pDevCtx = DeviceGetContext(device);
+            
+            status = WdfRequestRetrieveOutputBuffer(
+                Request,
+                sizeof(PBTHPS3PSM_GET_PSM_PATCHING),
+                (void*)&pGet,
+                &length
+            );
+
+            if (!NT_SUCCESS(status) || length != sizeof(PBTHPS3PSM_GET_PSM_PATCHING))
+            {
+                TraceEvents(
+                    TRACE_LEVEL_ERROR,
+                    TRACE_SIDEBAND,
+                    "WdfRequestRetrieveOutputBuffer failed with status %!STATUS!",
+                    status
+                );
+            }
+            else
+            {
+                pGet->IsEnabled = (pDevCtx->IsPsmPatchingEnabled > 0);
+                WdfRequestSetInformation(Request, sizeof(PBTHPS3PSM_GET_PSM_PATCHING));
+            }
+        }
+
+        WdfWaitLockRelease(FilterDeviceCollectionLock);
+
+        break;
+
+#pragma endregion
 
     default:
         TraceEvents(TRACE_LEVEL_WARNING,

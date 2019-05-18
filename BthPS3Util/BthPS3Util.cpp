@@ -375,6 +375,55 @@ int main(int, char* argv[])
         return EXIT_SUCCESS;
     }
 
+    if (cmdl[{ "--get-psm-patch" }])
+    {
+        if (!(cmdl({ "--device-index" }) >> deviceIndex)) {
+            std::cout << color(red) << "Device index missing" << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        const auto hDevice = CreateFile(
+            BTHPS3PSM_CONTROL_DEVICE_PATH,
+            GENERIC_READ | GENERIC_WRITE,
+            FILE_SHARE_READ | FILE_SHARE_WRITE,
+            nullptr,
+            OPEN_EXISTING,
+            FILE_ATTRIBUTE_NORMAL,
+            nullptr
+        );
+
+        BTHPS3PSM_GET_PSM_PATCHING req;
+        req.DeviceIndex = deviceIndex;
+
+        const auto ret = DeviceIoControl(
+            hDevice,
+            IOCTL_BTHPS3PSM_GET_PSM_PATCHING,
+            &req,
+            sizeof(req),
+            &req,
+            sizeof(req),
+            nullptr,
+            nullptr
+        );
+
+        CloseHandle(hDevice);
+
+        if (req.IsEnabled)
+        {
+            std::cout << color(cyan) << "PSM Patching is " 
+            << color(magenta) << "enabled" 
+            << color(cyan) << " for this device" << std::endl;
+        }
+        else
+        {
+            std::cout << color(cyan) << "PSM Patching is "
+                << color(gray) << "disabled"
+                << color(cyan) << " for this device" << std::endl;
+        }
+
+        return EXIT_SUCCESS;
+    }
+
 #pragma endregion
 
 #pragma region Misc. actions

@@ -154,7 +154,7 @@ BthPS3PSM_CreateControlDevice(
     if (!NT_SUCCESS(status)) {
         TraceEvents(TRACE_LEVEL_ERROR,
             TRACE_SIDEBAND,
-            "WdfIoQueueCreate failed with %!STATUS!", 
+            "WdfIoQueueCreate failed with %!STATUS!",
             status
         );
         goto Error;
@@ -227,15 +227,112 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
     _In_ ULONG      IoControlCode
 )
 {
-    
+    NTSTATUS                            status = STATUS_UNSUCCESSFUL;
+    PBTHPS3PSM_ENABLE_PSM_PATCHING      pEnable = NULL;
+    PBTHPS3PSM_DISABLE_PSM_PATCHING     pDisable = NULL;
+    size_t                              length = 0;
+    WDFDEVICE                           device;
+    PDEVICE_CONTEXT                     pDevCtx = NULL;
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_SIDEBAND, "%!FUNC! Entry");
 
     UNREFERENCED_PARAMETER(Queue);
-    UNREFERENCED_PARAMETER(Request);
     UNREFERENCED_PARAMETER(OutputBufferLength);
     UNREFERENCED_PARAMETER(InputBufferLength);
-    UNREFERENCED_PARAMETER(IoControlCode);
+
+
+    switch (IoControlCode)
+    {
+    case IOCTL_BTHPS3PSM_ENABLE_PSM_PATCHING:
+
+        status = WdfRequestRetrieveInputBuffer(
+            Request,
+            sizeof(BTHPS3PSM_ENABLE_PSM_PATCHING),
+            (void*)&pEnable,
+            &length
+        );
+
+        if (!NT_SUCCESS(status) || length != sizeof(BTHPS3PSM_ENABLE_PSM_PATCHING))
+        {
+            TraceEvents(
+                TRACE_LEVEL_ERROR,
+                TRACE_SIDEBAND,
+                "WdfRequestRetrieveInputBuffer failed with status %!STATUS!",
+                status
+            );
+
+            break;
+        }
+
+        WdfWaitLockAcquire(FilterDeviceCollectionLock, NULL);
+
+        device = WdfCollectionGetItem(FilterDeviceCollection, pEnable->DeviceIndex);
+
+        if (device == NULL)
+        {
+            status = STATUS_INVALID_PARAMETER;
+        }
+        else
+        {
+            pDevCtx = DeviceGetContext(device);
+            pDevCtx->IsPsmHidControlPatchingEnabled = TRUE;
+            pDevCtx->IsPsmHidInterruptPatchingEnabled = TRUE;
+        }
+
+        WdfWaitLockRelease(FilterDeviceCollectionLock);
+
+        break;
+
+    case IOCTL_BTHPS3PSM_DISABLE_PSM_PATCHING:
+
+        status = WdfRequestRetrieveInputBuffer(
+            Request,
+            sizeof(BTHPS3PSM_DISABLE_PSM_PATCHING),
+            (void*)&pDisable,
+            &length
+        );
+
+        if (!NT_SUCCESS(status) || length != sizeof(BTHPS3PSM_DISABLE_PSM_PATCHING))
+        {
+            TraceEvents(
+                TRACE_LEVEL_ERROR,
+                TRACE_SIDEBAND,
+                "WdfRequestRetrieveInputBuffer failed with status %!STATUS!",
+                status
+            );
+
+            break;
+        }
+
+        WdfWaitLockAcquire(FilterDeviceCollectionLock, NULL);
+
+        device = WdfCollectionGetItem(FilterDeviceCollection, pDisable->DeviceIndex);
+
+        if (device == NULL)
+        {
+            status = STATUS_INVALID_PARAMETER;
+        }
+        else
+        {
+            pDevCtx = DeviceGetContext(device);
+            pDevCtx->IsPsmHidControlPatchingEnabled = FALSE;
+            pDevCtx->IsPsmHidInterruptPatchingEnabled = FALSE;
+        }
+
+        WdfWaitLockRelease(FilterDeviceCollectionLock);
+
+        break;
+
+    default:
+        TraceEvents(TRACE_LEVEL_WARNING,
+            TRACE_SIDEBAND,
+            "Unknown I/O Control Code submitted: %X",
+            IoControlCode
+        );
+        break;
+    }
+
+    WdfRequestComplete(Request, status);
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_SIDEBAND, "%!FUNC! Exit");
 }

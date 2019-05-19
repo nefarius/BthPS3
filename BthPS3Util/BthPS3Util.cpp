@@ -430,7 +430,7 @@ int main(int, char* argv[])
 
     if (cmdl[{ "-v", "--version" }])
     {
-        std::cout << "BthPS3Util by version " <<
+        std::cout << "BthPS3Util version " <<
             winapi::GetVersionFromFile(winapi::GetImageBasePath())
             << " (C) Nefarius Software Solutions e.U."
             << std::endl;
@@ -455,10 +455,12 @@ int main(int, char* argv[])
     std::cout << "    --disable-filter          De-Register BthPS3PSM as lower filter for Bluetooth Class" << std::endl;
     std::cout << "    --create-filter-device    Create virtual device node for filter driver" << std::endl;
     std::cout << "                                Note: required only for testing and debugging" << std::endl;
-    std::cout << "    --enable-psm-patch        XXX" << std::endl;
-    std::cout << "      --device-index          XXX" << std::endl;
-    std::cout << "    --disable-psm-patch       XXX" << std::endl;
-    std::cout << "      --device-index          XXX" << std::endl;
+    std::cout << "    --enable-psm-patch        Instructs the filter to enable the PSM patch" << std::endl;
+    std::cout << "      --device-index          Zero-based index of affected device (required)" << std::endl;
+    std::cout << "    --disable-psm-patch       Instructs the filter to disable the PSM patch" << std::endl;
+    std::cout << "      --device-index          Zero-based index of affected device (required)" << std::endl;
+    std::cout << "    --get-psm-patch           Reports the current state of the PSM patch" << std::endl;
+    std::cout << "      --device-index          Zero-based index of affected device (required)" << std::endl;
     std::cout << "    -v, --version             Display version of this utility" << std::endl;
     std::cout << std::endl;
 
@@ -534,7 +536,6 @@ BOOL winapi::CreateDriverService(PCSTR ServiceName, PCSTR DisplayName, PCSTR Bin
 {
     SC_HANDLE hSCManager;
     SC_HANDLE hService;
-    SERVICE_STATUS ss;
 
     hSCManager = OpenSCManagerA(
         nullptr,
@@ -578,7 +579,6 @@ BOOL winapi::DeleteDriverService(PCSTR ServiceName)
 {
     SC_HANDLE hSCManager;
     SC_HANDLE hService;
-    SERVICE_STATUS ss;
     BOOL ret;
 
     hSCManager = OpenSCManagerA(

@@ -510,14 +510,58 @@ NTSTATUS BthPS3_PDO_EvtWdfDeviceD0Exit(
     WDF_POWER_DEVICE_STATE TargetState
 )
 {
+    NTSTATUS                    status = STATUS_SUCCESS;
+    WDFDEVICE                   parentDevice;
+    WDFIOTARGET                 parentTarget;
+    WDF_MEMORY_DESCRIPTOR       memDesc;
+    PBTHPS3_PDO_DEVICE_CONTEXT  pPdoDevCtx;
+
+
     UNREFERENCED_PARAMETER(Device);
     UNREFERENCED_PARAMETER(TargetState);
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Entry");
 
+    pPdoDevCtx = GetPdoDeviceContext(Device);
+    parentDevice = WdfPdoGetParent(Device);
+    parentTarget = WdfDeviceGetIoTarget(parentDevice);
+
+    TraceEvents(TRACE_LEVEL_INFORMATION,
+        TRACE_BUSLOGIC,
+        "Requesting device disconnect"
+    );
+
+    WDF_MEMORY_DESCRIPTOR_INIT_BUFFER(
+        &memDesc,
+        &pPdoDevCtx->ClientConnection->RemoteAddress,
+        sizeof(BTH_ADDR)
+    );
+
+    //
+    // Request parent to abandon us :'(
+    // 
+    status = WdfIoTargetSendIoctlSynchronously(
+        parentTarget, // send to parent (FDO)
+        NULL, // use internal request object
+        IOCTL_BTH_DISCONNECT_DEVICE,
+        &memDesc, // holds address to disconnect
+        NULL,
+        NULL,
+        NULL
+    );
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_BUSLOGIC,
+            "WdfIoTargetSendIoctlSynchronously failed with status %!STATUS!",
+            status
+        );
+    }
+
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Exit");
 
-    return STATUS_SUCCESS;
+    return status;
 }
 
 //

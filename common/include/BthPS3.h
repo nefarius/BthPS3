@@ -47,9 +47,13 @@ extern __declspec(selectany) PCWSTR BthPS3FilterName = L"BthPS3PSM";
 extern __declspec(selectany) PCSTR BthPS3FilterServiceName = "BthPS3PSM";
 extern __declspec(selectany) PCWSTR BthPS3ServiceName = L"BthPS3Service";
 
-// 0x11 -> 0x5053
+// 
+// Artificial HID Control PSM (0x11 -> 0x5053)
+// 
 #define PSM_DS3_HID_CONTROL     0x5053
-// 0x13 -> 0x5055
+// 
+// Artificial HID Interrupt PSM (0x13 -> 0x5055)
+// 
 #define PSM_DS3_HID_INTERRUPT   0x5055
 
 //
@@ -57,7 +61,14 @@ extern __declspec(selectany) PCWSTR BthPS3ServiceName = L"BthPS3Service";
 // 
 extern __declspec(selectany) PCWSTR BthPS3BusEnumeratorName = L"BTHPS3BUS";
 
+//
+// Path to control device in user-land
+// 
 #define BTHPS3PSM_CONTROL_DEVICE_PATH         L"\\\\.\\BthPS3PSMControl"
+
+//
+// Path to control device exposed in kernel-land
+// 
 #define BTHPS3PSM_NTDEVICE_NAME_STRING        L"\\Device\\BthPS3PSMControl"
 #define BTHPS3PSM_SYMBOLIC_NAME_STRING        L"\\DosDevices\\BthPS3PSMControl"
 
@@ -178,25 +189,48 @@ typedef enum _DS_DEVICE_TYPE
 
 #define IOCTL_BTHPS3_BASE 0x801
 
-// 
-// I/O control codes for function-to-bus-driver communication
-// 
+/**************************************************************/
+/* I/O control codes for function-to-bus-driver communication */
+/**************************************************************/
 
+// 
 // Read from control channel
+// 
 #define IOCTL_BTHPS3_HID_CONTROL_READ           BUSENUM_R_IOCTL (IOCTL_BTHPS3_BASE + 0x200)
 
+// 
 // Write to control channel
+// 
 #define IOCTL_BTHPS3_HID_CONTROL_WRITE          BUSENUM_W_IOCTL (IOCTL_BTHPS3_BASE + 0x201)
 
+// 
 // Read from interrupt channel
+// 
 #define IOCTL_BTHPS3_HID_INTERRUPT_READ         BUSENUM_R_IOCTL (IOCTL_BTHPS3_BASE + 0x202)
 
+// 
 // Write to interrupt channel
+// 
 #define IOCTL_BTHPS3_HID_INTERRUPT_WRITE        BUSENUM_W_IOCTL (IOCTL_BTHPS3_BASE + 0x203)
 
 
+/*************************************************************/
+/* I/O control codes for filter control device communication */
+/*************************************************************/
+
+//
+// Enable PSM patch for a supplied device index
+// 
 #define IOCTL_BTHPS3PSM_ENABLE_PSM_PATCHING     BUSENUM_W_IOCTL (IOCTL_BTHPS3_BASE + 0x300)
+
+//
+// Disable PSM patch for a supplied device index
+// 
 #define IOCTL_BTHPS3PSM_DISABLE_PSM_PATCHING    BUSENUM_W_IOCTL (IOCTL_BTHPS3_BASE + 0x301)
+
+//
+// Retrieve current PSM patch state for a supplied device index
+// 
 #define IOCTL_BTHPS3PSM_GET_PSM_PATCHING        BUSENUM_R_IOCTL (IOCTL_BTHPS3_BASE + 0x302)
 
 #include <pshpack1.h>

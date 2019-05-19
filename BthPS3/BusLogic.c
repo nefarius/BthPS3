@@ -392,7 +392,7 @@ BthPS3_EvtWdfChildListCreateDevice(
     //
     // PDO relies on the connection object context so 
     // we increase the reference count to protect from
-    // it getting freed to soon. See BthPS3_PDO_EvtDeviceContextCleanup
+    // it getting freed too soon. See BthPS3_PDO_EvtDeviceContextCleanup
     // 
     WdfObjectReference(WdfObjectContextGetObject(pDesc->ClientConnection));
 

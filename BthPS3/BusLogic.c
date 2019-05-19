@@ -413,7 +413,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 
     //
     // All of the heavy lifting is done by a function driver
-    // which communicates via IRP_MJ_INTERNAL_DEVICE_CONTROL
+    // which exchanges data via IRP_MJ_DEVICE_CONTROL
     // 
     WDF_IO_QUEUE_CONFIG_INIT_DEFAULT_QUEUE(&defaultQueueCfg, WdfIoQueueDispatchParallel);
 

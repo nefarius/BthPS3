@@ -27,7 +27,7 @@ DEFINE_GUID(BTHPS3_SERVICE_GUID,
 // {1cb831ea-79cd-4508-b0fc-85f7c85ae8e0}
 
 //
-// Filter control device interface GUID
+// Filter device enumeration interface GUID
 // 
 DEFINE_GUID(GUID_DEVINTERFACE_BTHPS3PSM,
     0x1e1f8b68, 0xeaa2, 0x4d19, 0x8b, 0x02, 0xe8, 0xb0, 0x91, 0x6c, 0x77, 0xdb);

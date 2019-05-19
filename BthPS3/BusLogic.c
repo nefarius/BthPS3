@@ -36,18 +36,20 @@ BthPS3_EvtWdfChildListCreateDevice(
     PWDFDEVICE_INIT ChildInit
 )
 {
-    NTSTATUS                            status = STATUS_UNSUCCESSFUL;
-    PPDO_IDENTIFICATION_DESCRIPTION     pDesc;
-    UNICODE_STRING                      guidString;
-    WDFDEVICE                           hChild = NULL;
-    WDF_IO_QUEUE_CONFIG                 defaultQueueCfg;
-    WDFQUEUE                            defaultQueue;
-    WDF_OBJECT_ATTRIBUTES               attributes;
-    PBTHPS3_PDO_DEVICE_CONTEXT          pdoCtx = NULL;
-    WDF_DEVICE_PNP_CAPABILITIES         pnpCaps;
-    WDFKEY                              hKey = NULL;
-    ULONG                               rawPdo = 0;
-    ULONG                               hidePdo = 0;
+    NTSTATUS                                status = STATUS_UNSUCCESSFUL;
+    PPDO_IDENTIFICATION_DESCRIPTION         pDesc;
+    UNICODE_STRING                          guidString;
+    WDFDEVICE                               hChild = NULL;
+    WDF_IO_QUEUE_CONFIG                     defaultQueueCfg;
+    WDFQUEUE                                defaultQueue;
+    WDF_OBJECT_ATTRIBUTES                   attributes;
+    PBTHPS3_PDO_DEVICE_CONTEXT              pdoCtx = NULL;
+    WDF_DEVICE_PNP_CAPABILITIES             pnpCaps;
+    WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS   idleSettings;
+    WDF_PNPPOWER_EVENT_CALLBACKS            pnpPowerCallbacks;
+    WDFKEY                                  hKey = NULL;
+    ULONG                                   rawPdo = 0;
+    ULONG                                   hidePdo = 0;
 
     DECLARE_UNICODE_STRING_SIZE(deviceId, MAX_DEVICE_ID_LEN);
     DECLARE_UNICODE_STRING_SIZE(hardwareId, MAX_DEVICE_ID_LEN);
@@ -306,6 +308,15 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 #pragma endregion
 
+#pragma region PNP/Power Callbacks
+
+    WDF_PNPPOWER_EVENT_CALLBACKS_INIT(&pnpPowerCallbacks);
+    pnpPowerCallbacks.EvtDeviceD0Exit = BthPS3_PDO_EvtWdfDeviceD0Exit;
+
+    WdfDeviceInitSetPnpPowerEventCallbacks(ChildInit, &pnpPowerCallbacks);
+
+#pragma endregion 
+
 #pragma region Child device creation
 
     WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(
@@ -400,12 +411,33 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 #pragma region PNP/Power Caps
 
+    //
+    // PNP Capabilities
+    // 
+
     WDF_DEVICE_PNP_CAPABILITIES_INIT(&pnpCaps);
     pnpCaps.Removable = WdfTrue;
     pnpCaps.SurpriseRemovalOK = WdfTrue;
     pnpCaps.NoDisplayInUI = (hidePdo) ? WdfTrue : WdfFalse;
 
     WdfDeviceSetPnpCapabilities(hChild, &pnpCaps);
+
+    //
+    // Idle settings
+    // 
+
+    WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS_INIT(&idleSettings, IdleCannotWakeFromS0);
+    idleSettings.IdleTimeout = 10000; // 10 secs idle timeout
+    status = WdfDeviceAssignS0IdleSettings(hChild, &idleSettings);
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_BUSLOGIC,
+            "WdfDeviceAssignS0IdleSettings failed with status %!STATUS!",
+            status
+        );
+        return status;
+    }
 
 #pragma endregion
 
@@ -468,6 +500,24 @@ BOOLEAN BthPS3_PDO_EvtChildListIdentificationDescriptionCompare(
     // 
     return (lhs->ClientConnection->RemoteAddress ==
         rhs->ClientConnection->RemoteAddress) ? TRUE : FALSE;
+}
+
+//
+// Triggered on entering I/O idle state
+// 
+NTSTATUS BthPS3_PDO_EvtWdfDeviceD0Exit(
+    WDFDEVICE Device,
+    WDF_POWER_DEVICE_STATE TargetState
+)
+{
+    UNREFERENCED_PARAMETER(Device);
+    UNREFERENCED_PARAMETER(TargetState);
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Entry");
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Exit");
+
+    return STATUS_SUCCESS;
 }
 
 //

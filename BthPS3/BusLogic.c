@@ -429,6 +429,20 @@ BthPS3_EvtWdfChildListCreateDevice(
     WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS_INIT(&idleSettings, IdleCannotWakeFromS0);
     idleSettings.IdleTimeout = 10000; // 10 secs idle timeout
     status = WdfDeviceAssignS0IdleSettings(hChild, &idleSettings);
+
+    //
+    // Catch special case more precisely 
+    // 
+    if (status == STATUS_INVALID_DEVICE_REQUEST)
+    {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_BUSLOGIC,
+            "!! No function driver attached and not in RAW mode, can't continue",
+            status
+        );
+        return status;
+    }
+
     if (!NT_SUCCESS(status))
     {
         TraceEvents(TRACE_LEVEL_ERROR,

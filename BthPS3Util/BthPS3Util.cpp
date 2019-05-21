@@ -320,6 +320,14 @@ int main(int, char* argv[])
             nullptr
         );
 
+        if (hDevice == INVALID_HANDLE_VALUE)
+        {
+            std::cout << color(red) <<
+                "Couldn't open control device, error: "
+                << winapi::GetLastErrorStdStr() << std::endl;
+            return GetLastError();
+        }
+
         BTHPS3PSM_ENABLE_PSM_PATCHING req;
         req.DeviceIndex = deviceIndex;
 
@@ -334,7 +342,19 @@ int main(int, char* argv[])
             nullptr
         );
 
+        if (!ret)
+        {
+            CloseHandle(hDevice);
+
+            std::cout << color(red) <<
+                "Couldn't enable PSM patch, error: "
+                << winapi::GetLastErrorStdStr() << std::endl;
+            return GetLastError();
+        }
+
         CloseHandle(hDevice);
+
+        std::cout << color(green) << "PSM Patch enabled successfully" << std::endl;
 
         return EXIT_SUCCESS;
     }
@@ -356,6 +376,14 @@ int main(int, char* argv[])
             nullptr
         );
 
+        if (hDevice == INVALID_HANDLE_VALUE)
+        {
+            std::cout << color(red) <<
+                "Couldn't open control device, error: "
+                << winapi::GetLastErrorStdStr() << std::endl;
+            return GetLastError();
+        }
+
         BTHPS3PSM_DISABLE_PSM_PATCHING req;
         req.DeviceIndex = deviceIndex;
 
@@ -370,7 +398,19 @@ int main(int, char* argv[])
             nullptr
         );
 
+        if (!ret)
+        {
+            CloseHandle(hDevice);
+
+            std::cout << color(red) <<
+                "Couldn't disable PSM patch, error: "
+                << winapi::GetLastErrorStdStr() << std::endl;
+            return GetLastError();
+        }
+
         CloseHandle(hDevice);
+
+        std::cout << color(green) << "PSM Patch disabled successfully" << std::endl;
 
         return EXIT_SUCCESS;
     }

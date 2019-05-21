@@ -432,6 +432,14 @@ int main(int, char* argv[])
             nullptr
         );
 
+        if (hDevice == INVALID_HANDLE_VALUE)
+        {
+            std::cout << color(red) <<
+                "Couldn't open control device, error: "
+                << winapi::GetLastErrorStdStr() << std::endl;
+            return GetLastError();
+        }
+
         BTHPS3PSM_GET_PSM_PATCHING req;
         req.DeviceIndex = deviceIndex;
 
@@ -445,6 +453,16 @@ int main(int, char* argv[])
             nullptr,
             nullptr
         );
+
+        if (!ret)
+        {
+            CloseHandle(hDevice);
+
+            std::cout << color(red) <<
+                "Couldn't fetch PSM patch state, error: "
+                << winapi::GetLastErrorStdStr() << std::endl;
+            return GetLastError();
+        }
 
         CloseHandle(hDevice);
 

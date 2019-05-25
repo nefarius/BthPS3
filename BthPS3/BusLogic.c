@@ -113,6 +113,12 @@ BthPS3_EvtWdfChildListCreateDevice(
     WdfDeviceInitSetDeviceType(ChildInit, FILE_DEVICE_BUS_EXTENDER);
 
     //
+    // Only one instance (either function driver or user-land application)
+    // may talk to this PDO at the same time to avoid splitting traffic.
+    // 
+    WdfDeviceInitSetExclusive(ChildInit, TRUE);
+
+    //
     // Parent FDO will handle IRP_MJ_INTERNAL_DEVICE_CONTROL
     // 
     WdfPdoInitAllowForwardingRequestToParent(ChildInit);
@@ -437,8 +443,7 @@ BthPS3_EvtWdfChildListCreateDevice(
     {
         TraceEvents(TRACE_LEVEL_ERROR,
             TRACE_BUSLOGIC,
-            "!! No function driver attached and not in RAW mode, can't continue",
-            status
+            "!! No function driver attached and not in RAW mode, can't continue"
         );
         return status;
     }

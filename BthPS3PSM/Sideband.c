@@ -234,6 +234,7 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
     PBTHPS3PSM_ENABLE_PSM_PATCHING      pEnable = NULL;
     PBTHPS3PSM_DISABLE_PSM_PATCHING     pDisable = NULL;
     PBTHPS3PSM_GET_PSM_PATCHING         pGet = NULL;
+    UNICODE_STRING                      linkName;
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_SIDEBAND, "%!FUNC! Entry");
 
@@ -273,7 +274,7 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
 
         if (device == NULL)
         {
-            status = STATUS_INVALID_PARAMETER;
+            status = STATUS_NO_SUCH_DEVICE;
         }
         else
         {
@@ -323,7 +324,7 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
 
         if (device == NULL)
         {
-            status = STATUS_INVALID_PARAMETER;
+            status = STATUS_NO_SUCH_DEVICE;
         }
         else
         {
@@ -350,12 +351,12 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
 
         status = WdfRequestRetrieveInputBuffer(
             Request,
-            sizeof(PBTHPS3PSM_GET_PSM_PATCHING),
+            sizeof(BTHPS3PSM_GET_PSM_PATCHING),
             (void*)&pGet,
             &length
         );
 
-        if (!NT_SUCCESS(status) || length != sizeof(PBTHPS3PSM_GET_PSM_PATCHING))
+        if (!NT_SUCCESS(status) || length != sizeof(BTHPS3PSM_GET_PSM_PATCHING))
         {
             TraceEvents(
                 TRACE_LEVEL_ERROR,
@@ -373,20 +374,20 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
 
         if (device == NULL)
         {
-            status = STATUS_INVALID_PARAMETER;
+            status = STATUS_NO_SUCH_DEVICE;
         }
         else
         {
             pDevCtx = DeviceGetContext(device);
-            
+
             status = WdfRequestRetrieveOutputBuffer(
                 Request,
-                sizeof(PBTHPS3PSM_GET_PSM_PATCHING),
+                sizeof(BTHPS3PSM_GET_PSM_PATCHING),
                 (void*)&pGet,
                 &length
             );
 
-            if (!NT_SUCCESS(status) || length != sizeof(PBTHPS3PSM_GET_PSM_PATCHING))
+            if (!NT_SUCCESS(status) || length != sizeof(BTHPS3PSM_GET_PSM_PATCHING))
             {
                 TraceEvents(
                     TRACE_LEVEL_ERROR,
@@ -398,7 +399,25 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
             else
             {
                 pGet->IsEnabled = (pDevCtx->IsPsmPatchingEnabled > 0);
-                WdfRequestSetInformation(Request, sizeof(PBTHPS3PSM_GET_PSM_PATCHING));
+
+                WdfStringGetUnicodeString(pDevCtx->SymbolicLinkName, &linkName);
+
+                TraceEvents(
+                    TRACE_LEVEL_VERBOSE,
+                    TRACE_SIDEBAND,
+                    "!! SymbolicLinkName: %wZ (length: %d)",
+                    &linkName,
+                    linkName.Length
+                );
+
+                // Source isn't NULL-terminated, so take that into account
+                if (linkName.Length <= (BTHPS3_MAX_DEVICE_ID_LEN - 1))
+                {
+                    RtlCopyMemory(pGet->SymbolicLinkName, linkName.Buffer, linkName.Length);
+                    pGet->SymbolicLinkName[linkName.Length] = '\0'; // NULL-terminate
+                }
+
+                WdfRequestSetInformation(Request, sizeof(BTHPS3PSM_GET_PSM_PATCHING));
             }
         }
 

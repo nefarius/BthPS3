@@ -50,8 +50,10 @@ BthPS3PSM_CreateDevice(
     WDF_PNPPOWER_EVENT_CALLBACKS    pnpPowerCallbacks;
     PDEVICE_CONTEXT                 deviceContext;
     WDFKEY                          key;
+    WDF_OBJECT_ATTRIBUTES           stringAttribs;
 
     DECLARE_CONST_UNICODE_STRING(patchPSMRegValue, G_PatchPSMRegValue);
+    DECLARE_CONST_UNICODE_STRING(linkNameRegValue, G_SymbolicLinkName);
 
 
     PAGED_CODE();
@@ -162,8 +164,50 @@ BthPS3PSM_CreateDevice(
                 {
                     TraceEvents(TRACE_LEVEL_VERBOSE,
                         TRACE_DEVICE,
-                        "Settings retrieved"
+                        "BthPS3PSMPatchEnabled value retrieved"
                     );
+                }
+
+                WDF_OBJECT_ATTRIBUTES_INIT(&stringAttribs);
+                stringAttribs.ParentObject = device;
+
+                status = WdfStringCreate(
+                    NULL,
+                    &stringAttribs,
+                    &deviceContext->SymbolicLinkName
+                );
+
+                if (!NT_SUCCESS(status))
+                {
+                    TraceEvents(TRACE_LEVEL_ERROR,
+                        TRACE_DEVICE,
+                        "WdfStringCreate failed with status %!STATUS!",
+                        status
+                    );
+                }
+                else
+                {
+                    status = WdfRegistryQueryString(
+                        key,
+                        &linkNameRegValue,
+                        deviceContext->SymbolicLinkName
+                    );
+
+                    if (!NT_SUCCESS(status))
+                    {
+                        TraceEvents(TRACE_LEVEL_ERROR,
+                            TRACE_DEVICE,
+                            "WdfRegistryQueryString failed with status %!STATUS!",
+                            status
+                        );
+                    }
+                    else
+                    {
+                        TraceEvents(TRACE_LEVEL_VERBOSE,
+                            TRACE_DEVICE,
+                            "SymbolicLinkName value retrieved"
+                        );
+                    }
                 }
 
                 WdfRegistryClose(key);
@@ -207,10 +251,10 @@ BthPS3PSM_CreateDevice(
         // Initialize the I/O Package and any Queues
         //
         status = BthPS3PSM_QueueInitialize(device);
-    }
+        }
 
     return status;
-}
+    }
 
 //
 // Called upon powering up

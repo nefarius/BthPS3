@@ -18,6 +18,7 @@ int main(int, char* argv[])
     std::string infPath, binPath;
     ULONG deviceIndex;
 
+    DWORD bytesReturned = 0;
     DWORD err = ERROR_SUCCESS;
     BLUETOOTH_LOCAL_SERVICE_INFO SvcInfo = { 0 };
     wcscpy_s(SvcInfo.szName, sizeof(SvcInfo.szName) / sizeof(WCHAR), BthPS3ServiceName);
@@ -338,7 +339,7 @@ int main(int, char* argv[])
             sizeof(BTHPS3PSM_ENABLE_PSM_PATCHING),
             nullptr,
             0,
-            nullptr,
+            &bytesReturned,
             nullptr
         );
 
@@ -394,7 +395,7 @@ int main(int, char* argv[])
             sizeof(BTHPS3PSM_DISABLE_PSM_PATCHING),
             nullptr,
             0,
-            nullptr,
+            &bytesReturned,
             nullptr
         );
 
@@ -450,7 +451,7 @@ int main(int, char* argv[])
             sizeof(req),
             &req,
             sizeof(req),
-            nullptr,
+            &bytesReturned,
             nullptr
         );
 
@@ -468,15 +469,17 @@ int main(int, char* argv[])
 
         if (req.IsEnabled)
         {
-            std::cout << color(cyan) << "PSM Patching is " 
-            << color(magenta) << "enabled" 
-            << color(cyan) << " for this device" << std::endl;
+            std::cout << color(cyan) << "PSM Patching is "
+                << color(magenta) << "enabled"
+                << color(cyan) << " for device ";
+            std::wcout << "\"" << std::wstring(req.SymbolicLinkName) << "\"" << std::endl;
         }
         else
         {
             std::cout << color(cyan) << "PSM Patching is "
                 << color(gray) << "disabled"
-                << color(cyan) << " for this device" << std::endl;
+                << color(cyan) << " for device ";
+            std::wcout << "\"" << std::wstring(req.SymbolicLinkName) << "\"" << std::endl;
         }
 
         return EXIT_SUCCESS;

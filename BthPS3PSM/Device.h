@@ -22,6 +22,7 @@
 EXTERN_C_START
 
 #define G_PatchPSMRegValue  L"BthPS3PSMPatchEnabled"
+#define G_SymbolicLinkName  L"SymbolicLinkName"
 
 //
 // The device context performs the same job as
@@ -44,6 +45,8 @@ typedef struct _DEVICE_CONTEXT
     ULONG IsPsmPatchingEnabled;
 
     BOOLEAN IsCompatible;
+
+    WDFSTRING SymbolicLinkName;
 
 } DEVICE_CONTEXT, *PDEVICE_CONTEXT;
 

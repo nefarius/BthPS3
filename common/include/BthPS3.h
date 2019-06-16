@@ -255,6 +255,8 @@ typedef struct _BTHPS3PSM_GET_PSM_PATCHING
 
     OUT ULONG IsEnabled;
 
+    OUT WCHAR SymbolicLinkName[BTHPS3_MAX_DEVICE_ID_LEN];
+
 } BTHPS3PSM_GET_PSM_PATCHING, *PBTHPS3PSM_GET_PSM_PATCHING;
 
 #include <poppack.h>

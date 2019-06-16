@@ -21,18 +21,6 @@
 
 #ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
 
-typedef struct _CONTROL_DEVICE_CONTEXT
-{
-    //
-    // TODO: turn into useful
-    // 
-    ULONG Placeholder;
-
-} CONTROL_DEVICE_CONTEXT, *PCONTROL_DEVICE_CONTEXT;
-
-WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(CONTROL_DEVICE_CONTEXT, ControlDeviceGetContext)
-
-
 EVT_WDF_IO_QUEUE_IO_DEVICE_CONTROL BthPS3PSM_SidebandIoDeviceControl;
 
 _Must_inspect_result_

@@ -46,7 +46,6 @@ BthPS3PSM_CreateControlDevice(
     BOOLEAN                 bCreate = FALSE;
     PWDFDEVICE_INIT         pInit = NULL;
     WDFDEVICE               controlDevice = NULL;
-    WDF_OBJECT_ATTRIBUTES   controlAttributes;
     WDF_IO_QUEUE_CONFIG     ioQueueConfig;
     WDFQUEUE                queue;
 
@@ -113,10 +112,8 @@ BthPS3PSM_CreateControlDevice(
         goto Error;
     }
 
-    WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&controlAttributes,
-        CONTROL_DEVICE_CONTEXT);
     status = WdfDeviceCreate(&pInit,
-        &controlAttributes,
+        WDF_NO_OBJECT_ATTRIBUTES,
         &controlDevice);
     if (!NT_SUCCESS(status)) {
         goto Error;

@@ -179,6 +179,9 @@ typedef enum _DS_DEVICE_TYPE
 #define BTHPS3_SIXAXIS_HID_INPUT_REPORT_SIZE        0x32
 #define BTHPS3_SIXAXIS_HID_OUTPUT_REPORT_SIZE       0x32
 
+//
+// Maximum Hardware/Device ID length limitation
+// 
 #define BTHPS3_MAX_DEVICE_ID_LEN   0xC8 // 200 characters
 
 #pragma region I/O Control section

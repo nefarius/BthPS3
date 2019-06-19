@@ -84,7 +84,15 @@ BthPS3PSM_CreateDevice(
         //
         // Add this device to the FilterDevice collection.
         //
-        WdfWaitLockAcquire(FilterDeviceCollectionLock, NULL);
+        status = WdfWaitLockAcquire(FilterDeviceCollectionLock, NULL);
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_QUEUE,
+                "WdfWaitLockAcquire failed with status %!STATUS!",
+                status
+            );
+        }
+
         //
         // WdfCollectionAdd takes a reference on the item object and removes
         // it when you call WdfCollectionRemove.
@@ -251,10 +259,10 @@ BthPS3PSM_CreateDevice(
         // Initialize the I/O Package and any Queues
         //
         status = BthPS3PSM_QueueInitialize(device);
-        }
+    }
 
     return status;
-    }
+}
 
 //
 // Called upon powering up
@@ -341,15 +349,23 @@ BthPS3PSM_EvtDeviceContextCleanup(
 
 #ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
 
-    ULONG               count;
+    ULONG               count, i;
     WDFKEY              key;
     NTSTATUS            status;
     PDEVICE_CONTEXT     pDevCtx;
+    WDFDEVICE           devIter = NULL;
 
     DECLARE_CONST_UNICODE_STRING(patchPSMRegValue, G_PatchPSMRegValue);
 
 
-    WdfWaitLockAcquire(FilterDeviceCollectionLock, NULL);
+    status = WdfWaitLockAcquire(FilterDeviceCollectionLock, NULL);
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_QUEUE,
+            "WdfWaitLockAcquire failed with status %!STATUS!",
+            status
+        );
+    }
 
     count = WdfCollectionGetCount(FilterDeviceCollection);
 
@@ -367,7 +383,20 @@ BthPS3PSM_EvtDeviceContextCleanup(
         BthPS3PSM_DeleteControlDevice((WDFDEVICE)Device);
     }
 
-    WdfCollectionRemove(FilterDeviceCollection, Device);
+    //
+    // Collection might be empty due to device creation failure
+    // Loop though and compare items before removal attempt
+    // 
+    for (i = 0; i < count; i++)
+    {
+        devIter = WdfCollectionGetItem(FilterDeviceCollection, i);
+
+        if (devIter == Device)
+        {
+            WdfCollectionRemoveItem(FilterDeviceCollection, i);
+            break;
+        }
+    }
 
     WdfWaitLockRelease(FilterDeviceCollectionLock);
 

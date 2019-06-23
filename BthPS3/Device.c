@@ -171,7 +171,7 @@ NTSTATUS BthPS3_OpenFilterIoTarget(WDFDEVICE Device)
     );
     if (!NT_SUCCESS(status)) {
         TraceEvents(TRACE_LEVEL_ERROR,
-            TRACE_DEVICE, 
+            TRACE_DEVICE,
             "WdfIoTargetOpen failed with status %!STATUS!",
             status
         );
@@ -237,6 +237,12 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
     PAGED_CODE();
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "%!FUNC! Entry");
+
+    if (devCtx->PsmFilterIoTarget != NULL)
+    {
+        WdfIoTargetClose(devCtx->PsmFilterIoTarget);
+        WdfObjectDelete(devCtx->PsmFilterIoTarget);
+    }
 
     if (NULL != devCtx->L2CAPServerHandle)
     {

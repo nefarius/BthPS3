@@ -106,9 +106,25 @@ L2CAP_PS3_HandleRemoteConnect(
             deviceType = DS_DEVICE_TYPE_MOTION;
             break;
         case 'W': // First letter in Wireless Controller ('W')
-            deviceType = DS_DEVICE_TYPE_WIRELESS;
-            break;
+            // TODO: disabled for testing purposes!
+            //deviceType = DS_DEVICE_TYPE_WIRELESS;
+            //break;
         default:
+
+            //
+            // Filter re-routed potentially unsupported device, disable
+            // 
+            status = BTHPS3PSM_PATCH_DISABLE(
+                DevCtx->PsmFilterIoTarget,
+                0
+            );
+            if (!NT_SUCCESS(status))
+            {
+                TraceEvents(TRACE_LEVEL_ERROR,
+                    TRACE_L2CAP,
+                    "BTHPS3PSM_PATCH_DISABLE failed with status %!STATUS!", status);
+            }
+
             //
             // Unsupported device, drop connection
             // 
@@ -837,7 +853,7 @@ L2CAP_PS3_RemoteDisconnect(
 
     CLIENT_CONNECTION_REQUEST_REUSE(Channel->ConnectDisconnectRequest);
     CtxHdr->ProfileDrvInterface.BthReuseBrb(
-        &Channel->ConnectDisconnectBrb, 
+        &Channel->ConnectDisconnectBrb,
         BRB_L2CA_CLOSE_CHANNEL
     );
 

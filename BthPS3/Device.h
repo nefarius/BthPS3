@@ -37,5 +37,9 @@ BthPS3_CreateDevice(
 EVT_WDF_DEVICE_SELF_MANAGED_IO_INIT BthPS3_EvtWdfDeviceSelfManagedIoInit;
 EVT_WDF_DEVICE_SELF_MANAGED_IO_CLEANUP BthPS3_EvtWdfDeviceSelfManagedIoCleanup;
 
+NTSTATUS
+BthPS3_OpenFilterIoTarget(
+    _In_ WDFDEVICE Device
+);
 
 EXTERN_C_END

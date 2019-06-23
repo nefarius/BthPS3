@@ -103,6 +103,11 @@ typedef struct _BTHPS3_SERVER_CONTEXT
     // 
     WDFSPINLOCK ClientConnectionsLock;
 
+    //
+    // Remote I/O target (PSM filter driver)
+    // 
+    WDFIOTARGET PsmFilterIoTarget;
+
 } BTHPS3_SERVER_CONTEXT, *PBTHPS3_SERVER_CONTEXT;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_SERVER_CONTEXT, GetServerDeviceContext)

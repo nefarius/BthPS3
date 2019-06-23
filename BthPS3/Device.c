@@ -23,6 +23,7 @@
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (PAGE, BthPS3_CreateDevice)
 #pragma alloc_text (PAGE, BthPS3_EvtWdfDeviceSelfManagedIoCleanup)
+#pragma alloc_text (PAGE, BthPS3_OpenFilterIoTarget)
 #endif
 
 
@@ -115,8 +116,60 @@ BthPS3_CreateDevice(
         goto exit;
     }
 
+
+
 exit:
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "%!FUNC! Exit");
+
+    return status;
+}
+
+NTSTATUS BthPS3_OpenFilterIoTarget(WDFDEVICE Device)
+{
+    NTSTATUS                    status = STATUS_UNSUCCESSFUL;
+    WDF_OBJECT_ATTRIBUTES       ioTargetAttrib;
+    PBTHPS3_SERVER_CONTEXT      pCtx;
+    WDF_IO_TARGET_OPEN_PARAMS   openParams;
+
+    DECLARE_CONST_UNICODE_STRING(symbolicLink, BTHPS3PSM_SYMBOLIC_NAME_STRING);
+
+    PAGED_CODE();
+
+    pCtx = GetServerDeviceContext(Device);
+
+    WDF_OBJECT_ATTRIBUTES_INIT(&ioTargetAttrib);
+
+    status = WdfIoTargetCreate(
+        Device,
+        &ioTargetAttrib,
+        &pCtx->PsmFilterIoTarget
+    );
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_DEVICE,
+            "WdfIoTargetCreate failed with status %!STATUS!",
+            status
+        );
+        return status;
+    }
+    WDF_IO_TARGET_OPEN_PARAMS_INIT_OPEN_BY_NAME(
+        &openParams,
+        &symbolicLink,
+        STANDARD_RIGHTS_ALL
+    );
+    status = WdfIoTargetOpen(
+        pCtx->PsmFilterIoTarget,
+        &openParams
+    );
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_DEVICE, 
+            "WdfIoTargetOpen failed with status %!STATUS!",
+            status
+        );
+        WdfObjectDelete(pCtx->PsmFilterIoTarget);
+        return status;
+    }
 
     return status;
 }

@@ -116,7 +116,15 @@ BthPS3_CreateDevice(
         goto exit;
     }
 
+    //
+    // Search and open filter remote I/O target
+    // 
 
+    status = BthPS3_OpenFilterIoTarget(device);
+    if (!NT_SUCCESS(status))
+    {
+        goto exit;
+    }
 
 exit:
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "%!FUNC! Exit");

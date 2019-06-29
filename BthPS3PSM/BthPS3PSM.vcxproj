@@ -54,6 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <Inf Include="BthPS3PSM.inf" />
+    <Inf Include="BthPS3PSM2.inf" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{1A4F031A-83D6-4261-96C8-EDD6D2C30FE9}</ProjectGuid>

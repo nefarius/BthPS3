@@ -25,6 +25,9 @@
     <Inf Include="BthPS3PSM.inf">
       <Filter>Driver Files</Filter>
     </Inf>
+    <Inf Include="BthPS3PSM2.inf">
+      <Filter>Driver Files</Filter>
+    </Inf>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Device.h">

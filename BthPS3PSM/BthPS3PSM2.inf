@@ -1,0 +1,95 @@
+; BthPS3PSM - Windows kernel-mode BTHUSB lower filter driver
+; Copyright (C) 2018-2019  Nefarius Software Solutions e.U. and Contributors
+;
+; This program is free software: you can redistribute it and/or modify
+; it under the terms of the GNU General Public License as published by
+; the Free Software Foundation, either version 3 of the License, or
+; (at your option) any later version.
+;
+; This program is distributed in the hope that it will be useful,
+; but WITHOUT ANY WARRANTY; without even the implied warranty of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+; GNU General Public License for more details.
+;
+; You should have received a copy of the GNU General Public License
+; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+[Version]
+Signature="$Windows NT$"
+Class="System"
+ClassGuid={4d36e97d-e325-11ce-bfc1-08002be10318}
+Provider=%MFGNAME%
+CatalogFile=BthPS3PSM.cat
+DriverVer=
+
+; -----------------------------------------------------------------------
+
+[DestinationDirs]
+DefaultDestDir=12
+BthPS3PSM.DriverFiles=12            ;%windir%\system32\drivers
+
+
+[SourceDisksNames]
+1=%INSTDISK%
+
+[SourceDisksFiles]
+BthPS3PSM.sys = 1,,
+
+[BthPS3PSM.DriverFiles]
+%DRIVERFILENAME%
+
+;------------------------------------------------------------------------------
+[DefaultInstall.NTAMD64]
+OptionDesc = %DESCRIPTION%
+CopyFiles = BthPS3PSM.DriverFiles
+
+[DefaultInstall.NTAMD64.services]
+AddService=%SERVICENAME%,,FilterService
+
+;------------------------------------------------------------------------------
+[DefaultUninstall.NTAMD64]
+LegacyUninstall=1
+
+[DefaultUninstall.NTAMD64.services]
+DelService=%SERVICENAME%,0x00000200 ;Stop service before deleting it
+
+;------------------------------------------------------------------------------
+[DefaultInstall.NTX86]
+OptionDesc = %DESCRIPTION%
+CopyFiles = BthPS3PSM.DriverFiles
+
+[DefaultInstall.NTX86.services]
+AddService=%SERVICENAME%,,FilterService
+
+;------------------------------------------------------------------------------
+[DefaultUninstall.NTX86]
+LegacyUninstall=1
+
+[DefaultUninstall.NTX86.services]
+DelService=%SERVICENAME%,0x00000200 ;Stop service before deleting it
+
+
+;------------------------------------------------------------------------------
+[FilterService]
+ServiceType=1   ;Kernel driver
+StartType=3     ;OnDemand start. No reboot required!
+;StartType=0    ;OnBoot start. Requires reboot.
+ErrorControl=1  ;Normal
+ServiceBinary=%12%\%DRIVERFILENAME%
+;AddReg = BthPS3PSM.AddRegistry
+
+;[BthPS3PSM.AddRegistry]
+; TODO: populate
+
+;------------------------------------------------------------------------------
+;  String Definitions
+;------------------------------------------------------------------------------
+
+[Strings]
+MFGNAME = "Nefarius Software Solutions e.U."
+INSTDISK = "PlayStation(R) 3 Bluetooth Filter Device Driver Disk"
+DESCRIPTION = "PlayStation(R) 3 Bluetooth Filter Service"
+SERVICENAME = "BthPS3PSM"
+DRIVERNAME = "BthPS3PSM"
+DRIVERFILENAME = "BthPS3PSM.sys"

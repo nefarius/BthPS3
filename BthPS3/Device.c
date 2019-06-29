@@ -182,6 +182,18 @@ NTSTATUS BthPS3_OpenFilterIoTarget(WDFDEVICE Device)
     return status;
 }
 
+void BthPS3_EnablePatchEvtWdfTimer(
+    WDFTIMER Timer
+)
+{
+    UNREFERENCED_PARAMETER(Timer);
+
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE,
+        "IRQL %!irql! too high, preparing async call",
+        KeGetCurrentIrql()
+    );
+}
+
 //
 // Gets invoked on device power-up
 // 

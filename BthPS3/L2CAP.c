@@ -124,6 +124,18 @@ L2CAP_PS3_HandleRemoteConnect(
                     TRACE_L2CAP,
                     "BTHPS3PSM_PATCH_DISABLE failed with status %!STATUS!", status);
             }
+            else
+            {
+                TraceEvents(TRACE_LEVEL_INFORMATION,
+                    TRACE_L2CAP,
+                    "Filter disabled, re-enabling in 10 seconds"
+                );
+
+                WdfTimerStart(
+                    DevCtx->PsmFilterAutoResetTimer,
+                    WDF_REL_TIMEOUT_IN_SEC(10)
+                );
+            }
 
             //
             // Unsupported device, drop connection

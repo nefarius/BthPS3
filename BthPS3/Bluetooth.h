@@ -108,6 +108,11 @@ typedef struct _BTHPS3_SERVER_CONTEXT
     // 
     WDFIOTARGET PsmFilterIoTarget;
 
+    //
+    // Delayed action to re-enable filter patch
+    // 
+    WDFTIMER PsmFilterAutoResetTimer;
+
 } BTHPS3_SERVER_CONTEXT, *PBTHPS3_SERVER_CONTEXT;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_SERVER_CONTEXT, GetServerDeviceContext)
@@ -121,6 +126,8 @@ typedef struct _BTHPS3_REMOTE_CONNECT_CONTEXT
 } BTHPS3_REMOTE_CONNECT_CONTEXT, *PBTHPS3_REMOTE_CONNECT_CONTEXT;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_REMOTE_CONNECT_CONTEXT, GetRemoteConnectContext)
+
+EVT_WDF_TIMER BthPS3_EnablePatchEvtWdfTimer;
 
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
@@ -177,6 +184,7 @@ BTHPS3_SERVER_CONTEXT_INIT(
 {
     NTSTATUS status;
     WDF_OBJECT_ATTRIBUTES attributes;
+    WDF_TIMER_CONFIG timerCfg;
 
     status = BthPS3_DeviceContextHeaderInit(&Context->Header, Device);
     if (!NT_SUCCESS(status))
@@ -202,6 +210,21 @@ BTHPS3_SERVER_CONTEXT_INIT(
     status = WdfCollectionCreate(
         &attributes,
         &Context->ClientConnections
+    );
+    if (!NT_SUCCESS(status))
+    {
+        goto exit;
+    }
+
+    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+    attributes.ParentObject = Device;
+
+    WDF_TIMER_CONFIG_INIT(&timerCfg, BthPS3_EnablePatchEvtWdfTimer);
+
+    status = WdfTimerCreate(
+        &timerCfg, 
+        &attributes, 
+        &Context->PsmFilterAutoResetTimer
     );
     if (!NT_SUCCESS(status))
     {

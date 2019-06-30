@@ -22,10 +22,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Inf Include="BthPS3PSM.inf">
+    <Inf Include="BthPS3PSM_WHQL.inf">
       <Filter>Driver Files</Filter>
     </Inf>
-    <Inf Include="BthPS3PSM2.inf">
+    <Inf Include="BthPS3PSM_Filter.inf">
       <Filter>Driver Files</Filter>
     </Inf>
   </ItemGroup>

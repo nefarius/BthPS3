@@ -248,26 +248,6 @@ int main(int, char* argv[])
         return EXIT_SUCCESS;
     }
 
-    if (cmdl[{ "--create-filter-device" }])
-    {
-        auto ret = devcon::create(
-            L"System",
-            &GUID_DEVCLASS_SYSTEM,
-            L"Nefarius\\{a3dc6d41-9e10-46d9-8be2-9b4a279841df}\0\0"
-        );
-
-        if (!ret)
-        {
-            std::cout << color(red) <<
-                "Failed to create device, error: "
-                << winapi::GetLastErrorStdStr() << std::endl;
-            return GetLastError();
-        }
-
-        std::cout << color(green) << "Device node created successfully" << std::endl;
-        return EXIT_SUCCESS;
-    }
-
 #pragma endregion
 
 #pragma region Generic driver installer
@@ -514,8 +494,6 @@ int main(int, char* argv[])
     std::cout << "      --force                 Force using this driver even if lower ranked (optional)" << std::endl;
     std::cout << "    --enable-filter           Register BthPS3PSM as lower filter for Bluetooth Class" << std::endl;
     std::cout << "    --disable-filter          De-Register BthPS3PSM as lower filter for Bluetooth Class" << std::endl;
-    std::cout << "    --create-filter-device    Create virtual device node for filter driver" << std::endl;
-    std::cout << "                                Note: required only for testing and debugging" << std::endl;
     std::cout << "    --enable-psm-patch        Instructs the filter to enable the PSM patch" << std::endl;
     std::cout << "      --device-index          Zero-based index of affected device (required)" << std::endl;
     std::cout << "    --disable-psm-patch       Instructs the filter to disable the PSM patch" << std::endl;

@@ -384,9 +384,10 @@ BTHPS3_GET_DEVICE_NAME(
 //
 // Request filter driver to disable PSM patching
 // 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 FORCEINLINE
-BTHPS3PSM_PATCH_DISABLE(
+BTHPS3PSM_PATCH_DISABLE_SYNC(
     WDFIOTARGET IoTarget,
     ULONG DeviceIndex
 )

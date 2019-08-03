@@ -280,7 +280,7 @@ BthPS3_SendBrbAsync(
 #pragma endregion
 
 //
-// TODO: why is this inline, you drunk f--? xD
+// Request remote device friendly name from radio
 // 
 NTSTATUS
 FORCEINLINE

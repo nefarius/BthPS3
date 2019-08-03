@@ -182,6 +182,9 @@ NTSTATUS BthPS3_OpenFilterIoTarget(WDFDEVICE Device)
     return status;
 }
 
+//
+// Timed auto-reset of filter driver
+// 
 void BthPS3_EnablePatchEvtWdfTimer(
     WDFTIMER Timer
 )

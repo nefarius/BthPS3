@@ -50,12 +50,14 @@ BthPS3_EvtWdfChildListCreateDevice(
     WDFKEY                                  hKey = NULL;
     ULONG                                   rawPdo = 0;
     ULONG                                   hidePdo = 0;
+    ULONG                                   idleTimeout = 10000; // 10 secs idle timeout
 
     DECLARE_UNICODE_STRING_SIZE(deviceId, MAX_DEVICE_ID_LEN);
     DECLARE_UNICODE_STRING_SIZE(hardwareId, MAX_DEVICE_ID_LEN);
     DECLARE_UNICODE_STRING_SIZE(instanceId, BTH_ADDR_HEX_LEN);
     DECLARE_CONST_UNICODE_STRING(rawPdoValue, L"RawPDO");
     DECLARE_CONST_UNICODE_STRING(hidePdoValue, L"HidePDO");
+    DECLARE_CONST_UNICODE_STRING(idleTimeoutValue, L"ChildIdleTimeout");
 
     UNREFERENCED_PARAMETER(ChildList);
 
@@ -102,6 +104,15 @@ BthPS3_EvtWdfChildListCreateDevice(
             hKey,
             &hidePdoValue,
             &hidePdo
+        );
+
+        //
+        // Don't care, if it fails, keep default value
+        // 
+        (void)WdfRegistryQueryULong(
+            hKey,
+            &idleTimeoutValue,
+            &idleTimeout
         );
 
         WdfRegistryClose(hKey);
@@ -433,7 +444,7 @@ BthPS3_EvtWdfChildListCreateDevice(
     // 
 
     WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS_INIT(&idleSettings, IdleCannotWakeFromS0);
-    idleSettings.IdleTimeout = 10000; // 10 secs idle timeout
+    idleSettings.IdleTimeout = idleTimeout; 
     status = WdfDeviceAssignS0IdleSettings(hChild, &idleSettings);
 
     //

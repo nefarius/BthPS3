@@ -150,7 +150,7 @@ NTSTATUS BthPS3_OpenFilterIoTarget(WDFDEVICE Device)
     status = WdfIoTargetCreate(
         Device,
         &ioTargetAttrib,
-        &pCtx->PsmFilterIoTarget
+        &pCtx->PsmFilter.IoTarget
     );
     if (!NT_SUCCESS(status)) {
         TraceEvents(TRACE_LEVEL_ERROR,
@@ -166,7 +166,7 @@ NTSTATUS BthPS3_OpenFilterIoTarget(WDFDEVICE Device)
         STANDARD_RIGHTS_ALL
     );
     status = WdfIoTargetOpen(
-        pCtx->PsmFilterIoTarget,
+        pCtx->PsmFilter.IoTarget,
         &openParams
     );
     if (!NT_SUCCESS(status)) {
@@ -175,7 +175,7 @@ NTSTATUS BthPS3_OpenFilterIoTarget(WDFDEVICE Device)
             "WdfIoTargetOpen failed with status %!STATUS!",
             status
         );
-        WdfObjectDelete(pCtx->PsmFilterIoTarget);
+        WdfObjectDelete(pCtx->PsmFilter.IoTarget);
         return status;
     }
 
@@ -253,10 +253,10 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "%!FUNC! Entry");
 
-    if (devCtx->PsmFilterIoTarget != NULL)
+    if (devCtx->PsmFilter.IoTarget != NULL)
     {
-        WdfIoTargetClose(devCtx->PsmFilterIoTarget);
-        WdfObjectDelete(devCtx->PsmFilterIoTarget);
+        WdfIoTargetClose(devCtx->PsmFilter.IoTarget);
+        WdfObjectDelete(devCtx->PsmFilter.IoTarget);
     }
 
     if (NULL != devCtx->L2CAPServerHandle)

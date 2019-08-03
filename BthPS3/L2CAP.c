@@ -115,7 +115,7 @@ L2CAP_PS3_HandleRemoteConnect(
             // Filter re-routed potentially unsupported device, disable
             // 
             status = BTHPS3PSM_PATCH_DISABLE(
-                DevCtx->PsmFilterIoTarget,
+                DevCtx->PsmFilter.IoTarget,
                 0
             );
             if (!NT_SUCCESS(status))
@@ -132,7 +132,7 @@ L2CAP_PS3_HandleRemoteConnect(
                 );
 
                 WdfTimerStart(
-                    DevCtx->PsmFilterAutoResetTimer,
+                    DevCtx->PsmFilter.AutoResetTimer,
                     WDF_REL_TIMEOUT_IN_SEC(10)
                 );
             }

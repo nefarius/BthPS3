@@ -103,15 +103,24 @@ typedef struct _BTHPS3_SERVER_CONTEXT
     // 
     WDFSPINLOCK ClientConnectionsLock;
 
-    //
-    // Remote I/O target (PSM filter driver)
-    // 
-    WDFIOTARGET PsmFilterIoTarget;
+    struct
+    {
+        //
+        // Remote I/O target (PSM filter driver)
+        // 
+        WDFIOTARGET IoTarget;
 
-    //
-    // Delayed action to re-enable filter patch
-    // 
-    WDFTIMER PsmFilterAutoResetTimer;
+        //
+        // Delayed action to re-enable filter patch
+        // 
+        WDFTIMER AutoResetTimer;
+
+        //
+        // Request object used to asynchronously enable the patch
+        // 
+        WDFREQUEST EnableRequest;
+
+    } PsmFilter;
 
 } BTHPS3_SERVER_CONTEXT, *PBTHPS3_SERVER_CONTEXT;
 
@@ -224,7 +233,7 @@ BTHPS3_SERVER_CONTEXT_INIT(
     status = WdfTimerCreate(
         &timerCfg, 
         &attributes, 
-        &Context->PsmFilterAutoResetTimer
+        &Context->PsmFilter.AutoResetTimer
     );
     if (!NT_SUCCESS(status))
     {

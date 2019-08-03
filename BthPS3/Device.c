@@ -40,6 +40,7 @@ BthPS3_CreateDevice(
     NTSTATUS                        status;
     WDF_PNPPOWER_EVENT_CALLBACKS    pnpPowerCallbacks;
     WDF_CHILD_LIST_CONFIG           childListCfg;
+    PBTHPS3_SERVER_CONTEXT          pSrvCtx;
 
     PAGED_CODE();
 
@@ -88,7 +89,9 @@ BthPS3_CreateDevice(
         goto exit;
     }
 
-    status = BTHPS3_SERVER_CONTEXT_INIT(GetServerDeviceContext(device), device);
+    pSrvCtx = GetServerDeviceContext(device);
+
+    status = BTHPS3_SERVER_CONTEXT_INIT(pSrvCtx, device);
 
     if (!NT_SUCCESS(status))
     {
@@ -126,12 +129,34 @@ BthPS3_CreateDevice(
         goto exit;
     }
 
+    //
+    // Allocate request object for async filter communication
+    // 
+
+    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+    attributes.ParentObject = pSrvCtx->PsmFilter.IoTarget;
+
+    status = WdfRequestCreate(
+        &attributes,
+        pSrvCtx->PsmFilter.IoTarget,
+        &pSrvCtx->PsmFilter.EnableRequest
+    );
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, TRACE_DEVICE,
+            "WdfRequestCreate failed with status %!STATUS!", status);
+        goto exit;
+    }
+
 exit:
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "%!FUNC! Exit");
 
     return status;
 }
 
+//
+// Locate and attempt to open instance of BTHPS3PSM filter device
+// 
 NTSTATUS BthPS3_OpenFilterIoTarget(WDFDEVICE Device)
 {
     NTSTATUS                    status = STATUS_UNSUCCESSFUL;

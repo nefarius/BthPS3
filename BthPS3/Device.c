@@ -139,7 +139,7 @@ BthPS3_CreateDevice(
     status = WdfRequestCreate(
         &attributes,
         pSrvCtx->PsmFilter.IoTarget,
-        &pSrvCtx->PsmFilter.EnableRequest
+        &pSrvCtx->PsmFilter.AsyncRequest
     );
     if (!NT_SUCCESS(status))
     {

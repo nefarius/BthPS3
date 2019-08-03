@@ -118,7 +118,7 @@ typedef struct _BTHPS3_SERVER_CONTEXT
         //
         // Request object used to asynchronously enable the patch
         // 
-        WDFREQUEST EnableRequest;
+        WDFREQUEST AsyncRequest;
 
     } PsmFilter;
 

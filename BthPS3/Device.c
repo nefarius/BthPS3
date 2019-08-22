@@ -229,7 +229,10 @@ void BthPS3_FilterRequestCompletionRoutine(
     WDFCONTEXT Context
 )
 {
-    
+    UNREFERENCED_PARAMETER(Request);
+    UNREFERENCED_PARAMETER(Target);
+    UNREFERENCED_PARAMETER(Params);
+    UNREFERENCED_PARAMETER(Context);
 }
 
 //

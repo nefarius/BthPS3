@@ -8,6 +8,12 @@ Windows kernel-mode Bluetooth Profile & Filter Drivers for PS3 peripherals.
 
 TBD
 
+The solution consists of the following individual projects:
+
+- [`BthPS3`](/BthPS3) - 
+- [`BthPS3PSM`](/BthPS3PSM) - 
+- [`BthPS3Util`](/BthPS3Util) - 
+
 ## How to build
 
 ### Prerequisites

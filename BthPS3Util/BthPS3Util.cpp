@@ -16,7 +16,7 @@ int main(int, char* argv[])
     cmdl.add_params({ "--inf-path", "--bin-path", "--device-index" });
     cmdl.parse(argv);
     std::string infPath, binPath;
-    ULONG deviceIndex;
+    ULONG deviceIndex = 0;
 
     DWORD bytesReturned = 0;
     DWORD err = ERROR_SUCCESS;
@@ -287,8 +287,7 @@ int main(int, char* argv[])
     if (cmdl[{ "--enable-psm-patch" }])
     {
         if (!(cmdl({ "--device-index" }) >> deviceIndex)) {
-            std::cout << color(red) << "Device index missing" << std::endl;
-            return EXIT_FAILURE;
+            std::cout << color(yellow) << "Device index missing, defaulting to 0" << std::endl;
         }
 
         const auto hDevice = CreateFile(
@@ -343,8 +342,7 @@ int main(int, char* argv[])
     if (cmdl[{ "--disable-psm-patch" }])
     {
         if (!(cmdl({ "--device-index" }) >> deviceIndex)) {
-            std::cout << color(red) << "Device index missing" << std::endl;
-            return EXIT_FAILURE;
+            std::cout << color(yellow) << "Device index missing, defaulting to 0" << std::endl;
         }
 
         const auto hDevice = CreateFile(
@@ -399,8 +397,7 @@ int main(int, char* argv[])
     if (cmdl[{ "--get-psm-patch" }])
     {
         if (!(cmdl({ "--device-index" }) >> deviceIndex)) {
-            std::cout << color(red) << "Device index missing" << std::endl;
-            return EXIT_FAILURE;
+            std::cout << color(yellow) << "Device index missing, defaulting to 0" << std::endl;
         }
 
         const auto hDevice = CreateFile(
@@ -452,14 +449,14 @@ int main(int, char* argv[])
             std::cout << color(cyan) << "PSM Patching is "
                 << color(magenta) << "enabled"
                 << color(cyan) << " for device ";
-            std::wcout << "\"" << std::wstring(req.SymbolicLinkName) << "\"" << std::endl;
+            std::wcout << std::wstring(req.SymbolicLinkName) << std::endl;
         }
         else
         {
             std::cout << color(cyan) << "PSM Patching is "
                 << color(gray) << "disabled"
                 << color(cyan) << " for device ";
-            std::wcout << "\"" << std::wstring(req.SymbolicLinkName) << "\"" << std::endl;
+            std::wcout << std::wstring(req.SymbolicLinkName) << std::endl;
         }
 
         return EXIT_SUCCESS;

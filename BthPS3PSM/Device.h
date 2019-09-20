@@ -21,29 +21,63 @@
 
 EXTERN_C_START
 
+#pragma region Registry key/value names
+
+//
+// Filter will be auto-enabled on device boot if value > 0
+// 
 #define G_PatchPSMRegValue  L"BthPS3PSMPatchEnabled"
+
+//
+// Symbolic link name of the radio the filter is currently loaded on
+// 
 #define G_SymbolicLinkName  L"SymbolicLinkName"
 
+#pragma endregion
+
 //
-// The device context performs the same job as
-// a WDM device extension in the driver frameworks
-//
+// Device context data
+// 
 typedef struct _DEVICE_CONTEXT
 {
+	//
+	// Framework USB object
+	// 
     WDFUSBDEVICE UsbDevice;
 
+	//
+	// USB interface object
+	// 
     WDFUSBINTERFACE UsbInterface;
 
+	//
+	// USB Interrupt (in) pipe handle
+	// 
     WDFUSBPIPE InterruptPipe;
 
+	//
+	// USB Bulk Read (in) handle
+	// 
     WDFUSBPIPE BulkReadPipe;
 
+	//
+	// USB Bulk Write (out) handle
+	// 
     WDFUSBPIPE BulkWritePipe;
 
+	//
+	// Patches PSM values if TRUE
+	// 
     ULONG IsPsmPatchingEnabled;
 
+	//
+	// TRUE if filter is loaded under a compatible USB function driver
+	// 
     BOOLEAN IsCompatible;
 
+	//
+	// Symbolic link name of host radio we're loaded onto
+	// 
     WDFSTRING SymbolicLinkName;
 
 } DEVICE_CONTEXT, *PDEVICE_CONTEXT;

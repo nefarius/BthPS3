@@ -42,7 +42,7 @@ class Build : NukeBuild
             MSBuild(s => s
                 .SetTargetPath(Solution)
                 .SetTargets("Restore")
-                .SetMSBuildVersion(MSBuildVersion.VS2017));
+                .SetMSBuildVersion(MSBuildVersion.VS2019));
         });
 
     Target Compile => _ => _
@@ -55,7 +55,7 @@ class Build : NukeBuild
                 .SetConfiguration(Configuration)
                 .SetMaxCpuCount(Environment.ProcessorCount)
                 .SetNodeReuse(IsLocalBuild)
-                .SetMSBuildVersion(MSBuildVersion.VS2017)
+                .SetMSBuildVersion(MSBuildVersion.VS2019)
                 .SetTargetPlatform(MSBuildTargetPlatform.x64));
 
             MSBuild(s => s
@@ -64,7 +64,7 @@ class Build : NukeBuild
                 .SetConfiguration(Configuration)
                 .SetMaxCpuCount(Environment.ProcessorCount)
                 .SetNodeReuse(IsLocalBuild)
-                .SetMSBuildVersion(MSBuildVersion.VS2017)
+                .SetMSBuildVersion(MSBuildVersion.VS2019)
                 .SetTargetPlatform(MSBuildTargetPlatform.x86));
         });
 

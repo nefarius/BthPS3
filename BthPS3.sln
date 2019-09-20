@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.106
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29306.81
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BthPS3", "BthPS3\BthPS3.vcxproj", "{F329494F-152C-4739-AFC2-00DF81B78D5F}"
 EndProject
@@ -115,22 +115,6 @@ Global
 		{906749ED-7A67-426A-AE7C-1152AB5CFAD3}.Release|x64.Deploy.0 = Release|x64
 		{906749ED-7A67-426A-AE7C-1152AB5CFAD3}.Release|x86.ActiveCfg = Release|Win32
 		{906749ED-7A67-426A-AE7C-1152AB5CFAD3}.Release|x86.Deploy.0 = Release|Win32
-		{3F50F473-B720-4C19-A302-6D51AD1D4448}.Debug|ARM.ActiveCfg = Debug|Any CPU
-		{3F50F473-B720-4C19-A302-6D51AD1D4448}.Debug|ARM.Build.0 = Debug|Any CPU
-		{3F50F473-B720-4C19-A302-6D51AD1D4448}.Debug|ARM64.ActiveCfg = Debug|Any CPU
-		{3F50F473-B720-4C19-A302-6D51AD1D4448}.Debug|ARM64.Build.0 = Debug|Any CPU
-		{3F50F473-B720-4C19-A302-6D51AD1D4448}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{3F50F473-B720-4C19-A302-6D51AD1D4448}.Debug|x64.Build.0 = Debug|Any CPU
-		{3F50F473-B720-4C19-A302-6D51AD1D4448}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{3F50F473-B720-4C19-A302-6D51AD1D4448}.Debug|x86.Build.0 = Debug|Any CPU
-		{3F50F473-B720-4C19-A302-6D51AD1D4448}.Release|ARM.ActiveCfg = Release|Any CPU
-		{3F50F473-B720-4C19-A302-6D51AD1D4448}.Release|ARM.Build.0 = Release|Any CPU
-		{3F50F473-B720-4C19-A302-6D51AD1D4448}.Release|ARM64.ActiveCfg = Release|Any CPU
-		{3F50F473-B720-4C19-A302-6D51AD1D4448}.Release|ARM64.Build.0 = Release|Any CPU
-		{3F50F473-B720-4C19-A302-6D51AD1D4448}.Release|x64.ActiveCfg = Release|Any CPU
-		{3F50F473-B720-4C19-A302-6D51AD1D4448}.Release|x64.Build.0 = Release|Any CPU
-		{3F50F473-B720-4C19-A302-6D51AD1D4448}.Release|x86.ActiveCfg = Release|Any CPU
-		{3F50F473-B720-4C19-A302-6D51AD1D4448}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

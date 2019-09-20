@@ -10,9 +10,9 @@ TBD
 
 The solution consists of the following individual projects:
 
-- [`BthPS3`](/BthPS3) - 
-- [`BthPS3PSM`](/BthPS3PSM) - 
-- [`BthPS3Util`](/BthPS3Util) - 
+- [`BthPS3`](/BthPS3) - Multi-purpose kernel-mode driver. Function driver for `BTHENUM` PDO, Bluetooth profile (L2CAP server service) and bus driver for PS3 wireless peripherals.
+- [`BthPS3PSM`](/BthPS3PSM) - Lower filter driver for `BTHUSB`, patching L2CAP packets. Required for profile driver to receive L2CAP traffic.
+- [`BthPS3Util`](/BthPS3Util) - User-land command-line utility for managing driver installation tasks and configuration changes.
 
 ## How to build
 

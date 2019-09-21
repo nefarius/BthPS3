@@ -260,3 +260,6 @@ paket-files/
 __pycache__/
 *.pyc
 /BthPS3.sln.DotSettings
+/Setup/*.aip
+/Setup/Setup Files
+/Setup/BthPS3 Bluetooth Drivers-cache

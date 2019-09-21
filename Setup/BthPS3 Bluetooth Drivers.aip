@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<DOCUMENT Type="Advanced Installer" CreateVersion="16.3" version="16.3" Modules="professional" RootPath="." Language="en" Id="{8A2D3E7F-8982-4767-9BE2-F3793D5B92B8}">
+<DOCUMENT Type="Advanced Installer" CreateVersion="16.3" version="16.3" PreviousModules="professional" Modules="enterprise" RootPath="." Language="en" Id="{8A2D3E7F-8982-4767-9BE2-F3793D5B92B8}">
   <COMPONENT cid="caphyon.advinst.msicomp.ProjectOptionsComponent">
-    <ROW Name="HiddenItems" Value="AppXProductDetailsComponent;AppXDependenciesComponent;AppXAppDetailsComponent;AppXVisualAssetsComponent;AppXCapabilitiesComponent;AppXAppDeclarationsComponent;AppXUriRulesComponent;MsiJavaComponent;MsiDriverPackagesComponent;UserAccountsComponent;ScheduledTasksComponent;SqlConnectionComponent;AutorunComponent;FirewallExceptionComponent;GameUxComponent;MsiDirectEditorComponent;SharePointSlnComponent;SilverlightSlnComponent;MultipleInstancesComponent;SccmComponent;ActSyncAppComponent;FixupComponent"/>
+    <ROW Name="HiddenItems" Value="AppXProductDetailsComponent;AppXDependenciesComponent;AppXAppDetailsComponent;AppXVisualAssetsComponent;AppXCapabilitiesComponent;AppXAppDeclarationsComponent;AppXUriRulesComponent;SccmComponent;ActSyncAppComponent;FixupComponent"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiPropsComponent">
     <ROW Property="AI_BITMAP_DISPLAY_MODE" Value="0"/>
     <ROW Property="AI_FINDEXE_TITLE" Value="Select the installation package for [|ProductName]" ValueLocId="AI.Property.FindExeTitle"/>
     <ROW Property="ALLUSERS" Value="1"/>
-    <ROW Property="ARPCOMMENTS" Value="This installer database contains the logic and data required to install [|ProductName]." ValueLocId="*"/>
-    <ROW Property="ARPNOREPAIR" MultiBuildValue="DefaultBuild:1"/>
+    <ROW Property="ARPCOMMENTS" Value="Windows kernel-mode Bluetooth Profile &amp; Filter Drivers for PS3 peripherals." ValueLocId="*"/>
+    <ROW Property="ARPHELPLINK" Value="https://forums.vigem.org/"/>
+    <ROW Property="ARPNOMODIFY" MultiBuildValue="DefaultBuild:1"/>
+    <ROW Property="ARPNOREPAIR" Value="1" MultiBuildValue="DefaultBuild:1"/>
+    <ROW Property="ARPURLINFOABOUT" Value="https://discord.vigem.org/"/>
     <ROW Property="Manufacturer" Value="Nefarius Software Solutions e.U."/>
     <ROW Property="ProductCode" Value="1033:{E7C8A6D8-20A3-4CE0-A3BA-8B1568758119} " Type="16"/>
     <ROW Property="ProductLanguage" Value="1033"/>
@@ -28,6 +31,8 @@
   <COMPONENT cid="caphyon.advinst.msicomp.MsiDirsComponent">
     <ROW Directory="AI_Bin32_Dir" Directory_Parent="APPDIR" DefaultDir="32-bit"/>
     <ROW Directory="APPDIR" Directory_Parent="TARGETDIR" DefaultDir="APPDIR:." IsPseudoRoot="1"/>
+    <ROW Directory="BthPS3_1_Dir" Directory_Parent="APPDIR" DefaultDir="BTHPS3~1|BthPS3_x86"/>
+    <ROW Directory="BthPS3_Dir" Directory_Parent="APPDIR" DefaultDir="BTHPS3~2|BthPS3_x64"/>
     <ROW Directory="ProductCode_Dir" Directory_Parent="TempFolder" DefaultDir="{E7C8A~1|[|ProductCode]"/>
     <ROW Directory="SHORTCUTDIR" Directory_Parent="TARGETDIR" DefaultDir="SHORTC~1|SHORTCUTDIR" IsPseudoRoot="1"/>
     <ROW Directory="Spring.742DA8B7_Dir" Directory_Parent="ProductCode_Dir" DefaultDir="SPRING~1.742|Spring.742DA8B7" DefaultDirLocId="-"/>
@@ -39,31 +44,26 @@
   <COMPONENT cid="caphyon.advinst.msicomp.MsiCompsComponent">
     <ROW Component="AI_ExePath" ComponentId="{BA5C8E00-5C81-4A39-83B6-CDB962D076EA}" Directory_="APPDIR" Attributes="4" KeyPath="AI_ExePath"/>
     <ROW Component="APPDIR" ComponentId="{2223AC10-1ED8-4FDF-A2EA-84201BE7DCCF}" Directory_="APPDIR" Attributes="0"/>
-    <ROW Component="BthPS3.inf" ComponentId="{E59B025C-9807-4E19-84C9-7A9E6CF7C18C}" Directory_="APPDIR" Attributes="256" Condition="VersionNT64" KeyPath="BthPS3.inf"/>
-    <ROW Component="BthPS3.inf_1" ComponentId="{E889C398-4981-401E-8BFF-EB2049DAC283}" Directory_="AI_Bin32_Dir" Attributes="0" Condition="NOT VersionNT64" KeyPath="BthPS3.inf_1"/>
-    <ROW Component="BthPS3.pdb" ComponentId="{F517A1FE-9F6E-4E6E-A537-136811DDDCC4}" Directory_="APPDIR" Attributes="256" Condition="VersionNT64" KeyPath="BthPS3.pdb"/>
-    <ROW Component="BthPS3.pdb_1" ComponentId="{DD6F1035-B0CC-467D-A747-056D84E71E1D}" Directory_="AI_Bin32_Dir" Attributes="0" Condition="NOT VersionNT64" KeyPath="BthPS3.pdb_1"/>
-    <ROW Component="BthPS3.sys" ComponentId="{536F48B0-5DFA-48B6-A7E7-BD38317F1D19}" Directory_="APPDIR" Attributes="256" Condition="VersionNT64" KeyPath="BthPS3.sys"/>
-    <ROW Component="BthPS3.sys_1" ComponentId="{ECEB763A-B51C-4962-8925-CA1E8FBB8518}" Directory_="AI_Bin32_Dir" Attributes="0" Condition="NOT VersionNT64" KeyPath="BthPS3.sys_1"/>
-    <ROW Component="BthPS3PSM.pdb" ComponentId="{4088301F-9795-4678-BF39-1DCFE0B605DD}" Directory_="APPDIR" Attributes="256" Condition="VersionNT64" KeyPath="BthPS3PSM.pdb"/>
-    <ROW Component="BthPS3PSM.pdb_1" ComponentId="{CAE43290-ADD6-40FA-B814-7AEAD5F79C55}" Directory_="AI_Bin32_Dir" Attributes="0" Condition="NOT VersionNT64" KeyPath="BthPS3PSM.pdb_1"/>
-    <ROW Component="BthPS3PSM.sys" ComponentId="{EF163111-41EA-447A-BD9A-6CB7906CE0D4}" Directory_="APPDIR" Attributes="256" Condition="VersionNT64" KeyPath="BthPS3PSM.sys"/>
+    <ROW Component="BthPS3.inf" ComponentId="{FEC54DA0-BBFE-45F5-9597-00DB95E7D6C7}" Directory_="BthPS3_Dir" Attributes="256" Condition="VersionNT64" KeyPath="WdfCoInstaller01011.dll_2"/>
+    <ROW Component="BthPS3.inf_4" ComponentId="{AF43076D-661C-4A74-B22C-979E9D686B3A}" Directory_="BthPS3_1_Dir" Attributes="0" Condition="(VersionNT &gt;= 500) AND NOT VersionNT64" KeyPath="WdfCoInstaller01011.dll"/>
+    <ROW Component="BthPS3.pdb" ComponentId="{F517A1FE-9F6E-4E6E-A537-136811DDDCC4}" Directory_="APPDIR" Attributes="256" Condition="VersionNT64" KeyPath="BthPS3.pdb" Type="4"/>
+    <ROW Component="BthPS3.pdb_1" ComponentId="{DD6F1035-B0CC-467D-A747-056D84E71E1D}" Directory_="AI_Bin32_Dir" Attributes="0" Condition="NOT VersionNT64" KeyPath="BthPS3.pdb_1" Type="4"/>
+    <ROW Component="BthPS3PSM.pdb" ComponentId="{4088301F-9795-4678-BF39-1DCFE0B605DD}" Directory_="APPDIR" Attributes="256" Condition="VersionNT64" KeyPath="BthPS3PSM.pdb" Type="4"/>
+    <ROW Component="BthPS3PSM.pdb_1" ComponentId="{CAE43290-ADD6-40FA-B814-7AEAD5F79C55}" Directory_="AI_Bin32_Dir" Attributes="0" Condition="NOT VersionNT64" KeyPath="BthPS3PSM.pdb_1" Type="4"/>
     <ROW Component="BthPS3PSM.sys_1" ComponentId="{6C54437B-3C13-4E96-A4B5-D7CE09BB1EE1}" Directory_="AI_Bin32_Dir" Attributes="0" Condition="NOT VersionNT64" KeyPath="BthPS3PSM.sys_1"/>
-    <ROW Component="BthPS3PSM_Filter.inf" ComponentId="{1A687324-E3C5-4BED-AB27-ADF6706C14CC}" Directory_="APPDIR" Attributes="256" Condition="VersionNT64" KeyPath="BthPS3PSM_Filter.inf"/>
     <ROW Component="BthPS3PSM_Filter.inf_1" ComponentId="{69B1B0D9-5D9F-43E3-AA71-699A264AAA3F}" Directory_="AI_Bin32_Dir" Attributes="0" Condition="NOT VersionNT64" KeyPath="BthPS3PSM_Filter.inf_1"/>
+    <ROW Component="BthPS3PSM_Filter.inf_2" ComponentId="{DD2ADDCC-2047-41ED-9A2D-F8E901C46BD4}" Directory_="APPDIR" Attributes="256" Condition="VersionNT64" KeyPath="BthPS3PSM_Filter.inf"/>
     <ROW Component="BthPS3Util.exe" ComponentId="{D1877B55-6A40-4780-BA21-35C6E42401D9}" Directory_="APPDIR" Attributes="256" Condition="VersionNT64" KeyPath="BthPS3Util.exe"/>
     <ROW Component="BthPS3Util.exe_1" ComponentId="{7BD3457E-2156-4545-994F-52EEF62B2514}" Directory_="AI_Bin32_Dir" Attributes="0" Condition="NOT VersionNT64" KeyPath="BthPS3Util.exe_1"/>
     <ROW Component="ProductInformation" ComponentId="{663B9183-2E77-43D4-8C3E-E1230861D139}" Directory_="APPDIR" Attributes="4" KeyPath="Version"/>
-    <ROW Component="WdfCoinstaller01011.dll" ComponentId="{171266A9-B147-4769-9DC6-4B8426A105F3}" Directory_="APPDIR" Attributes="256" Condition="VersionNT64" KeyPath="WdfCoinstaller01011.dll"/>
-    <ROW Component="WdfCoinstaller01011.dll_1" ComponentId="{C95739F2-C06B-4733-A347-C37EFB49D935}" Directory_="AI_Bin32_Dir" Attributes="0" Condition="NOT VersionNT64" KeyPath="WdfCoinstaller01011.dll_1"/>
-    <ROW Component="bthps3.cat" ComponentId="{33F20229-23E4-4CE9-82AF-25AF7E3FA691}" Directory_="APPDIR" Attributes="256" Condition="VersionNT64" KeyPath="bthps3.cat"/>
-    <ROW Component="bthps3.cat_1" ComponentId="{E592A5FF-019B-4512-8668-70F4EDEB1BC7}" Directory_="AI_Bin32_Dir" Attributes="0" Condition="NOT VersionNT64" KeyPath="bthps3.cat_1"/>
-    <ROW Component="bthps3psm.cat" ComponentId="{3D4E75D7-A7EA-457C-9D88-A2F6052A8300}" Directory_="APPDIR" Attributes="256" Condition="VersionNT64" KeyPath="bthps3psm.cat"/>
     <ROW Component="bthps3psm.cat_1" ComponentId="{4833E196-146F-4320-A9AF-AFB0763F6B09}" Directory_="AI_Bin32_Dir" Attributes="0" Condition="NOT VersionNT64" KeyPath="bthps3psm.cat_1"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiFeatsComponent">
     <ROW Feature="AI32BitFiles" Title="32-bit" Description="32-bit Executables and Libraries" Display="5" Level="1" Directory_="APPDIR" Attributes="0"/>
     <ROW Feature="AI64BitFiles" Title="64-bit" Description="64-bit Executables and Libraries" Display="3" Level="1" Directory_="APPDIR" Attributes="0"/>
+    <ROW Feature="BthPS3" Feature_Parent="MainFeature" Title="BthPS3" Description="Description" Display="1" Level="1" Directory_="APPDIR" Attributes="0"/>
+    <ROW Feature="BthPS3PSM_Filter" Feature_Parent="AI64BitFiles" Title="BthPS3PSM_Filter" Description="Description" Display="1" Level="1" Directory_="APPDIR" Attributes="0"/>
+    <ROW Feature="BthPS3_1" Feature_Parent="MainFeature" Title="BthPS3" Description="Description" Display="1" Level="1" Directory_="APPDIR" Attributes="0"/>
     <ROW Feature="MainFeature" Title="MainFeature" Description="Description" Display="1" Level="1" Directory_="APPDIR" Attributes="0"/>
     <ATTRIBUTE name="CurrentFeature" value="MainFeature"/>
   </COMPONENT>
@@ -71,29 +71,29 @@
     <ROW File="BthPS3.pdb" Component_="BthPS3.pdb" FileName="BthPS3.pdb" Attributes="0" SourcePath="..\bin\x64\BthPS3.pdb" SelfReg="false"/>
     <ROW File="BthPS3PSM.pdb" Component_="BthPS3PSM.pdb" FileName="BTHPS3~1.PDB|BthPS3PSM.pdb" Attributes="0" SourcePath="..\bin\x64\BthPS3PSM.pdb" SelfReg="false"/>
     <ROW File="BthPS3Util.exe" Component_="BthPS3Util.exe" FileName="BTHPS3~1.EXE|BthPS3Util.exe" Attributes="0" SourcePath="..\bin\x64\BthPS3Util.exe" SelfReg="false" DigSign="true"/>
-    <ROW File="bthps3.cat" Component_="bthps3.cat" FileName="bthps3.cat" Attributes="0" SourcePath="..\bin\x64\BthPS3\bthps3.cat" SelfReg="false"/>
-    <ROW File="BthPS3.inf" Component_="BthPS3.inf" FileName="BthPS3.inf" Attributes="0" SourcePath="..\bin\x64\BthPS3\BthPS3.inf" SelfReg="false"/>
-    <ROW File="BthPS3.sys" Component_="BthPS3.sys" FileName="BthPS3.sys" Attributes="0" SourcePath="..\bin\x64\BthPS3\BthPS3.sys" SelfReg="false"/>
-    <ROW File="WdfCoinstaller01011.dll" Component_="WdfCoinstaller01011.dll" FileName="WDFCOI~1.DLL|WdfCoinstaller01011.dll" Attributes="0" SourcePath="..\bin\x64\BthPS3\WdfCoinstaller01011.dll" SelfReg="false"/>
-    <ROW File="bthps3psm.cat" Component_="bthps3psm.cat" FileName="BTHPS3~1.CAT|bthps3psm.cat" Attributes="0" SourcePath="..\bin\x64\BthPS3PSM\bthps3psm.cat" SelfReg="false"/>
-    <ROW File="BthPS3PSM.sys" Component_="BthPS3PSM.sys" FileName="BTHPS3~1.SYS|BthPS3PSM.sys" Attributes="0" SourcePath="..\bin\x64\BthPS3PSM\BthPS3PSM.sys" SelfReg="false"/>
-    <ROW File="BthPS3PSM_Filter.inf" Component_="BthPS3PSM_Filter.inf" FileName="BTHPS3~1.INF|BthPS3PSM_Filter.inf" Attributes="0" SourcePath="..\bin\x64\BthPS3PSM\BthPS3PSM_Filter.inf" SelfReg="false"/>
+    <ROW File="bthps3psm.cat" Component_="BthPS3PSM_Filter.inf_2" FileName="BTHPS3~1.CAT|bthps3psm.cat" Attributes="0" SourcePath="..\bin\x64\BthPS3PSM\bthps3psm.cat" SelfReg="false"/>
+    <ROW File="BthPS3PSM.sys" Component_="BthPS3PSM_Filter.inf_2" FileName="BTHPS3~1.SYS|BthPS3PSM.sys" Attributes="0" SourcePath="..\bin\x64\BthPS3PSM\BthPS3PSM.sys" SelfReg="false"/>
+    <ROW File="BthPS3PSM_Filter.inf" Component_="BthPS3PSM_Filter.inf_2" FileName="BTHPS3~1.INF|BthPS3PSM_Filter.inf" Attributes="0" SourcePath="..\bin\x64\BthPS3PSM\BthPS3PSM_Filter.inf" SelfReg="false"/>
     <ROW File="BthPS3.pdb_1" Component_="BthPS3.pdb_1" FileName="BthPS3.pdb" Attributes="0" SourcePath="..\bin\x86\BthPS3.pdb" SelfReg="false"/>
     <ROW File="BthPS3PSM.pdb_1" Component_="BthPS3PSM.pdb_1" FileName="BTHPS3~1.PDB|BthPS3PSM.pdb" Attributes="0" SourcePath="..\bin\x86\BthPS3PSM.pdb" SelfReg="false"/>
     <ROW File="BthPS3Util.exe_1" Component_="BthPS3Util.exe_1" FileName="BTHPS3~1.EXE|BthPS3Util.exe" Attributes="0" SourcePath="..\bin\x86\BthPS3Util.exe" SelfReg="false" DigSign="true"/>
-    <ROW File="bthps3.cat_1" Component_="bthps3.cat_1" FileName="bthps3.cat" Attributes="0" SourcePath="..\bin\x86\BthPS3\bthps3.cat" SelfReg="false"/>
-    <ROW File="BthPS3.inf_1" Component_="BthPS3.inf_1" FileName="BthPS3.inf" Attributes="0" SourcePath="..\bin\x86\BthPS3\BthPS3.inf" SelfReg="false"/>
-    <ROW File="BthPS3.sys_1" Component_="BthPS3.sys_1" FileName="BthPS3.sys" Attributes="0" SourcePath="..\bin\x86\BthPS3\BthPS3.sys" SelfReg="false"/>
-    <ROW File="WdfCoinstaller01011.dll_1" Component_="WdfCoinstaller01011.dll_1" FileName="WDFCOI~1.DLL|WdfCoinstaller01011.dll" Attributes="0" SourcePath="..\bin\x86\BthPS3\WdfCoinstaller01011.dll" SelfReg="false"/>
     <ROW File="bthps3psm.cat_1" Component_="bthps3psm.cat_1" FileName="BTHPS3~1.CAT|bthps3psm.cat" Attributes="0" SourcePath="..\bin\x86\BthPS3PSM\bthps3psm.cat" SelfReg="false"/>
     <ROW File="BthPS3PSM.sys_1" Component_="BthPS3PSM.sys_1" FileName="BTHPS3~1.SYS|BthPS3PSM.sys" Attributes="0" SourcePath="..\bin\x86\BthPS3PSM\BthPS3PSM.sys" SelfReg="false"/>
     <ROW File="BthPS3PSM_Filter.inf_1" Component_="BthPS3PSM_Filter.inf_1" FileName="BTHPS3~1.INF|BthPS3PSM_Filter.inf" Attributes="0" SourcePath="..\bin\x86\BthPS3PSM\BthPS3PSM_Filter.inf" SelfReg="false"/>
+    <ROW File="BthPS3.inf_2" Component_="BthPS3.inf" FileName="BthPS3.inf" Attributes="0" SourcePath="..\bin\x64\BthPS3\BthPS3.inf" SelfReg="false"/>
+    <ROW File="BthPS3.sys_2" Component_="BthPS3.inf" FileName="BthPS3.sys" Attributes="0" SourcePath="..\bin\x64\BthPS3\BthPS3.sys" SelfReg="false"/>
+    <ROW File="WdfCoInstaller01011.dll_2" Component_="BthPS3.inf" FileName="WDFCOI~1.DLL|WdfCoInstaller01011.dll" Attributes="0" SourcePath="..\bin\x64\BthPS3\WdfCoinstaller01011.dll" SelfReg="false"/>
+    <ROW File="BthPS3.cat_2" Component_="BthPS3.inf" FileName="BthPS3.cat" Attributes="0" SourcePath="..\bin\x64\BthPS3\bthps3.cat" SelfReg="false"/>
+    <ROW File="BthPS3.inf" Component_="BthPS3.inf_4" FileName="BthPS3.inf" Attributes="0" SourcePath="..\bin\x86\BthPS3\BthPS3.inf" SelfReg="false"/>
+    <ROW File="BthPS3.sys" Component_="BthPS3.inf_4" FileName="BthPS3.sys" Attributes="0" SourcePath="..\bin\x86\BthPS3\BthPS3.sys" SelfReg="false"/>
+    <ROW File="WdfCoInstaller01011.dll" Component_="BthPS3.inf_4" FileName="WDFCOI~1.DLL|WdfCoInstaller01011.dll" Attributes="0" SourcePath="..\bin\x86\BthPS3\WdfCoinstaller01011.dll" SelfReg="false"/>
+    <ROW File="BthPS3.cat" Component_="BthPS3.inf_4" FileName="BthPS3.cat" Attributes="0" SourcePath="..\bin\x86\BthPS3\bthps3.cat" SelfReg="false"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.BootstrOptComponent">
     <ROW BootstrOptKey="GlobalOptions" DownloadFolder="[AppDataFolder][|Manufacturer]\[|ProductName]\prerequisites" Options="2"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.BuildComponent">
-    <ROW BuildKey="DefaultBuild" BuildName="DefaultBuild" BuildOrder="1" BuildType="0" PackageFolder="Setup Files" Languages="en" InstallationType="4" CabsLocation="1" PackageType="1" FilesInsideExe="true" ExtractionFolder="[AppDataFolder][|Manufacturer]\[|ProductName] [|ProductVersion]\install" ExtUI="true" UseLargeSchema="true" MsiPackageType="AI_ALL"/>
+    <ROW BuildKey="DefaultBuild" BuildName="DefaultBuild" BuildOrder="1" BuildType="1" PackageFolder="Setup Files" Languages="en" InstallationType="4" CabsLocation="1" PackageType="1" FilesInsideExe="true" ExtractionFolder="[AppDataFolder][|Manufacturer]\[|ProductName] [|ProductVersion]\install" ExtUI="true" UseLargeSchema="true" MsiPackageType="AI_ALL"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.DictionaryComponent">
     <ROW Path="&lt;AI_DICTS&gt;ui.ail"/>
@@ -134,6 +134,9 @@
   <COMPONENT cid="caphyon.advinst.msicomp.MsiConditionComponent">
     <ROW Feature_="AI64BitFiles" Level="0" Condition="NOT VersionNT64"/>
     <ROW Feature_="AI32BitFiles" Level="0" Condition="VersionNT64"/>
+    <ROW Feature_="BthPS3" Level="0" Condition="((VersionNT &lt; 500) OR (NOT VersionNT))"/>
+    <ROW Feature_="BthPS3PSM_Filter" Level="0" Condition="((VersionNT &lt; 500) OR (NOT VersionNT))"/>
+    <ROW Feature_="BthPS3_1" Level="0" Condition="((VersionNT &lt; 500) OR (NOT VersionNT))"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiControlComponent">
     <ROW Dialog_="LicenseAgreementDlg" Control="AgreementText" Type="ScrollableText" X="45" Y="118" Width="360" Height="166" Attributes="3" Property="EulaRead" Text="BthPS3_EULA.rtf" Order="800" MsiKey="LicenseAgreementDlg#AgreementText"/>
@@ -218,23 +221,15 @@
     <ROW Feature_="AI64BitFiles" Component_="BthPS3.pdb"/>
     <ROW Feature_="AI64BitFiles" Component_="BthPS3PSM.pdb"/>
     <ROW Feature_="AI64BitFiles" Component_="BthPS3Util.exe"/>
-    <ROW Feature_="AI64BitFiles" Component_="bthps3.cat"/>
-    <ROW Feature_="AI64BitFiles" Component_="BthPS3.inf"/>
-    <ROW Feature_="AI64BitFiles" Component_="BthPS3.sys"/>
-    <ROW Feature_="AI64BitFiles" Component_="WdfCoinstaller01011.dll"/>
-    <ROW Feature_="AI64BitFiles" Component_="bthps3psm.cat"/>
-    <ROW Feature_="AI64BitFiles" Component_="BthPS3PSM.sys"/>
-    <ROW Feature_="AI64BitFiles" Component_="BthPS3PSM_Filter.inf"/>
     <ROW Feature_="AI32BitFiles" Component_="BthPS3.pdb_1"/>
     <ROW Feature_="AI32BitFiles" Component_="BthPS3PSM.pdb_1"/>
     <ROW Feature_="AI32BitFiles" Component_="BthPS3Util.exe_1"/>
-    <ROW Feature_="AI32BitFiles" Component_="bthps3.cat_1"/>
-    <ROW Feature_="AI32BitFiles" Component_="BthPS3.inf_1"/>
-    <ROW Feature_="AI32BitFiles" Component_="BthPS3.sys_1"/>
-    <ROW Feature_="AI32BitFiles" Component_="WdfCoinstaller01011.dll_1"/>
+    <ROW Feature_="BthPS3_1" Component_="BthPS3.inf_4"/>
     <ROW Feature_="AI32BitFiles" Component_="bthps3psm.cat_1"/>
     <ROW Feature_="AI32BitFiles" Component_="BthPS3PSM.sys_1"/>
     <ROW Feature_="AI32BitFiles" Component_="BthPS3PSM_Filter.inf_1"/>
+    <ROW Feature_="BthPS3" Component_="BthPS3.inf"/>
+    <ROW Feature_="BthPS3PSM_Filter" Component_="BthPS3PSM_Filter.inf_2"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiInstExSeqComponent">
     <ROW Action="AI_DOWNGRADE" Condition="AI_NEWERPRODUCTFOUND AND (UILevel &lt;&gt; 5)" Sequence="210"/>

@@ -23,10 +23,10 @@
     <ROW Property="ARPSYSTEMCOMPONENT" Value="1"/>
     <ROW Property="ARPURLINFOABOUT" Value="https://discord.vigem.org/"/>
     <ROW Property="Manufacturer" Value="Nefarius Software Solutions e.U."/>
-    <ROW Property="ProductCode" Value="1033:{A952A901-9B47-4D2B-9D75-E26792FA4C70} " Type="16"/>
+    <ROW Property="ProductCode" Value="1033:{D43EC6E8-67F1-4AF4-BDBD-F994DEED6613} " Type="16"/>
     <ROW Property="ProductLanguage" Value="1033"/>
     <ROW Property="ProductName" Value="BthPS3 Drivers"/>
-    <ROW Property="ProductVersion" Value="1.0.1" Type="32"/>
+    <ROW Property="ProductVersion" Value="1.0.2" Type="32"/>
     <ROW Property="SecureCustomProperties" Value="OLDPRODUCTS;AI_NEWERPRODUCTFOUND;AI_SETUPEXEPATH;SETUPEXEDIR"/>
     <ROW Property="UpgradeCode" Value="{921AB075-8DC5-40EC-9F98-951D3792FF1E}"/>
     <ROW Property="WindowsType9X" MultiBuildValue="DefaultBuild:Windows 9x/ME" ValueLocId="-"/>
@@ -53,7 +53,7 @@
     <ROW Directory="TARGETDIR" DefaultDir="SourceDir"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiCompsComponent">
-    <ROW Component="AI_CustomARPName" ComponentId="{B5C49DFE-CE46-4C35-A2C8-023AA216C76A}" Directory_="APPDIR" Attributes="260" KeyPath="DisplayName" Options="1"/>
+    <ROW Component="AI_CustomARPName" ComponentId="{0390DA18-B2BE-432E-AF4C-045993A5C86D}" Directory_="APPDIR" Attributes="260" KeyPath="DisplayName" Options="1"/>
     <ROW Component="AI_DisableModify" ComponentId="{040FA693-9DDA-4F29-A3EA-1612BBB73862}" Directory_="APPDIR" Attributes="260" KeyPath="NoModify" Options="1"/>
     <ROW Component="AI_ExePath" ComponentId="{AAC0929B-29FE-4EF8-9648-B291695679FE}" Directory_="APPDIR" Attributes="260" KeyPath="AI_ExePath"/>
     <ROW Component="APPDIR" ComponentId="{2223AC10-1ED8-4FDF-A2EA-84201BE7DCCF}" Directory_="APPDIR" Attributes="0"/>
@@ -267,11 +267,13 @@
     <ROW Action="AI_SETPROGRAMFILES64" Type="51" Source="AI_ProgramFiles" Target="[ProgramFiles64Folder]"/>
     <ROW Action="AI_SHOW_LOG" Type="65" Source="aicustact.dll" Target="LaunchLogFile" WithoutSeq="true"/>
     <ROW Action="AI_STORE_LOCATION" Type="51" Source="ARPINSTALLLOCATION" Target="[APPDIR]"/>
+    <ROW Action="Disable_Filter_x64" Type="1042" Source="BthPS3Util.exe" Target="--disable-filter"/>
     <ROW Action="Disable_Service_x64" Type="1042" Source="BthPS3Util.exe" Target="--disable-service"/>
     <ROW Action="Enable_Filter_x64" Type="1554" Source="BthPS3Util.exe" Target="--enable-filter"/>
     <ROW Action="Enable_Service_x64" Type="1554" Source="BthPS3Util.exe" Target="--enable-service"/>
     <ROW Action="Install_BthPS3PSM_x64" Type="1554" Source="BthPS3Util.exe" Target="--install-driver --inf-path &quot;[APPDIR]\BthPS3PSM\BthPS3PSM_Filter.inf&quot; --force"/>
     <ROW Action="Install_BthPS3_x64" Type="1554" Source="BthPS3Util.exe" Target="--install-driver --inf-path &quot;[APPDIR]\BthPS3\BthPS3.inf&quot; --force"/>
+    <ROW Action="Restart_Host_x64" Type="1554" Source="BthPS3Util.exe" Target="--restart-host-device"/>
     <ROW Action="SET_APPDIR" Type="307" Source="APPDIR" Target="[ProgramFilesFolder][Manufacturer]\[ProductName]" MultiBuildTarget="DefaultBuild:[AI_ProgramFiles]Nefarius Software Solutions\[ProductName]"/>
     <ROW Action="SET_SHORTCUTDIR" Type="307" Source="SHORTCUTDIR" Target="[ProgramMenuFolder][ProductName]"/>
     <ROW Action="SET_TARGETDIR_TO_APPDIR" Type="51" Source="TARGETDIR" Target="[APPDIR]"/>
@@ -327,6 +329,8 @@
     <ROW Action="Install_BthPS3_x64" Condition="( NOT Installed ) AND ( VersionNT64 )" Sequence="6403"/>
     <ROW Action="Install_BthPS3PSM_x64" Condition="( NOT Installed ) AND ( VersionNT64 )" Sequence="6404"/>
     <ROW Action="Enable_Filter_x64" Condition="( NOT Installed ) AND ( VersionNT64 )" Sequence="6405"/>
+    <ROW Action="Disable_Filter_x64" Condition="( Installed AND ( REMOVE = &quot;ALL&quot; OR AI_INSTALL_MODE = &quot;Remove&quot; ) ) AND ( VersionNT64 )" Sequence="6407"/>
+    <ROW Action="Restart_Host_x64" Condition="( NOT Installed ) AND ( VersionNT64 )" Sequence="6406"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiInstallUISequenceComponent">
     <ROW Action="AI_RESTORE_LOCATION" Condition="APPDIR=&quot;&quot;" Sequence="747"/>

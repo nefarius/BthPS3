@@ -5,61 +5,61 @@
 #include <SetupAPI.h>
 #include <tchar.h>
 
-bool devcon::create(std::wstring className, const GUID *classGuid, std::wstring hardwareId)
+bool devcon::create(std::wstring className, const GUID* classGuid, std::wstring hardwareId)
 {
-    auto deviceInfoSet = SetupDiCreateDeviceInfoList(classGuid, nullptr);
+	auto deviceInfoSet = SetupDiCreateDeviceInfoList(classGuid, nullptr);
 
-    if (INVALID_HANDLE_VALUE == deviceInfoSet)
-        return false;
+	if (INVALID_HANDLE_VALUE == deviceInfoSet)
+		return false;
 
-    SP_DEVINFO_DATA deviceInfoData;
-    deviceInfoData.cbSize = sizeof(deviceInfoData);
+	SP_DEVINFO_DATA deviceInfoData;
+	deviceInfoData.cbSize = sizeof(deviceInfoData);
 
-    auto cdiRet = SetupDiCreateDeviceInfo(
-        deviceInfoSet,
-        className.c_str(),
-        classGuid,
-        nullptr,
-        nullptr,
-        DICD_GENERATE_ID,
-        &deviceInfoData
-    );
+	auto cdiRet = SetupDiCreateDeviceInfo(
+		deviceInfoSet,
+		className.c_str(),
+		classGuid,
+		nullptr,
+		nullptr,
+		DICD_GENERATE_ID,
+		&deviceInfoData
+	);
 
-    if (!cdiRet)
-    {
-        SetupDiDestroyDeviceInfoList(deviceInfoSet);
-        return false;
-    }
+	if (!cdiRet)
+	{
+		SetupDiDestroyDeviceInfoList(deviceInfoSet);
+		return false;
+	}
 
-    auto sdrpRet = SetupDiSetDeviceRegistryProperty(
-        deviceInfoSet,
-        &deviceInfoData,
-        SPDRP_HARDWAREID,
-        (const PBYTE)hardwareId.c_str(),
-        (DWORD)(hardwareId.size() * sizeof(WCHAR))
-    );
+	auto sdrpRet = SetupDiSetDeviceRegistryProperty(
+		deviceInfoSet,
+		&deviceInfoData,
+		SPDRP_HARDWAREID,
+		(const PBYTE)hardwareId.c_str(),
+		(DWORD)(hardwareId.size() * sizeof(WCHAR))
+	);
 
-    if (!sdrpRet)
-    {
-        SetupDiDestroyDeviceInfoList(deviceInfoSet);
-        return false;
-    }
+	if (!sdrpRet)
+	{
+		SetupDiDestroyDeviceInfoList(deviceInfoSet);
+		return false;
+	}
 
-    auto cciRet = SetupDiCallClassInstaller(
-        DIF_REGISTERDEVICE,
-        deviceInfoSet,
-        &deviceInfoData
-    );
+	auto cciRet = SetupDiCallClassInstaller(
+		DIF_REGISTERDEVICE,
+		deviceInfoSet,
+		&deviceInfoData
+	);
 
-    if (!cciRet)
-    {
-        SetupDiDestroyDeviceInfoList(deviceInfoSet);
-        return false;
-    }
+	if (!cciRet)
+	{
+		SetupDiDestroyDeviceInfoList(deviceInfoSet);
+		return false;
+	}
 
-    SetupDiDestroyDeviceInfoList(deviceInfoSet);
+	SetupDiDestroyDeviceInfoList(deviceInfoSet);
 
-    return true;
+	return true;
 }
 
 bool devcon::enable_disable_by_compatible_id(std::wstring compatibleId, bool state)
@@ -70,7 +70,7 @@ bool devcon::enable_disable_by_compatible_id(std::wstring compatibleId, bool sta
 	HDEVINFO hDevInfo;
 	SP_DEVINFO_DATA spDevInfoData;
 
-	hDevInfo = SetupDiGetClassDevs(NULL, 0, NULL, DIGCF_ALLCLASSES | DIGCF_PRESENT);
+	hDevInfo = SetupDiGetClassDevs(nullptr, nullptr, nullptr, DIGCF_ALLCLASSES | DIGCF_PRESENT);
 	if (hDevInfo == INVALID_HANDLE_VALUE)
 	{
 		return succeeded;
@@ -80,27 +80,30 @@ bool devcon::enable_disable_by_compatible_id(std::wstring compatibleId, bool sta
 	for (i = 0; SetupDiEnumDeviceInfo(hDevInfo, i, &spDevInfoData); i++)
 	{
 		DWORD DataT;
-		LPTSTR p, buffer = NULL;
+		LPTSTR p, buffer = nullptr;
 		DWORD buffersize = 0;
 
 		// get all devices info
 		while (!SetupDiGetDeviceRegistryProperty(hDevInfo,
-			&spDevInfoData,
-			SPDRP_COMPATIBLEIDS,
-			&DataT,
-			(PBYTE)buffer,
-			buffersize,
-			&buffersize))
+		                                         &spDevInfoData,
+		                                         SPDRP_COMPATIBLEIDS,
+		                                         &DataT,
+		                                         (PBYTE)buffer,
+		                                         buffersize,
+		                                         &buffersize))
 		{
-			if (GetLastError() == ERROR_INVALID_DATA) {
+			if (GetLastError() == ERROR_INVALID_DATA)
+			{
 				break;
 			}
-			else if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+			if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+			{
 				if (buffer)
 					LocalFree(buffer);
 				buffer = (wchar_t*)LocalAlloc(LPTR, buffersize);
 			}
-			else {
+			else
+			{
 				goto cleanup_DeviceInfo;
 			}
 		}
@@ -109,8 +112,10 @@ bool devcon::enable_disable_by_compatible_id(std::wstring compatibleId, bool sta
 			continue;
 
 		//find device with CompatibleId
-		for (p = buffer; *p && (p < &buffer[buffersize]); p += lstrlen(p) + sizeof(TCHAR)) {
-			if (!_tcscmp(compatibleId.c_str(), p)) {
+		for (p = buffer; *p && (p < &buffer[buffersize]); p += lstrlen(p) + sizeof(TCHAR))
+		{
+			if (!_tcscmp(compatibleId.c_str(), p))
+			{
 				found = true;
 				break;
 			}
@@ -130,12 +135,15 @@ bool devcon::enable_disable_by_compatible_id(std::wstring compatibleId, bool sta
 			params.StateChange = (state) ? DICS_ENABLE : DICS_DISABLE;
 
 			// setup proper parameters            
-			if (!SetupDiSetClassInstallParams(hDevInfo, &spDevInfoData, &params.ClassInstallHeader, sizeof(params))) {
+			if (!SetupDiSetClassInstallParams(hDevInfo, &spDevInfoData, &params.ClassInstallHeader, sizeof(params)))
+			{
 				err = GetLastError();
 			}
-			else {
+			else
+			{
 				// use parameters
-				if (!SetupDiCallClassInstaller(DIF_PROPERTYCHANGE, hDevInfo, &spDevInfoData)) {
+				if (!SetupDiCallClassInstaller(DIF_PROPERTYCHANGE, hDevInfo, &spDevInfoData))
+				{
 					err = GetLastError(); // error here  
 				}
 				else { succeeded = true; }
@@ -143,7 +151,6 @@ bool devcon::enable_disable_by_compatible_id(std::wstring compatibleId, bool sta
 
 			break;
 		}
-
 	}
 
 cleanup_DeviceInfo:

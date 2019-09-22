@@ -8,6 +8,7 @@ using namespace colorwin;
 
 
 #define LOWER_FILTERS L"LowerFilters"
+#define BTH_COMPAT_ID L"USB\\Class_E0&SubClass_01&Prot_01"
 
 
 int main(int, char* argv[])
@@ -466,6 +467,29 @@ int main(int, char* argv[])
 
 #pragma region Misc. actions
 
+	if (cmdl[{ "--restart-host-device" }])
+	{
+		if (!devcon::enable_disable_by_compatible_id(BTH_COMPAT_ID, false))
+		{
+			std::cout << color(red) <<
+				"Failed to disable Bluetooth host device, error: "
+				<< winapi::GetLastErrorStdStr() << std::endl;
+			return GetLastError();
+		}
+
+		if (!devcon::enable_disable_by_compatible_id(BTH_COMPAT_ID, true))
+		{
+			std::cout << color(red) <<
+				"Failed to enable Bluetooth host device, error: "
+				<< winapi::GetLastErrorStdStr() << std::endl;
+			return GetLastError();
+		}
+
+		std::cout << color(green) << "Bluetooth host device restarted successfully" << std::endl;
+
+		return EXIT_SUCCESS;
+	}
+
     if (cmdl[{ "-v", "--version" }])
     {
         std::cout << "BthPS3Util version " <<
@@ -497,6 +521,7 @@ int main(int, char* argv[])
     std::cout << "      --device-index          Zero-based index of affected device (optional)" << std::endl;
     std::cout << "    --get-psm-patch           Reports the current state of the PSM patch" << std::endl;
     std::cout << "      --device-index          Zero-based index of affected device (optional)" << std::endl;
+	std::cout << "    --restart-host-device     Disable and re-enable Bluetooth host device" << std::endl;
     std::cout << "    -v, --version             Display version of this utility" << std::endl;
     std::cout << std::endl;
 

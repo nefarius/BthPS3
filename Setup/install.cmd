@@ -6,9 +6,9 @@ pushd "%MYDIR%"
 
 BthPS3Util.exe --enable-service
 
-BthPS3Util.exe --install-driver --inf-path ".\BthPS3\BthPS3.inf" --force
+BthPS3Util.exe --install-driver --inf-path ".\BthPS3.inf" --force
 
-BthPS3Util.exe --install-driver --inf-path ".\BthPS3PSM\BthPS3PSM_Filter.inf" --force
+BthPS3Util.exe --install-driver --inf-path ".\BthPS3PSM_Filter.inf" --force
 
 BthPS3Util.exe --enable-filter
 
@@ -16,5 +16,3 @@ BthPS3Util.exe --restart-host-device
 
 popd
 endlocal
-
-timeout /t 5 /nobreak

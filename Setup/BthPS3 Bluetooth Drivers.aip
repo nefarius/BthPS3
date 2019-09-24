@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<DOCUMENT Type="Advanced Installer" CreateVersion="16.3" version="16.3" Modules="professional" RootPath="." Language="en" Id="{F1B9D4F1-8A31-499E-A5F0-4E4A5F6F88EF}">
+  <COMPONENT cid="caphyon.advinst.msicomp.ProjectOptionsComponent">
+    <ROW Name="HiddenItems" Value="AppXProductDetailsComponent;AppXDependenciesComponent;AppXAppDetailsComponent;AppXVisualAssetsComponent;AppXCapabilitiesComponent;AppXAppDeclarationsComponent;AppXUriRulesComponent;MsiJavaComponent;MsiDriverPackagesComponent;UserAccountsComponent;ScheduledTasksComponent;SqlConnectionComponent;AutorunComponent;FirewallExceptionComponent;GameUxComponent;MsiDirectEditorComponent;SharePointSlnComponent;SilverlightSlnComponent;MultipleInstancesComponent;SccmComponent;ActSyncAppComponent;FixupComponent"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiPropsComponent">
+    <ROW Property="AI_BITMAP_DISPLAY_MODE" Value="0"/>
+    <ROW Property="AI_FINDEXE_TITLE" Value="Select the installation package for [|ProductName]" ValueLocId="AI.Property.FindExeTitle"/>
+    <ROW Property="AI_RUN_AS_ADMIN" Value="0"/>
+    <ROW Property="ALLUSERS" Value="1"/>
+    <ROW Property="ARPCOMMENTS" Value="Windows kernel-mode Bluetooth Profile &amp; Filter Drivers for PS3 peripherals." ValueLocId="*"/>
+    <ROW Property="ARPNOMODIFY" MultiBuildValue="DefaultBuild:1"/>
+    <ROW Property="ARPNOREPAIR" Value="1" MultiBuildValue="DefaultBuild:1"/>
+    <ROW Property="Manufacturer" Value="Nefarius Software Solutions e.U."/>
+    <ROW Property="ProductCode" Value="1033:{74208127-C127-42EC-B1F4-A4A96234CC68} " Type="16"/>
+    <ROW Property="ProductLanguage" Value="1033"/>
+    <ROW Property="ProductName" Value="BthPS3 Bluetooth Drivers"/>
+    <ROW Property="ProductVersion" Value="1.0.0" Type="32"/>
+    <ROW Property="SecureCustomProperties" Value="OLDPRODUCTS;AI_NEWERPRODUCTFOUND;AI_SETUPEXEPATH;SETUPEXEDIR"/>
+    <ROW Property="UpgradeCode" Value="{79802617-4FBA-4442-B962-596E584A6803}"/>
+    <ROW Property="WindowsType9X" MultiBuildValue="DefaultBuild:Windows 9x/ME" ValueLocId="-"/>
+    <ROW Property="WindowsType9XDisplay" MultiBuildValue="DefaultBuild:Windows 9x/ME" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNT" MultiBuildValue="DefaultBuild:Windows XP SP3 x86, Windows Server 2003 SP2 x86, Windows Vista x86, Windows Server 2008 x86, Windows 7 x86, Windows 8 x86, Windows 8.1 x86" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNT40" MultiBuildValue="DefaultBuild:Windows NT 4.0" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNT40Display" MultiBuildValue="DefaultBuild:Windows NT 4.0" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNT50" MultiBuildValue="DefaultBuild:Windows 2000" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNT50Display" MultiBuildValue="DefaultBuild:Windows 2000" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNT5X" MultiBuildValue="DefaultBuild:Windows XP/2003 RTM, Windows XP/2003 SP1, Windows XP SP2 x86" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNT5XDisplay" MultiBuildValue="DefaultBuild:Windows XP/2003 RTM, Windows XP/2003 SP1, Windows XP SP2 x86" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNT64" MultiBuildValue="DefaultBuild:Windows XP SP2 x64, Windows Server 2003 SP2 x64, Windows Vista x64, Windows Server 2008 x64, Windows 7 x64, Windows Server 2008 R2 x64, Windows 8 x64, Windows Server 2012 x64, Windows 8.1 x64, Windows Server 2012 R2 x64" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNT64Display" MultiBuildValue="DefaultBuild:Windows XP SP2 x64, Windows Server 2003 SP2 x64, Windows Vista x64, Windows Server 2008 x64, Windows 7 x64, Windows Server 2008 R2 x64, Windows 8 x64, Windows Server 2012 x64, Windows 8.1 x64, Windows Server 2012 R2 x64" ValueLocId="-"/>
+    <ROW Property="WindowsTypeNTDisplay" MultiBuildValue="DefaultBuild:Windows XP SP3 x86, Windows Server 2003 SP2 x86, Windows Vista x86, Windows Server 2008 x86, Windows 7 x86, Windows 8 x86, Windows 8.1 x86" ValueLocId="-"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiDirsComponent">
+    <ROW Directory="AI_Bin32_Dir" Directory_Parent="APPDIR" DefaultDir="32-bit"/>
+    <ROW Directory="APPDIR" Directory_Parent="TARGETDIR" DefaultDir="APPDIR:." IsPseudoRoot="1"/>
+    <ROW Directory="SHORTCUTDIR" Directory_Parent="TARGETDIR" DefaultDir="SHORTC~1|SHORTCUTDIR" IsPseudoRoot="1"/>
+    <ROW Directory="TARGETDIR" DefaultDir="SourceDir"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiCompsComponent">
+    <ROW Component="AI_ExePath" ComponentId="{2A906DE8-741A-4BC1-91C0-A28C2C75CF07}" Directory_="APPDIR" Attributes="4" KeyPath="AI_ExePath"/>
+    <ROW Component="APPDIR" ComponentId="{6AFD0042-02BB-4BF9-954C-22D16BA3F9C7}" Directory_="APPDIR" Attributes="0"/>
+    <ROW Component="BthPS3.inf" ComponentId="{EC9E5326-791F-4F65-B7A4-13A935D50A37}" Directory_="APPDIR" Attributes="256" Condition="VersionNT64" KeyPath="BthPS3.inf"/>
+    <ROW Component="BthPS3.inf_1" ComponentId="{5A70198E-02F5-405E-8E5A-424BBA04AFDE}" Directory_="AI_Bin32_Dir" Attributes="0" Condition="NOT VersionNT64" KeyPath="BthPS3.inf_1"/>
+    <ROW Component="BthPS3.pdb" ComponentId="{401FC562-BAE6-40D1-90C8-0F0A41C982A5}" Directory_="APPDIR" Attributes="256" Condition="VersionNT64" KeyPath="BthPS3.pdb" Type="4"/>
+    <ROW Component="BthPS3.pdb_1" ComponentId="{F92A98F4-33BC-4A4A-85ED-AD83BA6D1DFF}" Directory_="AI_Bin32_Dir" Attributes="0" Condition="NOT VersionNT64" KeyPath="BthPS3.pdb_1" Type="4"/>
+    <ROW Component="BthPS3.sys" ComponentId="{7C979820-9318-4236-8ACC-6C184D5FAC64}" Directory_="APPDIR" Attributes="256" Condition="VersionNT64" KeyPath="BthPS3.sys"/>
+    <ROW Component="BthPS3.sys_1" ComponentId="{6F630383-6AA2-4B49-A427-2056D784BD91}" Directory_="AI_Bin32_Dir" Attributes="0" Condition="NOT VersionNT64" KeyPath="BthPS3.sys_1"/>
+    <ROW Component="BthPS3PSM.pdb" ComponentId="{4A9065F0-18B0-45E7-8137-BB47958D9F52}" Directory_="APPDIR" Attributes="256" Condition="VersionNT64" KeyPath="BthPS3PSM.pdb" Type="4"/>
+    <ROW Component="BthPS3PSM.pdb_1" ComponentId="{514D5252-0701-4CB1-A534-B11601E9C2C3}" Directory_="AI_Bin32_Dir" Attributes="0" Condition="NOT VersionNT64" KeyPath="BthPS3PSM.pdb_1" Type="4"/>
+    <ROW Component="BthPS3PSM.sys" ComponentId="{E0EE493D-07AA-43C9-9C46-BE87C77C1BF3}" Directory_="APPDIR" Attributes="256" Condition="VersionNT64" KeyPath="BthPS3PSM.sys"/>
+    <ROW Component="BthPS3PSM.sys_1" ComponentId="{DB467AB7-EAA8-49CA-BF69-3B51A1A30D65}" Directory_="AI_Bin32_Dir" Attributes="0" Condition="NOT VersionNT64" KeyPath="BthPS3PSM.sys_1"/>
+    <ROW Component="BthPS3PSM_Filter.inf" ComponentId="{05CCCABC-23E1-4B00-9982-4BD3D30B6EEC}" Directory_="APPDIR" Attributes="256" Condition="VersionNT64" KeyPath="BthPS3PSM_Filter.inf"/>
+    <ROW Component="BthPS3PSM_Filter.inf_1" ComponentId="{8AFD2E8F-6E12-48D3-8D9A-8622A6FD70C8}" Directory_="AI_Bin32_Dir" Attributes="0" Condition="NOT VersionNT64" KeyPath="BthPS3PSM_Filter.inf_1"/>
+    <ROW Component="BthPS3Util.exe" ComponentId="{CF678403-1D87-4B85-AEE6-C9F525927E3A}" Directory_="APPDIR" Attributes="256" Condition="VersionNT64" KeyPath="BthPS3Util.exe"/>
+    <ROW Component="BthPS3Util.exe_1" ComponentId="{EAB53CB5-D10B-4668-9833-BFB58B739C02}" Directory_="AI_Bin32_Dir" Attributes="0" Condition="NOT VersionNT64" KeyPath="BthPS3Util.exe_1"/>
+    <ROW Component="BthPS3_EULA.rtf" ComponentId="{4820FE58-C16F-40AE-8984-F02ED7945169}" Directory_="APPDIR" Attributes="0" KeyPath="BthPS3_EULA.rtf"/>
+    <ROW Component="ProductInformation" ComponentId="{FB782BDF-5E98-43E8-BB41-4AD573493712}" Directory_="APPDIR" Attributes="4" KeyPath="Version"/>
+    <ROW Component="WdfCoinstaller01011.dll" ComponentId="{05F62201-C623-49B6-9539-7313ACA6F699}" Directory_="APPDIR" Attributes="256" Condition="VersionNT64" KeyPath="WdfCoinstaller01011.dll"/>
+    <ROW Component="WdfCoinstaller01011.dll_1" ComponentId="{0B936851-6ACB-43AF-947D-A11E7C89F53A}" Directory_="AI_Bin32_Dir" Attributes="0" Condition="NOT VersionNT64" KeyPath="WdfCoinstaller01011.dll_1"/>
+    <ROW Component="bthps3.cat" ComponentId="{750841CD-47A9-4513-974D-25F9F2122B64}" Directory_="APPDIR" Attributes="256" Condition="VersionNT64" KeyPath="bthps3.cat"/>
+    <ROW Component="bthps3.cat_1" ComponentId="{9F55D447-7C34-4DF7-B657-4B6A456401CB}" Directory_="AI_Bin32_Dir" Attributes="0" Condition="NOT VersionNT64" KeyPath="bthps3.cat_1"/>
+    <ROW Component="bthps3psm.cat" ComponentId="{521C7EE3-E07F-4080-9241-A81F2487D54C}" Directory_="APPDIR" Attributes="256" Condition="VersionNT64" KeyPath="bthps3psm.cat"/>
+    <ROW Component="bthps3psm.cat_1" ComponentId="{ECE66E26-4EA4-45CE-8A09-AD09C1755FF0}" Directory_="AI_Bin32_Dir" Attributes="0" Condition="NOT VersionNT64" KeyPath="bthps3psm.cat_1"/>
+    <ROW Component="install.cmd" ComponentId="{8BE7AB56-DC18-4CF1-8A2D-33FFF17B7BA8}" Directory_="APPDIR" Attributes="0" KeyPath="install.cmd"/>
+    <ROW Component="uninstall.cmd" ComponentId="{A9A02C76-52A1-4C17-B4C8-C8B027C539E1}" Directory_="APPDIR" Attributes="0" KeyPath="uninstall.cmd"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiFeatsComponent">
+    <ROW Feature="MainFeature" Title="MainFeature" Description="Description" Display="1" Level="1" Directory_="APPDIR" Attributes="0"/>
+    <ATTRIBUTE name="CurrentFeature" value="MainFeature"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiFilesComponent">
+    <ROW File="BthPS3.pdb" Component_="BthPS3.pdb" FileName="BthPS3.pdb" Attributes="0" SourcePath="..\bin\x64\BthPS3.pdb" SelfReg="false"/>
+    <ROW File="BthPS3PSM.pdb" Component_="BthPS3PSM.pdb" FileName="BTHPS3~1.PDB|BthPS3PSM.pdb" Attributes="0" SourcePath="..\bin\x64\BthPS3PSM.pdb" SelfReg="false"/>
+    <ROW File="BthPS3Util.exe" Component_="BthPS3Util.exe" FileName="BTHPS3~1.EXE|BthPS3Util.exe" Attributes="0" SourcePath="..\bin\x64\BthPS3Util.exe" SelfReg="false" DigSign="true"/>
+    <ROW File="bthps3.cat" Component_="bthps3.cat" FileName="bthps3.cat" Attributes="0" SourcePath="..\bin\x64\BthPS3\bthps3.cat" SelfReg="false"/>
+    <ROW File="BthPS3.inf" Component_="BthPS3.inf" FileName="BthPS3.inf" Attributes="0" SourcePath="..\bin\x64\BthPS3\BthPS3.inf" SelfReg="false"/>
+    <ROW File="BthPS3.sys" Component_="BthPS3.sys" FileName="BthPS3.sys" Attributes="0" SourcePath="..\bin\x64\BthPS3\BthPS3.sys" SelfReg="false"/>
+    <ROW File="WdfCoinstaller01011.dll" Component_="WdfCoinstaller01011.dll" FileName="WDFCOI~1.DLL|WdfCoinstaller01011.dll" Attributes="0" SourcePath="..\bin\x64\BthPS3PSM\WdfCoinstaller01011.dll" SelfReg="false"/>
+    <ROW File="bthps3psm.cat" Component_="bthps3psm.cat" FileName="BTHPS3~1.CAT|bthps3psm.cat" Attributes="0" SourcePath="..\bin\x64\BthPS3PSM\bthps3psm.cat" SelfReg="false"/>
+    <ROW File="BthPS3PSM.sys" Component_="BthPS3PSM.sys" FileName="BTHPS3~1.SYS|BthPS3PSM.sys" Attributes="0" SourcePath="..\bin\x64\BthPS3PSM\BthPS3PSM.sys" SelfReg="false"/>
+    <ROW File="BthPS3PSM_Filter.inf" Component_="BthPS3PSM_Filter.inf" FileName="BTHPS3~1.INF|BthPS3PSM_Filter.inf" Attributes="0" SourcePath="..\bin\x64\BthPS3PSM\BthPS3PSM_Filter.inf" SelfReg="false"/>
+    <ROW File="BthPS3_EULA.rtf" Component_="BthPS3_EULA.rtf" FileName="BTHPS3~1.RTF|BthPS3_EULA.rtf" Attributes="0" SourcePath="BthPS3_EULA.rtf" SelfReg="false"/>
+    <ROW File="install.cmd" Component_="install.cmd" FileName="install.cmd" Attributes="0" SourcePath="install.cmd" SelfReg="false"/>
+    <ROW File="uninstall.cmd" Component_="uninstall.cmd" FileName="UNINST~1.CMD|uninstall.cmd" Attributes="0" SourcePath="uninstall.cmd" SelfReg="false"/>
+    <ROW File="BthPS3.pdb_1" Component_="BthPS3.pdb_1" FileName="BthPS3.pdb" Attributes="0" SourcePath="..\bin\x86\BthPS3.pdb" SelfReg="false"/>
+    <ROW File="BthPS3PSM.pdb_1" Component_="BthPS3PSM.pdb_1" FileName="BTHPS3~1.PDB|BthPS3PSM.pdb" Attributes="0" SourcePath="..\bin\x86\BthPS3PSM.pdb" SelfReg="false"/>
+    <ROW File="BthPS3Util.exe_1" Component_="BthPS3Util.exe_1" FileName="BTHPS3~1.EXE|BthPS3Util.exe" Attributes="0" SourcePath="..\bin\x86\BthPS3Util.exe" SelfReg="false" DigSign="true"/>
+    <ROW File="bthps3.cat_1" Component_="bthps3.cat_1" FileName="bthps3.cat" Attributes="0" SourcePath="..\bin\x86\BthPS3\bthps3.cat" SelfReg="false"/>
+    <ROW File="BthPS3.inf_1" Component_="BthPS3.inf_1" FileName="BthPS3.inf" Attributes="0" SourcePath="..\bin\x86\BthPS3\BthPS3.inf" SelfReg="false"/>
+    <ROW File="BthPS3.sys_1" Component_="BthPS3.sys_1" FileName="BthPS3.sys" Attributes="0" SourcePath="..\bin\x86\BthPS3\BthPS3.sys" SelfReg="false"/>
+    <ROW File="WdfCoinstaller01011.dll_1" Component_="WdfCoinstaller01011.dll_1" FileName="WDFCOI~1.DLL|WdfCoinstaller01011.dll" Attributes="0" SourcePath="..\bin\x86\BthPS3PSM\WdfCoinstaller01011.dll" SelfReg="false"/>
+    <ROW File="bthps3psm.cat_1" Component_="bthps3psm.cat_1" FileName="BTHPS3~1.CAT|bthps3psm.cat" Attributes="0" SourcePath="..\bin\x86\BthPS3PSM\bthps3psm.cat" SelfReg="false"/>
+    <ROW File="BthPS3PSM.sys_1" Component_="BthPS3PSM.sys_1" FileName="BTHPS3~1.SYS|BthPS3PSM.sys" Attributes="0" SourcePath="..\bin\x86\BthPS3PSM\BthPS3PSM.sys" SelfReg="false"/>
+    <ROW File="BthPS3PSM_Filter.inf_1" Component_="BthPS3PSM_Filter.inf_1" FileName="BTHPS3~1.INF|BthPS3PSM_Filter.inf" Attributes="0" SourcePath="..\bin\x86\BthPS3PSM\BthPS3PSM_Filter.inf" SelfReg="false"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.BootstrOptComponent">
+    <ROW BootstrOptKey="GlobalOptions" DownloadFolder="[AppDataFolder][|Manufacturer]\[|ProductName]\prerequisites" Options="2"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.BuildComponent">
+    <ROW BuildKey="DefaultBuild" BuildName="DefaultBuild" BuildOrder="1" BuildType="0" PackageFolder="Setup Files" Languages="en" InstallationType="4" CabsLocation="1" PackageType="1" FilesInsideExe="true" ExtractionFolder="[AppDataFolder][|Manufacturer]\[|ProductName] [|ProductVersion]\install" ExtUI="true" UseLargeSchema="true" MsiPackageType="AI_ALL"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.DictionaryComponent">
+    <ROW Path="&lt;AI_DICTS&gt;ui.ail"/>
+    <ROW Path="&lt;AI_DICTS&gt;ui_en.ail"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.FragmentComponent">
+    <ROW Fragment="CommonUI.aip" Path="&lt;AI_FRAGS&gt;CommonUI.aip"/>
+    <ROW Fragment="LicenseAgreementDlg.aip" Path="&lt;AI_THEMES&gt;air\fragments\LicenseAgreementDlg.aip"/>
+    <ROW Fragment="MaintenanceTypeDlg.aip" Path="&lt;AI_THEMES&gt;air\fragments\MaintenanceTypeDlg.aip"/>
+    <ROW Fragment="MaintenanceWelcomeDlg.aip" Path="&lt;AI_THEMES&gt;air\fragments\MaintenanceWelcomeDlg.aip"/>
+    <ROW Fragment="SequenceDialogs.aip" Path="&lt;AI_THEMES&gt;air\fragments\SequenceDialogs.aip"/>
+    <ROW Fragment="Sequences.aip" Path="&lt;AI_FRAGS&gt;Sequences.aip"/>
+    <ROW Fragment="SetupTypeDlg.aip" Path="&lt;AI_THEMES&gt;air\fragments\SetupTypeDlg.aip"/>
+    <ROW Fragment="StaticUIStrings.aip" Path="&lt;AI_FRAGS&gt;StaticUIStrings.aip"/>
+    <ROW Fragment="UI.aip" Path="&lt;AI_THEMES&gt;air\fragments\UI.aip"/>
+    <ROW Fragment="Validation.aip" Path="&lt;AI_FRAGS&gt;Validation.aip"/>
+    <ROW Fragment="VerifyRemoveDlg.aip" Path="&lt;AI_THEMES&gt;air\fragments\VerifyRemoveDlg.aip"/>
+    <ROW Fragment="VerifyRepairDlg.aip" Path="&lt;AI_THEMES&gt;air\fragments\VerifyRepairDlg.aip"/>
+    <ROW Fragment="WelcomeDlg.aip" Path="&lt;AI_THEMES&gt;air\fragments\WelcomeDlg.aip"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiActionTextComponent">
+    <ROW Action="AI_DeleteLzma" Description="Deleting files extracted from archive" DescriptionLocId="ActionText.Description.AI_DeleteLzma" TemplateLocId="-"/>
+    <ROW Action="AI_DeleteRLzma" Description="Deleting files extracted from archive" DescriptionLocId="ActionText.Description.AI_DeleteLzma" TemplateLocId="-"/>
+    <ROW Action="AI_ExtractFiles" Description="Extracting files from archive" DescriptionLocId="ActionText.Description.AI_ExtractLzma" TemplateLocId="-"/>
+    <ROW Action="AI_ExtractLzma" Description="Extracting files from archive" DescriptionLocId="ActionText.Description.AI_ExtractLzma" TemplateLocId="-"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiAppSearchComponent">
+    <ROW Property="AI_SETUPEXEPATH" Signature_="AI_EXE_PATH_LM" Builds="DefaultBuild"/>
+    <ROW Property="AI_SETUPEXEPATH" Signature_="AI_EXE_PATH_CU" Builds="DefaultBuild"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiBinaryComponent">
+    <ROW Name="Prereq.dll" SourcePath="&lt;AI_CUSTACTS&gt;Prereq.dll"/>
+    <ROW Name="aicustact.dll" SourcePath="&lt;AI_CUSTACTS&gt;aicustact.dll"/>
+    <ROW Name="lzmaextractor.dll" SourcePath="&lt;AI_CUSTACTS&gt;lzmaextractor.dll"/>
+    <ROW Name="viewer.exe" SourcePath="&lt;AI_CUSTACTS&gt;viewer.exe"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiControlComponent">
+    <ROW Dialog_="LicenseAgreementDlg" Control="AgreementText" Type="ScrollableText" X="35" Y="127" Width="321" Height="132" Attributes="3" Property="EulaRead" Text="BthPS3_EULA.rtf" Order="900" MsiKey="LicenseAgreementDlg#AgreementText"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiControlEventComponent">
+    <ROW Dialog_="WelcomeDlg" Control_="Next" Event="NewDialog" Argument="LicenseAgreementDlg" Condition="AI_INSTALL" Ordering="1"/>
+    <ROW Dialog_="VerifyReadyDlg" Control_="Install" Event="EndDialog" Argument="Return" Condition="AI_INSTALL" Ordering="197"/>
+    <ROW Dialog_="VerifyReadyDlg" Control_="Back" Event="NewDialog" Argument="SetupTypeDlg" Condition="AI_INSTALL" Ordering="201"/>
+    <ROW Dialog_="SetupTypeDlg" Control_="TypicalButton" Event="NewDialog" Argument="VerifyReadyDlg" Condition="AI_INSTALL" Ordering="299"/>
+    <ROW Dialog_="SetupTypeDlg" Control_="Back" Event="NewDialog" Argument="LicenseAgreementDlg" Condition="AI_INSTALL" Ordering="102"/>
+    <ROW Dialog_="CustomizeDlg" Control_="Next" Event="NewDialog" Argument="VerifyReadyDlg" Condition="AI_INSTALL AND InstallMode=InstallModeCustom" Ordering="101"/>
+    <ROW Dialog_="SetupTypeDlg" Control_="CustomButton" Event="NewDialog" Argument="CustomizeDlg" Condition="AI_INSTALL AND InstallMode=InstallModeCustom" Ordering="101"/>
+    <ROW Dialog_="CustomizeDlg" Control_="Back" Event="NewDialog" Argument="SetupTypeDlg" Condition="AI_INSTALL AND InstallMode=InstallModeCustom" Ordering="1"/>
+    <ROW Dialog_="MaintenanceWelcomeDlg" Control_="Next" Event="NewDialog" Argument="MaintenanceTypeDlg" Condition="AI_MAINT" Ordering="99"/>
+    <ROW Dialog_="CustomizeDlg" Control_="Next" Event="NewDialog" Argument="VerifyReadyDlg" Condition="AI_MAINT" Ordering="102"/>
+    <ROW Dialog_="CustomizeDlg" Control_="Back" Event="NewDialog" Argument="MaintenanceTypeDlg" Condition="AI_MAINT" Ordering="2"/>
+    <ROW Dialog_="VerifyReadyDlg" Control_="Install" Event="EndDialog" Argument="Return" Condition="AI_MAINT" Ordering="198"/>
+    <ROW Dialog_="VerifyReadyDlg" Control_="Back" Event="NewDialog" Argument="CustomizeDlg" Condition="AI_MAINT" Ordering="203"/>
+    <ROW Dialog_="MaintenanceTypeDlg" Control_="ChangeButton" Event="NewDialog" Argument="CustomizeDlg" Condition="AI_MAINT" Ordering="501"/>
+    <ROW Dialog_="MaintenanceTypeDlg" Control_="Back" Event="NewDialog" Argument="MaintenanceWelcomeDlg" Condition="AI_MAINT" Ordering="1"/>
+    <ROW Dialog_="MaintenanceTypeDlg" Control_="RemoveButton" Event="NewDialog" Argument="VerifyRemoveDlg" Condition="AI_MAINT AND InstallMode=&quot;Remove&quot;" Ordering="601"/>
+    <ROW Dialog_="VerifyRemoveDlg" Control_="Back" Event="NewDialog" Argument="MaintenanceTypeDlg" Condition="AI_MAINT AND InstallMode=&quot;Remove&quot;" Ordering="1"/>
+    <ROW Dialog_="MaintenanceTypeDlg" Control_="RepairButton" Event="NewDialog" Argument="VerifyRepairDlg" Condition="AI_MAINT AND InstallMode=&quot;Repair&quot;" Ordering="601"/>
+    <ROW Dialog_="VerifyRepairDlg" Control_="Back" Event="NewDialog" Argument="MaintenanceTypeDlg" Condition="AI_MAINT AND InstallMode=&quot;Repair&quot;" Ordering="1"/>
+    <ROW Dialog_="VerifyRepairDlg" Control_="Repair" Event="EndDialog" Argument="Return" Condition="AI_MAINT AND InstallMode=&quot;Repair&quot;" Ordering="399" Options="1"/>
+    <ROW Dialog_="VerifyRemoveDlg" Control_="Remove" Event="EndDialog" Argument="Return" Condition="AI_MAINT AND InstallMode=&quot;Remove&quot;" Ordering="299" Options="1"/>
+    <ROW Dialog_="PatchWelcomeDlg" Control_="Next" Event="NewDialog" Argument="VerifyReadyDlg" Condition="AI_PATCH" Ordering="201"/>
+    <ROW Dialog_="VerifyReadyDlg" Control_="Install" Event="EndDialog" Argument="Return" Condition="AI_PATCH" Ordering="199"/>
+    <ROW Dialog_="VerifyReadyDlg" Control_="Back" Event="NewDialog" Argument="PatchWelcomeDlg" Condition="AI_PATCH" Ordering="204"/>
+    <ROW Dialog_="ResumeDlg" Control_="Install" Event="EndDialog" Argument="Return" Condition="AI_RESUME" Ordering="299"/>
+    <ROW Dialog_="LicenseAgreementDlg" Control_="Next" Event="NewDialog" Argument="SetupTypeDlg" Condition="AI_INSTALL" Ordering="1"/>
+    <ROW Dialog_="LicenseAgreementDlg" Control_="Back" Event="NewDialog" Argument="WelcomeDlg" Condition="AI_INSTALL" Ordering="1"/>
+    <ROW Dialog_="VerifyReadyDlg" Control_="Back" Event="NewDialog" Argument="CustomizeDlg" Condition="AI_INSTALL AND InstallMode=InstallModeCustom" Ordering="202"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiCreateFolderComponent">
+    <ROW Directory_="APPDIR" Component_="APPDIR" ManualDelete="true"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiCustActComponent">
+    <ROW Action="AI_BACKUP_AI_SETUPEXEPATH" Type="51" Source="AI_SETUPEXEPATH_ORIGINAL" Target="[AI_SETUPEXEPATH]"/>
+    <ROW Action="AI_DATA_SETTER" Type="51" Source="AI_ExtractFiles" Target="[AI_SETUPEXEPATH]"/>
+    <ROW Action="AI_DOWNGRADE" Type="19" Target="4010"/>
+    <ROW Action="AI_DeleteCadLzma" Type="51" Source="AI_DeleteLzma" Target="[AI_SETUPEXEPATH]"/>
+    <ROW Action="AI_DeleteLzma" Type="1025" Source="lzmaextractor.dll" Target="DeleteLZMAFiles"/>
+    <ROW Action="AI_DeleteRCadLzma" Type="51" Source="AI_DeleteRLzma" Target="[AI_SETUPEXEPATH]"/>
+    <ROW Action="AI_DeleteRLzma" Type="1281" Source="lzmaextractor.dll" Target="DeleteLZMAFiles"/>
+    <ROW Action="AI_DpiContentScale" Type="1" Source="aicustact.dll" Target="DpiContentScale"/>
+    <ROW Action="AI_EnableDebugLog" Type="321" Source="aicustact.dll" Target="EnableDebugLog"/>
+    <ROW Action="AI_EstimateExtractFiles" Type="1" Source="Prereq.dll" Target="EstimateExtractFiles"/>
+    <ROW Action="AI_ExtractCadLzma" Type="51" Source="AI_ExtractLzma" Target="[AI_SETUPEXEPATH]"/>
+    <ROW Action="AI_ExtractFiles" Type="1025" Source="Prereq.dll" Target="ExtractSourceFiles" AdditionalSeq="AI_DATA_SETTER"/>
+    <ROW Action="AI_ExtractLzma" Type="1025" Source="lzmaextractor.dll" Target="ExtractLZMAFiles"/>
+    <ROW Action="AI_FindExeLzma" Type="1" Source="lzmaextractor.dll" Target="FindEXE"/>
+    <ROW Action="AI_InstallModeCheck" Type="1" Source="aicustact.dll" Target="UpdateInstallMode" WithoutSeq="true"/>
+    <ROW Action="AI_PREPARE_UPGRADE" Type="65" Source="aicustact.dll" Target="PrepareUpgrade"/>
+    <ROW Action="AI_REDIRECT_32BIT_FOLDER" Type="51" Source="AI_Bin32_Dir" Target="[APPDIR]"/>
+    <ROW Action="AI_REDIRECT_32BIT_SH_FOLDER" Type="51" Source="AI_Sh32_Dir" Target="[SHORTCUTDIR]"/>
+    <ROW Action="AI_RESTORE_AI_SETUPEXEPATH" Type="51" Source="AI_SETUPEXEPATH" Target="[AI_SETUPEXEPATH_ORIGINAL]"/>
+    <ROW Action="AI_RESTORE_LOCATION" Type="65" Source="aicustact.dll" Target="RestoreLocation"/>
+    <ROW Action="AI_ResolveKnownFolders" Type="1" Source="aicustact.dll" Target="AI_ResolveKnownFolders"/>
+    <ROW Action="AI_SETPROGRAMFILES" Type="51" Source="AI_ProgramFiles" Target="[ProgramFilesFolder]"/>
+    <ROW Action="AI_SETPROGRAMFILES64" Type="51" Source="AI_ProgramFiles" Target="[ProgramFiles64Folder]"/>
+    <ROW Action="AI_SHOW_LOG" Type="65" Source="aicustact.dll" Target="LaunchLogFile" WithoutSeq="true"/>
+    <ROW Action="AI_STORE_LOCATION" Type="51" Source="ARPINSTALLLOCATION" Target="[APPDIR]"/>
+    <ROW Action="SET_APPDIR" Type="307" Source="APPDIR" Target="[ProgramFilesFolder][Manufacturer]\[ProductName]" MultiBuildTarget="DefaultBuild:[AI_ProgramFiles]Nefarius Software Solutions\[ProductName]"/>
+    <ROW Action="SET_SHORTCUTDIR" Type="307" Source="SHORTCUTDIR" Target="[ProgramMenuFolder][ProductName]"/>
+    <ROW Action="SET_TARGETDIR_TO_APPDIR" Type="51" Source="TARGETDIR" Target="[APPDIR]"/>
+    <ROW Action="install.cmd" Type="1602" Source="viewer.exe" Target="/RunAsAdmin /HideWindow /dir &quot;[APPDIR]&quot; &quot;[APPDIR]install.cmd&quot;" Options="1"/>
+    <ROW Action="uninstall.cmd" Type="66" Source="viewer.exe" Target="/RunAsAdmin /HideWindow /dir &quot;[APPDIR]&quot; &quot;[APPDIR]uninstall.cmd&quot;" Options="1"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiFeatCompsComponent">
+    <ROW Feature_="MainFeature" Component_="APPDIR"/>
+    <ROW Feature_="MainFeature" Component_="ProductInformation"/>
+    <ROW Feature_="MainFeature" Component_="AI_ExePath"/>
+    <ROW Feature_="MainFeature" Component_="BthPS3.pdb"/>
+    <ROW Feature_="MainFeature" Component_="BthPS3PSM.pdb"/>
+    <ROW Feature_="MainFeature" Component_="BthPS3Util.exe"/>
+    <ROW Feature_="MainFeature" Component_="bthps3.cat"/>
+    <ROW Feature_="MainFeature" Component_="BthPS3.inf"/>
+    <ROW Feature_="MainFeature" Component_="BthPS3.sys"/>
+    <ROW Feature_="MainFeature" Component_="WdfCoinstaller01011.dll"/>
+    <ROW Feature_="MainFeature" Component_="bthps3psm.cat"/>
+    <ROW Feature_="MainFeature" Component_="BthPS3PSM.sys"/>
+    <ROW Feature_="MainFeature" Component_="BthPS3PSM_Filter.inf"/>
+    <ROW Feature_="MainFeature" Component_="BthPS3_EULA.rtf"/>
+    <ROW Feature_="MainFeature" Component_="install.cmd"/>
+    <ROW Feature_="MainFeature" Component_="uninstall.cmd"/>
+    <ROW Feature_="MainFeature" Component_="BthPS3.pdb_1"/>
+    <ROW Feature_="MainFeature" Component_="BthPS3PSM.pdb_1"/>
+    <ROW Feature_="MainFeature" Component_="BthPS3Util.exe_1"/>
+    <ROW Feature_="MainFeature" Component_="bthps3.cat_1"/>
+    <ROW Feature_="MainFeature" Component_="BthPS3.inf_1"/>
+    <ROW Feature_="MainFeature" Component_="BthPS3.sys_1"/>
+    <ROW Feature_="MainFeature" Component_="WdfCoinstaller01011.dll_1"/>
+    <ROW Feature_="MainFeature" Component_="bthps3psm.cat_1"/>
+    <ROW Feature_="MainFeature" Component_="BthPS3PSM.sys_1"/>
+    <ROW Feature_="MainFeature" Component_="BthPS3PSM_Filter.inf_1"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiInstExSeqComponent">
+    <ROW Action="AI_DOWNGRADE" Condition="AI_NEWERPRODUCTFOUND AND (UILevel &lt;&gt; 5)" Sequence="210"/>
+    <ROW Action="AI_RESTORE_LOCATION" Condition="APPDIR=&quot;&quot;" Sequence="747"/>
+    <ROW Action="AI_STORE_LOCATION" Condition="(Not Installed) OR REINSTALL" Sequence="1501"/>
+    <ROW Action="AI_PREPARE_UPGRADE" Condition="AI_UPGRADE=&quot;No&quot; AND (Not Installed)" Sequence="1399"/>
+    <ROW Action="AI_ResolveKnownFolders" Sequence="52"/>
+    <ROW Action="AI_EnableDebugLog" Sequence="51"/>
+    <ROW Action="AI_BACKUP_AI_SETUPEXEPATH" Sequence="99" Builds="DefaultBuild"/>
+    <ROW Action="AI_RESTORE_AI_SETUPEXEPATH" Condition="AI_SETUPEXEPATH_ORIGINAL" Sequence="101" Builds="DefaultBuild"/>
+    <ROW Action="AI_DeleteCadLzma" Condition="SETUPEXEDIR=&quot;&quot; AND Installed AND (REMOVE&lt;&gt;&quot;ALL&quot;) AND (AI_INSTALL_MODE&lt;&gt;&quot;Remove&quot;) AND (NOT PATCH)" Sequence="199" Builds="DefaultBuild"/>
+    <ROW Action="AI_DeleteRCadLzma" Condition="SETUPEXEDIR=&quot;&quot; AND Installed AND (REMOVE&lt;&gt;&quot;ALL&quot;) AND (AI_INSTALL_MODE&lt;&gt;&quot;Remove&quot;) AND (NOT PATCH)" Sequence="198" Builds="DefaultBuild"/>
+    <ROW Action="AI_ExtractCadLzma" Condition="SETUPEXEDIR=&quot;&quot; AND Installed AND (REMOVE&lt;&gt;&quot;ALL&quot;) AND (AI_INSTALL_MODE&lt;&gt;&quot;Remove&quot;) AND (NOT PATCH)" Sequence="197" Builds="DefaultBuild"/>
+    <ROW Action="AI_FindExeLzma" Condition="SETUPEXEDIR=&quot;&quot; AND Installed AND (REMOVE&lt;&gt;&quot;ALL&quot;) AND (AI_INSTALL_MODE&lt;&gt;&quot;Remove&quot;) AND (NOT PATCH)" Sequence="196" Builds="DefaultBuild"/>
+    <ROW Action="AI_ExtractLzma" Condition="SETUPEXEDIR=&quot;&quot; AND Installed AND (REMOVE&lt;&gt;&quot;ALL&quot;) AND (AI_INSTALL_MODE&lt;&gt;&quot;Remove&quot;) AND (NOT PATCH)" Sequence="1549" Builds="DefaultBuild"/>
+    <ROW Action="AI_DeleteRLzma" Condition="SETUPEXEDIR=&quot;&quot; AND Installed AND (REMOVE&lt;&gt;&quot;ALL&quot;) AND (AI_INSTALL_MODE&lt;&gt;&quot;Remove&quot;) AND (NOT PATCH)" Sequence="1548" Builds="DefaultBuild"/>
+    <ROW Action="AI_DeleteLzma" Condition="SETUPEXEDIR=&quot;&quot; AND Installed AND (REMOVE&lt;&gt;&quot;ALL&quot;) AND (AI_INSTALL_MODE&lt;&gt;&quot;Remove&quot;) AND (NOT PATCH)" Sequence="6599" Builds="DefaultBuild"/>
+    <ROW Action="AI_ExtractFiles" Sequence="3998" Builds="DefaultBuild"/>
+    <ROW Action="AI_DATA_SETTER" Sequence="3997"/>
+    <ROW Action="AI_EstimateExtractFiles" Sequence="3999" Builds="DefaultBuild"/>
+    <ROW Action="AI_REDIRECT_32BIT_FOLDER" Condition="NOT VersionNT64 AND NOT AI_Disable32BitRedirection" Sequence="798"/>
+    <ROW Action="AI_REDIRECT_32BIT_SH_FOLDER" Condition="NOT VersionNT64 AND NOT AI_Disable32BitRedirection" Sequence="799"/>
+    <ROW Action="AI_SETPROGRAMFILES64" Condition="VersionNT64" Sequence="748"/>
+    <ROW Action="AI_SETPROGRAMFILES" Condition="NOT VersionNT64" Sequence="749"/>
+    <ROW Action="install.cmd" Condition="( NOT Installed )" Sequence="6402"/>
+    <ROW Action="uninstall.cmd" Condition="( Installed AND ( REMOVE = &quot;ALL&quot; OR AI_INSTALL_MODE = &quot;Remove&quot; ) )" Sequence="6401"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiInstallUISequenceComponent">
+    <ROW Action="AI_RESTORE_LOCATION" Condition="APPDIR=&quot;&quot;" Sequence="747"/>
+    <ROW Action="AI_ResolveKnownFolders" Sequence="53"/>
+    <ROW Action="AI_DpiContentScale" Sequence="52"/>
+    <ROW Action="AI_EnableDebugLog" Sequence="51"/>
+    <ROW Action="AI_BACKUP_AI_SETUPEXEPATH" Sequence="99"/>
+    <ROW Action="AI_RESTORE_AI_SETUPEXEPATH" Condition="AI_SETUPEXEPATH_ORIGINAL" Sequence="101"/>
+    <ROW Action="AI_SETPROGRAMFILES64" Condition="VersionNT64" Sequence="748"/>
+    <ROW Action="AI_SETPROGRAMFILES" Condition="NOT VersionNT64" Sequence="749"/>
+    <ROW Action="AI_SET_EXTENDER_IMAGES" Sequence="54" MsiKey="AI_SET_EXTENDER_IMAGES"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiLaunchConditionsComponent">
+    <ROW Condition="( Version9X OR ( NOT VersionNT64 ) OR ( VersionNT64 AND ((VersionNT64 &lt;&gt; 502) OR (ServicePackLevel &lt;&gt; 2) OR (MsiNTProductType &lt;&gt; 1)) AND ((VersionNT64 &lt;&gt; 502) OR (ServicePackLevel &lt;&gt; 2) OR (MsiNTProductType = 1)) AND ((VersionNT64 &lt;&gt; 600) OR (MsiNTProductType &lt;&gt; 1)) AND ((VersionNT64 &lt;&gt; 600) OR (MsiNTProductType = 1)) AND ((VersionNT64 &lt;&gt; 601) OR (MsiNTProductType &lt;&gt; 1)) AND ((VersionNT64 &lt;&gt; 601) OR (MsiNTProductType = 1)) AND ((VersionNT64 &lt;&gt; 602) OR (MsiNTProductType &lt;&gt; 1)) AND ((VersionNT64 &lt;&gt; 602) OR (MsiNTProductType = 1)) AND ((VersionNT64 &lt;&gt; 603) OR (MsiNTProductType &lt;&gt; 1)) AND ((VersionNT64 &lt;&gt; 603) OR (MsiNTProductType = 1)) ) )" Description="[ProductName] cannot be installed on the following Windows versions: [WindowsTypeNT64Display]." DescriptionLocId="AI.LaunchCondition.NoSpecificNT64" IsPredefined="true" Builds="DefaultBuild"/>
+    <ROW Condition="( Version9X OR VersionNT64 OR ( VersionNT AND ((VersionNT &lt;&gt; 501) OR (ServicePackLevel &lt;&gt; 3)) AND ((VersionNT &lt;&gt; 502) OR (ServicePackLevel &lt;&gt; 2)) AND ((VersionNT &lt;&gt; 600) OR (MsiNTProductType &lt;&gt; 1)) AND ((VersionNT &lt;&gt; 600) OR (MsiNTProductType = 1)) AND (VersionNT &lt;&gt; 601) AND (VersionNT &lt;&gt; 602) AND (VersionNT &lt;&gt; 603) ) )" Description="[ProductName] cannot be installed on the following Windows versions: [WindowsTypeNTDisplay]." DescriptionLocId="AI.LaunchCondition.NoSpecificNT" IsPredefined="true" Builds="DefaultBuild"/>
+    <ROW Condition="(VersionNT &lt;&gt; 400)" Description="[ProductName] cannot be installed on [WindowsTypeNT40Display]." DescriptionLocId="AI.LaunchCondition.NoNT40" IsPredefined="true" Builds="DefaultBuild"/>
+    <ROW Condition="(VersionNT &lt;&gt; 500)" Description="[ProductName] cannot be installed on [WindowsTypeNT50Display]." DescriptionLocId="AI.LaunchCondition.NoNT50" IsPredefined="true" Builds="DefaultBuild"/>
+    <ROW Condition="(VersionNT64 OR ((VersionNT &lt;&gt; 501) OR (ServicePackLevel = 3))) AND ((VersionNT &lt;&gt; 502) OR (ServicePackLevel = 2))" Description="[ProductName] cannot be installed on [WindowsTypeNT5XDisplay]." DescriptionLocId="AI.LaunchCondition.NoNT5X" IsPredefined="true" Builds="DefaultBuild"/>
+    <ROW Condition="SETUPEXEDIR OR (REMOVE=&quot;ALL&quot;)" Description="This package can only be run from a bootstrapper." DescriptionLocId="AI.LaunchCondition.RequireBootstrapper" IsPredefined="true" Builds="DefaultBuild"/>
+    <ROW Condition="VersionNT" Description="[ProductName] cannot be installed on [WindowsType9XDisplay]." DescriptionLocId="AI.LaunchCondition.No9X" IsPredefined="true" Builds="DefaultBuild"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiRegLocatorComponent">
+    <ROW Signature_="AI_EXE_PATH_CU" Root="1" Key="Software\Caphyon\Advanced Installer\LZMA\[ProductCode]\[ProductVersion]" Name="AI_ExePath" Type="2"/>
+    <ROW Signature_="AI_EXE_PATH_LM" Root="2" Key="Software\Caphyon\Advanced Installer\LZMA\[ProductCode]\[ProductVersion]" Name="AI_ExePath" Type="2"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiRegsComponent">
+    <ROW Registry="AI_ExePath" Root="-1" Key="Software\Caphyon\Advanced Installer\LZMA\[ProductCode]\[ProductVersion]" Name="AI_ExePath" Value="[AI_SETUPEXEPATH]" Component_="AI_ExePath"/>
+    <ROW Registry="Path" Root="-1" Key="Software\[Manufacturer]\[ProductName]" Name="Path" Value="[APPDIR]" Component_="ProductInformation"/>
+    <ROW Registry="Version" Root="-1" Key="Software\[Manufacturer]\[ProductName]" Name="Version" Value="[ProductVersion]" Component_="ProductInformation"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiThemeComponent">
+    <ATTRIBUTE name="UsedTheme" value="air"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiUpgradeComponent">
+    <ROW UpgradeCode="[|UpgradeCode]" VersionMin="0.0.1" VersionMax="[|ProductVersion]" Attributes="257" ActionProperty="OLDPRODUCTS"/>
+    <ROW UpgradeCode="[|UpgradeCode]" VersionMin="[|ProductVersion]" Attributes="2" ActionProperty="AI_NEWERPRODUCTFOUND"/>
+  </COMPONENT>
+</DOCUMENT>

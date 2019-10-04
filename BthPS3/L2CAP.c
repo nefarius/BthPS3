@@ -91,6 +91,8 @@ L2CAP_PS3_HandleRemoteConnect(
             return L2CAP_PS3_DenyRemoteConnect(DevCtx, ConnectParams);
         }
 
+        // TODO: rework this to match against names from REG_MULTI_SZ
+
         //
         // Distinguish device type based on reported remote name
         // 
@@ -106,9 +108,8 @@ L2CAP_PS3_HandleRemoteConnect(
             deviceType = DS_DEVICE_TYPE_MOTION;
             break;
         case 'W': // First letter in Wireless Controller ('W')
-            // TODO: disabled for testing purposes!
-            //deviceType = DS_DEVICE_TYPE_WIRELESS;
-            //break;
+            deviceType = DS_DEVICE_TYPE_WIRELESS;
+            break;
         default:
 
             //
@@ -116,7 +117,7 @@ L2CAP_PS3_HandleRemoteConnect(
             // 
             status = BthPS3PSM_DisablePatchSync(
                 DevCtx->PsmFilter.IoTarget,
-                0
+                0 // TODO: read from registry?
             );
             if (!NT_SUCCESS(status))
             {
@@ -131,9 +132,12 @@ L2CAP_PS3_HandleRemoteConnect(
                     "Filter disabled, re-enabling in 10 seconds"
                 );
 
-                WdfTimerStart(
+                //
+                // Fire off re-enable timer
+                // 
+                (void) WdfTimerStart(
                     DevCtx->PsmFilter.AutoResetTimer,
-                    WDF_REL_TIMEOUT_IN_SEC(10)
+                    WDF_REL_TIMEOUT_IN_SEC(10) // TODO: read this value from registry
                 );
             }
 

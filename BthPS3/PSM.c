@@ -127,16 +127,35 @@ BthPS3PSM_EnablePatchAsync(
         NULL,
         NULL
     );
+    if (!NT_SUCCESS(status)) {
+        return status;
+    }
 
+    //
+    // Assign a fixed completion routine
+    // 
     WdfRequestSetCompletionRoutine(
         request,
         BthPS3PSM_FilterRequestCompletionRoutine,
         NULL
     );
 
-	return status;
+    //
+    // Send it
+    // 
+    if (WdfRequestSend(request,
+        IoTarget,
+        NULL) == FALSE)
+    {
+        return WdfRequestGetStatus(request);
+    }
+
+    return status;
 }
 
+//
+// Async filter enable request has completed
+// 
 void BthPS3PSM_FilterRequestCompletionRoutine(
     WDFREQUEST Request,
     WDFIOTARGET Target,
@@ -144,8 +163,15 @@ void BthPS3PSM_FilterRequestCompletionRoutine(
     WDFCONTEXT Context
 )
 {
-    UNREFERENCED_PARAMETER(Request);
     UNREFERENCED_PARAMETER(Target);
     UNREFERENCED_PARAMETER(Params);
     UNREFERENCED_PARAMETER(Context);
+
+    TraceEvents(TRACE_LEVEL_ERROR, 
+        TRACE_PSM,
+        "PSM Filter enable request finished with status %!STATUS!",
+        WdfRequestGetStatus(Request)
+    );
+
+    WdfObjectDelete(Request);
 }

@@ -214,12 +214,25 @@ void BthPS3_EnablePatchEvtWdfTimer(
     WDFTIMER Timer
 )
 {
-    UNREFERENCED_PARAMETER(Timer);
+    NTSTATUS status;
+    PBTHPS3_SERVER_CONTEXT devCtx = GetServerDeviceContext(WdfTimerGetParentObject(Timer));
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE,
-        "IRQL %!irql! too high, preparing async call",
-        KeGetCurrentIrql()
+        "%!FUNC! called, requesting filter to enable patch"
     );
+
+    status = BthPS3PSM_EnablePatchAsync(
+        devCtx->PsmFilter.IoTarget,
+        0 // TODO: read from registry?
+    );
+
+    if (!NT_SUCCESS(status))
+    {
+        TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE,
+            "BthPS3PSM_EnablePatchAsync failed with status %!STATUS!",
+            status
+        );
+    }
 }
 
 //

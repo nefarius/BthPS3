@@ -719,7 +719,7 @@ BthPS3_SendBrbAsync(
     if (!NT_SUCCESS(status))
     {
         TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
-            "Formatting request 0x%p with Brb 0x%p failed, Status code %!STATUS!\n",
+            "Formatting request 0x%p with Brb 0x%p failed, Status code %!STATUS!",
             Request,
             Brb,
             status
@@ -746,7 +746,7 @@ BthPS3_SendBrbAsync(
         status = WdfRequestGetStatus(Request);
 
         TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
-            "Request send failed for request 0x%p, Brb 0x%p, Status code %!STATUS!\n",
+            "Request send failed for request 0x%p, Brb 0x%p, Status code %!STATUS!",
             Request,
             Brb,
             status

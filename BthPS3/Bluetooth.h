@@ -122,6 +122,25 @@ typedef struct _BTHPS3_SERVER_CONTEXT
 
     } PsmFilter;
 
+    struct
+    {
+        // TODO: populate
+        ULONG AutoEnableFilter;
+
+        // TODO: populate
+        ULONG IsSIXAXISSupported;
+
+        // TODO: populate
+        ULONG IsNAVIGATIONSupported;
+
+        // TODO: populate
+        ULONG IsMOTIONSupported;
+
+        // TODO: populate
+        ULONG IsWIRELESSSupported;
+
+    } Settings;
+
 } BTHPS3_SERVER_CONTEXT, *PBTHPS3_SERVER_CONTEXT;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_SERVER_CONTEXT, GetServerDeviceContext)

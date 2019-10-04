@@ -17,7 +17,8 @@ BthPS3PSM_EnablePatchSync(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 BthPS3PSM_EnablePatchAsync(
-	WDFIOTARGET IoTarget,
-	WDFREQUEST Request,
-	ULONG DeviceIndex
+    WDFIOTARGET IoTarget,
+    ULONG DeviceIndex
 );
+
+EVT_WDF_REQUEST_COMPLETION_ROUTINE BthPS3PSM_FilterRequestCompletionRoutine;

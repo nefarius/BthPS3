@@ -291,6 +291,7 @@ BthPS3_SendBrbAsync(
 //
 // Request remote device friendly name from radio
 // 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 FORCEINLINE
 BTHPS3_GET_DEVICE_NAME(
@@ -379,69 +380,4 @@ BTHPS3_GET_DEVICE_NAME(
 
     WdfObjectDelete(MemoryHandle);
     return status;
-}
-
-//
-// Request filter driver to disable PSM patching
-// 
-_IRQL_requires_max_(DISPATCH_LEVEL)
-NTSTATUS
-FORCEINLINE
-BTHPS3PSM_PATCH_DISABLE_SYNC(
-    WDFIOTARGET IoTarget,
-    ULONG DeviceIndex
-)
-{
-    WDF_MEMORY_DESCRIPTOR MemoryDescriptor;
-    BTHPS3PSM_DISABLE_PSM_PATCHING payload;
-
-    payload.DeviceIndex = DeviceIndex;
-
-    WDF_MEMORY_DESCRIPTOR_INIT_BUFFER(
-        &MemoryDescriptor,
-        (PVOID)&payload,
-        sizeof(payload)
-    );
-
-    return WdfIoTargetSendIoctlSynchronously(
-        IoTarget,
-        NULL,
-        IOCTL_BTHPS3PSM_DISABLE_PSM_PATCHING,
-        &MemoryDescriptor,
-        NULL,
-        NULL,
-        NULL
-    );
-}
-
-//
-// Request filter driver to enable PSM patching
-// 
-NTSTATUS
-FORCEINLINE
-BTHPS3PSM_PATCH_ENABLE(
-    WDFIOTARGET IoTarget,
-    ULONG DeviceIndex
-)
-{
-    WDF_MEMORY_DESCRIPTOR MemoryDescriptor;
-    BTHPS3PSM_ENABLE_PSM_PATCHING payload;
-
-    payload.DeviceIndex = DeviceIndex;
-
-    WDF_MEMORY_DESCRIPTOR_INIT_BUFFER(
-        &MemoryDescriptor,
-        (PVOID)&payload,
-        sizeof(payload)
-    );
-
-    return WdfIoTargetSendIoctlSynchronously(
-        IoTarget,
-        NULL,
-        IOCTL_BTHPS3PSM_ENABLE_PSM_PATCHING,
-        &MemoryDescriptor,
-        NULL,
-        NULL,
-        NULL
-    );
 }

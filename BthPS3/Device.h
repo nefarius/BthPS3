@@ -42,6 +42,4 @@ BthPS3_OpenFilterIoTarget(
     _In_ WDFDEVICE Device
 );
 
-EVT_WDF_REQUEST_COMPLETION_ROUTINE BthPS3_FilterRequestCompletionRoutine;
-
 EXTERN_C_END

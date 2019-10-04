@@ -37,6 +37,7 @@
         WPP_DEFINE_BIT(TRACE_CONNECTION)                               \
         WPP_DEFINE_BIT(TRACE_L2CAP)                                    \
         WPP_DEFINE_BIT(TRACE_BUSLOGIC)                                 \
+		WPP_DEFINE_BIT(TRACE_PSM)								       \
         )                             
 
 #define WPP_FLAG_LEVEL_LOGGER(flag, level)                                  \

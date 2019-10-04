@@ -114,7 +114,7 @@ L2CAP_PS3_HandleRemoteConnect(
             //
             // Filter re-routed potentially unsupported device, disable
             // 
-            status = BTHPS3PSM_PATCH_DISABLE_SYNC(
+            status = BthPS3PSM_DisablePatchSync(
                 DevCtx->PsmFilter.IoTarget,
                 0
             );
@@ -122,7 +122,7 @@ L2CAP_PS3_HandleRemoteConnect(
             {
                 TraceEvents(TRACE_LEVEL_ERROR,
                     TRACE_L2CAP,
-                    "BTHPS3PSM_PATCH_DISABLE_SYNC failed with status %!STATUS!", status);
+                    "BthPS3PSM_DisablePatchSync failed with status %!STATUS!", status);
             }
             else
             {

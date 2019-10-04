@@ -222,19 +222,6 @@ void BthPS3_EnablePatchEvtWdfTimer(
     );
 }
 
-void BthPS3_FilterRequestCompletionRoutine(
-    WDFREQUEST Request,
-    WDFIOTARGET Target,
-    PWDF_REQUEST_COMPLETION_PARAMS Params,
-    WDFCONTEXT Context
-)
-{
-    UNREFERENCED_PARAMETER(Request);
-    UNREFERENCED_PARAMETER(Target);
-    UNREFERENCED_PARAMETER(Params);
-    UNREFERENCED_PARAMETER(Context);
-}
-
 //
 // Gets invoked on device power-up
 // 

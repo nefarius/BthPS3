@@ -54,6 +54,9 @@
     <ClInclude Include="..\common\include\BthPS3.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
+    <ClInclude Include="PSM.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Device.c">
@@ -75,6 +78,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="BusLogic.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PSM.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

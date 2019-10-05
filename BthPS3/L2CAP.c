@@ -134,7 +134,8 @@ L2CAP_PS3_HandleRemoteConnect(
             {
                 TraceEvents(TRACE_LEVEL_INFORMATION,
                     TRACE_L2CAP,
-                    "Filter disabled, re-enabling in 10 seconds"
+                    "Filter disabled, re-enabling in %d seconds",
+                    DevCtx->Settings.AutoEnableFilterDelay
                 );
 
                 //

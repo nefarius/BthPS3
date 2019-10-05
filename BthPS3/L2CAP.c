@@ -99,18 +99,23 @@ L2CAP_PS3_HandleRemoteConnect(
         switch (remoteName[0])
         {
         case 'P': // First letter in PLAYSTATION(R)3 Controller ('P')
+            if (!DevCtx->Settings.IsSIXAXISSupported) { goto unsupported; }
             deviceType = DS_DEVICE_TYPE_SIXAXIS;
             break;
         case 'N': // First letter in Navigation Controller ('N')
+            if (!DevCtx->Settings.IsNAVIGATIONSupported) { goto unsupported; }
             deviceType = DS_DEVICE_TYPE_NAVIGATION;
             break;
         case 'M': // First letter in Motion Controller ('M')
+            if (!DevCtx->Settings.IsMOTIONSupported) { goto unsupported; }
             deviceType = DS_DEVICE_TYPE_MOTION;
             break;
         case 'W': // First letter in Wireless Controller ('W')
+            if (!DevCtx->Settings.IsWIRELESSSupported) { goto unsupported; }
             deviceType = DS_DEVICE_TYPE_WIRELESS;
             break;
         default:
+        unsupported:
 
             //
             // Filter re-routed potentially unsupported device, disable

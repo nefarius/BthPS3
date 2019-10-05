@@ -124,19 +124,16 @@ typedef struct _BTHPS3_SERVER_CONTEXT
 
     struct
     {
-        // TODO: populate
         ULONG AutoEnableFilter;
 
-        // TODO: populate
+        ULONG AutoEnableFilterDelay;
+
         ULONG IsSIXAXISSupported;
 
-        // TODO: populate
         ULONG IsNAVIGATIONSupported;
 
-        // TODO: populate
         ULONG IsMOTIONSupported;
 
-        // TODO: populate
         ULONG IsWIRELESSSupported;
 
     } Settings;
@@ -207,6 +204,11 @@ NTSTATUS
 BthPS3_ServerContextInit(
     PBTHPS3_SERVER_CONTEXT Context,
     WDFDEVICE Device
+);
+
+NTSTATUS
+BthPS3_SettingsContextInit(
+    PBTHPS3_SERVER_CONTEXT Context
 );
 
 _IRQL_requires_max_(PASSIVE_LEVEL)

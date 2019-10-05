@@ -515,7 +515,104 @@ BthPS3_ServerContextInit(
         goto exit;
     }
 
+    //
+    // Query registry for dynamic values
+    // 
+    status = BthPS3_SettingsContextInit(Context);
+
 exit:
+    return status;
+}
+
+//
+// Read runtime properties from registry
+// 
+NTSTATUS
+BthPS3_SettingsContextInit(
+    PBTHPS3_SERVER_CONTEXT Context
+)
+{
+    NTSTATUS    status;
+    WDFKEY      hKey = NULL;
+
+    DECLARE_CONST_UNICODE_STRING(autoEnableFilter, BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER);
+    DECLARE_CONST_UNICODE_STRING(autoEnableFilterDelay, BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER_DELAY);
+
+    DECLARE_CONST_UNICODE_STRING(isSIXAXISSupported, BTHPS3_REG_VALUE_IS_SIXAXIS_SUPPORTED);
+    DECLARE_CONST_UNICODE_STRING(isNAVIGATIONSupported, BTHPS3_REG_VALUE_IS_NAVIGATION_SUPPORTED);
+    DECLARE_CONST_UNICODE_STRING(isMOTIONSupported, BTHPS3_REG_VALUE_IS_MOTION_SUPPORTED);
+    DECLARE_CONST_UNICODE_STRING(isWIRELESSSupported, BTHPS3_REG_VALUE_IS_WIRELESS_SUPPORTED);
+
+    //
+    // Set default values
+    //
+    Context->Settings.AutoEnableFilter = TRUE;
+    Context->Settings.AutoEnableFilterDelay = 10; // Seconds
+
+    Context->Settings.IsSIXAXISSupported = TRUE;
+    Context->Settings.IsNAVIGATIONSupported = TRUE;
+    Context->Settings.IsMOTIONSupported = TRUE;
+    Context->Settings.IsWIRELESSSupported = TRUE;
+
+    //
+    // Open
+    //   HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\BthPS3\Parameters
+    // key
+    // 
+    status = WdfDriverOpenParametersRegistryKey(
+        WdfGetDriver(),
+        STANDARD_RIGHTS_ALL,
+        WDF_NO_OBJECT_ATTRIBUTES,
+        &hKey
+    );
+
+    //
+    // On success, read configuration values
+    // 
+    if (NT_SUCCESS(status))
+    {
+        //
+        // Don't care, if it fails, keep default value
+        // 
+        (void)WdfRegistryQueryULong(
+            hKey,
+            &autoEnableFilter,
+            &Context->Settings.AutoEnableFilter
+        );
+
+        (void)WdfRegistryQueryULong(
+            hKey,
+            &autoEnableFilterDelay,
+            &Context->Settings.AutoEnableFilterDelay
+        );
+
+        (void)WdfRegistryQueryULong(
+            hKey,
+            &isSIXAXISSupported,
+            &Context->Settings.IsSIXAXISSupported
+        );
+
+        (void)WdfRegistryQueryULong(
+            hKey,
+            &isNAVIGATIONSupported,
+            &Context->Settings.IsNAVIGATIONSupported
+        );
+
+        (void)WdfRegistryQueryULong(
+            hKey,
+            &isMOTIONSupported,
+            &Context->Settings.IsMOTIONSupported
+        );
+
+        (void)WdfRegistryQueryULong(
+            hKey,
+            &isWIRELESSSupported,
+            &Context->Settings.IsWIRELESSSupported
+        );
+        
+        WdfRegistryClose(hKey);
+    }
+
     return status;
 }
 

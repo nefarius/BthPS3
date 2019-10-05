@@ -144,6 +144,49 @@ DEFINE_GUID(GUID_DEVINTERFACE_BTHPS3_WIRELESS,
 
 #pragma endregion
 
+#pragma region Registry constants
+
+/***********************************************************/
+/* HKLM\SYSTEM\CurrentControlSet\Services\BthPS3\Parameter */
+/***********************************************************/
+
+//
+// Bring up exposed device in raw mode (no function driver required)
+// 
+#define BTHPS3_REG_VALUE_RAW_PDO                        L"RawPDO"
+
+//
+// Hide driver-less device in Device Manager UI
+// 
+#define BTHPS3_REG_VALUE_HIDE_PDO                       L"HidePDO"
+
+//
+// I/O idle timeout value in milliseconds
+// 
+#define BTHPS3_REG_VALUE_CHILD_IDLE_TIMEOUT             L"ChildIdleTimeout"
+
+//
+// Should the profile driver attempt to auto-enable the patch again
+// 
+#define BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER             L"AutoEnableFilter"
+
+//
+// Time (in seconds) to wait for patch re-enable
+// 
+#define BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER_DELAY       L"AutoEnableFilterDelay"
+
+#define BTHPS3_REG_VALUE_IS_SIXAXIS_SUPPORTED           L"IsSIXAXISSupported"
+
+#define BTHPS3_REG_VALUE_IS_NAVIGATION_SUPPORTED        L"IsNAVIGATIONSupported"
+
+#define BTHPS3_REG_VALUE_IS_MOTION_SUPPORTED            L"IsMOTIONSupported"
+
+#define BTHPS3_REG_VALUE_IS_WIRELESS_SUPPORTED          L"IsWIRELESSSupported"
+
+
+
+#pragma endregion
+
 //
 // Type (make, model) of remote device
 // 
@@ -240,18 +283,27 @@ typedef enum _DS_DEVICE_TYPE
 
 #include <pshpack1.h>
 
+//
+// Payload for IOCTL_BTHPS3PSM_ENABLE_PSM_PATCHING
+// 
 typedef struct _BTHPS3PSM_ENABLE_PSM_PATCHING
 {
     IN ULONG DeviceIndex;
 
 } BTHPS3PSM_ENABLE_PSM_PATCHING, *PBTHPS3PSM_ENABLE_PSM_PATCHING;
 
+//
+// Payload for IOCTL_BTHPS3PSM_DISABLE_PSM_PATCHING
+// 
 typedef struct _BTHPS3PSM_DISABLE_PSM_PATCHING
 {
     IN ULONG DeviceIndex;
 
 } BTHPS3PSM_DISABLE_PSM_PATCHING, *PBTHPS3PSM_DISABLE_PSM_PATCHING;
 
+//
+// Payload for IOCTL_BTHPS3PSM_GET_PSM_PATCHING
+// 
 typedef struct _BTHPS3PSM_GET_PSM_PATCHING
 {
     IN ULONG DeviceIndex;

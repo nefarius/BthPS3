@@ -34,7 +34,7 @@ L2CAP_PS3_HandleRemoteConnect(
 )
 {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
-    struct _BRB_L2CA_OPEN_CHANNEL *brb = NULL;
+    struct _BRB_L2CA_OPEN_CHANNEL* brb = NULL;
     PFN_WDF_REQUEST_COMPLETION_ROUTINE completionRoutine = NULL;
     USHORT psm = ConnectParams->Parameters.Connect.Request.PSM;
     PBTHPS3_CLIENT_CONNECTION clientConnection = NULL;
@@ -135,10 +135,13 @@ L2CAP_PS3_HandleRemoteConnect(
                 //
                 // Fire off re-enable timer
                 // 
-                (void) WdfTimerStart(
-                    DevCtx->PsmFilter.AutoResetTimer,
-                    WDF_REL_TIMEOUT_IN_SEC(10) // TODO: read this value from registry
-                );
+                if (DevCtx->Settings.AutoEnableFilter)
+                {
+                    (void)WdfTimerStart(
+                        DevCtx->PsmFilter.AutoResetTimer,
+                        WDF_REL_TIMEOUT_IN_SEC(DevCtx->Settings.AutoEnableFilterDelay)
+                    );
+                }
             }
 
             //
@@ -179,13 +182,13 @@ L2CAP_PS3_HandleRemoteConnect(
         completionRoutine = L2CAP_PS3_ControlConnectResponseCompleted;
         clientConnection->HidControlChannel.ChannelHandle = ConnectParams->ConnectionHandle;
         brbAsyncRequest = clientConnection->HidControlChannel.ConnectDisconnectRequest;
-        brb = (struct _BRB_L2CA_OPEN_CHANNEL*) &(clientConnection->HidControlChannel.ConnectDisconnectBrb);
+        brb = (struct _BRB_L2CA_OPEN_CHANNEL*) & (clientConnection->HidControlChannel.ConnectDisconnectBrb);
         break;
     case PSM_DS3_HID_INTERRUPT:
         completionRoutine = L2CAP_PS3_InterruptConnectResponseCompleted;
         clientConnection->HidInterruptChannel.ChannelHandle = ConnectParams->ConnectionHandle;
         brbAsyncRequest = clientConnection->HidInterruptChannel.ConnectDisconnectRequest;
-        brb = (struct _BRB_L2CA_OPEN_CHANNEL*) &(clientConnection->HidInterruptChannel.ConnectDisconnectBrb);
+        brb = (struct _BRB_L2CA_OPEN_CHANNEL*) & (clientConnection->HidInterruptChannel.ConnectDisconnectBrb);
         break;
     default:
         // Doesn't happen
@@ -316,7 +319,7 @@ L2CAP_PS3_ControlConnectResponseCompleted(
 )
 {
     NTSTATUS status;
-    struct _BRB_L2CA_OPEN_CHANNEL *brb = NULL;
+    struct _BRB_L2CA_OPEN_CHANNEL* brb = NULL;
     PBTHPS3_CLIENT_CONNECTION clientConnection = NULL;
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
@@ -332,7 +335,7 @@ L2CAP_PS3_ControlConnectResponseCompleted(
         status
     );
 
-    brb = (struct _BRB_L2CA_OPEN_CHANNEL *) Context;
+    brb = (struct _BRB_L2CA_OPEN_CHANNEL*) Context;
     clientConnection = brb->Hdr.ClientContext[0];
 
     //
@@ -378,7 +381,7 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
 )
 {
     NTSTATUS status;
-    struct _BRB_L2CA_OPEN_CHANNEL *brb = NULL;
+    struct _BRB_L2CA_OPEN_CHANNEL* brb = NULL;
     PBTHPS3_CLIENT_CONNECTION clientConnection = NULL;
     BTHPS3_CONNECTION_STATE controlState;
 
@@ -395,7 +398,7 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
         status
     );
 
-    brb = (struct _BRB_L2CA_OPEN_CHANNEL *) Context;
+    brb = (struct _BRB_L2CA_OPEN_CHANNEL*) Context;
     clientConnection = brb->Hdr.ClientContext[0];
 
     //
@@ -476,7 +479,7 @@ L2CAP_PS3_DenyRemoteConnect(
 {
     NTSTATUS status = STATUS_SUCCESS;
     WDFREQUEST brbAsyncRequest = NULL;
-    struct _BRB_L2CA_OPEN_CHANNEL *brb = NULL;
+    struct _BRB_L2CA_OPEN_CHANNEL* brb = NULL;
 
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
@@ -571,7 +574,7 @@ L2CAP_PS3_DenyRemoteConnectCompleted(
 )
 {
     PBTHPS3_SERVER_CONTEXT deviceCtx = NULL;
-    struct _BRB_L2CA_OPEN_CHANNEL *brb = NULL;
+    struct _BRB_L2CA_OPEN_CHANNEL* brb = NULL;
 
     UNREFERENCED_PARAMETER(Target);
 
@@ -823,7 +826,7 @@ L2CAP_PS3_RemoteDisconnect(
     _In_ PBTHPS3_CLIENT_L2CAP_CHANNEL Channel
 )
 {
-    struct _BRB_L2CA_CLOSE_CHANNEL *disconnectBrb = NULL;
+    struct _BRB_L2CA_CLOSE_CHANNEL* disconnectBrb = NULL;
 
     WdfSpinLockAcquire(Channel->ConnectionStateLock);
 
@@ -873,7 +876,7 @@ L2CAP_PS3_RemoteDisconnect(
         BRB_L2CA_CLOSE_CHANNEL
     );
 
-    disconnectBrb = (struct _BRB_L2CA_CLOSE_CHANNEL *) &(Channel->ConnectDisconnectBrb);
+    disconnectBrb = (struct _BRB_L2CA_CLOSE_CHANNEL*) & (Channel->ConnectDisconnectBrb);
 
     disconnectBrb->BtAddress = RemoteAddress;
     disconnectBrb->ChannelHandle = Channel->ChannelHandle;

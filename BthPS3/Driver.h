@@ -31,6 +31,7 @@
 #include "Connection.h"
 #include "L2CAP.h"
 #include "BusLogic.h"
+#include "Util.h"
 
 EXTERN_C_START
 

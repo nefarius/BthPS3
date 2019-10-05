@@ -43,6 +43,7 @@
     <ClCompile Include="PSM.c" />
     <ClCompile Include="L2CAP.c" />
     <ClCompile Include="Queue.c" />
+    <ClCompile Include="Util.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\include\BthPS3.h" />
@@ -55,6 +56,7 @@
     <ClInclude Include="L2CAP.h" />
     <ClInclude Include="Queue.h" />
     <ClInclude Include="Trace.h" />
+    <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>
     <Inf Include="BthPS3.inf" />

@@ -204,64 +204,10 @@ BthPS3_DeviceContextHeaderInit(
 );
 
 NTSTATUS
-FORCEINLINE
-BTHPS3_SERVER_CONTEXT_INIT(
+BthPS3_ServerContextInit(
     PBTHPS3_SERVER_CONTEXT Context,
     WDFDEVICE Device
-)
-{
-    NTSTATUS status;
-    WDF_OBJECT_ATTRIBUTES attributes;
-    WDF_TIMER_CONFIG timerCfg;
-
-    status = BthPS3_DeviceContextHeaderInit(&Context->Header, Device);
-    if (!NT_SUCCESS(status))
-    {
-        goto exit;
-    }
-
-    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
-    attributes.ParentObject = Device;
-
-    status = WdfSpinLockCreate(
-        &attributes,
-        &Context->ClientConnectionsLock
-    );
-    if (!NT_SUCCESS(status))
-    {
-        goto exit;
-    }
-
-    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
-    attributes.ParentObject = Device;
-
-    status = WdfCollectionCreate(
-        &attributes,
-        &Context->ClientConnections
-    );
-    if (!NT_SUCCESS(status))
-    {
-        goto exit;
-    }
-
-    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
-    attributes.ParentObject = Device;
-
-    WDF_TIMER_CONFIG_INIT(&timerCfg, BthPS3_EnablePatchEvtWdfTimer);
-
-    status = WdfTimerCreate(
-        &timerCfg, 
-        &attributes, 
-        &Context->PsmFilter.AutoResetTimer
-    );
-    if (!NT_SUCCESS(status))
-    {
-        goto exit;
-    }
-
-exit:
-    return status;
-}
+);
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS

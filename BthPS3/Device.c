@@ -91,7 +91,7 @@ BthPS3_CreateDevice(
 
     pSrvCtx = GetServerDeviceContext(device);
 
-    status = BTHPS3_SERVER_CONTEXT_INIT(pSrvCtx, device);
+    status = BthPS3_ServerContextInit(pSrvCtx, device);
 
     if (!NT_SUCCESS(status))
     {

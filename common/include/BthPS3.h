@@ -156,7 +156,7 @@ DEFINE_GUID(GUID_DEVINTERFACE_BTHPS3_WIRELESS,
 #define BTHPS3_REG_VALUE_RAW_PDO                        L"RawPDO"
 
 //
-// Hide driver-less device in Device Manager UI
+// Hide driver-less device in Device Manager UI (cosmetic setting)
 // 
 #define BTHPS3_REG_VALUE_HIDE_PDO                       L"HidePDO"
 
@@ -175,15 +175,25 @@ DEFINE_GUID(GUID_DEVINTERFACE_BTHPS3_WIRELESS,
 // 
 #define BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER_DELAY       L"AutoEnableFilterDelay"
 
+//
+// SIXAXIS connection requests will be dropped, if FALSE
+// 
 #define BTHPS3_REG_VALUE_IS_SIXAXIS_SUPPORTED           L"IsSIXAXISSupported"
 
+//
+// NAVIGATION connection requests will be dropped, if FALSE
+// 
 #define BTHPS3_REG_VALUE_IS_NAVIGATION_SUPPORTED        L"IsNAVIGATIONSupported"
 
+//
+// MOTION connection requests will be dropped, if FALSE
+// 
 #define BTHPS3_REG_VALUE_IS_MOTION_SUPPORTED            L"IsMOTIONSupported"
 
+//
+// WIRELESS connection requests will be dropped, if FALSE
+// 
 #define BTHPS3_REG_VALUE_IS_WIRELESS_SUPPORTED          L"IsWIRELESSSupported"
-
-
 
 #pragma endregion
 

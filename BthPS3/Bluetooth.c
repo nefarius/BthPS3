@@ -515,6 +515,45 @@ BthPS3_ServerContextInit(
         goto exit;
     }
 
+    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+    attributes.ParentObject = Device;
+
+    status = WdfCollectionCreate(
+        &attributes,
+        &Context->Settings.SIXAXISSupportedNames
+    );
+    if (!NT_SUCCESS(status))
+    {
+        goto exit;
+    }
+
+    status = WdfCollectionCreate(
+        &attributes,
+        &Context->Settings.NAVIGATIONSupportedNames
+    );
+    if (!NT_SUCCESS(status))
+    {
+        goto exit;
+    }
+
+    status = WdfCollectionCreate(
+        &attributes,
+        &Context->Settings.MOTIONSupportedNames
+    );
+    if (!NT_SUCCESS(status))
+    {
+        goto exit;
+    }
+
+    status = WdfCollectionCreate(
+        &attributes,
+        &Context->Settings.WIRELESSSupportedNames
+    );
+    if (!NT_SUCCESS(status))
+    {
+        goto exit;
+    }
+
     //
     // Query registry for dynamic values
     // 
@@ -532,8 +571,9 @@ BthPS3_SettingsContextInit(
     PBTHPS3_SERVER_CONTEXT Context
 )
 {
-    NTSTATUS    status;
-    WDFKEY      hKey = NULL;
+    NTSTATUS                status;
+    WDFKEY                  hKey = NULL;
+    WDF_OBJECT_ATTRIBUTES   attribs;
 
     DECLARE_CONST_UNICODE_STRING(autoEnableFilter, BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER);
     DECLARE_CONST_UNICODE_STRING(autoEnableFilterDelay, BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER_DELAY);
@@ -542,6 +582,11 @@ BthPS3_SettingsContextInit(
     DECLARE_CONST_UNICODE_STRING(isNAVIGATIONSupported, BTHPS3_REG_VALUE_IS_NAVIGATION_SUPPORTED);
     DECLARE_CONST_UNICODE_STRING(isMOTIONSupported, BTHPS3_REG_VALUE_IS_MOTION_SUPPORTED);
     DECLARE_CONST_UNICODE_STRING(isWIRELESSSupported, BTHPS3_REG_VALUE_IS_WIRELESS_SUPPORTED);
+
+    DECLARE_CONST_UNICODE_STRING(SIXAXISSupportedNames, BTHPS3_REG_VALUE_SIXAXIS_SUPPORTED_NAMES);
+    DECLARE_CONST_UNICODE_STRING(NAVIGATIONSupportedNames, BTHPS3_REG_VALUE_NAVIGATION_SUPPORTED_NAMES);
+    DECLARE_CONST_UNICODE_STRING(MOTIONSupportedNames, BTHPS3_REG_VALUE_MOTION_SUPPORTED_NAMES);
+    DECLARE_CONST_UNICODE_STRING(WIRELESSSupportedNames, BTHPS3_REG_VALUE_WIRELESS_SUPPORTED_NAMES);
 
     //
     // Set default values
@@ -608,6 +653,42 @@ BthPS3_SettingsContextInit(
             hKey,
             &isWIRELESSSupported,
             &Context->Settings.IsWIRELESSSupported
+        );
+
+        WDF_OBJECT_ATTRIBUTES_INIT(&attribs);
+        attribs.ParentObject = Context->Settings.SIXAXISSupportedNames;
+        (void)WdfRegistryQueryMultiString(
+            hKey,
+            &SIXAXISSupportedNames,
+            &attribs,
+            Context->Settings.SIXAXISSupportedNames
+        );
+
+        WDF_OBJECT_ATTRIBUTES_INIT(&attribs);
+        attribs.ParentObject = Context->Settings.NAVIGATIONSupportedNames;
+        (void)WdfRegistryQueryMultiString(
+            hKey,
+            &NAVIGATIONSupportedNames,
+            &attribs,
+            Context->Settings.NAVIGATIONSupportedNames
+        );
+
+        WDF_OBJECT_ATTRIBUTES_INIT(&attribs);
+        attribs.ParentObject = Context->Settings.MOTIONSupportedNames;
+        (void)WdfRegistryQueryMultiString(
+            hKey,
+            &MOTIONSupportedNames,
+            &attribs,
+            Context->Settings.MOTIONSupportedNames
+        );
+
+        WDF_OBJECT_ATTRIBUTES_INIT(&attribs);
+        attribs.ParentObject = Context->Settings.WIRELESSSupportedNames;
+        (void)WdfRegistryQueryMultiString(
+            hKey,
+            &WIRELESSSupportedNames,
+            &attribs,
+            Context->Settings.WIRELESSSupportedNames
         );
         
         WdfRegistryClose(hKey);

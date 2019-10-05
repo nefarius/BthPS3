@@ -136,6 +136,14 @@ typedef struct _BTHPS3_SERVER_CONTEXT
 
         ULONG IsWIRELESSSupported;
 
+        WDFCOLLECTION SIXAXISSupportedNames;
+
+        WDFCOLLECTION NAVIGATIONSupportedNames;
+
+        WDFCOLLECTION MOTIONSupportedNames;
+
+        WDFCOLLECTION WIRELESSSupportedNames;
+
     } Settings;
 
 } BTHPS3_SERVER_CONTEXT, *PBTHPS3_SERVER_CONTEXT;

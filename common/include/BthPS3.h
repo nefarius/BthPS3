@@ -158,22 +158,22 @@ DEFINE_GUID(GUID_DEVINTERFACE_BTHPS3_WIRELESS,
 //
 // Hide driver-less device in Device Manager UI (cosmetic setting)
 // 
-#define BTHPS3_REG_VALUE_HIDE_PDO                       L"HidePDO"
+#define BTHPS3_REG_VALUE_HIDE_PDO               L"HidePDO"
 
 //
 // I/O idle timeout value in milliseconds
 // 
-#define BTHPS3_REG_VALUE_CHILD_IDLE_TIMEOUT             L"ChildIdleTimeout"
+#define BTHPS3_REG_VALUE_CHILD_IDLE_TIMEOUT     L"ChildIdleTimeout"
 
 //
 // Should the profile driver attempt to auto-enable the patch again
 // 
-#define BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER             L"AutoEnableFilter"
+#define BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER         L"AutoEnableFilter"
 
 //
 // Time (in seconds) to wait for patch re-enable
 // 
-#define BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER_DELAY       L"AutoEnableFilterDelay"
+#define BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER_DELAY   L"AutoEnableFilterDelay"
 
 //
 // SIXAXIS connection requests will be dropped, if FALSE
@@ -194,6 +194,15 @@ DEFINE_GUID(GUID_DEVINTERFACE_BTHPS3_WIRELESS,
 // WIRELESS connection requests will be dropped, if FALSE
 // 
 #define BTHPS3_REG_VALUE_IS_WIRELESS_SUPPORTED          L"IsWIRELESSSupported"
+
+
+#define BTHPS3_REG_VALUE_SIXAXIS_SUPPORTED_NAMES        L"SIXAXISSupportedNames"
+
+#define BTHPS3_REG_VALUE_NAVIGATION_SUPPORTED_NAMES     L"NAVIGATIONSupportedNames"
+
+#define BTHPS3_REG_VALUE_MOTION_SUPPORTED_NAMES         L"MOTIONSupportedNames"
+
+#define BTHPS3_REG_VALUE_WIRELESS_SUPPORTED_NAMES       L"WIRELESSSupportedNames"
 
 #pragma endregion
 

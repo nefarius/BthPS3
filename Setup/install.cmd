@@ -14,5 +14,7 @@ BthPS3Util.exe --enable-filter >> install.log 2>&1
 
 BthPS3Util.exe --restart-host-device >> install.log 2>&1
 
+BthPS3Util.exe --enable-psm-patch --device-index 0 >> install.log 2>&1
+
 popd
 endlocal

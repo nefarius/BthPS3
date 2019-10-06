@@ -63,6 +63,25 @@ ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
 StartType      = 3               ; SERVICE_DEMAND_START
 ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
 ServiceBinary  = %12%\BthPS3.sys
+AddReg         = BthPS3_Service_AddReg
+
+; Populate default service values
+[BthPS3_Service_AddReg]
+HKR,Parameters,RawPDO,0x00010001,1
+HKR,Parameters,HidePDO,0x00010001,0
+HKR,Parameters,ChildIdleTimeout,0x00010001,10000
+HKR,Parameters,AutoEnableFilter,0x00010001,1
+HKR,Parameters,AutoDisableFilter,0x00010001,1
+HKR,Parameters,AutoEnableFilterDelay,0x00010001,10
+HKR,Parameters,IsSIXAXISSupported,0x00010001,1
+HKR,Parameters,IsNAVIGATIONSupported,0x00010001,1
+HKR,Parameters,IsMOTIONSupported,0x00010001,1
+HKR,Parameters,IsWIRELESSSupported,0x00010001,1
+HKR,Parameters,SIXAXISSupportedNames,0x00010000,"PLAYSTATION(R)3 Controller"
+;HKR,Parameters,NAVIGATIONSupportedNames,0x00010000,""
+;HKR,Parameters,MOTIONSupportedNames,0x00010000,""
+HKR,Parameters,WIRELESSSupportedNames,0x00010000,"Wireless Controller","ONYX WIRELESS CONTROLLER"
+
 
 ;
 ;--- BthPS3_Device Coinstaller installation ------

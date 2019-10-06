@@ -2,6 +2,12 @@
 
 BOOLEAN
 StringUtil_BthNameIsEqual(
-    CHAR Lhs,
+    PCHAR Lhs,
     WDFSTRING Rhs
+);
+
+BOOLEAN
+StringUtil_BthNameIsInCollection(
+    PCHAR Entry,
+    WDFCOLLECTION Array
 );

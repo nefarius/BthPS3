@@ -91,31 +91,76 @@ L2CAP_PS3_HandleRemoteConnect(
             return L2CAP_PS3_DenyRemoteConnect(DevCtx, ConnectParams);
         }
 
-        // TODO: rework this to match against names from REG_MULTI_SZ
-
         //
         // Distinguish device type based on reported remote name
         // 
-        switch (remoteName[0])
-        {
-        case 'P': // First letter in PLAYSTATION(R)3 Controller ('P')
-            if (!DevCtx->Settings.IsSIXAXISSupported) { goto unsupported; }
+
+        //
+        // Check if PLAYSTATION(R)3 Controller
+        // 
+        if (DevCtx->Settings.IsSIXAXISSupported
+            && StringUtil_BthNameIsInCollection(remoteName, DevCtx->Settings.SIXAXISSupportedNames)) {
             deviceType = DS_DEVICE_TYPE_SIXAXIS;
-            break;
-        case 'N': // First letter in Navigation Controller ('N')
-            if (!DevCtx->Settings.IsNAVIGATIONSupported) { goto unsupported; }
+
+            TraceEvents(TRACE_LEVEL_INFORMATION,
+                TRACE_L2CAP,
+                "++ Device %012llX identified as SIXAXIS compatible",
+                ConnectParams->BtAddress
+            );
+        }
+
+        //
+        // Check if Navigation Controller
+        // 
+        if (DevCtx->Settings.IsNAVIGATIONSupported
+            && StringUtil_BthNameIsInCollection(remoteName, DevCtx->Settings.NAVIGATIONSupportedNames)) {
             deviceType = DS_DEVICE_TYPE_NAVIGATION;
-            break;
-        case 'M': // First letter in Motion Controller ('M')
-            if (!DevCtx->Settings.IsMOTIONSupported) { goto unsupported; }
+
+            TraceEvents(TRACE_LEVEL_INFORMATION,
+                TRACE_L2CAP,
+                "++ Device %012llX identified as NAVIGATION compatible",
+                ConnectParams->BtAddress
+            );
+        }
+
+        //
+        // Check if Motion Controller
+        // 
+        if (DevCtx->Settings.IsMOTIONSupported
+            && StringUtil_BthNameIsInCollection(remoteName, DevCtx->Settings.MOTIONSupportedNames)) {
             deviceType = DS_DEVICE_TYPE_MOTION;
-            break;
-        case 'W': // First letter in Wireless Controller ('W')
-            if (!DevCtx->Settings.IsWIRELESSSupported) { goto unsupported; }
+
+            TraceEvents(TRACE_LEVEL_INFORMATION,
+                TRACE_L2CAP,
+                "++ Device %012llX identified as MOTION compatible",
+                ConnectParams->BtAddress
+            );
+        }
+
+        //
+        // Check if Wireless Controller
+        // 
+        if (DevCtx->Settings.IsWIRELESSSupported
+            && StringUtil_BthNameIsInCollection(remoteName, DevCtx->Settings.WIRELESSSupportedNames)) {
             deviceType = DS_DEVICE_TYPE_WIRELESS;
-            break;
-        default:
-        unsupported:
+
+            TraceEvents(TRACE_LEVEL_INFORMATION,
+                TRACE_L2CAP,
+                "++ Device %012llX identified as WIRELESS compatible",
+                ConnectParams->BtAddress
+            );
+        }
+
+        //
+        // We were not able to identify, drop it
+        // 
+        if (deviceType == DS_DEVICE_TYPE_UNKNOWN)
+        {
+            TraceEvents(TRACE_LEVEL_WARNING,
+                TRACE_L2CAP,
+                "!! Device %012llX not identified or denied, dropping connection",
+                ConnectParams->BtAddress
+            );
 
             //
             // Filter re-routed potentially unsupported device, disable
@@ -132,17 +177,17 @@ L2CAP_PS3_HandleRemoteConnect(
             }
             else
             {
-                TraceEvents(TRACE_LEVEL_INFORMATION,
-                    TRACE_L2CAP,
-                    "Filter disabled, re-enabling in %d seconds",
-                    DevCtx->Settings.AutoEnableFilterDelay
-                );
-
                 //
                 // Fire off re-enable timer
                 // 
                 if (DevCtx->Settings.AutoEnableFilter)
                 {
+                    TraceEvents(TRACE_LEVEL_INFORMATION,
+                        TRACE_L2CAP,
+                        "Filter disabled, re-enabling in %d seconds",
+                        DevCtx->Settings.AutoEnableFilterDelay
+                    );
+
                     (void)WdfTimerStart(
                         DevCtx->PsmFilter.AutoResetTimer,
                         WDF_REL_TIMEOUT_IN_SEC(DevCtx->Settings.AutoEnableFilterDelay)
@@ -370,6 +415,10 @@ L2CAP_PS3_ControlConnectResponseCompleted(
         //
         // TODO: implement me!
         // 
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_L2CAP,
+            "HID Control Channel connection failed (NOT IMPLEMENTED)"
+        );
     }
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
@@ -465,6 +514,10 @@ failedDrop:
     //
     // TODO: implement me!
     // 
+    TraceEvents(TRACE_LEVEL_ERROR,
+        TRACE_L2CAP,
+        "%!FUNC! connection failed (NOT IMPLEMENTED)"
+    );
 
     return;
 }

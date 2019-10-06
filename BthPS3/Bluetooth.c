@@ -458,6 +458,7 @@ BthPS3_DeviceContextHeaderInit(
 //
 // Initialize all members of the server device context
 // 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_ServerContextInit(
     PBTHPS3_SERVER_CONTEXT Context,
@@ -567,6 +568,7 @@ exit:
 //
 // Read runtime properties from registry
 // 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_SettingsContextInit(
     PBTHPS3_SERVER_CONTEXT Context

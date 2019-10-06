@@ -210,12 +210,14 @@ BthPS3_DeviceContextHeaderInit(
     WDFDEVICE Device
 );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_ServerContextInit(
     PBTHPS3_SERVER_CONTEXT Context,
     WDFDEVICE Device
 );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_SettingsContextInit(
     PBTHPS3_SERVER_CONTEXT Context

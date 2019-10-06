@@ -171,9 +171,15 @@ DEFINE_GUID(GUID_DEVINTERFACE_BTHPS3_WIRELESS,
 #define BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER         L"AutoEnableFilter"
 
 //
+// Should the profile driver attempt to auto-disable the patch
+// 
+#define BTHPS3_REG_VALUE_AUTO_DISABLE_FILTER        L"AutoDisableFilter"
+
+//
 // Time (in seconds) to wait for patch re-enable
 // 
 #define BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER_DELAY   L"AutoEnableFilterDelay"
+
 
 //
 // SIXAXIS connection requests will be dropped, if FALSE
@@ -196,12 +202,24 @@ DEFINE_GUID(GUID_DEVINTERFACE_BTHPS3_WIRELESS,
 #define BTHPS3_REG_VALUE_IS_WIRELESS_SUPPORTED          L"IsWIRELESSSupported"
 
 
+//
+// Collection of supported remote names for SIXAXIS device
+// 
 #define BTHPS3_REG_VALUE_SIXAXIS_SUPPORTED_NAMES        L"SIXAXISSupportedNames"
 
+//
+// Collection of supported remote names for NAVIGATION device
+// 
 #define BTHPS3_REG_VALUE_NAVIGATION_SUPPORTED_NAMES     L"NAVIGATIONSupportedNames"
 
+//
+// Collection of supported remote names for MOTION device
+// 
 #define BTHPS3_REG_VALUE_MOTION_SUPPORTED_NAMES         L"MOTIONSupportedNames"
 
+//
+// Collection of supported remote names for WIRELESS device
+// 
 #define BTHPS3_REG_VALUE_WIRELESS_SUPPORTED_NAMES       L"WIRELESSSupportedNames"
 
 #pragma endregion

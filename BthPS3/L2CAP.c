@@ -165,33 +165,41 @@ L2CAP_PS3_HandleRemoteConnect(
             //
             // Filter re-routed potentially unsupported device, disable
             // 
-            status = BthPS3PSM_DisablePatchSync(
-                DevCtx->PsmFilter.IoTarget,
-                0 // TODO: read from registry?
-            );
-            if (!NT_SUCCESS(status))
+            if (DevCtx->Settings.AutoDisableFilter)
             {
-                TraceEvents(TRACE_LEVEL_ERROR,
-                    TRACE_L2CAP,
-                    "BthPS3PSM_DisablePatchSync failed with status %!STATUS!", status);
-            }
-            else
-            {
-                //
-                // Fire off re-enable timer
-                // 
-                if (DevCtx->Settings.AutoEnableFilter)
+                status = BthPS3PSM_DisablePatchSync(
+                    DevCtx->PsmFilter.IoTarget,
+                    0 // TODO: read from registry?
+                );
+                if (!NT_SUCCESS(status))
+                {
+                    TraceEvents(TRACE_LEVEL_ERROR,
+                        TRACE_L2CAP,
+                        "BthPS3PSM_DisablePatchSync failed with status %!STATUS!", status);
+                }
+                else
                 {
                     TraceEvents(TRACE_LEVEL_INFORMATION,
                         TRACE_L2CAP,
-                        "Filter disabled, re-enabling in %d seconds",
-                        DevCtx->Settings.AutoEnableFilterDelay
+                        "Filter disabled"
                     );
 
-                    (void)WdfTimerStart(
-                        DevCtx->PsmFilter.AutoResetTimer,
-                        WDF_REL_TIMEOUT_IN_SEC(DevCtx->Settings.AutoEnableFilterDelay)
-                    );
+                    //
+                    // Fire off re-enable timer
+                    // 
+                    if (DevCtx->Settings.AutoEnableFilter)
+                    {
+                        TraceEvents(TRACE_LEVEL_INFORMATION,
+                            TRACE_L2CAP,
+                            "Filter disabled, re-enabling in %d seconds",
+                            DevCtx->Settings.AutoEnableFilterDelay
+                        );
+
+                        (void)WdfTimerStart(
+                            DevCtx->PsmFilter.AutoResetTimer,
+                            WDF_REL_TIMEOUT_IN_SEC(DevCtx->Settings.AutoEnableFilterDelay)
+                        );
+                    }
                 }
             }
 

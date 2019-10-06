@@ -20,6 +20,7 @@
 #include "Driver.h"
 #include "bluetooth.tmh"
 #include <bthguid.h>
+#include "BthPS3.h"
 
 
 #ifdef ALLOC_PRAGMA
@@ -576,6 +577,7 @@ BthPS3_SettingsContextInit(
     WDF_OBJECT_ATTRIBUTES   attribs;
 
     DECLARE_CONST_UNICODE_STRING(autoEnableFilter, BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER);
+    DECLARE_CONST_UNICODE_STRING(autoDisableFilter, BTHPS3_REG_VALUE_AUTO_DISABLE_FILTER);
     DECLARE_CONST_UNICODE_STRING(autoEnableFilterDelay, BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER_DELAY);
 
     DECLARE_CONST_UNICODE_STRING(isSIXAXISSupported, BTHPS3_REG_VALUE_IS_SIXAXIS_SUPPORTED);
@@ -592,6 +594,7 @@ BthPS3_SettingsContextInit(
     // Set default values
     //
     Context->Settings.AutoEnableFilter = TRUE;
+    Context->Settings.AutoDisableFilter = TRUE;
     Context->Settings.AutoEnableFilterDelay = 10; // Seconds
 
     Context->Settings.IsSIXAXISSupported = TRUE;
@@ -623,6 +626,12 @@ BthPS3_SettingsContextInit(
             hKey,
             &autoEnableFilter,
             &Context->Settings.AutoEnableFilter
+        );
+
+        (void)WdfRegistryQueryULong(
+            hKey,
+            &autoDisableFilter,
+            &Context->Settings.AutoDisableFilter
         );
 
         (void)WdfRegistryQueryULong(

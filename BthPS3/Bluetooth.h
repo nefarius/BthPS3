@@ -126,6 +126,8 @@ typedef struct _BTHPS3_SERVER_CONTEXT
     {
         ULONG AutoEnableFilter;
 
+        ULONG AutoDisableFilter;
+
         ULONG AutoEnableFilterDelay;
 
         ULONG IsSIXAXISSupported;

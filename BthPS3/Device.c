@@ -267,6 +267,17 @@ BthPS3_EvtWdfDeviceSelfManagedIoInit(
         goto exit;
     }
 
+    //
+    // Attempt to enable, but ignore failure
+    //
+    if (devCtx->Settings.AutoEnableFilter)
+    {
+        (void)BthPS3PSM_EnablePatchSync(
+            devCtx->PsmFilter.IoTarget,
+            0
+        );
+    }
+
 exit:
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "%!FUNC! Exit");

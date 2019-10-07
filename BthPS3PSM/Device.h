@@ -71,11 +71,6 @@ typedef struct _DEVICE_CONTEXT
     ULONG IsPsmPatchingEnabled;
 
 	//
-	// TRUE if filter is loaded under a compatible USB function driver
-	// 
-    BOOLEAN IsCompatible;
-
-	//
 	// Symbolic link name of host radio we're loaded onto
 	// 
     WDFSTRING SymbolicLinkName;

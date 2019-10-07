@@ -46,6 +46,11 @@ L2CAP_PS3_HandleRemoteConnect(
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
 
     //
+    // (Try to) refresh settings from registry
+    // 
+    (void)BthPS3_SettingsContextInit(DevCtx);
+
+    //
     // Look for an existing connection object and reuse that
     // 
     status = ClientConnections_RetrieveByBthAddr(

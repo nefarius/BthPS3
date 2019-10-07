@@ -35,6 +35,10 @@ extern WDFWAITLOCK     FilterDeviceCollectionLock;
 #pragma alloc_text (PAGE, BthPS3PSM_EvtDeviceContextCleanup)
 #endif
 
+#define BTHPS3PSM_POOL_TAG                      'MSP3'
+#define BTHPS3PSM_DEVICE_PROPERTY_LENGTH        0xFF
+#define BTHPS3PSM_ENUMERATOR_NAME               L"USB"
+
 
 //
 // Called upon device creation
@@ -51,12 +55,65 @@ BthPS3PSM_CreateDevice(
     PDEVICE_CONTEXT                 deviceContext;
     WDFKEY                          key;
     WDF_OBJECT_ATTRIBUTES           stringAttribs;
+    PWCHAR                          propertyBuffer;
+    ULONG                           propertyBufferSize;
+    BOOLEAN                         isUsb = FALSE;
 
     DECLARE_CONST_UNICODE_STRING(patchPSMRegValue, G_PatchPSMRegValue);
     DECLARE_CONST_UNICODE_STRING(linkNameRegValue, G_SymbolicLinkName);
 
 
     PAGED_CODE();
+
+    //
+    // Allocate buffer holding enumerator name
+    // 
+    propertyBuffer = ExAllocatePoolWithTag(
+        NonPagedPoolNx,
+        BTHPS3PSM_DEVICE_PROPERTY_LENGTH,
+        BTHPS3PSM_POOL_TAG
+    );
+
+    //
+    // Query for enumerator name before continuing 
+    // 
+    if (propertyBuffer && NT_SUCCESS(IoGetDeviceProperty(
+        WdfFdoInitWdmGetPhysicalDevice(DeviceInit),
+        DevicePropertyEnumeratorName,
+        BTHPS3PSM_DEVICE_PROPERTY_LENGTH,
+        (PVOID)propertyBuffer,
+        &propertyBufferSize
+    )) && 0 == wcscmp(propertyBuffer, BTHPS3PSM_ENUMERATOR_NAME))
+    {
+        TraceEvents(TRACE_LEVEL_VERBOSE,
+            TRACE_QUEUE,
+            "++ DevicePropertyEnumeratorName: %ws",
+            propertyBuffer
+        );
+
+        isUsb = TRUE;
+    }
+    else
+    {
+        TraceEvents(TRACE_LEVEL_WARNING,
+            TRACE_DEVICE,
+            "It appears we're not loaded within a USB stack, aborting initialization"
+        );
+    }
+
+    //
+    // Free buffer
+    // 
+    if (propertyBuffer) {
+        ExFreePoolWithTag(propertyBuffer, BTHPS3PSM_POOL_TAG);
+    }
+
+    //
+    // Don't create a device object and return
+    // 
+    if (!isUsb) {
+        return STATUS_SUCCESS;
+    }
 
     WdfFdoInitSetFilter(DeviceInit);
 
@@ -117,43 +174,68 @@ BthPS3PSM_CreateDevice(
 
         deviceContext = DeviceGetContext(device);
 
-        //
-        // Query for Compatible IDs and opt-out on unsupported devices
-        // 
-        if (!IsCompatibleDevice(device))
+        status = WdfDeviceOpenRegistryKey(
+            device,
+            PLUGPLAY_REGKEY_DEVICE,
+            KEY_READ,
+            WDF_NO_OBJECT_ATTRIBUTES,
+            &key
+        );
+
+        if (NT_SUCCESS(status))
         {
-            TraceEvents(TRACE_LEVEL_WARNING,
-                TRACE_DEVICE,
-                "It appears we're not loaded within a USB stack, aborting initialization"
+            status = WdfRegistryQueryULong(
+                key,
+                &patchPSMRegValue,
+                &deviceContext->IsPsmPatchingEnabled
             );
 
-            return STATUS_INVALID_DEVICE_REQUEST;
-        }
-        else
-        {
-            deviceContext->IsCompatible = TRUE;
-
-            status = WdfDeviceOpenRegistryKey(
-                device,
-                PLUGPLAY_REGKEY_DEVICE,
-                KEY_READ,
-                WDF_NO_OBJECT_ATTRIBUTES,
-                &key
-            );
-
-            if (NT_SUCCESS(status))
+            if (!NT_SUCCESS(status))
             {
-                status = WdfRegistryQueryULong(
+                TraceEvents(TRACE_LEVEL_ERROR,
+                    TRACE_DEVICE,
+                    "WdfRegistryQueryULong failed with status %!STATUS!",
+                    status
+                );
+            }
+            else
+            {
+                TraceEvents(TRACE_LEVEL_VERBOSE,
+                    TRACE_DEVICE,
+                    "BthPS3PSMPatchEnabled value retrieved"
+                );
+            }
+
+            WDF_OBJECT_ATTRIBUTES_INIT(&stringAttribs);
+            stringAttribs.ParentObject = device;
+
+            status = WdfStringCreate(
+                NULL,
+                &stringAttribs,
+                &deviceContext->SymbolicLinkName
+            );
+
+            if (!NT_SUCCESS(status))
+            {
+                TraceEvents(TRACE_LEVEL_ERROR,
+                    TRACE_DEVICE,
+                    "WdfStringCreate failed with status %!STATUS!",
+                    status
+                );
+            }
+            else
+            {
+                status = WdfRegistryQueryString(
                     key,
-                    &patchPSMRegValue,
-                    &deviceContext->IsPsmPatchingEnabled
+                    &linkNameRegValue,
+                    deviceContext->SymbolicLinkName
                 );
 
                 if (!NT_SUCCESS(status))
                 {
                     TraceEvents(TRACE_LEVEL_ERROR,
                         TRACE_DEVICE,
-                        "WdfRegistryQueryULong failed with status %!STATUS!",
+                        "WdfRegistryQueryString failed with status %!STATUS!",
                         status
                     );
                 }
@@ -161,63 +243,22 @@ BthPS3PSM_CreateDevice(
                 {
                     TraceEvents(TRACE_LEVEL_VERBOSE,
                         TRACE_DEVICE,
-                        "BthPS3PSMPatchEnabled value retrieved"
+                        "SymbolicLinkName value retrieved"
                     );
                 }
-
-                WDF_OBJECT_ATTRIBUTES_INIT(&stringAttribs);
-                stringAttribs.ParentObject = device;
-
-                status = WdfStringCreate(
-                    NULL,
-                    &stringAttribs,
-                    &deviceContext->SymbolicLinkName
-                );
-
-                if (!NT_SUCCESS(status))
-                {
-                    TraceEvents(TRACE_LEVEL_ERROR,
-                        TRACE_DEVICE,
-                        "WdfStringCreate failed with status %!STATUS!",
-                        status
-                    );
-                }
-                else
-                {
-                    status = WdfRegistryQueryString(
-                        key,
-                        &linkNameRegValue,
-                        deviceContext->SymbolicLinkName
-                    );
-
-                    if (!NT_SUCCESS(status))
-                    {
-                        TraceEvents(TRACE_LEVEL_ERROR,
-                            TRACE_DEVICE,
-                            "WdfRegistryQueryString failed with status %!STATUS!",
-                            status
-                        );
-                    }
-                    else
-                    {
-                        TraceEvents(TRACE_LEVEL_VERBOSE,
-                            TRACE_DEVICE,
-                            "SymbolicLinkName value retrieved"
-                        );
-                    }
-                }
-
-                WdfRegistryClose(key);
             }
-            else
-            {
-                TraceEvents(TRACE_LEVEL_ERROR,
-                    TRACE_DEVICE,
-                    "WdfDeviceOpenRegistryKey failed with status %!STATUS!",
-                    status
-                );
-            }
+
+            WdfRegistryClose(key);
         }
+        else
+        {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_DEVICE,
+                "WdfDeviceOpenRegistryKey failed with status %!STATUS!",
+                status
+            );
+        }
+
 
 #ifndef BTHPS3PSM_WITH_CONTROL_DEVICE
         deviceContext->IsPsmPatchingEnabled = TRUE;
@@ -383,51 +424,49 @@ BthPS3PSM_EvtDeviceContextCleanup(
 
     pDevCtx = DeviceGetContext(Device);
 
-    if (pDevCtx->IsCompatible)
+    status = WdfDeviceOpenRegistryKey(
+        Device,
+        PLUGPLAY_REGKEY_DEVICE,
+        KEY_WRITE,
+        WDF_NO_OBJECT_ATTRIBUTES,
+        &key
+    );
+
+    if (NT_SUCCESS(status))
     {
-        status = WdfDeviceOpenRegistryKey(
-            Device,
-            PLUGPLAY_REGKEY_DEVICE,
-            KEY_WRITE,
-            WDF_NO_OBJECT_ATTRIBUTES,
-            &key
+        status = WdfRegistryAssignULong(
+            key,
+            &patchPSMRegValue,
+            pDevCtx->IsPsmPatchingEnabled
         );
 
-        if (NT_SUCCESS(status))
-        {
-            status = WdfRegistryAssignULong(
-                key,
-                &patchPSMRegValue,
-                pDevCtx->IsPsmPatchingEnabled
-            );
-
-            if (!NT_SUCCESS(status))
-            {
-                TraceEvents(TRACE_LEVEL_ERROR,
-                    TRACE_DEVICE,
-                    "WdfRegistryAssignULong failed with status %!STATUS!",
-                    status
-                );
-            }
-            else
-            {
-                TraceEvents(TRACE_LEVEL_VERBOSE,
-                    TRACE_DEVICE,
-                    "Settings stored"
-                );
-            }
-
-            WdfRegistryClose(key);
-        }
-        else
+        if (!NT_SUCCESS(status))
         {
             TraceEvents(TRACE_LEVEL_ERROR,
                 TRACE_DEVICE,
-                "WdfDeviceOpenRegistryKey failed with status %!STATUS!",
+                "WdfRegistryAssignULong failed with status %!STATUS!",
                 status
             );
         }
+        else
+        {
+            TraceEvents(TRACE_LEVEL_VERBOSE,
+                TRACE_DEVICE,
+                "Settings stored"
+            );
+        }
+
+        WdfRegistryClose(key);
     }
+    else
+    {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_DEVICE,
+            "WdfDeviceOpenRegistryKey failed with status %!STATUS!",
+            status
+        );
+    }
+
 
 #pragma endregion
 

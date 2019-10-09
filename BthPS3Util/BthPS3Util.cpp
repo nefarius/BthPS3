@@ -469,7 +469,7 @@ int main(int, char* argv[])
 
 	if (cmdl[{ "--restart-host-device" }])
 	{
-		if (!devcon::enable_disable_by_compatible_id(BTH_COMPAT_ID, false))
+		if (!devcon::enable_disable_bth_usb_device(false))
 		{
 			std::cout << color(red) <<
 				"Failed to disable Bluetooth host device, error: "
@@ -477,7 +477,7 @@ int main(int, char* argv[])
 			return GetLastError();
 		}
 
-		if (!devcon::enable_disable_by_compatible_id(BTH_COMPAT_ID, true))
+		if (!devcon::enable_disable_bth_usb_device(true))
 		{
 			std::cout << color(red) <<
 				"Failed to enable Bluetooth host device, error: "

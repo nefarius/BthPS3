@@ -263,3 +263,6 @@ __pycache__/
 /Setup/*.aip
 /Setup/Setup Files
 /Setup/BthPS3 Bluetooth Drivers-cache
+/Setup/disk1
+/Setup/setup.inf
+/Setup/setup.rpt

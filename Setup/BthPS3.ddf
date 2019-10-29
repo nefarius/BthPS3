@@ -1,0 +1,35 @@
+.OPTION EXPLICIT
+.Set CabinetFileCountThreshold=0
+.Set FolderFileCountThreshold=0
+.Set FolderSizeThreshold=0
+.Set MaxCabinetSize=0
+.Set MaxDiskFileCount=0
+.Set MaxDiskSize=0
+.Set CompressionType=MSZIP
+.Set Cabinet=on
+.Set Compress=on
+.Set CabinetNameTemplate=BthPS3.cab
+.Set DestinationDir=BthPS3
+..\LICENSE
+.Set DestinationDir=BthPS3\x64
+..\bin\x64\BthPS3.pdb
+..\bin\x64\BthPS3\BthPS3.inf
+..\bin\x64\BthPS3\BthPS3.sys
+..\bin\x64\BthPS3\WdfCoinstaller01011.dll
+.Set DestinationDir=BthPS3\x86
+..\bin\x86\BthPS3.pdb
+..\bin\x86\BthPS3\BthPS3.inf
+..\bin\x86\BthPS3\BthPS3.sys
+..\bin\x86\BthPS3\WdfCoinstaller01011.dll
+.Set DestinationDir=BthPS3PSM
+..\LICENSE
+.Set DestinationDir=BthPS3PSM\x64
+..\bin\x64\BthPS3PSM.pdb
+..\bin\x64\BthPS3PSM\BthPS3PSM_Filter.inf
+..\bin\x64\BthPS3PSM\BthPS3PSM.sys
+..\bin\x64\BthPS3PSM\WdfCoinstaller01011.dll
+.Set DestinationDir=BthPS3PSM\x86
+..\bin\x86\BthPS3PSM.pdb
+..\bin\x86\BthPS3PSM\BthPS3PSM_Filter.inf
+..\bin\x86\BthPS3PSM\BthPS3PSM.sys
+..\bin\x86\BthPS3PSM\WdfCoinstaller01011.dll

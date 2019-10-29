@@ -430,7 +430,8 @@ L2CAP_PS3_ControlConnectResponseCompleted(
         // 
         TraceEvents(TRACE_LEVEL_ERROR,
             TRACE_L2CAP,
-            "HID Control Channel connection failed (NOT IMPLEMENTED)"
+            "HID Control Channel connection failed with status %!STATUS! (NOT IMPLEMENTED)",
+			status
         );
     }
 
@@ -529,7 +530,8 @@ failedDrop:
     // 
     TraceEvents(TRACE_LEVEL_ERROR,
         TRACE_L2CAP,
-        "%!FUNC! connection failed (NOT IMPLEMENTED)"
+        "%!FUNC! connection failed with status %!STATUS! (NOT IMPLEMENTED)",
+		status
     );
 
     return;

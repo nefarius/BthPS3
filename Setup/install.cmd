@@ -4,6 +4,8 @@
 set MYDIR=%~dp0
 pushd "%MYDIR%"
 
+type NUL > install.log
+
 BthPS3Util.exe --enable-service >> install.log 2>&1
 
 BthPS3Util.exe --install-driver --inf-path ".\BthPS3.inf" --force >> install.log 2>&1

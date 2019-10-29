@@ -12,12 +12,13 @@
     <ROW Property="ARPHELPLINK" Value="https://forums.vigem.org/"/>
     <ROW Property="ARPNOMODIFY" MultiBuildValue="DefaultBuild:1"/>
     <ROW Property="ARPNOREPAIR" Value="1" MultiBuildValue="DefaultBuild:1"/>
+    <ROW Property="ARPPRODUCTICON" Value="B3.exe" Type="8"/>
     <ROW Property="ARPURLINFOABOUT" Value="https://discord.vigem.org/"/>
     <ROW Property="Manufacturer" Value="Nefarius Software Solutions e.U."/>
-    <ROW Property="ProductCode" Value="1033:{F7F290CE-50B3-4A03-B7F3-70F295AE38C3} " Type="16"/>
+    <ROW Property="ProductCode" Value="1033:{AFFCC2A7-D943-4F8F-9509-7B54C2F14C83} " Type="16"/>
     <ROW Property="ProductLanguage" Value="1033"/>
     <ROW Property="ProductName" Value="BthPS3 Bluetooth Drivers"/>
-    <ROW Property="ProductVersion" Value="1.0.8" Type="32"/>
+    <ROW Property="ProductVersion" Value="1.0.9" Type="32"/>
     <ROW Property="SecureCustomProperties" Value="OLDPRODUCTS;AI_NEWERPRODUCTFOUND;AI_SETUPEXEPATH;SETUPEXEDIR"/>
     <ROW Property="UpgradeCode" Value="{79802617-4FBA-4442-B962-596E584A6803}"/>
     <ROW Property="WindowsType9X" MultiBuildValue="DefaultBuild:Windows 9x/ME" ValueLocId="-"/>
@@ -228,6 +229,9 @@
     <ROW Feature_="MainFeature" Component_="BthPS3PSM.sys_1"/>
     <ROW Feature_="MainFeature" Component_="BthPS3PSM_Filter.inf_1"/>
     <ROW Feature_="MainFeature" Component_="LICENSE"/>
+  </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiIconsComponent">
+    <ROW Name="B3.exe" SourcePath="Icons\B3.ico" Index="0"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiInstExSeqComponent">
     <ROW Action="AI_DOWNGRADE" Condition="AI_NEWERPRODUCTFOUND AND (UILevel &lt;&gt; 5)" Sequence="210"/>

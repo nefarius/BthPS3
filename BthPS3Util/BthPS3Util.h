@@ -5,6 +5,7 @@
 // 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include <shlwapi.h>
 #include <SetupAPI.h>
 #include <newdev.h>
 #include <winioctl.h>

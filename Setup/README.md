@@ -8,3 +8,5 @@
 4. Production-sign drivers and tools to ensure authenticity of origin. 
 5. Run `sign.cmd` which will create the two `*.cab` files in the `disk1` folder and sign them.
 6. Upload `*.cab` files to Partner Portal.
+7. Request signatures, wait and pray.
+8. Download signed files and extract `drivers` directory directly into this directory.

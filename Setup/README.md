@@ -1,5 +1,9 @@
 # Production-ready setup creation documentation
 
+## Remarks
+
+- Driver and setup version numbers are decoupled as setup might require updates independently of driver logic changes. 
+
 ## Build & submission preparations
 
 1. Update/ensure correct `Driver Version Number` in `StampInf` of the projects.

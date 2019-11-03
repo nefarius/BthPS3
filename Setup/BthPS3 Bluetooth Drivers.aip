@@ -15,10 +15,10 @@
     <ROW Property="ARPPRODUCTICON" Value="B3.exe" Type="8"/>
     <ROW Property="ARPURLINFOABOUT" Value="https://discord.vigem.org/"/>
     <ROW Property="Manufacturer" Value="Nefarius Software Solutions e.U."/>
-    <ROW Property="ProductCode" Value="1033:{AFFCC2A7-D943-4F8F-9509-7B54C2F14C83} " Type="16"/>
+    <ROW Property="ProductCode" Value="1033:{50D83A5B-0CB0-4B0B-92B4-E59F7234778F} " Type="16"/>
     <ROW Property="ProductLanguage" Value="1033"/>
     <ROW Property="ProductName" Value="BthPS3 Bluetooth Drivers"/>
-    <ROW Property="ProductVersion" Value="1.0.9" Type="32"/>
+    <ROW Property="ProductVersion" Value="1.1.0" Type="32"/>
     <ROW Property="SecureCustomProperties" Value="OLDPRODUCTS;AI_NEWERPRODUCTFOUND;AI_SETUPEXEPATH;SETUPEXEDIR"/>
     <ROW Property="UpgradeCode" Value="{79802617-4FBA-4442-B962-596E584A6803}"/>
     <ROW Property="WindowsType9X" MultiBuildValue="DefaultBuild:Windows 9x/ME" ValueLocId="-"/>

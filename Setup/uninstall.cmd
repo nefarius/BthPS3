@@ -12,5 +12,9 @@ BthPS3Util.exe --disable-filter >> uninstall.log 2>&1
 
 BthPS3Util.exe --restart-host-device >> uninstall.log 2>&1
 
+BthPS3Util.exe --delete-filter-service >> uninstall.log 2>&1
+
+BthPS3Util.exe --restart-host-device >> uninstall.log 2>&1
+
 popd
 endlocal

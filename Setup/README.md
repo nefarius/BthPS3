@@ -10,3 +10,5 @@
 6. Upload `*.cab` files to Partner Portal.
 7. Request signatures, wait and pray.
 8. Download signed files and extract `drivers` directory directly into this directory.
+9. Build and sign the Advanced Installer setup project.
+10. Adjust updater control file and upload setup to distribution server.

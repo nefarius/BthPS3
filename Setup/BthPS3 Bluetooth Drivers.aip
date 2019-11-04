@@ -15,10 +15,10 @@
     <ROW Property="ARPPRODUCTICON" Value="B3.exe" Type="8"/>
     <ROW Property="ARPURLINFOABOUT" Value="https://discord.vigem.org/"/>
     <ROW Property="Manufacturer" Value="Nefarius Software Solutions e.U."/>
-    <ROW Property="ProductCode" Value="1033:{50D83A5B-0CB0-4B0B-92B4-E59F7234778F} " Type="16"/>
+    <ROW Property="ProductCode" Value="1033:{F66C3F15-E2AB-499A-8882-DD2D47D119F6} " Type="16"/>
     <ROW Property="ProductLanguage" Value="1033"/>
     <ROW Property="ProductName" Value="BthPS3 Bluetooth Drivers"/>
-    <ROW Property="ProductVersion" Value="1.1.0" Type="32"/>
+    <ROW Property="ProductVersion" Value="1.1.1" Type="32"/>
     <ROW Property="SecureCustomProperties" Value="OLDPRODUCTS;AI_NEWERPRODUCTFOUND;AI_SETUPEXEPATH;SETUPEXEDIR"/>
     <ROW Property="UpgradeCode" Value="{79802617-4FBA-4442-B962-596E584A6803}"/>
     <ROW Property="WindowsType9X" MultiBuildValue="DefaultBuild:Windows 9x/ME" ValueLocId="-"/>
@@ -99,7 +99,7 @@
     <ROW BootstrOptKey="GlobalOptions" DownloadFolder="[AppDataFolder][|Manufacturer]\[|ProductName]\prerequisites" Options="2"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.BuildComponent">
-    <ROW BuildKey="DefaultBuild" BuildName="DefaultBuild" BuildOrder="1" BuildType="1" PackageFolder="Setup Files" Languages="en" InstallationType="4" CabsLocation="1" PackageType="1" FilesInsideExe="true" ExtractionFolder="[AppDataFolder][|Manufacturer]\[|ProductName] [|ProductVersion]\install" ExtUI="true" UseLargeSchema="true" MsiPackageType="AI_ALL"/>
+    <ROW BuildKey="DefaultBuild" BuildName="DefaultBuild" BuildOrder="1" BuildType="1" PackageFolder="Setup Files" Languages="en" InstallationType="4" CabsLocation="1" PackageType="1" FilesInsideExe="true" ExeIconPath="Icons\B3.ico" ExtractionFolder="[AppDataFolder][|Manufacturer]\[|ProductName] [|ProductVersion]\install" ExtUI="true" UseLargeSchema="true" ExeName="[|ProductName]_v[|ProductVersion]" MsiPackageType="AI_ALL"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.DictionaryComponent">
     <ROW Path="&lt;AI_DICTS&gt;ui.ail"/>
@@ -140,6 +140,8 @@
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiControlComponent">
     <ROW Dialog_="LicenseAgreementDlg" Control="AgreementText" Type="ScrollableText" X="35" Y="127" Width="321" Height="132" Attributes="3" Property="EulaRead" Text="BthPS3_EULA.rtf" Order="900" MsiKey="LicenseAgreementDlg#AgreementText"/>
+    <ROW Dialog_="MaintenanceTypeDlg" Control="ChangeCommandLinkButton" Type="CommandLinkButton" X="35" Y="83" Width="314" Height="41" Attributes="4718593" Text="[CustomSetupIcon]" Help="Change which features are installed.|" Order="1100" HelpLocId="Azure.Control.Help.MaintenanceTypeDlg#ModifyCommand" MsiKey="MaintenanceTypeDlg#ChangeCommandLinkButton" ExtType="CommandLinkButton" ExtData="Add or Remove Features" ExtDataLocId="Azure.Control.ExtData.MaintenanceTypeDlg#ModifyCommand"/>
+    <ROW Dialog_="MaintenanceTypeDlg" Control="RepairCommandLinkButton" Type="CommandLinkButton" X="35" Y="142" Width="314" Height="41" Attributes="4718593" Text="[RepairIcon]" Help="Repairs errors in the most recent installation state.|" Order="1200" HelpLocId="Azure.Control.Help.MaintenanceTypeDlg#RepairCommand" MsiKey="MaintenanceTypeDlg#RepairCommandLinkButton" ExtType="CommandLinkButton" ExtData="Repair" ExtDataLocId="Azure.Control.ExtData.MaintenanceTypeDlg#RepairCommand"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiControlEventComponent">
     <ROW Dialog_="WelcomeDlg" Control_="Next" Event="NewDialog" Argument="LicenseAgreementDlg" Condition="AI_INSTALL" Ordering="1"/>

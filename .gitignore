@@ -267,3 +267,4 @@ __pycache__/
 /Setup/setup.inf
 /Setup/setup.rpt
 /Setup/drivers
+/Setup/*.7z

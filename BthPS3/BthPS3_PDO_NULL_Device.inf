@@ -25,11 +25,20 @@
 
 [Version]
 Signature="$WINDOWS NT$"
-Class=Bluetooth
-ClassGuid={e0cbf06c-cd8b-4647-bb8a-263b43f0f974}
+Class=%ClassName%
+ClassGuid={409ED5DE-6FC0-4566-BDB6-4878D965D914}
 Provider=%ManufacturerName%
 CatalogFile=BthPS3_PDO_NULL_Device.cat
 DriverVer=
+
+
+[ClassInstall32]
+Addreg=BthPS3_ClassReg
+
+[BthPS3_ClassReg]
+HKR,,,0,%ClassName%
+HKR,,Icon,,-5
+
 
 [Manufacturer]
 %ManufacturerName% = BthPS3_NULL_PDO,NT$ARCH$
@@ -67,8 +76,8 @@ AddService=,2
 
 
 [Strings]
+ClassName="PlayStation(R) 3 Peripherals"
 ManufacturerName="Nefarius Software Solutions e.U."
-BthPS3.DeviceDesc = "PlayStation(R) 3 Peripherals Enumerator"
 SIXAXIS.DeviceDesc = "SIXAXIS-compatible Bluetooth Device"
 NAVIGATION.DeviceDesc = "NAVIGATION-compatible Bluetooth Device"
 MOTION.DeviceDesc = "MOTION-compatible Bluetooth Device"

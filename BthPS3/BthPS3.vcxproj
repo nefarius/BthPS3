@@ -60,6 +60,7 @@
   </ItemGroup>
   <ItemGroup>
     <Inf Include="BthPS3.inf" />
+    <Inf Include="BthPS3_PDO_NULL_Device.inf" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{F329494F-152C-4739-AFC2-00DF81B78D5F}</ProjectGuid>

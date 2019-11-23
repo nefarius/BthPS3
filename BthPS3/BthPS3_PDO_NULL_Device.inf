@@ -1,0 +1,75 @@
+; BthPS3 RAW PDO NULL device driver
+; 
+; MIT License
+; 
+; Copyright (C) 2018-2019  Nefarius Software Solutions e.U. and Contributors
+; 
+; Permission is hereby granted, free of charge, to any person obtaining a copy
+; of this software and associated documentation files (the "Software"), to deal
+; in the Software without restriction, including without limitation the rights
+; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+; copies of the Software, and to permit persons to whom the Software is
+; furnished to do so, subject to the following conditions:
+; 
+; The above copyright notice and this permission notice shall be included in all
+; copies or substantial portions of the Software.
+; 
+; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+; SOFTWARE.
+
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=Bluetooth
+ClassGuid={e0cbf06c-cd8b-4647-bb8a-263b43f0f974}
+Provider=%ManufacturerName%
+CatalogFile=BthPS3_PDO_NULL_Device.cat
+DriverVer=
+
+[Manufacturer]
+%ManufacturerName% = BthPS3_NULL_PDO,NT$ARCH$
+
+[BthPS3_NULL_PDO.NT$ARCH$]
+%SIXAXIS.DeviceDesc% = SIXAXIS, BTHPS3BUS\{53F88889-1AAF-4353-A047-556B69EC6DA6}
+%NAVIGATION.DeviceDesc% = NAVIGATION, BTHPS3BUS\{206F84FC-1615-4D9F-954D-21F5A5D388C5}
+%MOTION.DeviceDesc% = MOTION, BTHPS3BUS\{84957238-D867-421F-89C1-67847A3B55B5}
+%WIRELESS.DeviceDesc% = WIRELESS, BTHPS3BUS\{13D12A06-D0B0-4D7E-8D1F-F55914A2ED7C}
+
+
+[SIXAXIS]
+; NULL driver
+
+[SIXAXIS.Services]
+AddService=,2
+
+[NAVIGATION]
+; NULL driver
+
+[NAVIGATION.Services]
+AddService=,2
+
+[MOTION]
+; NULL driver
+
+[MOTION.Services]
+AddService=,2
+
+[WIRELESS]
+; NULL driver
+
+[WIRELESS.Services]
+AddService=,2
+
+
+[Strings]
+ManufacturerName="Nefarius Software Solutions e.U."
+BthPS3.DeviceDesc = "PlayStation(R) 3 Peripherals Enumerator"
+SIXAXIS.DeviceDesc = "SIXAXIS-compatible Bluetooth Device"
+NAVIGATION.DeviceDesc = "NAVIGATION-compatible Bluetooth Device"
+MOTION.DeviceDesc = "MOTION-compatible Bluetooth Device"
+WIRELESS.DeviceDesc = "WIRELESS-compatible Bluetooth Device"

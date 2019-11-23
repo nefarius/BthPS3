@@ -25,6 +25,9 @@
     <Inf Include="BthPS3.inf">
       <Filter>Driver Files</Filter>
     </Inf>
+    <Inf Include="BthPS3_PDO_NULL_Device.inf">
+      <Filter>Driver Files</Filter>
+    </Inf>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Device.h">

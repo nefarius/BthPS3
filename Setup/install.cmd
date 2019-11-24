@@ -6,6 +6,9 @@ pushd "%MYDIR%"
 
 type NUL > install.log
 
+rem Install NULL device driver
+BthPS3Util.exe --install-driver --inf-path ".\BthPS3_PDO_NULL_Device.inf" --force >> install.log 2>&1
+
 rem Enable profile service (L2CAP server)
 BthPS3Util.exe --enable-service >> install.log 2>&1
 

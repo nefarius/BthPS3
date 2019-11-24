@@ -58,6 +58,8 @@ extern __declspec(selectany) PCWSTR BthPS3BusEnumeratorName = L"BTHPS3BUS";
 
 //
 // Path to control device in user-land
+//
+// Elevated (or kernel) access by default only
 // 
 #define BTHPS3PSM_CONTROL_DEVICE_PATH         L"\\\\.\\BthPS3PSMControl"
 
@@ -154,6 +156,11 @@ DEFINE_GUID(GUID_DEVINTERFACE_BTHPS3_WIRELESS,
 // Hide driver-less device in Device Manager UI (cosmetic setting)
 // 
 #define BTHPS3_REG_VALUE_HIDE_PDO               L"HidePDO"
+
+//
+// Restrict access to RAW PDO device to elevated processes only
+// 
+#define BTHPS3_REG_VALUE_ADMIN_ONLY_PDO			L"AdminOnlyPDO"
 
 //
 // I/O idle timeout value in milliseconds

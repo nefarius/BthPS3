@@ -50,6 +50,7 @@ BthPS3_EvtWdfChildListCreateDevice(
     WDFKEY                                  hKey = NULL;
     ULONG                                   rawPdo = 0;
     ULONG                                   hidePdo = 0;
+	ULONG                                   adminOnlyPdo = 0;
     ULONG                                   idleTimeout = 10000; // 10 secs idle timeout
 
     DECLARE_UNICODE_STRING_SIZE(deviceId, MAX_DEVICE_ID_LEN);
@@ -58,6 +59,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 
     DECLARE_CONST_UNICODE_STRING(rawPdoValue, BTHPS3_REG_VALUE_RAW_PDO);
     DECLARE_CONST_UNICODE_STRING(hidePdoValue, BTHPS3_REG_VALUE_HIDE_PDO);
+	DECLARE_CONST_UNICODE_STRING(adminOnlyPdoValue, BTHPS3_REG_VALUE_ADMIN_ONLY_PDO);
     DECLARE_CONST_UNICODE_STRING(idleTimeoutValue, BTHPS3_REG_VALUE_CHILD_IDLE_TIMEOUT);
 
     UNREFERENCED_PARAMETER(ChildList);
@@ -106,6 +108,15 @@ BthPS3_EvtWdfChildListCreateDevice(
             &hidePdoValue,
             &hidePdo
         );
+
+		//
+		// Don't care, if it fails, keep default value
+		// 
+		(void)WdfRegistryQueryULong(
+			hKey,
+			&adminOnlyPdoValue,
+			&adminOnlyPdo
+		);
 
         //
         // Don't care, if it fails, keep default value
@@ -226,7 +237,8 @@ BthPS3_EvtWdfChildListCreateDevice(
         // Let the world talk to us
         // 
         status = WdfDeviceInitAssignSDDLString(ChildInit,
-            &SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_RWX_RES_RWX
+			(adminOnlyPdo) ? &SDDL_DEVOBJ_SYS_ALL_ADM_ALL : // only elevated allowed
+            &SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_RWX_RES_RWX  // everyone is allowed
         );
 
         if (!NT_SUCCESS(status))

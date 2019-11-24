@@ -79,6 +79,8 @@ AddReg         = BthPS3_Service_AddReg
 HKR,Parameters,RawPDO,0x00010001,1
 ; Hide driver-less device in Device Manager UI (cosmetic setting)
 HKR,Parameters,HidePDO,0x00010001,0
+; Restrict access to RAW PDO device to elevated processes only
+HKR,Parameters,AdminOnlyPDO,0x00010001,0
 ; I/O idle timeout value in milliseconds
 HKR,Parameters,ChildIdleTimeout,0x00010001,10000
 ; Should the profile driver attempt to auto-enable the patch again

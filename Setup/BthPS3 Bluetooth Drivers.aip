@@ -9,11 +9,12 @@
     <ROW Property="AI_RUN_AS_ADMIN" Value="0"/>
     <ROW Property="ALLUSERS" Value="1"/>
     <ROW Property="ARPCOMMENTS" Value="Windows kernel-mode Bluetooth Profile &amp; Filter Drivers for PS3 peripherals." ValueLocId="*"/>
-    <ROW Property="ARPHELPLINK" Value="https://forums.vigem.org/"/>
+    <ROW Property="ARPHELPLINK" Value="https://forums.vigem.org/projects/bthps3"/>
     <ROW Property="ARPNOMODIFY" MultiBuildValue="DefaultBuild:1"/>
     <ROW Property="ARPNOREPAIR" Value="1" MultiBuildValue="DefaultBuild:1"/>
     <ROW Property="ARPPRODUCTICON" Value="B3.exe" Type="8"/>
-    <ROW Property="ARPURLINFOABOUT" Value="https://discord.vigem.org/"/>
+    <ROW Property="ARPURLINFOABOUT" Value="https://forums.vigem.org/projects/bthps3"/>
+    <ROW Property="ARPURLUPDATEINFO" Value="https://forums.vigem.org/projects/bthps3"/>
     <ROW Property="Manufacturer" Value="Nefarius Software Solutions e.U."/>
     <ROW Property="ProductCode" Value="1033:{6652ADA4-A03D-4F3D-97D4-998518952857} " Type="16"/>
     <ROW Property="ProductLanguage" Value="1033"/>

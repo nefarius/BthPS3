@@ -163,6 +163,11 @@ DEFINE_GUID(GUID_DEVINTERFACE_BTHPS3_WIRELESS,
 #define BTHPS3_REG_VALUE_ADMIN_ONLY_PDO			L"AdminOnlyPDO"
 
 //
+// Restrict access to RAW PDO device to one handle only
+// 
+#define BTHPS3_REG_VALUE_EXCLUSIVE_PDO			L"ExclusivePDO"
+
+//
 // I/O idle timeout value in milliseconds
 // 
 #define BTHPS3_REG_VALUE_CHILD_IDLE_TIMEOUT     L"ChildIdleTimeout"

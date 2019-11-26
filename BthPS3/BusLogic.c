@@ -59,6 +59,7 @@ BthPS3_EvtWdfChildListCreateDevice(
     ULONG                                   rawPdo = 0;
     ULONG                                   hidePdo = 0;
 	ULONG                                   adminOnlyPdo = 0;
+	ULONG                                   exclusivePdo = 1;
     ULONG                                   idleTimeout = 10000; // 10 secs idle timeout
 
     DECLARE_UNICODE_STRING_SIZE(deviceId, MAX_DEVICE_ID_LEN);
@@ -68,6 +69,7 @@ BthPS3_EvtWdfChildListCreateDevice(
     DECLARE_CONST_UNICODE_STRING(rawPdoValue, BTHPS3_REG_VALUE_RAW_PDO);
     DECLARE_CONST_UNICODE_STRING(hidePdoValue, BTHPS3_REG_VALUE_HIDE_PDO);
 	DECLARE_CONST_UNICODE_STRING(adminOnlyPdoValue, BTHPS3_REG_VALUE_ADMIN_ONLY_PDO);
+	DECLARE_CONST_UNICODE_STRING(exclusivePdoValue, BTHPS3_REG_VALUE_EXCLUSIVE_PDO);
     DECLARE_CONST_UNICODE_STRING(idleTimeoutValue, BTHPS3_REG_VALUE_CHILD_IDLE_TIMEOUT);
 
     UNREFERENCED_PARAMETER(ChildList);
@@ -126,6 +128,15 @@ BthPS3_EvtWdfChildListCreateDevice(
 			&adminOnlyPdo
 		);
 
+		//
+		// Don't care, if it fails, keep default value
+		// 
+		(void)WdfRegistryQueryULong(
+			hKey,
+			&exclusivePdoValue,
+			&exclusivePdo
+		);
+
         //
         // Don't care, if it fails, keep default value
         // 
@@ -147,7 +158,7 @@ BthPS3_EvtWdfChildListCreateDevice(
     // Only one instance (either function driver or user-land application)
     // may talk to this PDO at the same time to avoid splitting traffic.
     // 
-    WdfDeviceInitSetExclusive(ChildInit, TRUE);
+    WdfDeviceInitSetExclusive(ChildInit, (BOOLEAN)exclusivePdo);
 
     //
     // Parent FDO will handle IRP_MJ_INTERNAL_DEVICE_CONTROL

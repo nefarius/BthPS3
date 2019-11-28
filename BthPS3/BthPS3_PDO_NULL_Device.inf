@@ -37,7 +37,7 @@ Addreg=BthPS3_ClassReg
 
 [BthPS3_ClassReg]
 HKR,,,0,%ClassName%
-HKR,,Icon,,-5
+HKR,,Icon,,-24
 
 
 [Manufacturer]
@@ -76,9 +76,9 @@ AddService=,2
 
 
 [Strings]
-ClassName="PlayStation(R) 3 Peripherals"
+ClassName="Nefarius Wireless Devices"
 ManufacturerName="Nefarius Software Solutions e.U."
-SIXAXIS.DeviceDesc = "SIXAXIS-compatible Bluetooth Device"
-NAVIGATION.DeviceDesc = "NAVIGATION-compatible Bluetooth Device"
-MOTION.DeviceDesc = "MOTION-compatible Bluetooth Device"
-WIRELESS.DeviceDesc = "WIRELESS-compatible Bluetooth Device"
+SIXAXIS.DeviceDesc = "DS3 Compatible Bluetooth Device"
+NAVIGATION.DeviceDesc = "Navigation Compatible Bluetooth Device"
+MOTION.DeviceDesc = "Motion Compatible Bluetooth Device"
+WIRELESS.DeviceDesc = "DS4 Compatible Bluetooth Device"

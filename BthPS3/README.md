@@ -32,4 +32,4 @@ The `MOTION` PDO gets exposed as hardware ID `BTHPS3BUS\{84957238-D867-421F-89C1
 
 ### Wireless Controller/DualShock 4
 
-The `SIXAXIS` PDO gets exposed as hardware ID `BTHPS3BUS\{13D12A06-D0B0-4D7E-8D1F-F55914A2ED7C}` and can be enumerated with interface ID `{64CB1EE2-B428-4CE8-8794-F68036E57BE5}`.
+The `WIRELESS` PDO gets exposed as hardware ID `BTHPS3BUS\{13D12A06-D0B0-4D7E-8D1F-F55914A2ED7C}` and can be enumerated with interface ID `{64CB1EE2-B428-4CE8-8794-F68036E57BE5}`.

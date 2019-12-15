@@ -6,7 +6,7 @@ Windows kernel-mode Bluetooth Profile & Filter Drivers for PS3 peripherals.
 
 ## About
 
-**TL;DR:** these drivers allow popular PlayStation(R) 3 gaming peripherals (SIXAXIS/DualShock 3, PS Move Navigation & Motion Controllers) to connect to Windows via Bluetooth without losing any standard functionality 😊
+**TL;DR:** these drivers allow popular PlayStation(R) 3 gaming peripherals (SIXAXIS/DualShock 3, PS Move Navigation & Motion Controllers) to connect to Windows via Bluetooth without losing any standard functionality. 😊
 
 This set of Windows kernel-mode drivers enhances the standard (a.k.a. vanilla) Bluetooth stack (Microsoft/Broadcom/Toshiba/Intel/...) with an additional L2CAP server service (profile driver) and a USB lower filter driver [gracefully working around the reserved PSMs issue](https://nadavrub.wordpress.com/2015/07/17/simulate-hid-device-with-windows-desktop/) causing the PS3 peripherals connections to get denied on the default Windows stack. The profile driver attempts to distinguish the incoming device types based on their reported remote names and exposes their HID Control and HID Interrupt channels via simple bus child devices (a.k.a PDOs). The profile/bus driver supports both "regular" operation modes (requiring a proper function driver like a HID-minidriver) and "raw" mode (powering the PDO up without a function driver and exposing it to user-land) for maximum flexibility and future-proofing. The PSM filter only attaches to Bluetooth class devices and unloads itself if the underlying enumerator isn't USB.
 

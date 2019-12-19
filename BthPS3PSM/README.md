@@ -6,7 +6,7 @@ Protocol/Service Multiplexer Proxy Filter Driver for `BTHUSB`
 
 The `BthPS3PSM.sys` kernel-mode filter driver performs patching the [PSM](https://stackoverflow.com/a/55386042) values in the incoming L2CAP (USB bulk pipe) packets before they reach the `bthusb.sys` function driver.
 
-The driver is meant to be loaded as a lower filter for `GUID_DEVCLASS_BLUETOOTH` class devices which run under the `USB` enumerator. This effectively targets a wide rage of inherently compatible Bluetooth host radio devices attached via USB (common nano dongles, integrated cards, ...) eliminating the necessity of crafting a custom `*.inf` explicit hardware IDs.
+The driver is meant to be loaded as a lower filter for `GUID_DEVCLASS_BLUETOOTH` class devices which run under the `USB` enumerator. This effectively targets a wide rage of inherently compatible Bluetooth host radio devices attached via USB (common nano dongles, integrated cards, ...) eliminating the necessity of crafting a custom `*.inf` including explicit hardware IDs.
 
 Although it's currently not supported by Windows to run multiple Bluetooth host radios at the same time, the driver has been designed with multiple radios in mind and can handle this case, should it ever be pushed to production by Microsoft. The driver aborts initialization if it's attached to a device stack not running under the supported `USB` enumerator.
 

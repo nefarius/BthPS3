@@ -127,7 +127,7 @@ typedef enum _L2CAP_CONNECTION_RESPONSE_RESULT
     /// <summary>
     ///     Connection refused – PSM not supported.
     /// </summary>
-    L2CAP_ConnectionResponseResult_ConnectionRefusedPsmNotNupported = 0x0002,
+    L2CAP_ConnectionResponseResult_ConnectionRefusedPsmNotSupported = 0x0002,
 
     /// <summary>
     ///     Connection refused – security block.

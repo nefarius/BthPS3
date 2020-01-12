@@ -28,7 +28,12 @@ rem Instruct filter to enable patch
 BthPS3Util.exe --enable-psm-patch --device-index 0 >> install.log 2>&1
 
 rem Disable DS4 "PS4 mode" support until fully implemented
+rem see https://forums.vigem.org/post/1677
 reg add HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\BthPS3\Parameters /v IsWIRELESSSupported /t REG_DWORD /d 0 /f >> install.log 2>&1
+
+rem Disable PSMove MOTION support to ensure compatibility with PSMoveService
+rem see https://forums.vigem.org/topic/384/bthps3-incompatible-with-psmoveservice/
+reg add HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\BthPS3\Parameters /v IsMOTIONSupported /t REG_DWORD /d 0 /f >> install.log 2>&1
 
 popd
 endlocal

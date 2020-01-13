@@ -55,7 +55,7 @@
                         <GroupBox Grid.Column="0" Grid.Row="1"
                                   Margin="{adonisUi:Space 1}">
                             <GroupBox.Header>
-                                <CheckBox>Enable PlayStation®️ Move Navigation Support</CheckBox>
+                                <CheckBox IsChecked="{Binding Path=IsNAVIGATIONSupported}">Enable PlayStation®️ Move Navigation Support</CheckBox>
                             </GroupBox.Header>
                             <GroupBox.Content>
                                 Description
@@ -66,7 +66,7 @@
                         <GroupBox Grid.Column="0" Grid.Row="2"
                                   Margin="{adonisUi:Space 1}">
                             <GroupBox.Header>
-                                <CheckBox>Enable PlayStation®️ Move Motion Support</CheckBox>
+                                <CheckBox IsChecked="{Binding Path=IsMOTIONSupported}">Enable PlayStation®️ Move Motion Support</CheckBox>
                             </GroupBox.Header>
                             <GroupBox.Content>
                                 <Hyperlink NavigateUri="https://github.com/psmoveservice/PSMoveService"
@@ -80,7 +80,7 @@
                         <GroupBox Grid.Column="0" Grid.Row="3"
                                   Margin="{adonisUi:Space 1}">
                             <GroupBox.Header>
-                                <CheckBox>Enable Wireless Controller (DualShock™️ 4) Support</CheckBox>
+                                <CheckBox IsChecked="{Binding Path=IsWIRELESSSupported}">Enable Wireless Controller (DualShock™️ 4) Support</CheckBox>
                             </GroupBox.Header>
                             <GroupBox.Content>
                                 <Hyperlink NavigateUri="https://github.com/Ryochan7/DS4Windows">DS4Windows</Hyperlink>
@@ -91,10 +91,10 @@
                         <GroupBox Grid.Column="1" Grid.Row="0"
                                   Margin="{adonisUi:Space 1}">
                             <GroupBox.Header>
-                                <CheckBox>Enable Wireless Controller (DualShock™️ 4) Support</CheckBox>
+                                <CheckBox IsChecked="{Binding Path=AutoEnableFilter}">Automatically re-enable filter after grace period has passed</CheckBox>
                             </GroupBox.Header>
                             <GroupBox.Content>
-                                <Hyperlink NavigateUri="https://github.com/Ryochan7/DS4Windows">DS4Windows</Hyperlink>
+                                Description
                             </GroupBox.Content>
                         </GroupBox>
 
@@ -110,11 +110,11 @@
                                             Maximum="60"
                                             IsSnapToTickEnabled="True"
                                             Value="{Binding Path=Timeout}"/>
-                                    <TextBlock>Hi</TextBlock>
+                                    <TextBlock>Placeholder</TextBlock>
                                 </DockPanel>
                             </GroupBox.Header>
                             <GroupBox.Content>
-                                <Hyperlink NavigateUri="https://github.com/Ryochan7/DS4Windows">DS4Windows</Hyperlink>
+                                Description
                             </GroupBox.Content>
                         </GroupBox>
 
@@ -122,10 +122,10 @@
                         <GroupBox Grid.Column="1" Grid.Row="2"
                                   Margin="{adonisUi:Space 1}">
                             <GroupBox.Header>
-                                <CheckBox>Enable Wireless Controller (DualShock™️ 4) Support</CheckBox>
+                                <CheckBox IsChecked="{Binding Path=AutoDisableFilter}">Automatically disable filter on unsupported device arrival</CheckBox>
                             </GroupBox.Header>
                             <GroupBox.Content>
-                                <Hyperlink NavigateUri="https://github.com/Ryochan7/DS4Windows">DS4Windows</Hyperlink>
+                                Description
                             </GroupBox.Content>
                         </GroupBox>
                     </Grid>

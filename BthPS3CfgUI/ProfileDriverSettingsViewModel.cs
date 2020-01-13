@@ -7,37 +7,65 @@ namespace BthPS3CfgUI
 {
     public class ProfileDriverSettingsViewModel : INotifyPropertyChanged
     {
-        private RegistryKey _bthPs3ServiceParameters;
+        private readonly RegistryKey _bthPs3ServiceParameters;
 
         public ProfileDriverSettingsViewModel()
         {
             _bthPs3ServiceParameters =
                 Registry.LocalMachine.OpenSubKey(
-                    "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\BthPS3\\Parameters", true);
+                    "SYSTEM\\CurrentControlSet\\Services\\BthPS3\\Parameters", true);
         }
 
+        private void SetBool(string valueName, bool value)
+        {
+            _bthPs3ServiceParameters.SetValue(valueName, value ? 1 : 0, RegistryValueKind.DWord);
+        }
+
+        private bool GetBool(string valueName, bool defaultValue)
+        {
+            return int.Parse(_bthPs3ServiceParameters.GetValue(valueName, defaultValue ? 1 : 0).ToString()) > 0;
+        }
+
+        [UsedImplicitly]
         public bool IsSIXAXISSupported
         {
-            get => bool.Parse(_bthPs3ServiceParameters.GetValue("IsSIXAXISSupported", true).ToString());
-            set => _bthPs3ServiceParameters.SetValue("IsSIXAXISSupported", value, RegistryValueKind.DWord);
+            get => GetBool("IsSIXAXISSupported", true);
+            set => SetBool("IsSIXAXISSupported", value);
         }
 
+        [UsedImplicitly]
         public bool IsNAVIGATIONSupported
         {
-            get => bool.Parse(_bthPs3ServiceParameters.GetValue("IsNAVIGATIONSupported", true).ToString());
-            set => _bthPs3ServiceParameters.SetValue("IsNAVIGATIONSupported", value, RegistryValueKind.DWord);
+            get => GetBool("IsNAVIGATIONSupported", true);
+            set => SetBool("IsNAVIGATIONSupported", value);
         }
 
+        [UsedImplicitly]
         public bool IsMOTIONSupported
         {
-            get => bool.Parse(_bthPs3ServiceParameters.GetValue("IsMOTIONSupported", true).ToString());
-            set => _bthPs3ServiceParameters.SetValue("IsMOTIONSupported", value, RegistryValueKind.DWord);
+            get => GetBool("IsMOTIONSupported", false);
+            set => SetBool("IsMOTIONSupported", value);
         }
 
+        [UsedImplicitly]
         public bool IsWIRELESSSupported
         {
-            get => bool.Parse(_bthPs3ServiceParameters.GetValue("IsWIRELESSSupported", true).ToString());
-            set => _bthPs3ServiceParameters.SetValue("IsWIRELESSSupported", value, RegistryValueKind.DWord);
+            get => GetBool("IsWIRELESSSupported", false);
+            set => SetBool("IsWIRELESSSupported", value);
+        }
+
+        [UsedImplicitly]
+        public bool AutoEnableFilter
+        {
+            get => GetBool("AutoEnableFilter", true);
+            set => SetBool("AutoEnableFilter", value);
+        }
+
+        [UsedImplicitly]
+        public bool AutoDisableFilter
+        {
+            get => GetBool("AutoDisableFilter", true);
+            set => SetBool("AutoDisableFilter", value);
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

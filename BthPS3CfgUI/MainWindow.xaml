@@ -1,14 +1,14 @@
 ﻿<adonisControls:AdonisWindow x:Class="BthPS3CfgUI.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:BthPS3CfgUI"
-        xmlns:adonisUi="clr-namespace:AdonisUI;assembly=AdonisUI"
-        xmlns:adonisControls="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
-        mc:Ignorable="d"
-        Title="BthPS3 Driver Configuration Utility" Height="450" Width="800" 
-        ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+                             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                             xmlns:local="clr-namespace:BthPS3CfgUI"
+                             xmlns:adonisUi="clr-namespace:AdonisUI;assembly=AdonisUI"
+                             xmlns:adonisControls="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
+                             mc:Ignorable="d"
+                             Title="BthPS3 Driver Configuration Utility" Height="450" Width="800"
+                             ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
     <adonisControls:AdonisWindow.TitleBarContent>
         <StackPanel Orientation="Horizontal"
                     HorizontalAlignment="Right">
@@ -28,21 +28,21 @@
                     <TextBlock>Changing these settings applies to newly connected devices.</TextBlock>
                     <Grid>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="350"/>
-                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
                         <!-- IsSIXAXISSupported -->
-                        <GroupBox Grid.Column="0" Grid.Row="0" 
-                              Margin="{adonisUi:Space 1}">
+                        <GroupBox Grid.Column="0" Grid.Row="0"
+                                  Margin="{adonisUi:Space 1}">
                             <GroupBox.Header>
                                 <CheckBox>Enable SIXAXIS™️/DualShock™️ 3 Support</CheckBox>
                             </GroupBox.Header>
@@ -52,8 +52,8 @@
                         </GroupBox>
 
                         <!-- IsNAVIGATIONSupported -->
-                        <GroupBox Grid.Column="0" Grid.Row="1" 
-                              Margin="{adonisUi:Space 1}">
+                        <GroupBox Grid.Column="0" Grid.Row="1"
+                                  Margin="{adonisUi:Space 1}">
                             <GroupBox.Header>
                                 <CheckBox>Enable PlayStation®️ Move Navigation Support</CheckBox>
                             </GroupBox.Header>
@@ -63,19 +63,63 @@
                         </GroupBox>
 
                         <!-- IsMOTIONSupported -->
-                        <GroupBox Grid.Column="0" Grid.Row="2" 
-                              Margin="{adonisUi:Space 1}">
+                        <GroupBox Grid.Column="0" Grid.Row="2"
+                                  Margin="{adonisUi:Space 1}">
                             <GroupBox.Header>
                                 <CheckBox>Enable PlayStation®️ Move Motion Support</CheckBox>
                             </GroupBox.Header>
                             <GroupBox.Content>
-                                <Hyperlink NavigateUri="https://github.com/psmoveservice/PSMoveService" RequestNavigate="Hyperlink_OnRequestNavigate">PSMoveService</Hyperlink>
+                                <Hyperlink NavigateUri="https://github.com/psmoveservice/PSMoveService"
+                                           RequestNavigate="Hyperlink_OnRequestNavigate">
+                                    PSMoveService
+                                </Hyperlink>
                             </GroupBox.Content>
                         </GroupBox>
 
                         <!-- IsWIRELESSSupported -->
-                        <GroupBox Grid.Column="0" Grid.Row="3" 
-                              Margin="{adonisUi:Space 1}">
+                        <GroupBox Grid.Column="0" Grid.Row="3"
+                                  Margin="{adonisUi:Space 1}">
+                            <GroupBox.Header>
+                                <CheckBox>Enable Wireless Controller (DualShock™️ 4) Support</CheckBox>
+                            </GroupBox.Header>
+                            <GroupBox.Content>
+                                <Hyperlink NavigateUri="https://github.com/Ryochan7/DS4Windows">DS4Windows</Hyperlink>
+                            </GroupBox.Content>
+                        </GroupBox>
+
+                        <!-- AutoEnableFilter -->
+                        <GroupBox Grid.Column="1" Grid.Row="0"
+                                  Margin="{adonisUi:Space 1}">
+                            <GroupBox.Header>
+                                <CheckBox>Enable Wireless Controller (DualShock™️ 4) Support</CheckBox>
+                            </GroupBox.Header>
+                            <GroupBox.Content>
+                                <Hyperlink NavigateUri="https://github.com/Ryochan7/DS4Windows">DS4Windows</Hyperlink>
+                            </GroupBox.Content>
+                        </GroupBox>
+
+                        <!-- AutoEnableFilterDelay -->
+                        <GroupBox Grid.Column="1" Grid.Row="1"
+                                  Margin="{adonisUi:Space 1}">
+                            <GroupBox.Header>
+                                <DockPanel>
+                                    <Slider Width="100" 
+                                            AutoToolTipPlacement="TopLeft" AutoToolTipPrecision="0" 
+                                            Minimum="10"
+                                            TickFrequency="1"
+                                            Maximum="60"
+                                            IsSnapToTickEnabled="True"/>
+                                    <TextBlock>Hi</TextBlock>
+                                </DockPanel>
+                            </GroupBox.Header>
+                            <GroupBox.Content>
+                                <Hyperlink NavigateUri="https://github.com/Ryochan7/DS4Windows">DS4Windows</Hyperlink>
+                            </GroupBox.Content>
+                        </GroupBox>
+
+                        <!-- AutoDisableFilter -->
+                        <GroupBox Grid.Column="1" Grid.Row="2"
+                                  Margin="{adonisUi:Space 1}">
                             <GroupBox.Header>
                                 <CheckBox>Enable Wireless Controller (DualShock™️ 4) Support</CheckBox>
                             </GroupBox.Header>
@@ -88,9 +132,7 @@
             </TabItem>
 
             <!-- Filter Driver Settings -->
-            <TabItem Header="Filter Driver Settings">
-
-            </TabItem>
+            <TabItem Header="Filter Driver Settings" />
         </TabControl>
     </Grid>
 </adonisControls:AdonisWindow>

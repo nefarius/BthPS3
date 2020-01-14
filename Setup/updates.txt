@@ -1,0 +1,21 @@
+;aiu;
+
+[BthPS3_1.2.2]
+Name = BthPS3 Bluetooth Drivers 1.2.2
+URL = https://downloads.vigem.org/projects/BthPS3/stable/1.2.2/BthPS3%20Bluetooth%20Drivers_v1.2.2.exe
+Size = 14097056
+Enhancement = Setup now refuses operation if no host radio device is detected
+Enhancement1 = PSMove MOTION controller support has been disabled by default to keep compatibility with PSMoveService
+Enhancement2 = Updated EULA
+RegistryKey = HKLM\Software\Nefarius Software Solutions e.U.\BthPS3 Bluetooth Drivers\Version
+Version = 1.2.2
+
+[BthPS3_1.2.1]
+Name = BthPS3 Bluetooth Drivers 1.2.1
+URL = https://downloads.vigem.org/projects/BthPS3/stable/1.2.1/BthPS3%20Bluetooth%20Drivers_v1.2.1.exe
+Size = 12812368
+;Description = This release changed a few default settings of the driver
+Enhancement = Disabled re-routing the Wireless Controler (DualShock 4) to the driver by default
+;BugFix =
+RegistryKey = HKLM\Software\Nefarius Software Solutions e.U.\BthPS3 Bluetooth Drivers\Version
+Version = 1.2.1

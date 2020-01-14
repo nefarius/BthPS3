@@ -16,10 +16,10 @@
     <ROW Property="ARPURLINFOABOUT" Value="https://forums.vigem.org/projects/bthps3"/>
     <ROW Property="ARPURLUPDATEINFO" Value="https://forums.vigem.org/projects/bthps3"/>
     <ROW Property="Manufacturer" Value="Nefarius Software Solutions e.U."/>
-    <ROW Property="ProductCode" Value="1033:{6AD0CC4D-EEA6-4DBD-A739-B9AF0E4A7CE2} " Type="16"/>
+    <ROW Property="ProductCode" Value="1033:{78447CDA-111F-4861-B56C-7C1437193EB4} " Type="16"/>
     <ROW Property="ProductLanguage" Value="1033"/>
     <ROW Property="ProductName" Value="BthPS3 Bluetooth Drivers"/>
-    <ROW Property="ProductVersion" Value="1.2.1" Type="32"/>
+    <ROW Property="ProductVersion" Value="1.2.2" Type="32"/>
     <ROW Property="SecureCustomProperties" Value="OLDPRODUCTS;AI_NEWERPRODUCTFOUND;AI_SETUPEXEPATH;SETUPEXEDIR"/>
     <ROW Property="UpgradeCode" Value="{79802617-4FBA-4442-B962-596E584A6803}"/>
     <ROW Property="WindowsType9X" MultiBuildValue="DefaultBuild:Windows 9x/ME" ValueLocId="-"/>
@@ -151,6 +151,7 @@
     <ROW Property="AI_SETUPEXEPATH" Signature_="AI_EXE_PATH_CU" Builds="DefaultBuild"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiBinaryComponent">
+    <ROW Name="PowerShellScriptLauncher.dll" SourcePath="&lt;AI_CUSTACTS&gt;PowerShellScriptLauncher.dll"/>
     <ROW Name="Prereq.dll" SourcePath="&lt;AI_CUSTACTS&gt;Prereq.dll"/>
     <ROW Name="aicustact.dll" SourcePath="&lt;AI_CUSTACTS&gt;aicustact.dll"/>
     <ROW Name="aischeduler.dll" SourcePath="&lt;AI_CUSTACTS&gt;aischeduler.dll"/>
@@ -196,6 +197,7 @@
   <COMPONENT cid="caphyon.advinst.msicomp.MsiCustActComponent">
     <ROW Action="AI_BACKUP_AI_SETUPEXEPATH" Type="51" Source="AI_SETUPEXEPATH_ORIGINAL" Target="[AI_SETUPEXEPATH]"/>
     <ROW Action="AI_DATA_SETTER" Type="51" Source="AI_ExtractFiles" Target="[AI_SETUPEXEPATH]"/>
+    <ROW Action="AI_DATA_SETTER_1" Type="51" Source="CustomActionData" Target="AEkAcwA2ADQAQgBpAHQAAgABAEkAcwBGAGEAbABsAGIAYQBjAGsAMwAyAEIAaQB0AAIAAQBQAGEAcgBhAG0AcwACAAEAUwBjAHIAaQBwAHQAAgAjACAAQgBsAG8AYwBrACAAZgBvAHIAIABkAGUAYwBsAGEAcgBpAG4AZwAgAHQAaABlACAAcwBjAHIAaQBwAHQAIABwAGEAcgBhAG0AZQB0AGUAcgBzAC4ADQAKAFAAYQByAGEAbQAoACkADQAKAA0ACgAjACAAWQBvAHUAcgAgAGMAbwBkAGUAIABnAG8AZQBzACAAaABlAHIAZQAuAA0ACgBBAGQAZAAtAFQAeQBwAGUAIAAtAFQAeQBwAGUARABlAGYAaQBuAGkAdABpAG8AbgAgAEAAIgANAAoAbgBhAG0AZQBzAHAAYQBjAGUAIABQAEkAbgB2AG8AawBlACAAWwBcAHsAXQANAAoACQB1AHMAaQBuAGcAIABTAHkAcwB0AGUAbQA7AA0ACgAJAHUAcwBpAG4AZwAgAFMAeQBzAHQAZQBtAC4AUgB1AG4AdABpAG0AZQAuAEkAbgB0AGUAcgBvAHAAUwBlAHIAdgBpAGMAZQBzADsADQAKAAkADQAKAAkAWwBcAFsAXQBTAHQAcgB1AGMAdABMAGEAeQBvAHUAdAAoAEwAYQB5AG8AdQB0AEsAaQBuAGQALgBTAGUAcQB1AGUAbgB0AGkAYQBsACkAWwBcAF0AXQANAAoACQBwAHUAYgBsAGkAYwAgAHMAdAByAHUAYwB0ACAAQgBMAFUARQBUAE8ATwBUAEgAXwBGAEkATgBEAF8AUgBBAEQASQBPAF8AUABBAFIAQQBNAFMADQAKAAkAWwBcAHsAXQANAAoACQAJAHAAdQBiAGwAaQBjACAAVQBJAG4AdAAzADIAIABkAHcAUwBpAHoAZQA7AA0ACgAJAAkADQAKAAkACQBwAHUAYgBsAGkAYwAgAHYAbwBpAGQAIABJAG4AaQB0ACgAKQANAAoACQAJAFsAXAB7AF0ADQAKAAkACQAJAHQAaABpAHMALgBkAHcAUwBpAHoAZQAgAD0AIAAoAFUASQBuAHQAMwAyACkATQBhAHIAcwBoAGEAbAAuAFMAaQB6AGUATwBmACgAdAB5AHAAZQBvAGYAKABCAEwAVQBFAFQATwBPAFQASABfAEYASQBOAEQAXwBSAEEARABJAE8AXwBQAEEAUgBBAE0AUwApACkAOwANAAoACQAJAFsAXAB9AF0ADQAKAAkAWwBcAH0AXQANAAoACQANAAoACQBwAHUAYgBsAGkAYwAgAHMAdABhAHQAaQBjACAAYwBsAGEAcwBzACAAQgBsAHUAZQB0AG8AbwB0AGgAQQBwAGkAcwANAAoACQBbAFwAewBdAA0ACgAJAAkAWwBcAFsAXQBEAGwAbABJAG0AcABvAHIAdAAoACIAQgBsAHUAZQB0AG8AbwB0AGgAQQBwAGkAcwAuAGQAbABsACIALAAgAFMAZQB0AEwAYQBzAHQARQByAHIAbwByAD0AdAByAHUAZQApAFsAXABdAF0ADQAKAAkACQBwAHUAYgBsAGkAYwAgAHMAdABhAHQAaQBjACAAZQB4AHQAZQByAG4AIABJAG4AdABQAHQAcgAgAEIAbAB1AGUAdABvAG8AdABoAEYAaQBuAGQARgBpAHIAcwB0AFIAYQBkAGkAbwAoAHIAZQBmACAAQgBMAFUARQBUAE8ATwBUAEgAXwBGAEkATgBEAF8AUgBBAEQASQBPAF8AUABBAFIAQQBNAFMAIABwAGIAdABmAHIAcAAsACAAbwB1AHQAIABJAG4AdABQAHQAcgAgAHAAaABSAGEAZABpAG8AKQA7AA0ACgAJAFsAXAB9AF0ADQAKAFsAXAB9AF0ADQAKACIAQAA7AA0ACgANAAoAJABwAGIAdABmAHIAcAAgAD0AIABOAGUAdwAtAE8AYgBqAGUAYwB0ACAAUABJAG4AdgBvAGsAZQAuAEIATABVAEUAVABPAE8AVABIAF8ARgBJAE4ARABfAFIAQQBEAEkATwBfAFAAQQBSAEEATQBTAA0ACgAkAHAAYgB0AGYAcgBwAC4ASQBuAGkAdAAoACkADQAKACQAcABoAFIAYQBkAGkAbwAgAD0AIABbAFwAWwBdAFMAeQBzAHQAZQBtAC4ASQBuAHQAUAB0AHIAWwBcAF0AXQA6ADoAWgBlAHIAbwANAAoADQAKAGUAeABpAHQAIAAoAFsAXABbAF0AUABJAG4AdgBvAGsAZQAuAEIAbAB1AGUAdABvAG8AdABoAEEAcABpAHMAWwBcAF0AXQA6ADoAQgBsAHUAZQB0AG8AbwB0AGgARgBpAG4AZABGAGkAcgBzAHQAUgBhAGQAaQBvACgAWwBcAFsAXQByAGUAZgBbAFwAXQBdACAAJABwAGIAdABmAHIAcAAsACAAWwBcAFsAXQByAGUAZgBbAFwAXQBdACAAJABwAGgAUgBhAGQAaQBvACkAIAAtAGUAcQAgAFsAXABbAF0AUwB5AHMAdABlAG0ALgBJAG4AdABQAHQAcgBbAFwAXQBdADoAOgBaAGUAcgBvACkADQAK"/>
     <ROW Action="AI_DOWNGRADE" Type="19" Target="4010"/>
     <ROW Action="AI_DeleteCadLzma" Type="51" Source="AI_DeleteLzma" Target="[AI_SETUPEXEPATH]"/>
     <ROW Action="AI_DeleteLzma" Type="1025" Source="lzmaextractor.dll" Target="DeleteLZMAFiles"/>
@@ -231,6 +233,7 @@
     <ROW Action="AI_UPDATER_UNINSTALL" Type="82" Source="updater.exe" Target="/clean silent"/>
     <ROW Action="AI_UninstallTasks" Type="1" Source="aischeduler.dll" Target="UninstallTasks"/>
     <ROW Action="AI_UninstallTasks2" Type="1" Source="aischeduler2.dll" Target="UninstallTasks"/>
+    <ROW Action="CheckBluetoothRadioPresence" Type="1" Source="PowerShellScriptLauncher.dll" Target="RunPowerShellScript" Options="1" AdditionalSeq="AI_DATA_SETTER_1"/>
     <ROW Action="OpenNextSteps" Type="194" Source="viewer.exe" Target="https://forums.vigem.org/projects/bthps3/post-installation" WithoutSeq="true" Options="1"/>
     <ROW Action="SET_APPDIR" Type="307" Source="APPDIR" Target="[ProgramFilesFolder][Manufacturer]\[ProductName]" MultiBuildTarget="DefaultBuild:[AI_ProgramFiles]Nefarius Software Solutions\[ProductName]"/>
     <ROW Action="SET_SHORTCUTDIR" Type="307" Source="SHORTCUTDIR" Target="[ProgramMenuFolder][ProductName]"/>
@@ -325,6 +328,8 @@
     <ROW Action="AI_SETPROGRAMFILES64" Condition="VersionNT64" Sequence="748"/>
     <ROW Action="AI_SETPROGRAMFILES" Condition="NOT VersionNT64" Sequence="749"/>
     <ROW Action="AI_SET_EXTENDER_IMAGES" Sequence="54" MsiKey="AI_SET_EXTENDER_IMAGES"/>
+    <ROW Action="CheckBluetoothRadioPresence" Condition="(VersionNT &gt; 501) OR (VersionNT = 501 AND ServicePackLevel &gt;= 2)" Sequence="1232"/>
+    <ROW Action="AI_DATA_SETTER_1" Condition="(VersionNT &gt; 501) OR (VersionNT = 501 AND ServicePackLevel &gt;= 2)" Sequence="1231"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiLaunchConditionsComponent">
     <ROW Condition="( Version9X OR ( NOT VersionNT64 ) OR ( VersionNT64 AND ((VersionNT64 &lt;&gt; 600) OR (MsiNTProductType &lt;&gt; 1)) AND ((VersionNT64 &lt;&gt; 600) OR (MsiNTProductType = 1)) AND ((VersionNT64 &lt;&gt; 601) OR (MsiNTProductType = 1)) AND ((VersionNT64 &lt;&gt; 602) OR (MsiNTProductType &lt;&gt; 1)) AND ((VersionNT64 &lt;&gt; 602) OR (MsiNTProductType = 1)) AND ((VersionNT64 &lt;&gt; 603) OR (MsiNTProductType &lt;&gt; 1)) AND ((VersionNT64 &lt;&gt; 603) OR (MsiNTProductType = 1)) ) )" Description="[ProductName] cannot be installed on the following Windows versions: [WindowsTypeNT64Display]." DescriptionLocId="AI.LaunchCondition.NoSpecificNT64" IsPredefined="true" Builds="DefaultBuild"/>

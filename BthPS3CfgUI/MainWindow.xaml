@@ -100,7 +100,8 @@
 
                         <!-- AutoEnableFilterDelay -->
                         <GroupBox Grid.Column="1" Grid.Row="1"
-                                  Margin="{adonisUi:Space 1}">
+                                  Margin="{adonisUi:Space 1}"
+                                  IsEnabled="{Binding Path=AutoEnableFilter}">
                             <GroupBox.Header>
                                 <DockPanel>
                                     <Slider Width="100" 
@@ -109,8 +110,10 @@
                                             TickFrequency="1"
                                             Maximum="60"
                                             IsSnapToTickEnabled="True"
-                                            Value="{Binding Path=Timeout}"/>
-                                    <TextBlock>Placeholder</TextBlock>
+                                            Value="{Binding Path=AutoEnableFilterDelay}"/>
+                                    <TextBlock Margin="5,0,5,0">Re-enable filter after</TextBlock>
+                                    <TextBlock Text="{Binding Path=AutoEnableFilterDelay}"/>
+                                    <TextBlock Margin="5,0,0,0">Seconds</TextBlock>
                                 </DockPanel>
                             </GroupBox.Header>
                             <GroupBox.Content>

@@ -26,6 +26,16 @@ namespace BthPS3CfgUI
             return int.Parse(_bthPs3ServiceParameters.GetValue(valueName, defaultValue ? 1 : 0).ToString()) > 0;
         }
 
+        private void SetUInt(string valueName, uint value)
+        {
+            _bthPs3ServiceParameters.SetValue(valueName, value, RegistryValueKind.DWord);
+        }
+
+        private uint GetUInt(string valueName, uint defaultValue)
+        {
+            return uint.Parse(_bthPs3ServiceParameters.GetValue(valueName, defaultValue).ToString());
+        }
+
         [UsedImplicitly]
         public bool IsSIXAXISSupported
         {
@@ -59,6 +69,13 @@ namespace BthPS3CfgUI
         {
             get => GetBool("AutoEnableFilter", true);
             set => SetBool("AutoEnableFilter", value);
+        }
+
+        [UsedImplicitly]
+        public uint AutoEnableFilterDelay
+        {
+            get => GetUInt("AutoEnableFilterDelay", 10);
+            set => SetUInt("AutoEnableFilterDelay", value);
         }
 
         [UsedImplicitly]

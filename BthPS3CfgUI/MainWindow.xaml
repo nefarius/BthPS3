@@ -7,7 +7,7 @@
                              xmlns:adonisUi="clr-namespace:AdonisUI;assembly=AdonisUI"
                              xmlns:adonisControls="clr-namespace:AdonisUI.Controls;assembly=AdonisUI"
                              mc:Ignorable="d"
-                             Title="BthPS3 Driver Configuration Utility" Height="450" Width="800"
+                             Title="BthPS3 Driver Configuration Utility" Height="540" Width="800"
                              ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
     <adonisControls:AdonisWindow.TitleBarContent>
         <StackPanel Orientation="Horizontal"
@@ -141,7 +141,7 @@
             <!-- Danger Zone -->
             <TabItem Header="Danger Zone" Background="{DynamicResource {x:Static adonisUi:Brushes.ErrorBrush}}">
                 <StackPanel>
-                    <TextBlock>Changing these settings can cause unpredicted or unwanted behavior. Modify at your own risk.</TextBlock>
+                    <TextBlock>Changing these settings can cause unpredicted or unwanted behavior. Modify at your own risk. Device reconnect required.</TextBlock>
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -160,10 +160,12 @@
                         <GroupBox Grid.Column="0" Grid.Row="0"
                                   Margin="{adonisUi:Space 1}">
                             <GroupBox.Header>
-                                <CheckBox IsChecked="{Binding Path=RawPDO}">RawPDO</CheckBox>
+                                <CheckBox IsChecked="{Binding Path=RawPDO}">Expose PDO as RAW device to user-land</CheckBox>
                             </GroupBox.Header>
                             <GroupBox.Content>
-                                Description
+                                <TextBlock TextWrapping="Wrap" TextAlignment="Justify">
+                                    Connected devices will be exposed in RAW PDO mode, making them available for reading/writing to any user-land application that has permissions to open the device.
+                                </TextBlock>
                             </GroupBox.Content>
                         </GroupBox>
 
@@ -171,10 +173,12 @@
                         <GroupBox Grid.Column="0" Grid.Row="1"
                                   Margin="{adonisUi:Space 1}">
                             <GroupBox.Header>
-                                <CheckBox IsChecked="{Binding Path=HidePDO}">HidePDO</CheckBox>
+                                <CheckBox IsChecked="{Binding Path=HidePDO}">Hide PDO from Device Manager</CheckBox>
                             </GroupBox.Header>
                             <GroupBox.Content>
-                                Description
+                                <TextBlock TextWrapping="Wrap" TextAlignment="Justify">
+                                    Hide connected devices from Device Manager. Useful as a cosmetic fix if no NULL or function driver is present for the device.
+                                </TextBlock>
                             </GroupBox.Content>
                         </GroupBox>
 
@@ -182,13 +186,12 @@
                         <GroupBox Grid.Column="0" Grid.Row="2"
                                   Margin="{adonisUi:Space 1}">
                             <GroupBox.Header>
-                                <CheckBox IsChecked="{Binding Path=AdminOnlyPDO}">AdminOnlyPDO</CheckBox>
+                                <CheckBox IsChecked="{Binding Path=AdminOnlyPDO}">Restrict PDO access to elevated users</CheckBox>
                             </GroupBox.Header>
                             <GroupBox.Content>
-                                <Hyperlink NavigateUri="https://github.com/psmoveservice/PSMoveService"
-                                           RequestNavigate="Hyperlink_OnRequestNavigate">
-                                    PSMoveService
-                                </Hyperlink>
+                                <TextBlock TextWrapping="Wrap" TextAlignment="Justify">
+                                    Only processes running under elevated users (System Services, Administrators) can access connected devices.
+                                </TextBlock>
                             </GroupBox.Content>
                         </GroupBox>
 
@@ -196,10 +199,12 @@
                         <GroupBox Grid.Column="0" Grid.Row="3"
                                   Margin="{adonisUi:Space 1}">
                             <GroupBox.Header>
-                                <CheckBox IsChecked="{Binding Path=ExclusivePDO}">ExclusivePDO</CheckBox>
+                                <CheckBox IsChecked="{Binding Path=ExclusivePDO}">Exclusive PDO access enforced</CheckBox>
                             </GroupBox.Header>
                             <GroupBox.Content>
-                                <Hyperlink NavigateUri="https://github.com/Ryochan7/DS4Windows">DS4Windows</Hyperlink>
+                                <TextBlock TextWrapping="Wrap" TextAlignment="Justify">
+                                    Restrict PDO access to one handle only. Recommended to keep applications from taking over devices which are already read/written to.
+                                </TextBlock>
                             </GroupBox.Content>
                         </GroupBox>
 
@@ -221,7 +226,9 @@
                                 </DockPanel>
                             </GroupBox.Header>
                             <GroupBox.Content>
-                                Description
+                                <TextBlock TextWrapping="Wrap" TextAlignment="Justify">
+                                    When S0 Idle Timeout is triggered (e.g. no I/O activity for the defined time span), the device will be disconnected to mitigate uncontrolled kernel memory consumption.
+                                </TextBlock>
                             </GroupBox.Content>
                         </GroupBox>
 

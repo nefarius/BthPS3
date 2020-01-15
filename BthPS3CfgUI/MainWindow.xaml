@@ -140,7 +140,93 @@
 
             <!-- Danger Zone -->
             <TabItem Header="Danger Zone" Background="{DynamicResource {x:Static adonisUi:Brushes.ErrorBrush}}">
+                <StackPanel>
+                    <TextBlock>Changing these settings can cause unpredicted or unwanted behavior. Modify at your own risk.</TextBlock>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
 
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- RawPDO -->
+                        <GroupBox Grid.Column="0" Grid.Row="0"
+                                  Margin="{adonisUi:Space 1}">
+                            <GroupBox.Header>
+                                <CheckBox IsChecked="{Binding Path=RawPDO}">RawPDO</CheckBox>
+                            </GroupBox.Header>
+                            <GroupBox.Content>
+                                Description
+                            </GroupBox.Content>
+                        </GroupBox>
+
+                        <!-- HidePDO -->
+                        <GroupBox Grid.Column="0" Grid.Row="1"
+                                  Margin="{adonisUi:Space 1}">
+                            <GroupBox.Header>
+                                <CheckBox IsChecked="{Binding Path=HidePDO}">HidePDO</CheckBox>
+                            </GroupBox.Header>
+                            <GroupBox.Content>
+                                Description
+                            </GroupBox.Content>
+                        </GroupBox>
+
+                        <!-- AdminOnlyPDO -->
+                        <GroupBox Grid.Column="0" Grid.Row="2"
+                                  Margin="{adonisUi:Space 1}">
+                            <GroupBox.Header>
+                                <CheckBox IsChecked="{Binding Path=AdminOnlyPDO}">AdminOnlyPDO</CheckBox>
+                            </GroupBox.Header>
+                            <GroupBox.Content>
+                                <Hyperlink NavigateUri="https://github.com/psmoveservice/PSMoveService"
+                                           RequestNavigate="Hyperlink_OnRequestNavigate">
+                                    PSMoveService
+                                </Hyperlink>
+                            </GroupBox.Content>
+                        </GroupBox>
+
+                        <!-- ExclusivePDO -->
+                        <GroupBox Grid.Column="0" Grid.Row="3"
+                                  Margin="{adonisUi:Space 1}">
+                            <GroupBox.Header>
+                                <CheckBox IsChecked="{Binding Path=ExclusivePDO}">ExclusivePDO</CheckBox>
+                            </GroupBox.Header>
+                            <GroupBox.Content>
+                                <Hyperlink NavigateUri="https://github.com/Ryochan7/DS4Windows">DS4Windows</Hyperlink>
+                            </GroupBox.Content>
+                        </GroupBox>
+
+                        <!-- ChildIdleTimeout -->
+                        <GroupBox Grid.Column="1" Grid.Row="0"
+                                  Margin="{adonisUi:Space 1}">
+                            <GroupBox.Header>
+                                <DockPanel>
+                                    <Slider Width="120" 
+                                            AutoToolTipPlacement="TopLeft" AutoToolTipPrecision="0" 
+                                            Minimum="2000"
+                                            TickFrequency="1000"
+                                            Maximum="120000"
+                                            IsSnapToTickEnabled="True"
+                                            Value="{Binding Path=ChildIdleTimeout}"/>
+                                    <TextBlock Margin="5,0,5,0">PDO S0 Idle Timeout:</TextBlock>
+                                    <TextBlock Text="{Binding Path=ChildIdleTimeout}"/>
+                                    <TextBlock Margin="5,0,0,0">Milliseconds</TextBlock>
+                                </DockPanel>
+                            </GroupBox.Header>
+                            <GroupBox.Content>
+                                Description
+                            </GroupBox.Content>
+                        </GroupBox>
+
+                    </Grid>
+                </StackPanel>
             </TabItem>
         </TabControl>
     </Grid>

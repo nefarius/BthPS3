@@ -36,6 +36,8 @@ namespace BthPS3CfgUI
             return uint.Parse(_bthPs3ServiceParameters.GetValue(valueName, defaultValue).ToString());
         }
 
+        #region Profile Driver
+
         [UsedImplicitly]
         public bool IsSIXAXISSupported
         {
@@ -84,6 +86,47 @@ namespace BthPS3CfgUI
             get => GetBool("AutoDisableFilter", true);
             set => SetBool("AutoDisableFilter", value);
         }
+
+        #endregion
+
+        #region Danger Zone
+
+        [UsedImplicitly]
+        public bool RawPDO
+        {
+            get => GetBool("RawPDO", true);
+            set => SetBool("RawPDO", value);
+        }
+
+        [UsedImplicitly]
+        public bool HidePDO
+        {
+            get => GetBool("HidePDO", false);
+            set => SetBool("HidePDO", value);
+        }
+
+        [UsedImplicitly]
+        public bool AdminOnlyPDO
+        {
+            get => GetBool("AdminOnlyPDO", false);
+            set => SetBool("AdminOnlyPDO", value);
+        }
+
+        [UsedImplicitly]
+        public bool ExclusivePDO
+        {
+            get => GetBool("ExclusivePDO", true);
+            set => SetBool("ExclusivePDO", value);
+        }
+
+        [UsedImplicitly]
+        public uint ChildIdleTimeout
+        {
+            get => GetUInt("ChildIdleTimeout", 10000);
+            set => SetUInt("ChildIdleTimeout", value);
+        }
+
+        #endregion
 
         public event PropertyChangedEventHandler PropertyChanged;
 

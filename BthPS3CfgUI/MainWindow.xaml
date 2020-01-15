@@ -137,6 +137,11 @@
 
             <!-- Filter Driver Settings -->
             <TabItem Header="Filter Driver Settings" />
+
+            <!-- Danger Zone -->
+            <TabItem Header="Danger Zone" Background="{DynamicResource {x:Static adonisUi:Brushes.ErrorBrush}}">
+
+            </TabItem>
         </TabControl>
     </Grid>
 </adonisControls:AdonisWindow>

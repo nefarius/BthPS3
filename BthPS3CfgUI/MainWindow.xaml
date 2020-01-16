@@ -96,7 +96,9 @@
                                     DualShock™️ 4 (1/2) compatible wireless devices will be picked up by the driver and exposed to the system.
                                     This option needs to be turned off to not break compatibility with the
                                     <Hyperlink NavigateUri="https://github.com/Ryochan7/DS4Windows"
-                                               RequestNavigate="Hyperlink_OnRequestNavigate">DS4Windows</Hyperlink>
+                                               RequestNavigate="Hyperlink_OnRequestNavigate">
+                                        DS4Windows
+                                    </Hyperlink>
                                     Project.
                                 </TextBlock>
                             </GroupBox.Content>
@@ -135,7 +137,7 @@
                             </GroupBox.Header>
                             <GroupBox.Content>
                                 <TextBlock TextWrapping="Wrap" TextAlignment="Justify">
-                                    Time span (grace period) within the L2CAP patch will stay disabled 
+                                    Time span (grace period) within the L2CAP patch will stay disabled
                                     (a workaround to mitigate interference with other HID devices).
                                 </TextBlock>
                             </GroupBox.Content>
@@ -149,7 +151,7 @@
                             </GroupBox.Header>
                             <GroupBox.Content>
                                 <TextBlock TextWrapping="Wrap" TextAlignment="Justify">
-                                    The profile driver will instruct the filter to disable the L2CAP patch after an unsupported or disabled device tried to connect. 
+                                    The profile driver will instruct the filter to disable the L2CAP patch after an unsupported or disabled device tried to connect.
                                     When the grace period becomes active, the filter is basically set to "pass-thru" and standard-compliant operation is ensured.
                                 </TextBlock>
                             </GroupBox.Content>
@@ -257,6 +259,21 @@
 
                     </Grid>
                 </StackPanel>
+            </TabItem>
+
+            <!-- About -->
+            <TabItem Header="About">
+                <TextBlock TextAlignment="Justify" TextWrapping="Wrap">
+                    Copyright (C) 2018-2019 - Nefarius Software Solutions e.U.<LineBreak/><LineBreak/>
+                    This is a community project and not affiliated with Sony Interactive Entertainment Inc. in any way.<LineBreak/><LineBreak/>
+                    "PlayStation", "PSP", "PS2", "PS one", "DUALSHOCK" and "SIXAXIS" are registered trademarks of Sony Interactive Entertainment Inc.<LineBreak/><LineBreak/>
+                    BthPS3 is released as freeware. You are allowed to freely distribute this solution via floppy disk, CD-ROM, Internet, or in any other way, as long as you don't charge anything for this. If you distribute this solution, you must include all files in the distribution package, without any modification.<LineBreak/><LineBreak/>
+                    Should you wish to redistribute this program, or any part of it, you should read the full terms and conditions set out in the license agreement before doing so. A copy of the license is available on our website.<LineBreak/><LineBreak/>
+                    If you simply wish to install and use this software, you need only be aware of the disclaimer conditions in the license, which are set out below.<LineBreak/><LineBreak/>
+                    <Bold>NO WARRANTY</Bold><LineBreak/><LineBreak/>
+                    Because the program is licensed free of charge, there is no warranty for the program, to the extent permitted by applicable law.  Except when otherwise stated in writing the copyright holders and/or other parties provide the program "as is" without warranty of any kind, either expressed or implied, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose.  The entire risk as to the quality and performance of the program is with you.  Should the program prove defective, you assume the cost of all necessary servicing, repair or correction.<LineBreak/><LineBreak/>
+                    In no event unless required by applicable law or agreed to in writing will any copyright holder, or any other party who may modify and/or redistribute the program as permitted above, be liable to you for damages, including any general, special, incidental or consequential damages arising out of the use or inability to use the program (including but not limited to loss of data or data being rendered inaccurate or losses sustained by you or third parties or a failure of the program to operate with any other programs), even if such holder or other party has been advised of the possibility of such damages.<LineBreak/><LineBreak/>
+                </TextBlock>
             </TabItem>
         </TabControl>
     </Grid>

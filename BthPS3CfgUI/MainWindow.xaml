@@ -47,7 +47,9 @@
                                 <CheckBox IsChecked="{Binding Path=IsSIXAXISSupported}">Enable SIXAXIS™️/DualShock™️ 3 Support</CheckBox>
                             </GroupBox.Header>
                             <GroupBox.Content>
-                                Description
+                                <TextBlock TextWrapping="Wrap" TextAlignment="Justify">
+                                    SIXAXIS™️/DualShock™️ 3 compatible wireless devices will be picked up by the driver and exposed to the system.
+                                </TextBlock>
                             </GroupBox.Content>
                         </GroupBox>
 
@@ -58,7 +60,9 @@
                                 <CheckBox IsChecked="{Binding Path=IsNAVIGATIONSupported}">Enable PlayStation®️ Move Navigation Support</CheckBox>
                             </GroupBox.Header>
                             <GroupBox.Content>
-                                Description
+                                <TextBlock TextWrapping="Wrap" TextAlignment="Justify">
+                                    PlayStation®️ Move Navigation compatible wireless devices will be picked up by the driver and exposed to the system.
+                                </TextBlock>
                             </GroupBox.Content>
                         </GroupBox>
 
@@ -69,10 +73,15 @@
                                 <CheckBox IsChecked="{Binding Path=IsMOTIONSupported}">Enable PlayStation®️ Move Motion Support</CheckBox>
                             </GroupBox.Header>
                             <GroupBox.Content>
-                                <Hyperlink NavigateUri="https://github.com/psmoveservice/PSMoveService"
-                                           RequestNavigate="Hyperlink_OnRequestNavigate">
-                                    PSMoveService
-                                </Hyperlink>
+                                <TextBlock TextWrapping="Wrap" TextAlignment="Justify">
+                                    PlayStation®️ Move Motion compatible wireless devices will be picked up by the driver and exposed to the system.
+                                    This option needs to be turned off to not break compatibility with the
+                                    <Hyperlink NavigateUri="https://github.com/psmoveservice/PSMoveService"
+                                               RequestNavigate="Hyperlink_OnRequestNavigate">
+                                        PSMoveService
+                                    </Hyperlink>
+                                    project.
+                                </TextBlock>
                             </GroupBox.Content>
                         </GroupBox>
 
@@ -83,7 +92,13 @@
                                 <CheckBox IsChecked="{Binding Path=IsWIRELESSSupported}">Enable Wireless Controller (DualShock™️ 4) Support</CheckBox>
                             </GroupBox.Header>
                             <GroupBox.Content>
-                                <Hyperlink NavigateUri="https://github.com/Ryochan7/DS4Windows">DS4Windows</Hyperlink>
+                                <TextBlock TextWrapping="Wrap" TextAlignment="Justify">
+                                    DualShock™️ 4 (1/2) compatible wireless devices will be picked up by the driver and exposed to the system.
+                                    This option needs to be turned off to not break compatibility with the
+                                    <Hyperlink NavigateUri="https://github.com/Ryochan7/DS4Windows"
+                                               RequestNavigate="Hyperlink_OnRequestNavigate">DS4Windows</Hyperlink>
+                                    Project.
+                                </TextBlock>
                             </GroupBox.Content>
                         </GroupBox>
 
@@ -94,7 +109,9 @@
                                 <CheckBox IsChecked="{Binding Path=AutoEnableFilter}">Automatically re-enable filter after grace period has passed</CheckBox>
                             </GroupBox.Header>
                             <GroupBox.Content>
-                                Description
+                                <TextBlock TextWrapping="Wrap" TextAlignment="Justify">
+                                    The profile driver will instruct the filter to enable the L2CAP patch again automatically after the defined grace period has passed.
+                                </TextBlock>
                             </GroupBox.Content>
                         </GroupBox>
 
@@ -104,20 +121,23 @@
                                   IsEnabled="{Binding Path=AutoEnableFilter}">
                             <GroupBox.Header>
                                 <DockPanel>
-                                    <Slider Width="100" 
-                                            AutoToolTipPlacement="TopLeft" AutoToolTipPrecision="0" 
+                                    <Slider Width="100"
+                                            AutoToolTipPlacement="TopLeft" AutoToolTipPrecision="0"
                                             Minimum="10"
                                             TickFrequency="1"
                                             Maximum="60"
                                             IsSnapToTickEnabled="True"
-                                            Value="{Binding Path=AutoEnableFilterDelay}"/>
+                                            Value="{Binding Path=AutoEnableFilterDelay}" />
                                     <TextBlock Margin="5,0,5,0">Re-enable filter after</TextBlock>
-                                    <TextBlock Text="{Binding Path=AutoEnableFilterDelay}"/>
+                                    <TextBlock Text="{Binding Path=AutoEnableFilterDelay}" />
                                     <TextBlock Margin="5,0,0,0">Seconds</TextBlock>
                                 </DockPanel>
                             </GroupBox.Header>
                             <GroupBox.Content>
-                                Description
+                                <TextBlock TextWrapping="Wrap" TextAlignment="Justify">
+                                    Time span (grace period) within the L2CAP patch will stay disabled 
+                                    (a workaround to mitigate interference with other HID devices).
+                                </TextBlock>
                             </GroupBox.Content>
                         </GroupBox>
 
@@ -128,7 +148,10 @@
                                 <CheckBox IsChecked="{Binding Path=AutoDisableFilter}">Automatically disable filter on unsupported device arrival</CheckBox>
                             </GroupBox.Header>
                             <GroupBox.Content>
-                                Description
+                                <TextBlock TextWrapping="Wrap" TextAlignment="Justify">
+                                    The profile driver will instruct the filter to disable the L2CAP patch after an unsupported or disabled device tried to connect. 
+                                    When the grace period becomes active, the filter is basically set to "pass-thru" and standard-compliant operation is ensured.
+                                </TextBlock>
                             </GroupBox.Content>
                         </GroupBox>
                     </Grid>
@@ -213,15 +236,15 @@
                                   Margin="{adonisUi:Space 1}">
                             <GroupBox.Header>
                                 <DockPanel>
-                                    <Slider Width="120" 
-                                            AutoToolTipPlacement="TopLeft" AutoToolTipPrecision="0" 
+                                    <Slider Width="120"
+                                            AutoToolTipPlacement="TopLeft" AutoToolTipPrecision="0"
                                             Minimum="2000"
                                             TickFrequency="1000"
                                             Maximum="120000"
                                             IsSnapToTickEnabled="True"
-                                            Value="{Binding Path=ChildIdleTimeout}"/>
+                                            Value="{Binding Path=ChildIdleTimeout}" />
                                     <TextBlock Margin="5,0,5,0">PDO S0 Idle Timeout:</TextBlock>
-                                    <TextBlock Text="{Binding Path=ChildIdleTimeout}"/>
+                                    <TextBlock Text="{Binding Path=ChildIdleTimeout}" />
                                     <TextBlock Margin="5,0,0,0">Milliseconds</TextBlock>
                                 </DockPanel>
                             </GroupBox.Header>

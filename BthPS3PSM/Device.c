@@ -58,6 +58,7 @@ BthPS3PSM_CreateDevice(
     PWCHAR                          propertyBuffer;
     ULONG                           propertyBufferSize;
     BOOLEAN                         isUsb = FALSE;
+    WDF_DEVICE_STATE                deviceState;
 
     DECLARE_CONST_UNICODE_STRING(patchPSMRegValue, G_PatchPSMRegValue);
     DECLARE_CONST_UNICODE_STRING(linkNameRegValue, G_SymbolicLinkName);
@@ -134,6 +135,13 @@ BthPS3PSM_CreateDevice(
 
     if (NT_SUCCESS(status))
     {
+    	//
+    	// Hide from UI
+    	// 
+        WDF_DEVICE_STATE_INIT(&deviceState);
+        deviceState.DontDisplayInUI = WdfTrue;
+        WdfDeviceSetDeviceState(device, &deviceState);
+    	
 #pragma region Add this device to global collection
 
 #ifdef BTHPS3PSM_WITH_CONTROL_DEVICE

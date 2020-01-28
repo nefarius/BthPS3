@@ -18,8 +18,8 @@
 // ------- version info -------------------------------------------------------
 
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION             1,1,1,0
-PRODUCTVERSION          1,1,1,0
+FILEVERSION             1,1,2,0
+PRODUCTVERSION          1,1,2,0
 FILEFLAGSMASK           VS_FFI_FILEFLAGSMASK
 FILEFLAGS               VER_DBG
 FILEOS                  VOS_NT
@@ -33,12 +33,12 @@ BEGIN
 		VALUE "Comments",         "Protocol/Service Multiplexer Proxy Filter Driver for BTHUSB"
 		VALUE "CompanyName",      "Nefarius Software Solutions e.U."
 		VALUE "FileDescription",  "Protocol/Service Multiplexer Proxy Filter Driver for BTHUSB"
-		VALUE "FileVersion",      "1.1.1.0"
+		VALUE "FileVersion",      "1.1.2.0"
 		VALUE "InternalName",     "Protocol/Service Multiplexer Proxy Filter Driver for BTHUSB"
 		VALUE "LegalCopyright",   "(C) 2019 Nefarius Software Solutions e.U."
-		VALUE "OriginalFilename", "BthPS3.sys"
+		VALUE "OriginalFilename", "BthPS3PSM.sys"
 		VALUE "ProductName",      "Protocol/Service Multiplexer Proxy Filter Driver for BTHUSB"
-		VALUE "ProductVersion",	  "1.1.1.0"
+		VALUE "ProductVersion",	  "1.1.2.0"
         END
 	END
 	BLOCK "VarFileInfo"

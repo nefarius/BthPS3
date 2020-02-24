@@ -170,7 +170,7 @@ BthPS3PSM_CreateDevice(
         status = WdfWaitLockAcquire(FilterDeviceCollectionLock, NULL);
         if (!NT_SUCCESS(status)) {
             TraceEvents(TRACE_LEVEL_ERROR,
-                TRACE_QUEUE,
+                TRACE_DEVICE,
                 "WdfWaitLockAcquire failed with status %!STATUS!",
                 status
             );
@@ -183,7 +183,7 @@ BthPS3PSM_CreateDevice(
         status = WdfCollectionAdd(FilterDeviceCollection, device);
         if (!NT_SUCCESS(status)) {
             TraceEvents(TRACE_LEVEL_ERROR,
-                TRACE_QUEUE,
+                TRACE_DEVICE,
                 "WdfCollectionAdd failed with status %!STATUS!",
                 status
             );

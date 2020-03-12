@@ -257,7 +257,7 @@ ClientConnections_RemoveAndDestroy(
 
     WdfSpinLockRelease(Context->ClientConnectionsLock);
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
+    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CONNECTION, "%!FUNC! Exit");
 }
 
 //

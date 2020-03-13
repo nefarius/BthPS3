@@ -306,7 +306,7 @@ L2CAP_PS3_HandleRemoteConnect(
     brb->ConfigIn.Flags = CFG_MTU;
     brb->ConfigIn.Mtu.Max = brb->ConfigOut.Mtu.Max;
     brb->ConfigIn.Mtu.Min = brb->ConfigOut.Mtu.Min;
-    brb->ConfigIn.Mtu.Preferred = brb->ConfigOut.Mtu.Max;
+    brb->ConfigIn.Mtu.Preferred = brb->ConfigOut.Mtu.Preferred;
 
     //
     // Remaining L2CAP defaults

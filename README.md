@@ -31,6 +31,30 @@ For details, please consult the individual `LICENSE` files.
 
 BthPS3 components (drivers, utilities) are developed, designed and tested for Windows 7 SP1 or newer (x86, x64).
 
+## Supported Bluetooth host devices
+
+The BthPS3 profile driver and supported devices have been tested successfully with host devices following [Link Manager Protocol (LMP)](https://www.bluetooth.com/specifications/assigned-numbers/link-manager/) core specification
+version **4** (which equals **Bluetooth 2.1 + EDR**) and higher. Anything lower than that is not advised and not supported. Check your particular chip firmware version in Device Manager prior to installing the drivers:
+
+![MB0xeRakoP.png](docs/MB0xeRakoP.png)
+
+### Link Manager Versions
+
+| LMP | Bluetooth Version   |
+| --- | ------------------- |
+| 0   | Bluetooth 1.0b      |
+| 1   | Bluetooth 1.1       |
+| 2   | Bluetooth 1.2       |
+| 3   | Bluetooth 2.0 + EDR |
+| 4   | Bluetooth 2.1 + EDR |
+| 5   | Bluetooth 3.0 + HS  |
+| 6   | Bluetooth 4.0       |
+| 7   | Bluetooth 4.1       |
+| 8   | Bluetooth 4.2       |
+| 9   | Bluetooth 5         |
+| 10  | Bluetooth 5.1       |
+| 11  | Bluetooth 5.2       |
+
 ## How to build
 
 ### Prerequisites

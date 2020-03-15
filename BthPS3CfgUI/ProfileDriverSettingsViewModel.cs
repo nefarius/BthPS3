@@ -1,5 +1,7 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows.Threading;
 using BthPS3CfgUI.Annotations;
 using Microsoft.Win32;
 
@@ -8,12 +10,41 @@ namespace BthPS3CfgUI
     public class ProfileDriverSettingsViewModel : INotifyPropertyChanged
     {
         private readonly RegistryKey _bthPs3ServiceParameters;
+        private readonly DispatcherTimer dispatcherTimer;
 
         public ProfileDriverSettingsViewModel()
         {
             _bthPs3ServiceParameters =
                 Registry.LocalMachine.OpenSubKey(
                     "SYSTEM\\CurrentControlSet\\Services\\BthPS3\\Parameters", true);
+
+            //
+            // Periodically refresh patch state value
+            // 
+            dispatcherTimer = new DispatcherTimer {Interval = new TimeSpan(0, 0, 1)};
+            dispatcherTimer.Tick += DispatcherTimerOnTick;
+            dispatcherTimer.Start();
+        }
+
+        #region PSM patch
+
+        [UsedImplicitly]
+        public bool IsPSMPatchEnabled
+        {
+            get => FilterDriver.IsFilterEnabled;
+            set => FilterDriver.IsFilterEnabled = value;
+        }
+
+        #endregion
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private void DispatcherTimerOnTick(object sender, EventArgs e)
+        {
+            //
+            // Force UI to re-evaluate patch status value
+            // 
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsPSMPatchEnabled"));
         }
 
         private void SetBool(string valueName, bool value)
@@ -34,6 +65,12 @@ namespace BthPS3CfgUI
         private uint GetUInt(string valueName, uint defaultValue)
         {
             return uint.Parse(_bthPs3ServiceParameters.GetValue(valueName, defaultValue).ToString());
+        }
+
+        [NotifyPropertyChangedInvocator]
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         #region Profile Driver
@@ -127,13 +164,5 @@ namespace BthPS3CfgUI
         }
 
         #endregion
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        [NotifyPropertyChangedInvocator]
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
     }
 }

@@ -161,7 +161,35 @@
             </TabItem>
 
             <!-- Filter Driver Settings -->
-            <TabItem Header="Filter Driver Settings" />
+            <TabItem Header="Filter Driver Settings">
+                <StackPanel>
+                    <TextBlock>Changing these settings applies to newly connected devices.</TextBlock>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Is filter patch enabled/disabled -->
+                        <GroupBox Grid.Column="0" Grid.Row="0"
+                                  Margin="{adonisUi:Space 1}">
+                            <GroupBox.Header>
+                                <CheckBox IsChecked="{Binding Path=IsPSMPatchEnabled}">Enable PSM patching</CheckBox>
+                            </GroupBox.Header>
+                            <GroupBox.Content>
+                                <TextBlock TextWrapping="Wrap" TextAlignment="Justify">
+                                    WIP.
+                                </TextBlock>
+                            </GroupBox.Content>
+                        </GroupBox>
+                    </Grid>
+                </StackPanel>
+            </TabItem>
 
             <!-- Danger Zone -->
             <TabItem Header="Danger Zone" Background="{DynamicResource {x:Static adonisUi:Brushes.ErrorBrush}}">
@@ -264,7 +292,7 @@
             <!-- About -->
             <TabItem Header="About">
                 <TextBlock TextAlignment="Justify" TextWrapping="Wrap">
-                    Copyright (C) 2018-2019 - Nefarius Software Solutions e.U.<LineBreak/><LineBreak/>
+                    Copyright (C) 2018-2020 - Nefarius Software Solutions e.U.<LineBreak/><LineBreak/>
                     This is a community project and not affiliated with Sony Interactive Entertainment Inc. in any way.<LineBreak/><LineBreak/>
                     "PlayStation", "PSP", "PS2", "PS one", "DUALSHOCK" and "SIXAXIS" are registered trademarks of Sony Interactive Entertainment Inc.<LineBreak/><LineBreak/>
                     BthPS3 is released as freeware. You are allowed to freely distribute this solution via floppy disk, CD-ROM, Internet, or in any other way, as long as you don't charge anything for this. If you distribute this solution, you must include all files in the distribution package, without any modification.<LineBreak/><LineBreak/>

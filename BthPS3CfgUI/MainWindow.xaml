@@ -172,7 +172,7 @@
 
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
+                            <!-- <ColumnDefinition Width="*" /> -->
                         </Grid.ColumnDefinitions>
 
                         <!-- Is filter patch enabled/disabled -->
@@ -183,7 +183,24 @@
                             </GroupBox.Header>
                             <GroupBox.Content>
                                 <TextBlock TextWrapping="Wrap" TextAlignment="Justify">
-                                    WIP.
+                                    The L2CAP PSM (Protocol/Service Multiplexer) patching the filter driver performs is the core functionality required for this solution to work.
+                                    While in operation, the filter transparently alters some incoming packets causing a re-routing of traffic to the Profile Driver.
+                                    This behaviour can be either manually or automatically disabled to circumvent possible compatibility issues with other wireless devices.
+                                    To influence the automatism please refer to the Profile Driver Settings tab. Changing this setting has no effect on currently connected devices.
+                                    <LineBreak/><LineBreak/>
+
+                                    An example when run under default (shipped) settings:<LineBreak/><LineBreak/>
+
+                                    - Pair/power on a DualShock 4 controller in PC mode<LineBreak/>
+                                    - Patch is enabled, traffic will be sent to profile driver<LineBreak/>
+                                    - Profile driver drops connection and instructs filter to disable itself for 10 seconds<LineBreak/>
+                                    - Within these 10 seconds, power on the controller again<LineBreak/>
+                                    - Patch is disabled, traffic will now flow as in vanilla operation<LineBreak/>
+                                    - The DualShock 4 operates in PC mode as expected<LineBreak/>
+                                    - The filter gets enabled automatically after 10 seconds pass<LineBreak/>
+                                    - Other PS3 peripherals can now connect again<LineBreak/><LineBreak/>
+
+                                    This example will not work if "Enable Wireless Controller (DualShock™️ 4) Support" is ticked.
                                 </TextBlock>
                             </GroupBox.Content>
                         </GroupBox>

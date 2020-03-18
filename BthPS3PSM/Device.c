@@ -288,7 +288,6 @@ BthPS3PSM_CreateDevice(
 
 #ifndef BTHPS3PSM_WITH_CONTROL_DEVICE
         deviceContext->IsPsmPatchingEnabled = TRUE;
-        deviceContext->IsPsmHidInterruptPatchingEnabled = TRUE;
 #else
 
 #pragma region Create control device

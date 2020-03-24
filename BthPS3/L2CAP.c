@@ -702,6 +702,12 @@ L2CAP_PS3_ConnectionIndicationCallback(
     PBTHPS3_CLIENT_CONNECTION connection = NULL;
     PDO_IDENTIFICATION_DESCRIPTION pdoDesc;
 
+	//
+	// TODO: queue work item to lower IRQL instead of this!
+	// 
+    LARGE_INTEGER timeout;
+    timeout.QuadPart = 0;
+
     TraceEvents(TRACE_LEVEL_VERBOSE,
         TRACE_L2CAP,
         "%!FUNC! Entry (Indication: 0x%X, Context: 0x%p)",
@@ -779,21 +785,45 @@ L2CAP_PS3_ConnectionIndicationCallback(
                 "++ Both channels are gone, awaiting clean-up"
             );
 
-            KeWaitForSingleObject(
+            status = KeWaitForSingleObject(
                 &connection->HidControlChannel.DisconnectEvent,
                 Executive,
                 KernelMode,
                 FALSE,
-                NULL
+                &timeout
             );
+        	if(!NT_SUCCESS(status))
+        	{
+                TraceEvents(TRACE_LEVEL_ERROR,
+                    TRACE_L2CAP,
+                    "HID Control - KeWaitForSingleObject failed with status %!STATUS!",
+                    status
+                );
 
-            KeWaitForSingleObject(
+        		//
+        		// TODO: react properly to this!
+        		// 
+        	}
+
+            status = KeWaitForSingleObject(
                 &connection->HidInterruptChannel.DisconnectEvent,
                 Executive,
                 KernelMode,
                 FALSE,
-                NULL
+                &timeout
             );
+            if (!NT_SUCCESS(status))
+            {
+                TraceEvents(TRACE_LEVEL_ERROR,
+                    TRACE_L2CAP,
+                    "HID Interrupt - KeWaitForSingleObject failed with status %!STATUS!",
+                    status
+                );
+
+                //
+                // TODO: react properly to this!
+                // 
+            }
 
             WDF_CHILD_IDENTIFICATION_DESCRIPTION_HEADER_INIT(
                 &pdoDesc.Header,

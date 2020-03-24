@@ -70,6 +70,30 @@ extern __declspec(selectany) PCWSTR BthPS3ServiceName = L"BthPS3Service";
 #define PSM_DS3_HID_INTERRUPT   0x5055
 
 //
+// Lowest HCI major version to support
+// 
+#define BTHPS3_MIN_SUPPORTED_HCI_MAJOR_VERSION      0x04 // Bluetooth 2.1 + EDR
+/*
+ * Link Manager Versions
+ * 
+ * | LMP | Bluetooth Version   |
+ * | --- | ------------------- |
+ * | 0   | Bluetooth 1.0b      |
+ * | 1   | Bluetooth 1.1       |
+ * | 2   | Bluetooth 1.2       |
+ * | 3   | Bluetooth 2.0 + EDR |
+ * | 4   | Bluetooth 2.1 + EDR |
+ * | 5   | Bluetooth 3.0 + HS  |
+ * | 6   | Bluetooth 4.0       |
+ * | 7   | Bluetooth 4.1       |
+ * | 8   | Bluetooth 4.2       |
+ * | 9   | Bluetooth 5         |
+ * | 10  | Bluetooth 5.1       |
+ * | 11  | Bluetooth 5.2       |
+ * 
+ */
+
+//
 // Bus enumerator name
 // 
 extern __declspec(selectany) PCWSTR BthPS3BusEnumeratorName = L"BTHPS3BUS";

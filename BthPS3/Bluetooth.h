@@ -51,132 +51,132 @@
 
 typedef struct _BTHPS3_DEVICE_CONTEXT_HEADER
 {
-    //
-    // Framework device this context is associated with
-    //
-    WDFDEVICE Device;
+	//
+	// Framework device this context is associated with
+	//
+	WDFDEVICE Device;
 
-    //
-    // Default I/O target
-    //
-    WDFIOTARGET IoTarget;
+	//
+	// Default I/O target
+	//
+	WDFIOTARGET IoTarget;
 
-    //
-    // Profile driver interface which contains profile driver DDI
-    //
-    BTH_PROFILE_DRIVER_INTERFACE ProfileDrvInterface;
+	//
+	// Profile driver interface which contains profile driver DDI
+	//
+	BTH_PROFILE_DRIVER_INTERFACE ProfileDrvInterface;
 
-    //
-    // Local Bluetooth Address
-    //
-    BTH_ADDR LocalBthAddr;
+	//
+	// Local Bluetooth Address
+	//
+	BTH_ADDR LocalBthAddr;
 
-    //
-    // Preallocated request to be reused during initialization/deinitialization phase
-    // Access to this request is not synchronized
-    //
-    WDFREQUEST HostInitRequest;
+	//
+	// Preallocated request to be reused during initialization/deinitialization phase
+	// Access to this request is not synchronized
+	//
+	WDFREQUEST HostInitRequest;
 
-} BTHPS3_DEVICE_CONTEXT_HEADER, *PBTHPS3_DEVICE_CONTEXT_HEADER;
+} BTHPS3_DEVICE_CONTEXT_HEADER, * PBTHPS3_DEVICE_CONTEXT_HEADER;
 
 typedef struct _BTHPS3_SERVER_CONTEXT
 {
-    //
-    // Context common to client and server
-    //
-    BTHPS3_DEVICE_CONTEXT_HEADER Header;
+	//
+	// Context common to client and server
+	//
+	BTHPS3_DEVICE_CONTEXT_HEADER Header;
 
-    //
-    // Artificial HID Control PSM
-    // 
-    USHORT PsmHidControl;
+	//
+	// Artificial HID Control PSM
+	// 
+	USHORT PsmHidControl;
 
-    //
-    // Artificial HID Interrupt PSM
-    // 
-    USHORT PsmHidInterrupt;
+	//
+	// Artificial HID Interrupt PSM
+	// 
+	USHORT PsmHidInterrupt;
 
-    //
-    // Handle obtained by registering L2CAP server
-    //
-    L2CAP_SERVER_HANDLE L2CAPServerHandle;
+	//
+	// Handle obtained by registering L2CAP server
+	//
+	L2CAP_SERVER_HANDLE L2CAPServerHandle;
 
-    //
-    // BRB used for server and PSM register and unregister
-    //
-    // Server and PSM register and unregister must be done
-    // sequentially since access to this brb is not
-    // synchronized.
-    //
-    struct _BRB RegisterUnregisterBrb;
+	//
+	// BRB used for server and PSM register and unregister
+	//
+	// Server and PSM register and unregister must be done
+	// sequentially since access to this brb is not
+	// synchronized.
+	//
+	struct _BRB RegisterUnregisterBrb;
 
-    //
-    // Collection of state information about 
-    // currently established connections
-    // 
-    WDFCOLLECTION ClientConnections;
+	//
+	// Collection of state information about 
+	// currently established connections
+	// 
+	WDFCOLLECTION ClientConnections;
 
-    //
-    // Lock for ClientConnections collection
-    // 
-    WDFSPINLOCK ClientConnectionsLock;
+	//
+	// Lock for ClientConnections collection
+	// 
+	WDFSPINLOCK ClientConnectionsLock;
 
-    struct
-    {
-        //
-        // Remote I/O target (PSM filter driver)
-        // 
-        WDFIOTARGET IoTarget;
+	struct
+	{
+		//
+		// Remote I/O target (PSM filter driver)
+		// 
+		WDFIOTARGET IoTarget;
 
-        //
-        // Delayed action to re-enable filter patch
-        // 
-        WDFTIMER AutoResetTimer;
+		//
+		// Delayed action to re-enable filter patch
+		// 
+		WDFTIMER AutoResetTimer;
 
-        //
-        // Request object used to asynchronously enable the patch
-        // 
-        WDFREQUEST AsyncRequest;
+		//
+		// Request object used to asynchronously enable the patch
+		// 
+		WDFREQUEST AsyncRequest;
 
-    } PsmFilter;
+	} PsmFilter;
 
-    struct
-    {
-        ULONG AutoEnableFilter;
+	struct
+	{
+		ULONG AutoEnableFilter;
 
-        ULONG AutoDisableFilter;
+		ULONG AutoDisableFilter;
 
-        ULONG AutoEnableFilterDelay;
+		ULONG AutoEnableFilterDelay;
 
-        ULONG IsSIXAXISSupported;
+		ULONG IsSIXAXISSupported;
 
-        ULONG IsNAVIGATIONSupported;
+		ULONG IsNAVIGATIONSupported;
 
-        ULONG IsMOTIONSupported;
+		ULONG IsMOTIONSupported;
 
-        ULONG IsWIRELESSSupported;
+		ULONG IsWIRELESSSupported;
 
-        WDFCOLLECTION SIXAXISSupportedNames;
+		WDFCOLLECTION SIXAXISSupportedNames;
 
-        WDFCOLLECTION NAVIGATIONSupportedNames;
+		WDFCOLLECTION NAVIGATIONSupportedNames;
 
-        WDFCOLLECTION MOTIONSupportedNames;
+		WDFCOLLECTION MOTIONSupportedNames;
 
-        WDFCOLLECTION WIRELESSSupportedNames;
+		WDFCOLLECTION WIRELESSSupportedNames;
 
-    } Settings;
+	} Settings;
 
-} BTHPS3_SERVER_CONTEXT, *PBTHPS3_SERVER_CONTEXT;
+} BTHPS3_SERVER_CONTEXT, * PBTHPS3_SERVER_CONTEXT;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_SERVER_CONTEXT, GetServerDeviceContext)
 
 typedef struct _BTHPS3_REMOTE_CONNECT_CONTEXT
 {
-    PBTHPS3_SERVER_CONTEXT ServerContext;
+	PBTHPS3_SERVER_CONTEXT ServerContext;
 
-    INDICATION_PARAMETERS IndicationParameters;
+	INDICATION_PARAMETERS IndicationParameters;
 
-} BTHPS3_REMOTE_CONNECT_CONTEXT, *PBTHPS3_REMOTE_CONNECT_CONTEXT;
+} BTHPS3_REMOTE_CONNECT_CONTEXT, * PBTHPS3_REMOTE_CONNECT_CONTEXT;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_REMOTE_CONNECT_CONTEXT, GetRemoteConnectContext)
 
@@ -186,7 +186,7 @@ EVT_WDF_TIMER BthPS3_EnablePatchEvtWdfTimer;
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_RetrieveLocalInfo(
-    _In_ PBTHPS3_DEVICE_CONTEXT_HEADER DevCtxHdr
+	_In_ PBTHPS3_DEVICE_CONTEXT_HEADER DevCtxHdr
 );
 
 #pragma region PSM Registration
@@ -194,13 +194,13 @@ BthPS3_RetrieveLocalInfo(
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_RegisterPSM(
-    _In_ PBTHPS3_SERVER_CONTEXT DevCtx
+	_In_ PBTHPS3_SERVER_CONTEXT DevCtx
 );
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 VOID
 BthPS3_UnregisterPSM(
-    _In_ PBTHPS3_SERVER_CONTEXT DevCtx
+	_In_ PBTHPS3_SERVER_CONTEXT DevCtx
 );
 
 #pragma endregion
@@ -210,13 +210,13 @@ BthPS3_UnregisterPSM(
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_RegisterL2CAPServer(
-    _In_ PBTHPS3_SERVER_CONTEXT DevCtx
+	_In_ PBTHPS3_SERVER_CONTEXT DevCtx
 );
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 VOID
 BthPS3_UnregisterL2CAPServer(
-    _In_ PBTHPS3_SERVER_CONTEXT DevCtx
+	_In_ PBTHPS3_SERVER_CONTEXT DevCtx
 );
 
 #pragma endregion
@@ -224,41 +224,41 @@ BthPS3_UnregisterL2CAPServer(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 BthPS3_DeviceContextHeaderInit(
-    PBTHPS3_DEVICE_CONTEXT_HEADER Header,
-    WDFDEVICE Device
+	PBTHPS3_DEVICE_CONTEXT_HEADER Header,
+	WDFDEVICE Device
 );
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_ServerContextInit(
-    PBTHPS3_SERVER_CONTEXT Context,
-    WDFDEVICE Device
+	PBTHPS3_SERVER_CONTEXT Context,
+	WDFDEVICE Device
 );
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_SettingsContextInit(
-    PBTHPS3_SERVER_CONTEXT Context
+	PBTHPS3_SERVER_CONTEXT Context
 );
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_QueryInterfaces(
-    _In_ PBTHPS3_SERVER_CONTEXT DevCtx
+	_In_ PBTHPS3_SERVER_CONTEXT DevCtx
 );
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_Initialize(
-    _In_ PBTHPS3_SERVER_CONTEXT DevCtx
+	_In_ PBTHPS3_SERVER_CONTEXT DevCtx
 );
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 void
 BthPS3_IndicationCallback(
-    _In_ PVOID Context,
-    _In_ INDICATION_CODE Indication,
-    _In_ PINDICATION_PARAMETERS Parameters
+	_In_ PVOID Context,
+	_In_ INDICATION_CODE Indication,
+	_In_ PINDICATION_PARAMETERS Parameters
 );
 
 #pragma region BRB Request submission
@@ -266,21 +266,21 @@ BthPS3_IndicationCallback(
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_SendBrbSynchronously(
-    _In_ WDFIOTARGET IoTarget,
-    _In_ WDFREQUEST Request,
-    _In_ PBRB Brb,
-    _In_ ULONG BrbSize
+	_In_ WDFIOTARGET IoTarget,
+	_In_ WDFREQUEST Request,
+	_In_ PBRB Brb,
+	_In_ ULONG BrbSize
 );
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 BthPS3_SendBrbAsync(
-    _In_ WDFIOTARGET IoTarget,
-    _In_ WDFREQUEST Request,
-    _In_ PBRB Brb,
-    _In_ size_t BrbSize,
-    _In_ PFN_WDF_REQUEST_COMPLETION_ROUTINE ComplRoutine,
-    _In_opt_ WDFCONTEXT Context
+	_In_ WDFIOTARGET IoTarget,
+	_In_ WDFREQUEST Request,
+	_In_ PBRB Brb,
+	_In_ size_t BrbSize,
+	_In_ PFN_WDF_REQUEST_COMPLETION_ROUTINE ComplRoutine,
+	_In_opt_ WDFCONTEXT Context
 );
 
 #pragma endregion
@@ -292,90 +292,151 @@ _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 FORCEINLINE
 BTHPS3_GET_DEVICE_NAME(
-    WDFIOTARGET IoTarget,
-    BTH_ADDR RemoteAddress,
-    PCHAR Name
+	WDFIOTARGET IoTarget,
+	BTH_ADDR RemoteAddress,
+	PCHAR Name
 )
 {
-    NTSTATUS status = STATUS_INVALID_BUFFER_SIZE;
-    ULONG index = 0;
-    WDF_MEMORY_DESCRIPTOR MemoryDescriptor;
-    WDFMEMORY MemoryHandle = NULL;
-    PBTH_DEVICE_INFO_LIST pDeviceInfoList = NULL;
-    ULONG maxDevices = BTH_DEVICE_INFO_MAX_COUNT;
-    ULONG retryCount = 0;
+	NTSTATUS status = STATUS_INVALID_BUFFER_SIZE;
+	ULONG index = 0;
+	WDF_MEMORY_DESCRIPTOR MemoryDescriptor;
+	WDFMEMORY MemoryHandle = NULL;
+	PBTH_DEVICE_INFO_LIST pDeviceInfoList = NULL;
+	ULONG maxDevices = BTH_DEVICE_INFO_MAX_COUNT;
+	ULONG retryCount = 0;
 
-    //
-    // Retry increasing the buffer a few times if _a lot_ of devices
-    // are cached and the allocated memory can't store them all.
-    // 
-    for (retryCount = 0; (retryCount <= BTH_DEVICE_INFO_MAX_RETRIES
-        && status == STATUS_INVALID_BUFFER_SIZE); retryCount++)
-    {
-        if (MemoryHandle != NULL) {
-            WdfObjectDelete(MemoryHandle);
-        }
+	//
+	// Retry increasing the buffer a few times if _a lot_ of devices
+	// are cached and the allocated memory can't store them all.
+	// 
+	for (retryCount = 0; (retryCount <= BTH_DEVICE_INFO_MAX_RETRIES
+		&& status == STATUS_INVALID_BUFFER_SIZE); retryCount++)
+	{
+		if (MemoryHandle != NULL) {
+			WdfObjectDelete(MemoryHandle);
+		}
 
-        status = WdfMemoryCreate(NULL,
-            NonPagedPoolNx,
-            POOLTAG_BTHPS3,
-            sizeof(BTH_DEVICE_INFO_LIST) + (sizeof(BTH_DEVICE_INFO) * maxDevices),
-            &MemoryHandle,
-            NULL);
+		status = WdfMemoryCreate(NULL,
+			NonPagedPoolNx,
+			POOLTAG_BTHPS3,
+			sizeof(BTH_DEVICE_INFO_LIST) + (sizeof(BTH_DEVICE_INFO) * maxDevices),
+			&MemoryHandle,
+			NULL);
 
-        if (!NT_SUCCESS(status)) {
-            return status;
-        }
+		if (!NT_SUCCESS(status)) {
+			return status;
+		}
 
-        WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(
-            &MemoryDescriptor,
-            MemoryHandle,
-            NULL
-        );
+		WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(
+			&MemoryDescriptor,
+			MemoryHandle,
+			NULL
+		);
 
-        status = WdfIoTargetSendIoctlSynchronously(
-            IoTarget,
-            NULL,
-            IOCTL_BTH_GET_DEVICE_INFO,
-            &MemoryDescriptor,
-            &MemoryDescriptor,
-            NULL,
-            NULL
-        );
+		status = WdfIoTargetSendIoctlSynchronously(
+			IoTarget,
+			NULL,
+			IOCTL_BTH_GET_DEVICE_INFO,
+			&MemoryDescriptor,
+			&MemoryDescriptor,
+			NULL,
+			NULL
+		);
 
-        //
-        // Increase memory to allocate
-        // 
-        maxDevices += BTH_DEVICE_INFO_MAX_COUNT;
-    }
+		//
+		// Increase memory to allocate
+		// 
+		maxDevices += BTH_DEVICE_INFO_MAX_COUNT;
+	}
 
-    if (!NT_SUCCESS(status)) {
-        WdfObjectDelete(MemoryHandle);
-        return status;
-    }
+	if (!NT_SUCCESS(status)) {
+		WdfObjectDelete(MemoryHandle);
+		return status;
+	}
 
-    pDeviceInfoList = WdfMemoryGetBuffer(MemoryHandle, NULL);
-    status = STATUS_NOT_FOUND;
+	pDeviceInfoList = WdfMemoryGetBuffer(MemoryHandle, NULL);
+	status = STATUS_NOT_FOUND;
 
-    for (index = 0; index < pDeviceInfoList->numOfDevices; index++)
-    {
-        PBTH_DEVICE_INFO pDeviceInfo = &pDeviceInfoList->deviceList[index];
+	for (index = 0; index < pDeviceInfoList->numOfDevices; index++)
+	{
+		PBTH_DEVICE_INFO pDeviceInfo = &pDeviceInfoList->deviceList[index];
 
-        if (pDeviceInfo->address == RemoteAddress)
-        {
-            if (strlen(pDeviceInfo->name) == 0)
-            {
-                status = STATUS_INVALID_PARAMETER;
-                break;
-            }
+		if (pDeviceInfo->address == RemoteAddress)
+		{
+			if (strlen(pDeviceInfo->name) == 0)
+			{
+				status = STATUS_INVALID_PARAMETER;
+				break;
+			}
 
-            strcpy_s(Name, BTH_MAX_NAME_SIZE, pDeviceInfo->name);
-            status = STATUS_SUCCESS;
-            break;
-        }
-    }
+			strcpy_s(Name, BTH_MAX_NAME_SIZE, pDeviceInfo->name);
+			status = STATUS_SUCCESS;
+			break;
+		}
+	}
 
-    WdfObjectDelete(MemoryHandle);
-    return status;
+	WdfObjectDelete(MemoryHandle);
+	return status;
 }
 
+//
+// Request remote device friendly name from radio
+// 
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS
+FORCEINLINE
+BTHPS3_GET_HCI_VERSION(
+	_In_ WDFIOTARGET IoTarget,
+	_Out_ PUCHAR HciVersion,
+	_Out_opt_ PUSHORT HciRevision
+)
+{
+	NTSTATUS status;
+	WDF_MEMORY_DESCRIPTOR MemoryDescriptor;
+	WDFMEMORY MemoryHandle = NULL;
+	PBTH_LOCAL_RADIO_INFO pLocalInfo = NULL;
+	ULONGLONG bytesReturned;
+	
+	status = WdfMemoryCreate(NULL,
+		NonPagedPoolNx,
+		POOLTAG_BTHPS3,
+		sizeof(BTH_LOCAL_RADIO_INFO),
+		&MemoryHandle,
+		NULL);
+
+	if (!NT_SUCCESS(status)) {
+		return status;
+	}
+
+	WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(
+		&MemoryDescriptor,
+		MemoryHandle,
+		NULL
+	);
+
+	status = WdfIoTargetSendIoctlSynchronously(
+		IoTarget,
+		NULL,
+		IOCTL_BTH_GET_LOCAL_INFO,
+		&MemoryDescriptor,
+		&MemoryDescriptor,
+		NULL,
+		&bytesReturned
+	);
+
+	if (!NT_SUCCESS(status) || bytesReturned < sizeof(BTH_LOCAL_RADIO_INFO)) {
+		WdfObjectDelete(MemoryHandle);
+		return status;
+	}
+
+	pLocalInfo = WdfMemoryGetBuffer(MemoryHandle, NULL);
+
+	if (HciVersion)
+		*HciVersion = pLocalInfo->hciVersion;
+		
+	if (HciRevision)
+		*HciRevision = pLocalInfo->hciRevision;
+
+	WdfObjectDelete(MemoryHandle);
+	return status;
+}

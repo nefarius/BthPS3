@@ -141,7 +141,7 @@ BthPS3PSM_EnablePatchAsync(
     // Create payload memory
     // 
     status = WdfMemoryCreate(&attribs,
-        NonPagedPool,
+        NonPagedPoolNx,
         POOLTAG_BTHPS3,
         sizeof(BTHPS3PSM_ENABLE_PSM_PATCHING),
         &memory,

@@ -317,7 +317,7 @@ BTHPS3_GET_DEVICE_NAME(
         }
 
         status = WdfMemoryCreate(NULL,
-            NonPagedPool,
+            NonPagedPoolNx,
             POOLTAG_BTHPS3,
             sizeof(BTH_DEVICE_INFO_LIST) + (sizeof(BTH_DEVICE_INFO) * maxDevices),
             &MemoryHandle,
@@ -378,3 +378,4 @@ BTHPS3_GET_DEVICE_NAME(
     WdfObjectDelete(MemoryHandle);
     return status;
 }
+

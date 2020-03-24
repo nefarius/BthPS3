@@ -38,6 +38,10 @@ version **4** (which equals **Bluetooth 2.1 + EDR**) and higher. Anything lower 
 
 ![MB0xeRakoP.png](docs/MB0xeRakoP.png)
 
+When loaded onto an unsupported host radio, device boot will fail with `STATUS_DEVICE_POWER_FAILURE`:
+
+![P37N2cgWdG.png](docs/P37N2cgWdG.png)
+
 ### Link Manager Versions
 
 | LMP | Bluetooth Version   |

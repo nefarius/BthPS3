@@ -126,6 +126,10 @@ Below representation attempts to visualize the relationships between the drivers
 
 ```
 
+## Installation
+
+Pre-built binaries and instructions are provided by `Nefarius Software Solutions e.U.` and [available as an all-in-one setup](https://forums.vigem.org/projects/bthps3).
+
 ## Sources & 3rd party credits
 
 - [ViGEm Forums - Bluetooth Filter Driver for DS3-compatibility - research notes](https://forums.vigem.org/topic/242/bluetooth-filter-driver-for-ds3-compatibility-research-notes)

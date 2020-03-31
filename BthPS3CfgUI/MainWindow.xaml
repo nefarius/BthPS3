@@ -99,7 +99,7 @@
                                                RequestNavigate="Hyperlink_OnRequestNavigate">
                                         DS4Windows
                                     </Hyperlink>
-                                    Project.
+                                    project.
                                 </TextBlock>
                             </GroupBox.Content>
                         </GroupBox>

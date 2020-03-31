@@ -8,3 +8,10 @@
 - Profile driver now refuses to load if attached to a host radio with unsupported firmware version
 - Motion device support disabled by default. This option needs to be turned off to not break compatibility with the [PSMoveService](https://github.com/psmoveservice/PSMoveService) project
 - Wireless device support disabled by default. This option needs to be turned off to not break compatibility with the [DS4Windows](https://github.com/Ryochan7/DS4Windows) project
+
+## Portal details
+
+Job names:
+
+- BthPS3 x86 v1.1.3.0 31.03.2020
+- BthPS3 x64 v1.1.3.0 31.03.2020

@@ -395,7 +395,11 @@ BTHPS3_GET_HCI_VERSION(
 	WDF_MEMORY_DESCRIPTOR MemoryDescriptor;
 	WDFMEMORY MemoryHandle = NULL;
 	PBTH_LOCAL_RADIO_INFO pLocalInfo = NULL;
+#ifdef _M_IX86
+	ULONG bytesReturned;
+#else
 	ULONGLONG bytesReturned;
+#endif
 	
 	status = WdfMemoryCreate(NULL,
 		NonPagedPoolNx,

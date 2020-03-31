@@ -134,6 +134,10 @@ Pre-built binaries and instructions are provided by `Nefarius Software Solutions
 
 If facing issues please [search on the forums](https://forums.vigem.org/) first for similar cases and possible solutions.
 
+## Contributing
+
+This project was birthed out of curiosity and the drive to learn more about Bluetooth drivers for Microsoft Windows (and a lingering love for the DualShock 3). If it brought you joy please consider checking out the Sponsor-Button on top and toss a coin to your Developer, O' Valley of Gamers 😃
+
 ## Sources & 3rd party credits
 
 - [ViGEm Forums - Bluetooth Filter Driver for DS3-compatibility - research notes](https://forums.vigem.org/topic/242/bluetooth-filter-driver-for-ds3-compatibility-research-notes)

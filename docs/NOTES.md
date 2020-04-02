@@ -1,3 +1,14 @@
+# v1.1.4 (setup-v1.2.4) BthPS3 changelog
+
+- Restored support for Bluetooth 2.0 + EDR host radios
+
+## Portal details
+
+Job names:
+
+- BthPS3 x86 v1.1.4.0 02.04.2020
+- BthPS3 x64 v1.1.4.0 02.04.2020
+
 # v1.1.3 (setup-v1.2.3) BthPS3 changelog
 
 - Fixed incorrect use of executable non-pageable memory which can trigger a bug check when Code Integrity is enforced

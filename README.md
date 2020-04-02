@@ -34,7 +34,7 @@ BthPS3 components (drivers, utilities) are developed, designed and tested for Wi
 ## Supported Bluetooth host devices
 
 The BthPS3 profile driver and supported devices have been tested successfully with host devices following [Link Manager Protocol (LMP)](https://www.bluetooth.com/specifications/assigned-numbers/link-manager/) core specification
-version **4** (which equals **Bluetooth 2.1 + EDR**) and higher. Anything lower than that is not advised and not supported. Check your particular chip firmware version in Device Manager prior to installing the drivers:
+version **3** (which equals **Bluetooth 2.0 + EDR**) and higher. Anything lower than that is not advised and not supported. Check your particular chip firmware version in Device Manager prior to installing the drivers:
 
 ![MB0xeRakoP.png](docs/MB0xeRakoP.png)
 

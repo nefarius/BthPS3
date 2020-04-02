@@ -72,7 +72,7 @@ extern __declspec(selectany) PCWSTR BthPS3ServiceName = L"BthPS3Service";
 //
 // Lowest HCI major version to support
 // 
-#define BTHPS3_MIN_SUPPORTED_HCI_MAJOR_VERSION      0x04 // Bluetooth 2.1 + EDR
+#define BTHPS3_MIN_SUPPORTED_HCI_MAJOR_VERSION      0x03 // Bluetooth 2.0 + EDR
 /*
  * Link Manager Versions
  * 

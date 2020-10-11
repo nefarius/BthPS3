@@ -69,6 +69,10 @@ When loaded onto an unsupported host radio, device boot will fail with `STATUS_D
 
 You can build individual projects of the solution within Visual Studio.
 
+## Documentation
+
+Take a look at the [Wiki](../../wiki) for more information.
+
 ## Device tree
 
 Below representation attempts to visualize the relationships between the drivers and devices involved (near host hardware on the bottom, towards exposed child devices on top):

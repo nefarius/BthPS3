@@ -18,6 +18,11 @@ namespace BthPS3CfgUI
                 Registry.LocalMachine.OpenSubKey(
                     "SYSTEM\\CurrentControlSet\\Services\\BthPS3\\Parameters", true);
 
+            if (_bthPs3ServiceParameters == null)
+            {
+                throw new Exception("BthPS3 registry path not found. Are the drivers installed?");
+            }
+
             //
             // Periodically refresh patch state value
             // 

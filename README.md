@@ -78,7 +78,7 @@ Rough road map with useful features (in no particular order):
 
 ## Documentation
 
-Take a look at the [Wiki](../../wiki) for more information.
+Take a look at the [project page](https://vigem.org/projects/BthPS3/) for more information.
 
 ## Device tree
 
@@ -139,7 +139,7 @@ Below representation attempts to visualize the relationships between the drivers
 
 ## Installation
 
-Pre-built binaries and instructions are provided by `Nefarius Software Solutions e.U.` and [available as an all-in-one setup](https://forums.vigem.org/topic/362/playstation-r-3-peripherals-unofficial-bluetooth-drivers-bthps3) (**note:** officially supports **Windows 10** only).
+Pre-built binaries and instructions are provided by `Nefarius Software Solutions e.U.` and [available as an all-in-one setup](https://vigem.org/projects/BthPS3/Installation-Guide-Shibari-Edition/) (**note:** officially supports **Windows 10** only).
 
 ### Support
 

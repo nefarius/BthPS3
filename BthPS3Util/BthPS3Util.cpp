@@ -330,7 +330,7 @@ int main(int, char* argv[])
 
 		if (UuidFromStringA(reinterpret_cast<RPC_CSTR>(&classGuid[0]), &clID) == RPC_S_INVALID_STRING_UUID)
 		{
-			std::cout << color(red) << "Device Class GUID format invalid" << std::endl;
+			std::cout << color(red) << "Device Class GUID format invalid, expected format (no brackets): xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" << std::endl;
 			return EXIT_FAILURE;
 		}
 
@@ -585,7 +585,6 @@ int main(int, char* argv[])
 	std::cout << "      --hardware-id           Hardware ID of the new device (required)" << std::endl;
 	std::cout << "      --class-name            Device Class Name of the new device (required)" << std::endl;
 	std::cout << "      --class-guid            Device Class GUID of the new device (required)" << std::endl;
-	std::cout << "                                Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" << std::endl;
 	std::cout << "    --enable-filter           Register BthPS3PSM as lower filter for Bluetooth Class" << std::endl;
 	std::cout << "    --disable-filter          De-Register BthPS3PSM as lower filter for Bluetooth Class" << std::endl;
 	std::cout << "    --enable-psm-patch        Instructs the filter to enable the PSM patch" << std::endl;

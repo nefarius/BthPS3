@@ -16,7 +16,7 @@ bool devcon::create(std::wstring className, const GUID* classGuid, std::wstring 
     SP_DEVINFO_DATA deviceInfoData;
     deviceInfoData.cbSize = sizeof(deviceInfoData);
 
-    auto cdiRet = SetupDiCreateDeviceInfo(
+    auto cdiRet = SetupDiCreateDeviceInfoW(
         deviceInfoSet,
         className.c_str(),
         classGuid,
@@ -32,7 +32,64 @@ bool devcon::create(std::wstring className, const GUID* classGuid, std::wstring 
         return false;
     }
 
-    auto sdrpRet = SetupDiSetDeviceRegistryProperty(
+    auto sdrpRet = SetupDiSetDeviceRegistryPropertyW(
+        deviceInfoSet,
+        &deviceInfoData,
+        SPDRP_HARDWAREID,
+        (const PBYTE)hardwareId.c_str(),
+        (DWORD)(hardwareId.size() * sizeof(WCHAR))
+    );
+
+    if (!sdrpRet)
+    {
+        SetupDiDestroyDeviceInfoList(deviceInfoSet);
+        return false;
+    }
+
+    auto cciRet = SetupDiCallClassInstaller(
+        DIF_REGISTERDEVICE,
+        deviceInfoSet,
+        &deviceInfoData
+    );
+
+    if (!cciRet)
+    {
+        SetupDiDestroyDeviceInfoList(deviceInfoSet);
+        return false;
+    }
+
+    SetupDiDestroyDeviceInfoList(deviceInfoSet);
+
+    return true;
+}
+
+bool devcon::create(std::string className, const GUID* classGuid, std::string hardwareId)
+{
+    auto deviceInfoSet = SetupDiCreateDeviceInfoList(classGuid, nullptr);
+
+    if (INVALID_HANDLE_VALUE == deviceInfoSet)
+        return false;
+
+    SP_DEVINFO_DATA deviceInfoData;
+    deviceInfoData.cbSize = sizeof(deviceInfoData);
+
+    auto cdiRet = SetupDiCreateDeviceInfoA(
+        deviceInfoSet,
+        className.c_str(),
+        classGuid,
+        nullptr,
+        nullptr,
+        DICD_GENERATE_ID,
+        &deviceInfoData
+    );
+
+    if (!cdiRet)
+    {
+        SetupDiDestroyDeviceInfoList(deviceInfoSet);
+        return false;
+    }
+
+    auto sdrpRet = SetupDiSetDeviceRegistryPropertyA(
         deviceInfoSet,
         &deviceInfoData,
         SPDRP_HARDWAREID,

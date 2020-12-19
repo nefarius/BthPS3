@@ -9,6 +9,7 @@
 #include <SetupAPI.h>
 #include <newdev.h>
 #include <winioctl.h>
+#include <rpc.h>
 
 //
 // OS Bluetooth APIs

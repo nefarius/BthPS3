@@ -14,9 +14,16 @@ using namespace colorwin;
 int main(int, char* argv[])
 {
 	argh::parser cmdl;
-	cmdl.add_params({ "--inf-path", "--bin-path", "--device-index" });
+	cmdl.add_params({
+		"--inf-path",
+		"--bin-path",
+		"--device-index",
+		"--hardware-id",
+		"--class-name",
+		"--class-guid"
+	});
 	cmdl.parse(argv);
-	std::string infPath, binPath;
+	std::string infPath, binPath, hwId, className, classGuid;
 	ULONG deviceIndex = 0;
 
 	DWORD bytesReturned = 0;
@@ -300,6 +307,46 @@ int main(int, char* argv[])
 		std::cout << color(green) << "Driver installed successfully" << std::endl;
 
 		return (rebootRequired) ? ERROR_RESTART_APPLICATION : EXIT_SUCCESS;
+	}
+
+	if (cmdl[{ "--create-device-node" }])
+	{
+		if (!(cmdl({ "--hardware-id" }) >> hwId)) {
+			std::cout << color(red) << "Hardware ID missing" << std::endl;
+			return EXIT_FAILURE;
+		}
+
+		if (!(cmdl({ "--class-name" }) >> className)) {
+			std::cout << color(red) << "Device Class Name missing" << std::endl;
+			return EXIT_FAILURE;
+		}
+
+		if (!(cmdl({ "--class-guid" }) >> classGuid)) {
+			std::cout << color(red) << "Device Class GUID missing" << std::endl;
+			return EXIT_FAILURE;
+		}
+
+		GUID clID;
+
+		if (UuidFromStringA(reinterpret_cast<RPC_CSTR>(&classGuid[0]), &clID) == RPC_S_INVALID_STRING_UUID)
+		{
+			std::cout << color(red) << "Device Class GUID format invalid" << std::endl;
+			return EXIT_FAILURE;
+		}
+
+		auto ret = devcon::create(className, &clID, hwId);
+
+		if (!ret)
+		{
+			std::cout << color(red) <<
+				"Failed to create device node, error: "
+				<< winapi::GetLastErrorStdStr() << std::endl;
+			return GetLastError();
+		}
+
+		std::cout << color(green) << "Device node created successfully" << std::endl;
+
+		return EXIT_SUCCESS;
 	}
 
 #pragma endregion

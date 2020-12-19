@@ -1,0 +1,33 @@
+version: 1.3.{build}.0
+image: Visual Studio 2019
+platform:
+- x86
+- x64
+configuration:
+- Release
+install:
+- cmd: git submodule -q update --init
+- cmd: git clone -q https://github.com/microsoft/DMF.git C:\projects\DMF
+before_build:
+- ps: Invoke-WebRequest "https://github.com/nefarius/vpatch/releases/latest/download/vpatch.exe" -OutFile vpatch.exe
+- cmd: vpatch.exe --stamp-version "%APPVEYOR_BUILD_VERSION%" --target-file ".\BthPS3\BthPS3.vcxproj" --vcxproj.inf-time-stamp
+- cmd: vpatch.exe --stamp-version "%APPVEYOR_BUILD_VERSION%" --target-file ".\BthPS3\BthPS3.rc" --resource.file-version --resource.product-version
+- cmd: vpatch.exe --stamp-version "%APPVEYOR_BUILD_VERSION%" --target-file ".\BthPS3PSM\BthPS3PSM.vcxproj" --vcxproj.inf-time-stamp
+- cmd: vpatch.exe --stamp-version "%APPVEYOR_BUILD_VERSION%" --target-file ".\BthPS3PSM\BthPS3PSM.rc" --resource.file-version --resource.product-version
+uild:
+  project: $(APPVEYOR_BUILD_FOLDER)\$(APPVEYOR_PROJECT_NAME).sln
+after_build:
+- cmd: makecab.exe /f .\setup\BthPS3_%PLATFORM%.ddf
+artifacts:
+- path: 'bin**\BthPS3\*.inf'
+- path: 'bin**\BthPS3\*.sys'
+- path: 'bin**\BthPS3PSM\*.inf'
+- path: 'bin**\BthPS3PSM\*.sys'
+- path: 'bin**\*.pdb'
+- path: 'disk1\*.cab'
+- path: 'bin**\*.msi'
+deploy:
+- provider: Environment
+  name: BUILDBOT
+  on:
+    appveyor_repo_tag: true

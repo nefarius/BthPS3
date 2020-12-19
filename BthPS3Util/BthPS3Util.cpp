@@ -581,6 +581,10 @@ int main(int, char* argv[])
 	std::cout << "    --install-driver          Invoke the installation of a given PNP driver" << std::endl;
 	std::cout << "      --inf-path              Path to the INF file to install (required)" << std::endl;
 	std::cout << "      --force                 Force using this driver even if lower ranked (optional)" << std::endl;
+	std::cout << "    --create-device-node      Create a new ROOT enumerated virtual device" << std::endl;
+	std::cout << "      --hardware-id           Hardware ID of the new device (required)" << std::endl;
+	std::cout << "      --class-name            Device Class Name of the new device (required)" << std::endl;
+	std::cout << "      --class-guid            Device Class GUID of the new device (required)" << std::endl;
 	std::cout << "    --enable-filter           Register BthPS3PSM as lower filter for Bluetooth Class" << std::endl;
 	std::cout << "    --disable-filter          De-Register BthPS3PSM as lower filter for Bluetooth Class" << std::endl;
 	std::cout << "    --enable-psm-patch        Instructs the filter to enable the PSM patch" << std::endl;

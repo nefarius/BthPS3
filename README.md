@@ -69,13 +69,6 @@ When loaded onto an unsupported host radio, device boot will fail with `STATUS_D
 
 You can build individual projects of the solution within Visual Studio.
 
-## Planned/Work in progress
-
-Rough road map with useful features (in no particular order):
-
-- Finish and package the [driver configuration UI tool](/BthPS3CfgUI)
-- Implement the unfinished sections in the channel connection completion routines causing memory leaks on unexpected connection failure (search for `TODO:`)
-
 ## Documentation
 
 Take a look at the [project page](https://vigem.org/projects/BthPS3/) for more information.

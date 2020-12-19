@@ -49,6 +49,9 @@ namespace BthPS3CfgUI
                     Kernel32.SafeObjectHandle.Null
                 ))
                 {
+                    if (handle.IsInvalid)
+                        throw new Exception("BthPS3 filter driver access failed. Are the drivers installed?");
+
                     var payloadBuffer = Marshal.AllocHGlobal(Marshal.SizeOf<BTHPS3PSM_GET_PSM_PATCHING>());
                     var payload = new BTHPS3PSM_GET_PSM_PATCHING { DeviceIndex = 0 };
 
@@ -89,6 +92,9 @@ namespace BthPS3CfgUI
                     Kernel32.SafeObjectHandle.Null
                 ))
                 {
+                    if (handle.IsInvalid)
+                        throw new Exception("BthPS3 filter driver access failed. Are the drivers installed?");
+                    
                     var payloadEnableBuffer = Marshal.AllocHGlobal(Marshal.SizeOf<BTHPS3PSM_ENABLE_PSM_PATCHING>());
                     var payloadEnable = new BTHPS3PSM_ENABLE_PSM_PATCHING { DeviceIndex = 0 };
                     var payloadDisableBuffer = Marshal.AllocHGlobal(Marshal.SizeOf<BTHPS3PSM_DISABLE_PSM_PATCHING>());

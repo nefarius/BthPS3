@@ -585,6 +585,7 @@ int main(int, char* argv[])
 	std::cout << "      --hardware-id           Hardware ID of the new device (required)" << std::endl;
 	std::cout << "      --class-name            Device Class Name of the new device (required)" << std::endl;
 	std::cout << "      --class-guid            Device Class GUID of the new device (required)" << std::endl;
+	std::cout << "                                Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" << std::endl;
 	std::cout << "    --enable-filter           Register BthPS3PSM as lower filter for Bluetooth Class" << std::endl;
 	std::cout << "    --disable-filter          De-Register BthPS3PSM as lower filter for Bluetooth Class" << std::endl;
 	std::cout << "    --enable-psm-patch        Instructs the filter to enable the PSM patch" << std::endl;

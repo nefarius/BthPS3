@@ -38,6 +38,7 @@ ClassGuid={409ED5DE-6FC0-4566-BDB6-4878D965D914} ; artificial class
 Provider=%ManufacturerName%
 CatalogFile=BthPS3_PDO_NULL_Device.cat
 DriverVer=
+PnpLockdown=1
 
 
 [ClassInstall32]

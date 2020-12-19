@@ -1,30 +1,167 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-	<Product Id="*" Name="BthPS3Setup" Language="1033" Version="1.0.0.0" Manufacturer="" UpgradeCode="0a1a37ff-57bd-4ca1-a2b8-a42b65736c80">
-		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
 
-		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
-		<MediaTemplate />
+  <!-- https://stackoverflow.com/a/18630847 -->
+  <?if $(var.Platform) = x64 ?>
+  <?define Win64 = "yes" ?>
+  <?define PlatformProgramFilesFolder = "ProgramFiles64Folder" ?>
+  <?define ArchDir = "x64" ?>
+  <?define WixQuietExec="WixQuietExec64"?>
+  <?else ?>
+  <?define Win64 = "no" ?>
+  <?define PlatformProgramFilesFolder = "ProgramFilesFolder" ?>
+  <?define ArchDir = "x86" ?>
+  <?define WixQuietExec="WixQuietExec"?>
+  <?endif ?>
 
-		<Feature Id="ProductFeature" Title="BthPS3Setup" Level="1">
-			<ComponentGroupRef Id="ProductComponents" />
-		</Feature>
-	</Product>
+  <!-- change build flow if running under CI -->
+  <?ifdef env.APPVEYOR?>
+  <?define IsCI = "yes" ?>
+  <?else ?>
+  <?define IsCI = "no" ?>
+  <?endif ?>
 
-	<Fragment>
-		<Directory Id="TARGETDIR" Name="SourceDir">
-			<Directory Id="ProgramFilesFolder">
-				<Directory Id="INSTALLFOLDER" Name="BthPS3Setup" />
-			</Directory>
-		</Directory>
-	</Fragment>
+  <!-- use driver file version for installer -->
+  <?define VERSION = "!(bind.FileVersion.ViGEmBus.sys)" ?>
 
-	<Fragment>
-		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
-			<!-- TODO: Remove the comments around this Component element and the ComponentRef below in order to add resources to this installer. -->
-			<!-- <Component Id="ProductComponent"> -->
-				<!-- TODO: Insert files, registry keys, and other resources here. -->
-			<!-- </Component> -->
-		</ComponentGroup>
-	</Fragment>
+  <!-- basic product properties -->
+  <Product Id="*" Name="Nefarius BthPS3 Bluetooth Drivers" Language="1033" Version="$(var.VERSION)"
+           Manufacturer="Nefarius Software Solutions e.U."
+           UpgradeCode="CC32A6ED-BDFE-4D51-9FFF-2AB51D9ECE18">
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+
+    <!-- use single MSI file only -->
+    <MediaTemplate EmbedCab="yes" />
+
+    <!-- set setup icon and uninstall options -->
+    <Icon Id="ViGEm.ico" SourceFile="$(var.ProjectDir)Icons\B3.ico" />
+    <Property Id="ARPPRODUCTICON" Value="ViGEm.ico" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/ViGEm/ViGEmBus" />
+    <Property Id="ARPNOREPAIR" Value="yes" Secure="yes" /> 
+
+    <!-- always perform major upgrade and remove previous versions -->
+    <Property Id="PREVIOUSVERSIONSINSTALLED" Secure="yes" />
+    <Upgrade Id="0A4A02DE-0BE3-4BF4-91F0-1EA47AD26881">
+      <UpgradeVersion
+        Minimum="1.0.0.0" Maximum="$(var.VERSION)"
+        Property="PREVIOUSVERSIONSINSTALLED"
+        IncludeMinimum="yes" IncludeMaximum="no" />
+    </Upgrade>
+
+    <!-- don't allow downgrades -->
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+
+    <!-- https://stackoverflow.com/a/31991006 -->
+    <Property Id="WIN10FOUND">
+      <DirectorySearch Id="searchSystem" Path="[SystemFolder]" Depth="0">
+        <FileSearch Id="searchFile" Name="advapi32.dll" MinVersion="6.3.10000.0"/>
+      </DirectorySearch>
+    </Property>
+
+    <!-- https://stackoverflow.com/a/23061358 -->
+    <Condition Message="This application can only be installed on Windows 10.">
+      <![CDATA[WIN10FOUND]]>
+    </Condition>
+
+    <!-- write version value to registry -->
+    <DirectoryRef Id="TARGETDIR">
+      <Component Id="RegistryEntries" Guid="A6805462-9E3A-42AD-B29B-2BC57A67E80D">
+        <RegistryKey Root="HKLM"
+                     Key="SOFTWARE\Nefarius Software Solutions e.U.\BthPS3 Bluetooth Drivers">
+          <RegistryValue Type="string" Name="Version" Value="$(var.VERSION)" KeyPath="yes"/>
+        </RegistryKey>
+      </Component>
+    </DirectoryRef>
+
+    <!-- main feature are the driver files and some version registry values -->
+    <Feature Id="ProductFeature" Title="Nefarius BthPS3 Bluetooth Drivers" Level="1">
+      <ComponentGroupRef Id="ProductComponents" />
+      <ComponentRef Id="RegistryEntries" />
+    </Feature>
+
+    <!-- build installation command -->
+    <CustomAction Id="DevconInstallPropertyAssign"
+                  Property="DevconInstallQuiet"
+                  Value="&quot;[INSTALLFOLDER]devcon.exe&quot; install &quot;[INSTALLFOLDER]ViGEmBus.inf&quot; Nefarius\ViGEmBus\Gen1"
+                  Execute="immediate" />
+
+    <!-- execute installation with suppressed UI -->
+    <CustomAction Id="DevconInstallQuiet" BinaryKey="WixCA" DllEntry="$(var.WixQuietExec)"
+                  Execute="deferred" Return="check" Impersonate="no" />
+
+    <!-- build removal command -->
+    <CustomAction Id="DevconRemovePropertyAssign"
+                  Property="DevconRemoveQuiet"
+                  Value="&quot;[INSTALLFOLDER]devcon.exe&quot; /r remove &quot;Nefarius\ViGEmBus\Gen1&quot;"
+                  Execute="immediate" />
+
+    <!-- execute removal with suppressed UI -->
+    <CustomAction Id="DevconRemoveQuiet" BinaryKey="WixCA" DllEntry="$(var.WixQuietExec)"
+                  Execute="deferred" Return="ignore" Impersonate="no" />
+
+    <!-- custom installation and removal actions -->
+    <InstallExecuteSequence>
+      <Custom Action="DevconInstallPropertyAssign" Before="DevconInstallQuiet">NOT Installed AND NOT REMOVE</Custom>
+      <Custom Action="DevconRemovePropertyAssign" Before="DevconRemoveQuiet">REMOVE="ALL"</Custom>
+      <Custom Action="DevconInstallQuiet" Before="InstallFinalize">NOT Installed AND NOT REMOVE</Custom>
+      <Custom Action='DevconRemoveQuiet' After='InstallInitialize'>REMOVE="ALL"</Custom>
+    </InstallExecuteSequence>
+
+    <!-- use LICENSE as EULA, not technically an EULA but for now it has to do -->
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.ProjectDir)BthPS3_EULA.rtf" />
+
+    <!-- use minimalistic UI with EULA approval -->
+    <UIRef Id="WixUI_Minimal" />
+
+  </Product>
+
+  <!-- build program files directory -->
+  <Fragment>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="$(var.PlatformProgramFilesFolder)">
+        <!-- the "e.U." is butchered so omitted -->
+        <Directory Id="NSS" Name="Nefarius Software Solutions">
+          <Directory Id="INSTALLFOLDER" Name="BthPS3 Bluetooth Drivers" />
+        </Directory>
+      </Directory>
+    </Directory>
+  </Fragment>
+
+  <!-- include necessary files -->
+  <Fragment>
+    <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+      <Component Id="ProductComponent" Guid="9DB08B36-09FC-48F5-8BDA-2EE24687B5DF" Win64="$(var.Win64)">
+        <?if $(var.IsCI) = "no" ?>
+          <!-- local build -->
+          <File Name="BthPS3.sys" Source="$(var.SolutionDir)drivers\$(var.ArchDir)\BthPS3.sys" />
+          <File Name="BthPS3.inf" Source="$(var.SolutionDir)drivers\$(var.ArchDir)\BthPS3.inf" />
+          <File Name="BthPS3.cat" Source="$(var.SolutionDir)drivers\$(var.ArchDir)\BthPS3.cat" />
+          <File Name="BthPS3PSM.sys" Source="$(var.SolutionDir)drivers\$(var.ArchDir)\BthPS3PSM.sys" />
+          <File Name="BthPS3PSM.inf" Source="$(var.SolutionDir)drivers\$(var.ArchDir)\BthPS3PSM.inf" />
+          <File Name="BthPS3PSM.cat" Source="$(var.SolutionDir)drivers\$(var.ArchDir)\BthPS3PSM.cat" />
+          <File Name="bthps3_pdo_null_device.cat" Source="$(var.SolutionDir)drivers\$(var.ArchDir)\bthps3_pdo_null_device.cat" />
+          <File Name="BthPS3_PDO_NULL_Device.inf" Source="$(var.SolutionDir)drivers\$(var.ArchDir)\BthPS3_PDO_NULL_Device.inf" />
+          <File Name="WdfCoinstaller01011.dll" Source="$(var.SolutionDir)drivers\$(var.ArchDir)\WdfCoinstaller01011.dll" />
+          <File Name="install.cmd" Source="$(var.ProjectDir)install.cmd" />
+          <File Name="uninstall.cmd" Source="$(var.ProjectDir)uninstall.cmd" />
+          <File Name="LICENSE" Source="$(var.SolutionDir)\LICENSE" />
+        <?else ?>
+          <!-- CI build -->
+          <File Name="BthPS3.sys" Source="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3.sys" />
+          <File Name="BthPS3.inf" Source="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3.inf" />
+          <File Name="BthPS3.cat" Source="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3.cat" />
+          <File Name="BthPS3PSM.sys" Source="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3PSM.sys" />
+          <File Name="BthPS3PSM.inf" Source="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3PSM.inf" />
+          <File Name="BthPS3PSM.cat" Source="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3PSM.cat" />
+          <File Name="bthps3_pdo_null_device.cat" Source="$(var.SolutionDir)bin\$(var.ArchDir)\bthps3_pdo_null_device.cat" />
+          <File Name="BthPS3_PDO_NULL_Device.inf" Source="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3_PDO_NULL_Device.inf" />
+          <File Name="WdfCoinstaller01011.dll" Source="$(var.SolutionDir)bin\$(var.ArchDir)\WdfCoinstaller01011.dll" />
+          <File Name="install.cmd" Source="$(var.ProjectDir)install.cmd" />
+          <File Name="uninstall.cmd" Source="$(var.ProjectDir)uninstall.cmd" />
+          <File Name="LICENSE" Source="$(var.SolutionDir)LICENSE" />
+        <?endif ?>
+      </Component>
+    </ComponentGroup>
+  </Fragment>
 </Wix>

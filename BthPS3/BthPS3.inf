@@ -38,6 +38,7 @@ ClassGuid={e0cbf06c-cd8b-4647-bb8a-263b43f0f974}
 Provider=%ManufacturerName%
 CatalogFile=BthPS3.cat
 DriverVer=
+PnpLockdown=1
 
 [DestinationDirs]
 DefaultDestDir = 12

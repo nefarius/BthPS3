@@ -537,22 +537,14 @@ int main(int, char* argv[])
 
 	if (cmdl[{ "--restart-host-device" }])
 	{
-		if (!devcon::enable_disable_bth_usb_device(false))
+		if (!devcon::restart_bth_usb_device())
 		{
 			std::cout << color(red) <<
-				"Failed to disable Bluetooth host device, error: "
+				"Failed to restart Bluetooth host device, error: "
 				<< winapi::GetLastErrorStdStr() << std::endl;
 			return GetLastError();
 		}
-
-		if (!devcon::enable_disable_bth_usb_device(true))
-		{
-			std::cout << color(red) <<
-				"Failed to enable Bluetooth host device, error: "
-				<< winapi::GetLastErrorStdStr() << std::endl;
-			return GetLastError();
-		}
-
+		
 		std::cout << color(green) << "Bluetooth host device restarted successfully" << std::endl;
 
 		return EXIT_SUCCESS;

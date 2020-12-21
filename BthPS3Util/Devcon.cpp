@@ -120,7 +120,7 @@ bool devcon::create(std::string className, const GUID* classGuid, std::string ha
     return true;
 }
 
-bool devcon::enable_disable_bth_usb_device(bool state)
+bool devcon::restart_bth_usb_device()
 {
     DWORD i, err;
     bool found = false, succeeded = false;
@@ -187,32 +187,18 @@ bool devcon::enable_disable_bth_usb_device(bool state)
         if (buffer)
             LocalFree(buffer);
 
-        // if device found change it's state
+        // if device found restart
         if (found)
         {
-            SP_PROPCHANGE_PARAMS params;
-
-            params.ClassInstallHeader.cbSize = sizeof(SP_CLASSINSTALL_HEADER);
-            params.ClassInstallHeader.InstallFunction = DIF_PROPERTYCHANGE;
-            params.Scope = DICS_FLAG_GLOBAL;
-            params.StateChange = (state) ? DICS_ENABLE : DICS_DISABLE;
-
-            // setup proper parameters            
-            if (!SetupDiSetClassInstallParams(hDevInfo, &spDevInfoData, &params.ClassInstallHeader, sizeof(params)))
+            if(!SetupDiRestartDevices(hDevInfo, &spDevInfoData))
             {
-                err = GetLastError();
-            }
-            else
-            {
-                // use parameters
-                if (!SetupDiCallClassInstaller(DIF_PROPERTYCHANGE, hDevInfo, &spDevInfoData))
-                {
-                    err = GetLastError(); // error here  
-                }
-                else { succeeded = true; }
+	            err = GetLastError();
+            	break;
             }
 
-            break;
+            succeeded = true;
+        	
+        	break;
         }
     }
 

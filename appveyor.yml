@@ -27,6 +27,7 @@ artifacts:
 - path: 'bin**\*.pdb'
 - path: 'disk1\*.cab'
 - path: 'bin**\*.msi'
+- path: 'bin**\*.exe'
 deploy:
 - provider: Environment
   name: BUILDBOT

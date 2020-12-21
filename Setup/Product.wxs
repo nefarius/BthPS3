@@ -23,7 +23,7 @@
   <?endif ?>
 
   <!-- use driver file version for installer -->
-  <?define VERSION = "!(bind.FileVersion.ViGEmBus.sys)" ?>
+  <?define VERSION = "!(bind.FileVersion.BthPS3.sys)" ?>
 
   <!-- basic product properties -->
   <Product Id="*" Name="Nefarius BthPS3 Bluetooth Drivers" Language="1033" Version="$(var.VERSION)"
@@ -35,9 +35,9 @@
     <MediaTemplate EmbedCab="yes" />
 
     <!-- set setup icon and uninstall options -->
-    <Icon Id="ViGEm.ico" SourceFile="$(var.ProjectDir)Icons\B3.ico" />
-    <Property Id="ARPPRODUCTICON" Value="ViGEm.ico" />
-    <Property Id="ARPURLINFOABOUT" Value="https://github.com/ViGEm/ViGEmBus" />
+    <Icon Id="B3.ico" SourceFile="$(var.ProjectDir)Icons\B3.ico" />
+    <Property Id="ARPPRODUCTICON" Value="B3.ico" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/ViGEm/BthPS3" />
     <Property Id="ARPNOREPAIR" Value="yes" Secure="yes" /> 
 
     <!-- always perform major upgrade and remove previous versions -->

@@ -1,0 +1,109 @@
+; BthPS3PSM - Windows kernel-mode BTHUSB lower filter driver
+; 
+; BSD 3-Clause License
+; 
+; Copyright (c) 2018-2020, Nefarius Software Solutions e.U.
+; All rights reserved.
+; 
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+; 
+; 1. Redistributions of source code must retain the above copyright notice, this
+;    list of conditions and the following disclaimer.
+; 
+; 2. Redistributions in binary form must reproduce the above copyright notice,
+;    this list of conditions and the following disclaimer in the documentation
+;    and/or other materials provided with the distribution.
+; 
+; 3. Neither the name of the copyright holder nor the names of its
+;    contributors may be used to endorse or promote products derived from
+;    this software without specific prior written permission.
+; 
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+; DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+; FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+; DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+; SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+; CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+; OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=System
+ClassGuid={4D36E97D-E325-11CE-BFC1-08002BE10318}
+Provider=%ManufacturerName%
+CatalogFile=BthPS3PSM.cat
+DriverVer= ;
+PnpLockdown=1
+
+[DestinationDirs]
+DefaultDestDir = 12
+BthPS3PSM_Device_CoInstaller_CopyFiles = 11
+
+[SourceDisksNames]
+1 = %DiskName%,,,
+
+[SourceDisksFiles]
+BthPS3PSM.sys = 1,,
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll = 1
+
+;*****************************************
+; Install Section
+;*****************************************
+
+[Manufacturer]
+%ManufacturerName%=Standard,NTamd64,NTx86
+
+[Standard.NTamd64]
+%BthPS3PSM.DeviceDesc%=BthPS3PSM_Device, Nefarius\BthPS3PSM
+
+[Standard.NTx86]
+%BthPS3PSM.DeviceDesc%=BthPS3PSM_Device, Nefarius\BthPS3PSM
+
+[BthPS3PSM_Device.NT]
+CopyFiles=Drivers_Dir
+
+[Drivers_Dir]
+BthPS3PSM.sys
+
+;-------------- Service installation
+[BthPS3PSM_Device.NT.Services]
+AddService = BthPS3PSM,%SPSVCINST_ASSOCSERVICE%, BthPS3PSM_Service_Inst
+
+; -------------- BthPS3PSM driver install sections
+[BthPS3PSM_Service_Inst]
+DisplayName    = %BthPS3PSM.SVCDESC%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 1               ; SERVICE_SYSTEM_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\BthPS3PSM.sys
+
+;
+;--- BthPS3PSM_Device Coinstaller installation ------
+;
+
+[BthPS3PSM_Device.NT.CoInstallers]
+AddReg=BthPS3PSM_Device_CoInstaller_AddReg
+CopyFiles=BthPS3PSM_Device_CoInstaller_CopyFiles
+
+[BthPS3PSM_Device_CoInstaller_AddReg]
+HKR,,CoInstallers32,0x00010000, "WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll,WdfCoInstaller"
+
+[BthPS3PSM_Device_CoInstaller_CopyFiles]
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll
+
+[BthPS3PSM_Device.NT.Wdf]
+KmdfService =  BthPS3PSM, BthPS3PSM_wdfsect
+[BthPS3PSM_wdfsect]
+KmdfLibraryVersion = $KMDFVERSION$
+
+[Strings]
+SPSVCINST_ASSOCSERVICE= 0x00000002
+ManufacturerName="Nefarius Software Solutions e.U."
+DiskName = "Nefarius Bluetooth PS Filter Device Driver Disk"
+BthPS3PSM.DeviceDesc = "Nefarius Bluetooth PS Filter Driver"
+BthPS3PSM.SVCDESC = "Nefarius Bluetooth PS Filter Service"

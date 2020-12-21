@@ -53,6 +53,7 @@
     <ClInclude Include="UsbUtil.h" />
   </ItemGroup>
   <ItemGroup>
+    <Inf Include="BthPS3PSM.inf" />
     <Inf Include="BthPS3PSM_WHQL.inf" />
     <Inf Include="BthPS3PSM_Filter.inf" />
   </ItemGroup>

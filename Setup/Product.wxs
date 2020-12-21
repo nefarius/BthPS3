@@ -148,6 +148,7 @@
         <File Name="install.cmd" Source="$(var.ProjectDir)install.cmd" />
         <File Name="uninstall.cmd" Source="$(var.ProjectDir)uninstall.cmd" />
         <File Name="BthPS3CfgUI.exe" Source="$(var.SolutionDir)bin\BthPS3CfgUI.exe" />
+        <File Name="BthPS3CfgUI.exe.config" Source="$(var.SolutionDir)bin\BthPS3CfgUI.exe.config" />
         <File Name="LICENSE" Source="$(var.SolutionDir)\LICENSE" />
         <?else ?>
         <!-- CI build -->
@@ -165,6 +166,7 @@
         <File Name="install.cmd" Source="$(var.ProjectDir)install.cmd" />
         <File Name="uninstall.cmd" Source="$(var.ProjectDir)uninstall.cmd" />
         <File Name="BthPS3CfgUI.exe" Source="$(var.SolutionDir)bin\BthPS3CfgUI.exe" />
+        <File Name="BthPS3CfgUI.exe.config" Source="$(var.SolutionDir)bin\BthPS3CfgUI.exe.config" />
         <File Name="LICENSE" Source="$(var.SolutionDir)LICENSE" />
         <?endif ?>
       </Component>

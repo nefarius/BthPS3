@@ -12,15 +12,15 @@
 ; x86
 .Set CabinetNameTemplate=BthPS3_x86.cab
 .Set DestinationDir=BthPS3_x86
-..\LICENSE
-..\bin\x86\BthPS3.pdb
-..\bin\x86\BthPS3\BthPS3.inf
-..\bin\x86\BthPS3\BthPS3.sys
-..\bin\x86\BthPS3\WdfCoinstaller01011.dll
-..\bin\x86\BthPS3\BthPS3_PDO_NULL_Device.inf
+LICENSE
+bin\x86\BthPS3.pdb
+bin\x86\BthPS3\BthPS3.inf
+bin\x86\BthPS3\BthPS3.sys
+bin\x86\BthPS3\WdfCoinstaller01011.dll
+bin\x86\BthPS3\BthPS3_PDO_NULL_Device.inf
 .Set DestinationDir=BthPS3PSM_x86
-..\LICENSE
-..\bin\x86\BthPS3PSM.pdb
-..\bin\x86\BthPS3PSM\BthPS3PSM_Filter.inf
-..\bin\x86\BthPS3PSM\BthPS3PSM.sys
-..\bin\x86\BthPS3PSM\WdfCoinstaller01011.dll
+LICENSE
+bin\x86\BthPS3PSM.pdb
+bin\x86\BthPS3PSM\BthPS3PSM_Filter.inf
+bin\x86\BthPS3PSM\BthPS3PSM.sys
+bin\x86\BthPS3PSM\WdfCoinstaller01011.dll

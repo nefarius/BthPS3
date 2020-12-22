@@ -4,17 +4,13 @@
 set MYDIR=%~dp0
 pushd "%MYDIR%"
 
-type NUL > uninstall.log
+type NUL > "%TEMP%\uninstall.log"
 
-BthPS3Util.exe --disable-service >> uninstall.log 2>&1
+BthPS3Util.exe --disable-service >> "%TEMP%\uninstall.log" 2>&1
 
-BthPS3Util.exe --disable-filter >> uninstall.log 2>&1
+BthPS3Util.exe --disable-filter >> "%TEMP%\uninstall.log" 2>&1
 
-BthPS3Util.exe --restart-host-device >> uninstall.log 2>&1
-
-BthPS3Util.exe --delete-filter-service >> uninstall.log 2>&1
-
-BthPS3Util.exe --restart-host-device >> uninstall.log 2>&1
+BthPS3Util.exe --restart-host-device >> "%TEMP%\uninstall.log" 2>&1
 
 popd
 endlocal

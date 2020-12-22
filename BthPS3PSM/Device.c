@@ -55,7 +55,8 @@ extern WDFWAITLOCK     FilterDeviceCollectionLock;
 
 #define BTHPS3PSM_POOL_TAG                      'MSP3'
 #define BTHPS3PSM_DEVICE_PROPERTY_LENGTH        0xFF
-#define BTHPS3PSM_ENUMERATOR_NAME               L"USB"
+#define BTHPS3PSM_USB_ENUMERATOR_NAME           L"USB"
+#define BTHPS3PSM_SYSTEM_ENUMERATOR_NAME        L"System"
 
 
 //
@@ -75,7 +76,7 @@ BthPS3PSM_CreateDevice(
     WDF_OBJECT_ATTRIBUTES           stringAttribs;
     PWCHAR                          propertyBuffer;
     ULONG                           propertyBufferSize;
-    BOOLEAN                         isUsb = FALSE;
+    BOOLEAN                         isUsb = FALSE, isSystem = FALSE;
     WDF_DEVICE_STATE                deviceState;
 
     DECLARE_CONST_UNICODE_STRING(patchPSMRegValue, G_PatchPSMRegValue);
@@ -102,7 +103,7 @@ BthPS3PSM_CreateDevice(
         BTHPS3PSM_DEVICE_PROPERTY_LENGTH,
         (PVOID)propertyBuffer,
         &propertyBufferSize
-    )) && 0 == wcscmp(propertyBuffer, BTHPS3PSM_ENUMERATOR_NAME))
+    )))
     {
         TraceEvents(TRACE_LEVEL_VERBOSE,
             TRACE_QUEUE,
@@ -110,7 +111,14 @@ BthPS3PSM_CreateDevice(
             propertyBuffer
         );
 
-        isUsb = TRUE;
+        if (0 == wcscmp(propertyBuffer, BTHPS3PSM_USB_ENUMERATOR_NAME))
+        {
+	        isUsb = TRUE;
+        }
+        else if (0 == wcscmp(propertyBuffer, BTHPS3PSM_SYSTEM_ENUMERATOR_NAME))
+        {
+	        isSystem = TRUE;
+        }
     }
     else
     {
@@ -130,7 +138,7 @@ BthPS3PSM_CreateDevice(
     //
     // Don't create a device object and return
     // 
-    if (!isUsb) {
+    if (!isUsb && !isSystem) {
         return STATUS_SUCCESS;
     }
 
@@ -153,12 +161,24 @@ BthPS3PSM_CreateDevice(
 
     if (NT_SUCCESS(status))
     {
-    	//
-    	// Hide from UI
-    	// 
-        WDF_DEVICE_STATE_INIT(&deviceState);
-        deviceState.DontDisplayInUI = WdfTrue;
-        WdfDeviceSetDeviceState(device, &deviceState);
+    	deviceContext = DeviceGetContext(device);
+    	
+	    if (isSystem)
+	    {
+            deviceContext->IsSystemDevice = isSystem;
+	    	
+		    //
+		    // Hide from UI
+		    // 
+		    WDF_DEVICE_STATE_INIT(&deviceState);
+		    deviceState.DontDisplayInUI = WdfTrue;
+		    WdfDeviceSetDeviceState(device, &deviceState);
+
+	    	//
+	    	// Done, no need for further initialization
+	    	// 
+		    return status;
+	    }
     	
 #pragma region Add this device to global collection
 
@@ -197,8 +217,6 @@ BthPS3PSM_CreateDevice(
 #endif
 
 #pragma endregion
-
-        deviceContext = DeviceGetContext(device);
 
         status = WdfDeviceOpenRegistryKey(
             device,
@@ -392,17 +410,25 @@ BthPS3PSM_EvtDeviceContextCleanup(
 
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Entry");
 
+	PDEVICE_CONTEXT pDevCtx = DeviceGetContext(Device);
+
+	//
+	// Nothing to clean up in this case
+	// 
+    if (pDevCtx->IsSystemDevice)
+    {
+	    return;
+    }
+	
 #ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
 
     ULONG               count, i;
     WDFKEY              key;
     NTSTATUS            status;
-    PDEVICE_CONTEXT     pDevCtx;
     WDFDEVICE           devIter = NULL;
 
     DECLARE_CONST_UNICODE_STRING(patchPSMRegValue, G_PatchPSMRegValue);
-
-
+    
     status = WdfWaitLockAcquire(FilterDeviceCollectionLock, NULL);
     if (!NT_SUCCESS(status)) {
         TraceEvents(TRACE_LEVEL_ERROR,
@@ -491,7 +517,6 @@ BthPS3PSM_EvtDeviceContextCleanup(
             status
         );
     }
-
 
 #pragma endregion
 

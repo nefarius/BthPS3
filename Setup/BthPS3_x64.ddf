@@ -21,6 +21,6 @@ bin\x64\BthPS3\BthPS3_PDO_NULL_Device.inf
 .Set DestinationDir=BthPS3PSM_x64
 LICENSE
 bin\x64\BthPS3PSM.pdb
-bin\x64\BthPS3PSM\BthPS3PSM_Filter.inf
+bin\x64\BthPS3PSM\BthPS3PSM.inf
 bin\x64\BthPS3PSM\BthPS3PSM.sys
 bin\x64\BthPS3PSM\WdfCoinstaller01011.dll

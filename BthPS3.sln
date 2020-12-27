@@ -158,7 +158,7 @@ Global
 		{FB0C187D-63CC-45B4-BDA9-0EBDBE2AB266}.Release|Any CPU.ActiveCfg = Release|x86
 		{FB0C187D-63CC-45B4-BDA9-0EBDBE2AB266}.Release|ARM.ActiveCfg = Release|x86
 		{FB0C187D-63CC-45B4-BDA9-0EBDBE2AB266}.Release|ARM64.ActiveCfg = Release|x86
-		{FB0C187D-63CC-45B4-BDA9-0EBDBE2AB266}.Release|x64.ActiveCfg = Release|x86
+		{FB0C187D-63CC-45B4-BDA9-0EBDBE2AB266}.Release|x64.ActiveCfg = Release|x64
 		{FB0C187D-63CC-45B4-BDA9-0EBDBE2AB266}.Release|x86.ActiveCfg = Release|x86
 		{FB0C187D-63CC-45B4-BDA9-0EBDBE2AB266}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection

@@ -73,6 +73,10 @@
                   DllEntry="CheckHostRadioPresence" 
                   Execute="firstSequence"/>
 
+    <Condition Message="Bluetooth Host Radio not found. A working Bluetooth stack is required for driver installation or removal.">
+      <![CDATA[RADIOFOUND = "1"]]>
+    </Condition>
+
     <!-- write version value to registry -->
     <DirectoryRef Id="TARGETDIR">
       <Component Id="RegistryEntries" Guid="A6805462-9E3A-42AD-B29B-2BC57A67E80D">
@@ -109,8 +113,13 @@
     <CustomAction Id="DevconRemoveQuiet" BinaryKey="WixCA" DllEntry="$(var.WixQuietExec)"
                   Execute="deferred" Return="ignore" Impersonate="no" />
 
+    <InstallUISequence>
+      <Custom Action="CheckHostRadioPresence" Before="LaunchConditions" />
+    </InstallUISequence>
+
     <!-- custom installation and removal actions -->
     <InstallExecuteSequence>
+      <Custom Action="CheckHostRadioPresence" Before="LaunchConditions" />
       <Custom Action="DevconInstallPropertyAssign" Before="DevconInstallQuiet">NOT Installed AND NOT REMOVE</Custom>
       <Custom Action="DevconRemovePropertyAssign" Before="DevconRemoveQuiet">REMOVE="ALL"</Custom>
       <Custom Action="DevconInstallQuiet" Before="InstallFinalize">NOT Installed AND NOT REMOVE</Custom>

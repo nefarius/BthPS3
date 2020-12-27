@@ -23,10 +23,14 @@ UINT __stdcall CheckHostRadioPresence(
 	if (ret)
 	{
 		BluetoothFindRadioClose(ret);
+		MsiSetProperty(hInstall, L"RADIOFOUND", L"1");
+		WcaLog(LOGMSG_STANDARD, "Host radio found.");
 	}
-
-	
-	
+	else
+	{
+		WcaLog(LOGMSG_STANDARD, "Host radio not found.");
+	}
+		
 LExit:
 	er = SUCCEEDED(hr) ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;
 	return WcaFinalize(er);

@@ -1,14 +1,14 @@
 #include "stdafx.h"
 
 
-UINT __stdcall CustomAction1(
+UINT __stdcall CheckHostRadioPresence(
 	MSIHANDLE hInstall
 	)
 {
 	HRESULT hr = S_OK;
 	UINT er = ERROR_SUCCESS;
 
-	hr = WcaInitialize(hInstall, "CustomAction1");
+	hr = WcaInitialize(hInstall, "CheckHostRadioPresence");
 	ExitOnFailure(hr, "Failed to initialize");
 
 	WcaLog(LOGMSG_STANDARD, "Initialized.");

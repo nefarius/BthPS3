@@ -16,7 +16,7 @@
 // 
 #include <bthsdpdef.h>
 #include <bthdef.h>
-#include <BlueToothApis.h>
+#include <bluetoothapis.h>
 
 //
 // Device class interfaces

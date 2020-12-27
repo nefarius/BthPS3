@@ -11,5 +11,9 @@
 // WiX Header Files:
 #include <wcautil.h>
 
-
-// TODO: reference additional headers your program requires here
+//
+// OS Bluetooth APIs
+// 
+#include <bthsdpdef.h>
+#include <bthdef.h>
+#include <bluetoothapis.h>

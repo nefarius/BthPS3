@@ -1,0 +1,4 @@
+LIBRARY "BthPS3CA"
+
+EXPORTS
+	CustomAction1

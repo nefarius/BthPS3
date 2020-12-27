@@ -10,6 +10,14 @@ using namespace colorwin;
 #define LOWER_FILTERS L"LowerFilters"
 #define BUFSIZE 4096
 
+//
+// Enable Visual Styles for message box
+// 
+#pragma comment(linker,"\"/manifestdependency:type='win32' \
+	name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
+processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+
+
 
 int main(int, char* argv[])
 {
@@ -550,6 +558,42 @@ int main(int, char* argv[])
 		return EXIT_SUCCESS;
 	}
 
+	if (cmdl[{ "--check-host-radio" }])
+	{
+		HANDLE hRadio = INVALID_HANDLE_VALUE;
+		BLUETOOTH_FIND_RADIO_PARAMS radioParams;
+		ZeroMemory(&radioParams, sizeof(BLUETOOTH_FIND_RADIO_PARAMS));
+		radioParams.dwSize = sizeof(BLUETOOTH_FIND_RADIO_PARAMS);
+
+		auto* const ret = BluetoothFindFirstRadio(&radioParams, &hRadio);
+
+		if (ret == nullptr)
+		{
+			if (cmdl[{"--show-dialog"}])
+			{
+				MessageBox(nullptr,
+				           L"Bluetooth Host Radio couldn't be detected. "\
+							"Please make sure your USB dongle/Laptop card is plugged in/turned on and "\
+							"running with the manufacturer/Windows stock drivers.",
+				           L"Bluetooth Host Radio not found",
+				           MB_ICONERROR | MB_OK
+				);
+			}
+
+			std::cout << color(red) <<
+				"Bluetooth Host Radio not found, error: "
+				<< winapi::GetLastErrorStdStr() << std::endl;
+			
+			return GetLastError();
+		}
+
+		BluetoothFindRadioClose(ret);
+
+		std::cout << color(green) << "Bluetooth host radio detected successfully" << std::endl;
+		
+		return EXIT_SUCCESS;
+	}
+
 	if (cmdl[{ "-v", "--version" }])
 	{
 		std::cout << "BthPS3Util version " <<
@@ -586,6 +630,8 @@ int main(int, char* argv[])
 	std::cout << "    --get-psm-patch           Reports the current state of the PSM patch" << std::endl;
 	std::cout << "      --device-index          Zero-based index of affected device (optional)" << std::endl;
 	std::cout << "    --restart-host-device     Disable and re-enable Bluetooth host device" << std::endl;
+	std::cout << "    --check-host-radio        Check if Bluetooth Host Radio is currently present" << std::endl;
+	std::cout << "      --show-dialog           Present a modal dialog box to the user (optional)" << std::endl;
 	std::cout << "    -v, --version             Display version of this utility" << std::endl;
 	std::cout << std::endl;
 

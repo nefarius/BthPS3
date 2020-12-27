@@ -13,9 +13,20 @@ UINT __stdcall CheckHostRadioPresence(
 
 	WcaLog(LOGMSG_STANDARD, "Initialized.");
 
-	// TODO: Add your custom action code here.
+	HANDLE hRadio = INVALID_HANDLE_VALUE;
+	BLUETOOTH_FIND_RADIO_PARAMS radioParams;
+	ZeroMemory(&radioParams, sizeof(BLUETOOTH_FIND_RADIO_PARAMS));
+	radioParams.dwSize = sizeof(BLUETOOTH_FIND_RADIO_PARAMS);
 
+	auto* const ret = BluetoothFindFirstRadio(&radioParams, &hRadio);
 
+	if (ret)
+	{
+		BluetoothFindRadioClose(ret);
+	}
+
+	
+	
 LExit:
 	er = SUCCEEDED(hr) ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;
 	return WcaFinalize(er);

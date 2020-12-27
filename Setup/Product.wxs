@@ -64,6 +64,15 @@
       <![CDATA[Installed OR WIN10FOUND]]>
     </Condition>
 
+    <!-- Custom action (DLL) to detect host radio -->
+    <Binary Id="CheckHostRadioPresenceCA" SourceFile="$(var.SolutionDir)bin\CheckHostRadioPresence.dll" />
+
+    <!-- Custom action to detect host radio -->
+    <CustomAction Id="CheckHostRadioPresence" 
+                  BinaryKey="CheckHostRadioPresenceCA" 
+                  DllEntry="CheckHostRadioPresence" 
+                  Execute="firstSequence"/>
+
     <!-- write version value to registry -->
     <DirectoryRef Id="TARGETDIR">
       <Component Id="RegistryEntries" Guid="A6805462-9E3A-42AD-B29B-2BC57A67E80D">

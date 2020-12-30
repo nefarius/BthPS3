@@ -73,6 +73,7 @@
                   DllEntry="CheckHostRadioPresence" 
                   Execute="firstSequence"/>
 
+    <!-- can't continue if this check fails -->
     <Condition Message="Bluetooth Host Radio not found. A working Bluetooth stack is required for driver installation or removal.">
       <![CDATA[RADIOFOUND = "1"]]>
     </Condition>

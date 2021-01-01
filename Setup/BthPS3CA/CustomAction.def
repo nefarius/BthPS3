@@ -2,3 +2,5 @@ LIBRARY "BthPS3CustomActions"
 
 EXPORTS
 	CheckHostRadioPresence
+	InstallDrivers
+	UninstallDrivers

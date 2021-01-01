@@ -18,9 +18,15 @@
     <ClInclude Include="framework.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Devcon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BthPS3SetupHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Devcon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

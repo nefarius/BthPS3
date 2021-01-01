@@ -65,11 +65,11 @@
     </Condition>
 
     <!-- Custom action (DLL) to detect host radio -->
-    <Binary Id="CheckHostRadioPresenceCA" SourceFile="$(var.SolutionDir)bin\CheckHostRadioPresence.dll" />
+    <Binary Id="BthPS3CustomActions" SourceFile="$(var.SolutionDir)bin\BthPS3CustomActions.dll" />
 
     <!-- Custom action to detect host radio -->
     <CustomAction Id="CheckHostRadioPresence" 
-                  BinaryKey="CheckHostRadioPresenceCA" 
+                  BinaryKey="BthPS3CustomActions" 
                   DllEntry="CheckHostRadioPresence" 
                   Execute="firstSequence"/>
 

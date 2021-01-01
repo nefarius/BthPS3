@@ -1,4 +1,4 @@
-LIBRARY "CheckHostRadioPresence"
+LIBRARY "BthPS3CustomActions"
 
 EXPORTS
 	CheckHostRadioPresence

@@ -47,7 +47,7 @@
     <OutDir>$(SolutionDir)bin\</OutDir>
     <IntDir>obj\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>CheckHostRadioPresence</TargetName>
+    <TargetName>BthPS3CustomActions</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

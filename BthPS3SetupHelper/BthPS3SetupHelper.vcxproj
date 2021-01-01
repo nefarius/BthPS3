@@ -147,10 +147,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BthPS3Setup.h" />
     <ClInclude Include="Devcon.h" />
     <ClInclude Include="framework.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BthPS3Setup.cpp" />
     <ClCompile Include="BthPS3SetupHelper.cpp" />
     <ClCompile Include="Devcon.cpp" />
   </ItemGroup>

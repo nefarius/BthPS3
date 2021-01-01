@@ -21,9 +21,6 @@
     <ClCompile Include="BthPS3Util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Devcon.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="argh.h">
@@ -36,9 +33,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="BthPS3Util.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Devcon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="colorwin.hpp">

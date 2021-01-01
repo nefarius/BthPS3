@@ -21,12 +21,18 @@
     <ClInclude Include="Devcon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="BthPS3Setup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BthPS3SetupHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Devcon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BthPS3Setup.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

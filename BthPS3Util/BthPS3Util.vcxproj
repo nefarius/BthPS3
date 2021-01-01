@@ -170,14 +170,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BthPS3Util.cpp" />
-    <ClCompile Include="Devcon.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\include\BthPS3.h" />
     <ClInclude Include="argh.h" />
     <ClInclude Include="BthPS3Util.h" />
     <ClInclude Include="colorwin.hpp" />
-    <ClInclude Include="Devcon.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="WinReg.hpp" />
   </ItemGroup>

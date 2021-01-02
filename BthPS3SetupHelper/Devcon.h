@@ -10,4 +10,6 @@ namespace devcon
 	bool create(std::string className, const GUID *classGuid, std::string hardwareId);
 
     bool restart_bth_usb_device();
+
+	bool devcon::install_driver(const std::wstring& fullInfPath, bool* rebootRequired);
 };

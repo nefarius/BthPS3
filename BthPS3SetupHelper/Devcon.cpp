@@ -5,6 +5,7 @@
 #include <SetupAPI.h>
 #include <tchar.h>
 #include <devguid.h>
+#include <newdev.h>
 
 bool devcon::create(std::wstring className, const GUID* classGuid, std::wstring hardwareId)
 {
@@ -208,4 +209,21 @@ cleanup_DeviceInfo:
     SetLastError(err);
 
     return succeeded;
+}
+
+bool devcon::install_driver(const std::wstring& fullInfPath, bool* rebootRequired)
+{
+	BOOL reboot;
+    
+	const auto ret = DiInstallDriver(
+		nullptr,
+		fullInfPath.c_str(),
+		DIIRFLAG_FORCE_INF,
+		&reboot
+	);
+
+	if (rebootRequired)
+		*rebootRequired = reboot > 1;
+
+	return ret > 0;
 }

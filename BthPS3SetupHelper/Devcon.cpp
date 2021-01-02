@@ -576,8 +576,8 @@ inline bool uninstall_device_and_driver(HDEVINFO hDevInfo, PSP_DEVINFO_DATA spDe
 
 bool devcon::uninstall_device_and_driver(const GUID* classGuid, const std::wstring& hardwareId, bool* rebootRequired)
 {
-    DWORD i, err = ERROR_SUCCESS;
-    bool found = false, succeeded = false;
+    DWORD err = ERROR_SUCCESS;
+    bool succeeded = false;
 
     HDEVINFO hDevInfo;
     SP_DEVINFO_DATA spDevInfoData;
@@ -594,7 +594,8 @@ bool devcon::uninstall_device_and_driver(const GUID* classGuid, const std::wstri
     }
 
     spDevInfoData.cbSize = sizeof(SP_DEVINFO_DATA);
-    for (i = 0; SetupDiEnumDeviceInfo(hDevInfo, i, &spDevInfoData); i++)
+	
+    for (DWORD i = 0; SetupDiEnumDeviceInfo(hDevInfo, i, &spDevInfoData); i++)
     {
         DWORD DataT;
         LPWSTR p, buffer = nullptr;

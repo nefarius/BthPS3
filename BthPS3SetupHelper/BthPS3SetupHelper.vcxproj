@@ -154,7 +154,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BthPS3Setup.cpp" />
-    <ClCompile Include="BthPS3SetupHelper.cpp" />
     <ClCompile Include="Devcon.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

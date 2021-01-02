@@ -95,10 +95,18 @@
     </Feature>
 
     <!-- run install code -->
+    <CustomAction Id="DevconInstallPropertyAssign"
+                  Property="DevconInstall"
+                  Value="[INSTALLFOLDER]"
+                  Execute="immediate" />
     <CustomAction Id="DevconInstall" BinaryKey="BthPS3CustomActions" DllEntry="InstallDrivers"
                   Execute="deferred" Return="check" Impersonate="no" />
 
     <!-- run removal code -->
+    <CustomAction Id="DevconRemovePropertyAssign"
+                  Property="DevconRemove"
+                  Value="[INSTALLFOLDER]"
+                  Execute="immediate" />
     <CustomAction Id="DevconRemove" BinaryKey="BthPS3CustomActions" DllEntry="UninstallDrivers"
                   Execute="deferred" Return="ignore" Impersonate="no" />
 
@@ -110,7 +118,11 @@
     <!-- custom installation and removal actions -->
     <InstallExecuteSequence>
       <Custom Action="CheckHostRadioPresence" Before="LaunchConditions" />
+      
+      <Custom Action="DevconInstallPropertyAssign" Before="DevconInstall">NOT Installed AND NOT REMOVE</Custom>
       <Custom Action="DevconInstall" Before="InstallFinalize">NOT Installed AND NOT REMOVE</Custom>
+
+      <Custom Action="DevconRemovePropertyAssign" Before="DevconRemove">REMOVE="ALL"</Custom>
       <Custom Action='DevconRemove' After='InstallInitialize'>REMOVE="ALL"</Custom>
     </InstallExecuteSequence>
 

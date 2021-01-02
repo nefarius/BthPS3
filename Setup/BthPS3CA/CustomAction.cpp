@@ -48,7 +48,12 @@ UINT __stdcall InstallDrivers(
 
 	WcaLog(LOGMSG_STANDARD, "Initialized.");
 
-	
+	WCHAR targetPath[MAX_PATH * sizeof(WCHAR)];
+	DWORD length = ARRAYSIZE(targetPath);
+
+	(void)MsiGetProperty(hInstall, L"CustomActionData", targetPath, &length);
+
+	MessageBox(NULL, targetPath, L"Path", MB_OK);
 		
 LExit:
 	er = SUCCEEDED(hr) ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;
@@ -67,7 +72,12 @@ UINT __stdcall UninstallDrivers(
 
 	WcaLog(LOGMSG_STANDARD, "Initialized.");
 
-	
+	WCHAR targetPath[MAX_PATH * sizeof(WCHAR)];
+	DWORD length = ARRAYSIZE(targetPath);
+
+	(void)MsiGetProperty(hInstall, L"CustomActionData", targetPath, &length);
+
+	MessageBox(NULL, targetPath, L"Path", MB_OK);
 	
 LExit:
 	er = SUCCEEDED(hr) ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;

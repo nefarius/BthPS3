@@ -45,6 +45,8 @@ When loaded onto an unsupported host radio, device boot will fail with `STATUS_D
 
 ![P37N2cgWdG.png](docs/P37N2cgWdG.png)
 
+For a list of tested devices [consult the extended documentation](https://vigem.org/projects/BthPS3/Compatible-Bluetooth-Devices/).
+
 ### Link Manager Versions
 
 | LMP | Bluetooth Version   |

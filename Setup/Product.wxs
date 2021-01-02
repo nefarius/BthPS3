@@ -94,26 +94,15 @@
       <ComponentRef Id="RegistryEntries" />
     </Feature>
 
-    <!-- build installation command -->
-    <CustomAction Id="DevconInstallPropertyAssign"
-                  Property="DevconInstallQuiet"
-                  Value="&quot;[INSTALLFOLDER]install.cmd"
-                  Execute="immediate" />
-
-    <!-- execute installation with suppressed UI -->
-    <CustomAction Id="DevconInstallQuiet" BinaryKey="WixCA" DllEntry="$(var.WixQuietExec)"
+    <!-- run install code -->
+    <CustomAction Id="DevconInstall" BinaryKey="BthPS3CustomActions" DllEntry="InstallDrivers"
                   Execute="deferred" Return="check" Impersonate="no" />
 
-    <!-- build removal command -->
-    <CustomAction Id="DevconRemovePropertyAssign"
-                  Property="DevconRemoveQuiet"
-                  Value="&quot;[INSTALLFOLDER]uninstall.cmd"
-                  Execute="immediate" />
-
-    <!-- execute removal with suppressed UI -->
-    <CustomAction Id="DevconRemoveQuiet" BinaryKey="WixCA" DllEntry="$(var.WixQuietExec)"
+    <!-- run removal code -->
+    <CustomAction Id="DevconRemove" BinaryKey="BthPS3CustomActions" DllEntry="UninstallDrivers"
                   Execute="deferred" Return="ignore" Impersonate="no" />
 
+    <!-- pre-launch conditions -->
     <InstallUISequence>
       <Custom Action="CheckHostRadioPresence" Before="LaunchConditions" />
     </InstallUISequence>
@@ -121,10 +110,8 @@
     <!-- custom installation and removal actions -->
     <InstallExecuteSequence>
       <Custom Action="CheckHostRadioPresence" Before="LaunchConditions" />
-      <Custom Action="DevconInstallPropertyAssign" Before="DevconInstallQuiet">NOT Installed AND NOT REMOVE</Custom>
-      <Custom Action="DevconRemovePropertyAssign" Before="DevconRemoveQuiet">REMOVE="ALL"</Custom>
-      <Custom Action="DevconInstallQuiet" Before="InstallFinalize">NOT Installed AND NOT REMOVE</Custom>
-      <Custom Action='DevconRemoveQuiet' After='InstallInitialize'>REMOVE="ALL"</Custom>
+      <Custom Action="DevconInstall" Before="InstallFinalize">NOT Installed AND NOT REMOVE</Custom>
+      <Custom Action='DevconRemove' After='InstallInitialize'>REMOVE="ALL"</Custom>
     </InstallExecuteSequence>
 
     <!-- use LICENSE as EULA, not technically an EULA but for now it has to do -->

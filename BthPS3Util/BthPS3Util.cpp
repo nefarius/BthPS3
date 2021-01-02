@@ -118,15 +118,9 @@ int main(int, char* argv[])
 			return EXIT_FAILURE;
 		}
 
-		BOOL rebootRequired;
-		auto ret = DiInstallDriverA(
-			nullptr,
-			infPath.c_str(),
-			(cmdl[{ "--force" }]) ? DIIRFLAG_FORCE_INF : 0,
-			& rebootRequired
-		);
+		bool rebootRequired;
 
-		if (!ret)
+		if (!devcon::install_driver(to_wstring(infPath), &rebootRequired))
 		{
 			std::cout << color(red) <<
 				"Failed to install driver, error: "

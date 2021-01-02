@@ -14,4 +14,6 @@ namespace devcon
 	bool add_device_class_lower_filter(const GUID* classGuid, const std::wstring& filterName);
 
 	bool remove_device_class_lower_filter(const GUID* classGuid, const std::wstring& filterName);
+
+	bool uninstall_device_and_driver(const GUID *classGuid, const std::wstring& hardwareId, bool* rebootRequired);
 };

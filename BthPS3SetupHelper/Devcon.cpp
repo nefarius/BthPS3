@@ -435,3 +435,234 @@ bool devcon::remove_device_class_lower_filter(const GUID* classGuid, const std::
 	return false;
 }
 
+bool devcon::uninstall_device_and_driver(const GUID* classGuid, const std::wstring& hardwareId, bool* rebootRequired)
+{
+    DWORD i, err;
+    bool found = false, succeeded = false;
+
+    HDEVINFO hDevInfo;
+    SP_DEVINFO_DATA spDevInfoData;
+
+    hDevInfo = SetupDiGetClassDevsW(
+        classGuid,
+        nullptr, 
+        nullptr, 
+        DIGCF_PRESENT
+    );
+    if (hDevInfo == INVALID_HANDLE_VALUE)
+    {
+        return succeeded;
+    }
+
+    spDevInfoData.cbSize = sizeof(SP_DEVINFO_DATA);
+    for (i = 0; SetupDiEnumDeviceInfo(hDevInfo, i, &spDevInfoData); i++)
+    {
+        DWORD DataT;
+        LPWSTR p, buffer = nullptr;
+        DWORD buffersize = 0;
+
+        // get all devices info
+        while (!SetupDiGetDeviceRegistryPropertyW(hDevInfo,
+            &spDevInfoData,
+            SPDRP_HARDWAREID,
+            &DataT,
+            reinterpret_cast<PBYTE>(buffer),
+            buffersize,
+            &buffersize))
+        {
+            if (GetLastError() == ERROR_INVALID_DATA)
+            {
+                break;
+            }
+            if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+            {
+                if (buffer)
+                    LocalFree(buffer);
+                buffer = static_cast<wchar_t*>(LocalAlloc(LPTR, buffersize));
+            }
+            else
+            {
+                goto cleanup_DeviceInfo;
+            }
+        }
+
+        if (GetLastError() == ERROR_INVALID_DATA)
+            continue;
+
+        //
+        // find device matching hardware ID
+        // 
+        for (p = buffer; *p && (p < &buffer[buffersize]); p += lstrlenW(p) + sizeof(TCHAR))
+        {
+            if (!wcscmp(hardwareId.c_str(), p))
+            {
+                found = true;
+                break;
+            }
+        }
+
+        if (buffer)
+            LocalFree(buffer);
+
+        // if device found change it's state
+        if (found)
+        {
+	        BOOL drvNeedsReboot = FALSE, devNeedsReboot = FALSE;
+	        DWORD requiredBufferSize = 0;
+
+	        SP_DRVINFO_DATA_W drvInfoData;
+	        drvInfoData.cbSize = sizeof(drvInfoData);
+
+	        //
+	        // Start building driver info
+	        // 
+	        if (!SetupDiBuildDriverInfoList(
+		        hDevInfo,
+		        &spDevInfoData,
+		        SPDIT_COMPATDRIVER
+	        ))
+	        {
+		        err = GetLastError();
+		        break;
+	        }
+
+	        if (!SetupDiEnumDriverInfoW(
+		        hDevInfo,
+		        &spDevInfoData,
+		        SPDIT_COMPATDRIVER,
+		        0, // One result expected
+		        &drvInfoData
+	        ))
+	        {
+		        err = GetLastError();
+		        SetupDiDestroyDriverInfoList(
+			        hDevInfo,
+			        &spDevInfoData,
+			        SPDIT_COMPATDRIVER
+		        );
+		        break;
+	        }
+
+	        //
+	        // Details will contain the INF path to driver store copy
+	        // 
+	        SP_DRVINFO_DETAIL_DATA_W drvInfoDetailData;
+	        drvInfoDetailData.cbSize = sizeof(drvInfoDetailData);
+
+	        //
+	        // Request required buffer size
+	        // 
+	        (void)SetupDiGetDriverInfoDetailW(
+		        hDevInfo,
+		        &spDevInfoData,
+		        &drvInfoData,
+		        &drvInfoDetailData,
+		        drvInfoDetailData.cbSize,
+		        &requiredBufferSize
+	        );
+
+	        if (requiredBufferSize == 0)
+	        {
+		        err = GetLastError();
+		        SetupDiDestroyDriverInfoList(
+			        hDevInfo,
+			        &spDevInfoData,
+			        SPDIT_COMPATDRIVER
+		        );
+		        break;
+	        }
+
+	        //
+	        // Allocate required amount
+	        // 
+	        auto pDrvInfoDetailData =
+		        static_cast<PSP_DRVINFO_DETAIL_DATA_W>(malloc(requiredBufferSize));
+
+	        if (pDrvInfoDetailData == nullptr)
+	        {
+		        SetupDiDestroyDriverInfoList(
+			        hDevInfo,
+			        &spDevInfoData,
+			        SPDIT_COMPATDRIVER
+		        );
+		        err = ERROR_INSUFFICIENT_BUFFER;
+		        break;
+	        }
+
+	        pDrvInfoDetailData->cbSize = sizeof(SP_DRVINFO_DETAIL_DATA_W);
+
+	        //
+	        // Query full driver details
+	        // 
+	        if (!SetupDiGetDriverInfoDetailW(
+		        hDevInfo,
+		        &spDevInfoData,
+		        &drvInfoData,
+		        pDrvInfoDetailData,
+		        requiredBufferSize,
+		        nullptr
+	        ))
+	        {
+		        free(pDrvInfoDetailData);
+		        err = GetLastError();
+		        SetupDiDestroyDriverInfoList(
+			        hDevInfo,
+			        &spDevInfoData,
+			        SPDIT_COMPATDRIVER
+		        );
+		        break;
+	        }
+
+	        (void)SetupDiDestroyDriverInfoList(
+		        hDevInfo,
+		        &spDevInfoData,
+		        SPDIT_COMPATDRIVER
+	        );
+
+            //
+	        // Remove device
+	        // 
+	        if (!DiUninstallDevice(
+		        nullptr,
+		        hDevInfo,
+		        &spDevInfoData,
+		        0,
+		        &devNeedsReboot
+	        ))
+	        {
+		        free(pDrvInfoDetailData);
+		        err = GetLastError();
+		        break;
+	        }
+        	
+        	//
+        	// Uninstall from driver store
+        	// 
+	        if (!DiUninstallDriver(
+		        nullptr,
+		        pDrvInfoDetailData->InfFileName,
+		        0,
+		        &drvNeedsReboot
+	        ))
+	        {
+		        free(pDrvInfoDetailData);
+		        err = GetLastError();
+		        break;
+	        }
+
+	        *rebootRequired = (drvNeedsReboot > 0) || (devNeedsReboot > 0);
+
+	        err = GetLastError();
+	        succeeded = true;
+
+	        break;
+        }
+    }
+
+cleanup_DeviceInfo:
+    err = GetLastError();
+    SetupDiDestroyDeviceInfoList(hDevInfo);
+    SetLastError(err);
+
+    return succeeded;
+}

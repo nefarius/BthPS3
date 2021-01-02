@@ -16,6 +16,9 @@ The solution consists of the following individual projects:
 - [`BthPS3PSM`](/BthPS3PSM) - Lower filter driver for `BTHUSB`, patching L2CAP packets. Required for profile driver to receive L2CAP traffic.
 - [`BthPS3Util`](/BthPS3Util) - User-land command-line utility for managing driver installation tasks and configuration changes.
 - [`BthPS3CfgUI`](/BthPS3CfgUI) - User-land GUI utility to safely edit driver settings.
+- [`BthPS3SetupHelper`](/BthPS3SetupHelper) - Library hosting utility functions for driver management.
+- [`BthPS3CA`](/Setup/BthPS3CA) - Custom Actions for [WiX](https://wixtoolset.org/)-based setup.
+- [`BthPS3Setup`](/Setup) - [WiX](https://wixtoolset.org/)-based setup for driver installation and removal.
 
 ## Licensing
 
@@ -66,6 +69,7 @@ When loaded onto an unsupported host radio, device boot will fail with `STATUS_D
 - [Step 1: Install Visual Studio 2019](<https://docs.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk#download-icon-step-1-install-visual-studio-2019>)
   - From the Visual Studio Installer, add the Individual component `MSVC v142 - VS 2019 C++ x64/x86 Spectre-mitigated libs`
 - [Step 2: Install WDK for Windows 10, version 2004](<https://docs.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk#download-icon-step-2-install-wdk-for-windows-10-version-2004>)
+- [Step 3: Install the WiX Toolset **version 3**](https://wixtoolset.org/releases/)
 
 You can build individual projects of the solution within Visual Studio.
 

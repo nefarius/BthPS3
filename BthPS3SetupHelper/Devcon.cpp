@@ -443,7 +443,7 @@ bool devcon::uninstall_device_and_driver(const GUID* classGuid, const std::wstri
     HDEVINFO hDevInfo;
     SP_DEVINFO_DATA spDevInfoData;
 
-    hDevInfo = SetupDiGetClassDevsW(
+    hDevInfo = SetupDiGetClassDevs(
         classGuid,
         nullptr, 
         nullptr, 
@@ -462,7 +462,7 @@ bool devcon::uninstall_device_and_driver(const GUID* classGuid, const std::wstri
         DWORD buffersize = 0;
 
         // get all devices info
-        while (!SetupDiGetDeviceRegistryPropertyW(hDevInfo,
+        while (!SetupDiGetDeviceRegistryProperty(hDevInfo,
             &spDevInfoData,
             SPDRP_HARDWAREID,
             &DataT,
@@ -526,7 +526,7 @@ bool devcon::uninstall_device_and_driver(const GUID* classGuid, const std::wstri
 		        break;
 	        }
 
-	        if (!SetupDiEnumDriverInfoW(
+	        if (!SetupDiEnumDriverInfo(
 		        hDevInfo,
 		        &spDevInfoData,
 		        SPDIT_COMPATDRIVER,
@@ -552,7 +552,7 @@ bool devcon::uninstall_device_and_driver(const GUID* classGuid, const std::wstri
 	        //
 	        // Request required buffer size
 	        // 
-	        (void)SetupDiGetDriverInfoDetailW(
+	        (void)SetupDiGetDriverInfoDetail(
 		        hDevInfo,
 		        &spDevInfoData,
 		        &drvInfoData,
@@ -594,7 +594,7 @@ bool devcon::uninstall_device_and_driver(const GUID* classGuid, const std::wstri
 	        //
 	        // Query full driver details
 	        // 
-	        if (!SetupDiGetDriverInfoDetailW(
+	        if (!SetupDiGetDriverInfoDetail(
 		        hDevInfo,
 		        &spDevInfoData,
 		        &drvInfoData,

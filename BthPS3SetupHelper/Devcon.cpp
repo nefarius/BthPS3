@@ -55,9 +55,9 @@ inline std::vector<wchar_t> BuildMultiString(const std::vector<std::wstring>& da
     return multiString;
 }
 
-bool devcon::create(std::wstring className, const GUID* classGuid, std::wstring hardwareId)
+auto devcon::create(const std::wstring& className, const GUID* classGuid, const std::wstring& hardwareId) -> bool
 {
-    auto deviceInfoSet = SetupDiCreateDeviceInfoList(classGuid, nullptr);
+	const auto deviceInfoSet = SetupDiCreateDeviceInfoList(classGuid, nullptr);
 
     if (INVALID_HANDLE_VALUE == deviceInfoSet)
         return false;
@@ -65,7 +65,7 @@ bool devcon::create(std::wstring className, const GUID* classGuid, std::wstring 
     SP_DEVINFO_DATA deviceInfoData;
     deviceInfoData.cbSize = sizeof(deviceInfoData);
 
-    auto cdiRet = SetupDiCreateDeviceInfoW(
+	const auto cdiRet = SetupDiCreateDeviceInfoW(
         deviceInfoSet,
         className.c_str(),
         classGuid,
@@ -81,12 +81,12 @@ bool devcon::create(std::wstring className, const GUID* classGuid, std::wstring 
         return false;
     }
 
-    auto sdrpRet = SetupDiSetDeviceRegistryPropertyW(
+	const auto sdrpRet = SetupDiSetDeviceRegistryPropertyW(
         deviceInfoSet,
         &deviceInfoData,
         SPDRP_HARDWAREID,
         (const PBYTE)hardwareId.c_str(),
-        (DWORD)(hardwareId.size() * sizeof(WCHAR))
+        static_cast<DWORD>(hardwareId.size() * sizeof(WCHAR))
     );
 
     if (!sdrpRet)
@@ -95,7 +95,7 @@ bool devcon::create(std::wstring className, const GUID* classGuid, std::wstring 
         return false;
     }
 
-    auto cciRet = SetupDiCallClassInstaller(
+	const auto cciRet = SetupDiCallClassInstaller(
         DIF_REGISTERDEVICE,
         deviceInfoSet,
         &deviceInfoData

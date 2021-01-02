@@ -18,3 +18,13 @@ namespace winapi
 
     std::string GetImageBasePath();
 };
+
+namespace bthps3
+{
+	namespace bluetooth
+	{
+		bool enable_service();
+
+		bool disable_service();
+	}
+}

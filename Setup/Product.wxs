@@ -163,8 +163,7 @@
         <File Name="bthps3_pdo_null_device.cat" Source="$(var.ProjectDir)drivers\BthPS3_$(var.ArchDir)\bthps3_pdo_null_device.cat" />
         <File Name="BthPS3_PDO_NULL_Device.inf" Source="$(var.ProjectDir)drivers\BthPS3_$(var.ArchDir)\BthPS3_PDO_NULL_Device.inf" />
         <File Name="WdfCoinstaller01011.dll" Source="$(var.ProjectDir)drivers\BthPS3_$(var.ArchDir)\WdfCoinstaller01011.dll" />
-        <File Name="install.cmd" Source="$(var.ProjectDir)install.cmd" />
-        <File Name="uninstall.cmd" Source="$(var.ProjectDir)uninstall.cmd" />
+        <File Name="BthPS3Util.exe" Source="$(var.SolutionDir)bin\BthPS3Util.exe" />
         <File Name="BthPS3CfgUI.exe" Source="$(var.SolutionDir)bin\BthPS3CfgUI.exe" />
         <File Name="BthPS3CfgUI.exe.config" Source="$(var.SolutionDir)bin\BthPS3CfgUI.exe.config" />
         <File Name="LICENSE" Source="$(var.SolutionDir)\LICENSE" />
@@ -181,8 +180,7 @@
         <File Name="bthps3_pdo_null_device.cat" Source="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3\bthps3_pdo_null_device.cat" />
         <File Name="BthPS3_PDO_NULL_Device.inf" Source="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3\BthPS3_PDO_NULL_Device.inf" />
         <File Name="WdfCoinstaller01011.dll" Source="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3\WdfCoinstaller01011.dll" />
-        <File Name="install.cmd" Source="$(var.ProjectDir)install.cmd" />
-        <File Name="uninstall.cmd" Source="$(var.ProjectDir)uninstall.cmd" />
+        <File Name="BthPS3Util.exe" Source="$(var.SolutionDir)bin\BthPS3Util.exe" />
         <File Name="BthPS3CfgUI.exe" Source="$(var.SolutionDir)bin\BthPS3CfgUI.exe" />
         <File Name="BthPS3CfgUI.exe.config" Source="$(var.SolutionDir)bin\BthPS3CfgUI.exe.config" />
         <File Name="LICENSE" Source="$(var.SolutionDir)LICENSE" />

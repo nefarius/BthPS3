@@ -72,16 +72,14 @@ UINT __stdcall InstallDrivers(
 	PathCchCombine(&profileInfPath[0], profileInfPath.size(), targetPath, g_profileInf.c_str());
 	PathCchCombine(&filterInfPath[0], filterInfPath.size(), targetPath, g_filterInf.c_str());
 
-	do
+	
+	WcaLog(LOGMSG_STANDARD, "Installing PDO NULL driver.");
+	if (!devcon::install_driver(nullInfPath, &rebootRequired))
 	{
-		WcaLog(LOGMSG_STANDARD, "Installing PDO NULL driver.");
-		if (!devcon::install_driver(nullInfPath, &rebootRequired))
-		{
-			WcaLog(LOGMSG_STANDARD, "Failed to install PDO NULL driver, error: %s",
-			       winapi::GetLastErrorStdStr().c_str());
-		}
+		ExitOnLastError(hr, "Failed to install PDO NULL driver, error: %s",
+		                winapi::GetLastErrorStdStr().c_str());
 	}
-	while (FALSE);
+	WcaLog(LOGMSG_STANDARD, "PDO NULL driver installed.");
 	
 LExit:
 	er = SUCCEEDED(hr) ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;

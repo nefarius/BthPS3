@@ -214,3 +214,55 @@ std::string winapi::GetImageBasePath()
 
 	return std::string(myPath);
 }
+
+bool bthps3::bluetooth::enable_service()
+{
+	DWORD err;
+	BLUETOOTH_LOCAL_SERVICE_INFO SvcInfo = {0};
+	wcscpy_s(SvcInfo.szName, sizeof(SvcInfo.szName) / sizeof(WCHAR), BthPS3ServiceName);
+
+	if (FALSE == winapi::AdjustProcessPrivileges())
+		return false;
+
+	SvcInfo.Enabled = TRUE;
+
+	if (ERROR_SUCCESS != (err = BluetoothSetLocalServiceInfo(
+		nullptr, //callee would select the first found radio
+		&BTHPS3_SERVICE_GUID,
+		0,
+		&SvcInfo
+	)))
+	{
+		SetLastError(err);
+		return false;
+	}
+
+	SetLastError(err);
+	return true;
+}
+
+bool bthps3::bluetooth::disable_service()
+{
+	DWORD err;
+	BLUETOOTH_LOCAL_SERVICE_INFO SvcInfo = {0};
+	wcscpy_s(SvcInfo.szName, sizeof(SvcInfo.szName) / sizeof(WCHAR), BthPS3ServiceName);
+
+	if (FALSE == winapi::AdjustProcessPrivileges())
+		return false;
+
+	SvcInfo.Enabled = FALSE;
+
+	if (ERROR_SUCCESS != (err = BluetoothSetLocalServiceInfo(
+		nullptr, //callee would select the first found radio
+		&BTHPS3_SERVICE_GUID,
+		0,
+		&SvcInfo
+	)))
+	{
+		SetLastError(err);
+		return false;
+	}
+
+	SetLastError(err);
+	return true;
+}

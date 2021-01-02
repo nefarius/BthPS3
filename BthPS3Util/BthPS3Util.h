@@ -43,12 +43,13 @@
 #include "argh.h"
 
 //
-// Registry manipulation wrapper
+// Add some colors to console
 // 
-#include "WinReg.hpp"
-
 #include "colorwin.hpp"
 
-#include "Devcon.h"
-
+//
+// Setup helpers
+// 
+#include <Devcon.h>
 #include <BthPS3Setup.h>
+#include <UniUtil.h>

@@ -150,6 +150,7 @@
     <ClInclude Include="BthPS3Setup.h" />
     <ClInclude Include="Devcon.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="UniUtil.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BthPS3Setup.cpp" />

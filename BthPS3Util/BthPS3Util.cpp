@@ -3,12 +3,9 @@
 
 #include "BthPS3Util.h"
 
-using namespace winreg;
+
 using namespace colorwin;
 
-
-#define LOWER_FILTERS L"LowerFilters"
-#define BUFSIZE 4096
 
 //
 // Enable Visual Styles for message box
@@ -24,7 +21,6 @@ int main(int, char* argv[])
 	argh::parser cmdl;
 	cmdl.add_params({
 		"--inf-path",
-		"--bin-path",
 		"--device-index",
 		"--hardware-id",
 		"--class-name",
@@ -105,99 +101,12 @@ int main(int, char* argv[])
 
 #pragma region BthPS3PSM Lower Filter Driver actions
 
-	if (cmdl[{ "--create-filter-service" }])
+	if (cmdl[{"--enable-filter"}])
 	{
-		if (!(cmdl({ "--bin-path" }) >> binPath)) {
-			std::cout << color(red) << "SYS path missing" << std::endl;
-			return EXIT_FAILURE;
-		}
+		auto ret = devcon::add_device_class_lower_filter(&GUID_DEVCLASS_BLUETOOTH, BthPS3FilterName);
 
-		if (PathIsRelativeA(binPath.c_str()))
+		if (ret)
 		{
-			CHAR  buffer[BUFSIZE] = ("");
-			CHAR** lppPart = { NULL };
-
-			if (0 == GetFullPathNameA(
-				binPath.c_str(),
-				BUFSIZ,
-				buffer,
-				lppPart
-			))
-			{
-				std::cout << color(red) <<
-					"GetFullPathNameA failed, error: "
-					<< winapi::GetLastErrorStdStr() << std::endl;
-				return GetLastError();
-			}
-
-			binPath = buffer;
-		}
-
-		auto ret = winapi::CreateDriverService(
-			BthPS3FilterServiceName,
-			"PlayStation(R) 3 Bluetooth Filter Service",
-			binPath.c_str()
-		);
-
-		if (!ret) {
-			std::cout << color(red) <<
-				"Service creation failed, error: "
-				<< winapi::GetLastErrorStdStr() << std::endl;
-			return GetLastError();
-		}
-
-		std::cout << color(green) << "Service created successfully" << std::endl;
-		return EXIT_SUCCESS;
-	}
-
-	if (cmdl[{ "--delete-filter-service" }])
-	{
-		auto ret = winapi::DeleteDriverService(
-			BthPS3FilterServiceName
-		);
-
-		if (!ret) {
-			std::cout << color(red) <<
-				"Service deletion failed, error: "
-				<< winapi::GetLastErrorStdStr() << std::endl;
-			return GetLastError();
-		}
-
-		std::cout << color(green) << "Service deleted successfully" << std::endl;
-		return EXIT_SUCCESS;
-	}
-
-	if (cmdl[{ "--enable-filter" }])
-	{
-		auto key = SetupDiOpenClassRegKey(&GUID_DEVCLASS_BLUETOOTH, KEY_ALL_ACCESS);
-
-		if (INVALID_HANDLE_VALUE == key)
-		{
-			std::cout << color(red) <<
-				"Couldn't open Class key, error: "
-				<< winapi::GetLastErrorStdStr() << std::endl;
-			return GetLastError();
-		}
-
-		// wrap it up
-		RegKey classKey(key);
-
-		//
-		// Check if "LowerFilters" value exists
-		// 
-		auto values = classKey.EnumValues();
-		auto ret = std::find_if(values.begin(), values.end(), [&](std::pair<std::wstring, DWORD> const& ref) {
-			return ref.first == LOWER_FILTERS;
-			});
-
-		//
-		// Value doesn't exist, create with filter driver name
-		// 
-		if (ret == values.end())
-		{
-			classKey.SetMultiStringValue(LOWER_FILTERS, { BthPS3FilterName });
-			classKey.Close();
-
 			std::cout << color(yellow) <<
 				"Filter enabled. Reconnect affected devices or reboot system to apply changes!"
 				<< std::endl;
@@ -205,70 +114,18 @@ int main(int, char* argv[])
 			return EXIT_SUCCESS;
 		}
 
-		//
-		// Patch in our filter
-		// 
-		auto lowerFilters = classKey.GetMultiStringValue(LOWER_FILTERS);
-		if (std::find(lowerFilters.begin(), lowerFilters.end(), BthPS3FilterName) == lowerFilters.end())
-		{
-			lowerFilters.emplace_back(BthPS3FilterName);
-			classKey.SetMultiStringValue(LOWER_FILTERS, lowerFilters);
-			classKey.Close();
-
-			std::cout << color(yellow) <<
-				"Filter enabled. Reconnect affected devices or reboot system to apply changes!"
-				<< std::endl;
-
-			return EXIT_SUCCESS;
-		}
-
-		classKey.Close();
-
-		std::cout << color(green) <<
-			"Filter already enabled. No changes were made"
-			<< std::endl;
-
-		return ERROR_SUCCESS;
+		std::cout << color(red) <<
+			"Failed to modify filter value, error: "
+			<< winapi::GetLastErrorStdStr() << std::endl;
+		return GetLastError();
 	}
 
-	if (cmdl[{ "--disable-filter" }])
+	if (cmdl[{"--disable-filter"}])
 	{
-		auto key = SetupDiOpenClassRegKey(&GUID_DEVCLASS_BLUETOOTH, KEY_ALL_ACCESS);
+		auto ret = devcon::remove_device_class_lower_filter(&GUID_DEVCLASS_BLUETOOTH, BthPS3FilterName);
 
-		if (INVALID_HANDLE_VALUE == key)
+		if (ret)
 		{
-			std::cout << color(red) <<
-				"Couldn't open Class key, error: "
-				<< winapi::GetLastErrorStdStr() << std::endl;
-			return GetLastError();
-		}
-
-		// wrap it up
-		RegKey classKey(key);
-
-		//
-		// Check if "LowerFilters" value exists
-		// 
-		auto values = classKey.EnumValues();
-		auto ret = std::find_if(values.begin(), values.end(), [&](std::pair<std::wstring, DWORD> const& ref) {
-			return ref.first == LOWER_FILTERS;
-			});
-
-		//
-		// Value exists, patch out our name
-		// 
-		if (ret != values.end())
-		{
-			auto lowerFilters = classKey.GetMultiStringValue(LOWER_FILTERS);
-			lowerFilters.erase(
-				std::remove(
-					lowerFilters.begin(),
-					lowerFilters.end(),
-					BthPS3FilterName),
-				lowerFilters.end());
-			classKey.SetMultiStringValue(LOWER_FILTERS, lowerFilters);
-			classKey.Close();
-
 			std::cout << color(yellow) <<
 				"Filter disabled. Reconnect affected devices or reboot system to apply changes!"
 				<< std::endl;
@@ -276,13 +133,10 @@ int main(int, char* argv[])
 			return EXIT_SUCCESS;
 		}
 
-		classKey.Close();
-
-		std::cout << color(green) <<
-			"Filter already disabled. No changes were made"
-			<< std::endl;
-
-		return EXIT_SUCCESS;
+		std::cout << color(red) <<
+			"Failed to modify filter value, error: "
+			<< winapi::GetLastErrorStdStr() << std::endl;
+		return GetLastError();
 	}
 
 #pragma endregion
@@ -342,7 +196,7 @@ int main(int, char* argv[])
 			return EXIT_FAILURE;
 		}
 
-		auto ret = devcon::create(className, &clID, hwId);
+		auto ret = devcon::create(to_wstring(className), &clID, to_wstring(hwId));
 
 		if (!ret)
 		{
@@ -611,9 +465,6 @@ int main(int, char* argv[])
 	std::cout << "  options:" << std::endl;
 	std::cout << "    --enable-service          Register BthPS3 service on Bluetooth radio" << std::endl;
 	std::cout << "    --disable-service         De-Register BthPS3 service on Bluetooth radio" << std::endl;
-	std::cout << "    --create-filter-service   Create service for BthPS3PSM filter driver" << std::endl;
-	std::cout << "      --bin-path              Path to the SYS file to install (required)" << std::endl;
-	std::cout << "    --delete-filter-service   Delete service for BthPS3PSM filter driver" << std::endl;
 	std::cout << "    --install-driver          Invoke the installation of a given PNP driver" << std::endl;
 	std::cout << "      --inf-path              Path to the INF file to install (required)" << std::endl;
 	std::cout << "      --force                 Force using this driver even if lower ranked (optional)" << std::endl;

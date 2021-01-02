@@ -1,11 +1,59 @@
 #include "Devcon.h"
 
+//
+// WinAPI
+// 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <SetupAPI.h>
 #include <tchar.h>
 #include <devguid.h>
 #include <newdev.h>
+
+//
+// STL
+// 
+#include <vector>
+
+// Helper function to build a multi-string from a vector<wstring>
+inline std::vector<wchar_t> BuildMultiString(const std::vector<std::wstring>& data)
+{
+    // Special case of the empty multi-string
+    if (data.empty())
+    {
+        // Build a vector containing just two NULs
+        return std::vector<wchar_t>(2, L'\0');
+    }
+
+    // Get the total length in wchar_ts of the multi-string
+    size_t totalLen = 0;
+    for (const auto& s : data)
+    {
+        // Add one to current string's length for the terminating NUL
+        totalLen += (s.length() + 1);
+    }
+
+    // Add one for the last NUL terminator (making the whole structure double-NUL terminated)
+    totalLen++;
+
+    // Allocate a buffer to store the multi-string
+    std::vector<wchar_t> multiString;
+    multiString.reserve(totalLen);
+
+    // Copy the single strings into the multi-string
+    for (const auto& s : data)
+    {      
+        multiString.insert(multiString.end(), s.begin(), s.end());
+        
+        // Don't forget to NUL-terminate the current string
+        multiString.push_back(L'\0');
+    }
+
+    // Add the last NUL-terminator
+    multiString.push_back(L'\0');
+
+    return multiString;
+}
 
 bool devcon::create(std::wstring className, const GUID* classGuid, std::wstring hardwareId)
 {
@@ -34,63 +82,6 @@ bool devcon::create(std::wstring className, const GUID* classGuid, std::wstring 
     }
 
     auto sdrpRet = SetupDiSetDeviceRegistryPropertyW(
-        deviceInfoSet,
-        &deviceInfoData,
-        SPDRP_HARDWAREID,
-        (const PBYTE)hardwareId.c_str(),
-        (DWORD)(hardwareId.size() * sizeof(WCHAR))
-    );
-
-    if (!sdrpRet)
-    {
-        SetupDiDestroyDeviceInfoList(deviceInfoSet);
-        return false;
-    }
-
-    auto cciRet = SetupDiCallClassInstaller(
-        DIF_REGISTERDEVICE,
-        deviceInfoSet,
-        &deviceInfoData
-    );
-
-    if (!cciRet)
-    {
-        SetupDiDestroyDeviceInfoList(deviceInfoSet);
-        return false;
-    }
-
-    SetupDiDestroyDeviceInfoList(deviceInfoSet);
-
-    return true;
-}
-
-bool devcon::create(std::string className, const GUID* classGuid, std::string hardwareId)
-{
-    auto deviceInfoSet = SetupDiCreateDeviceInfoList(classGuid, nullptr);
-
-    if (INVALID_HANDLE_VALUE == deviceInfoSet)
-        return false;
-
-    SP_DEVINFO_DATA deviceInfoData;
-    deviceInfoData.cbSize = sizeof(deviceInfoData);
-
-    auto cdiRet = SetupDiCreateDeviceInfoA(
-        deviceInfoSet,
-        className.c_str(),
-        classGuid,
-        nullptr,
-        nullptr,
-        DICD_GENERATE_ID,
-        &deviceInfoData
-    );
-
-    if (!cdiRet)
-    {
-        SetupDiDestroyDeviceInfoList(deviceInfoSet);
-        return false;
-    }
-
-    auto sdrpRet = SetupDiSetDeviceRegistryPropertyA(
         deviceInfoSet,
         &deviceInfoData,
         SPDRP_HARDWAREID,
@@ -227,3 +218,220 @@ bool devcon::install_driver(const std::wstring& fullInfPath, bool* rebootRequire
 
 	return ret > 0;
 }
+
+bool devcon::add_device_class_lower_filter(const GUID* classGuid, const std::wstring& filterName)
+{
+	auto key = SetupDiOpenClassRegKey(classGuid, KEY_ALL_ACCESS);
+
+	if (INVALID_HANDLE_VALUE == key)
+	{
+		return false;
+	}
+
+	LPCWSTR lowerFilterValue = L"LowerFilters";
+    DWORD type, size;
+	std::vector<std::wstring> filters;
+	
+	auto status = RegQueryValueExW(
+		key,
+		lowerFilterValue,
+		nullptr,
+		&type,
+		nullptr,
+		&size
+	);
+
+	//
+	// Value exists already, read it with returned buffer size
+	// 
+	if (status == ERROR_SUCCESS)
+	{
+		std::vector<wchar_t> temp(size / sizeof(wchar_t));
+
+		status = RegQueryValueExW(
+			key,
+			lowerFilterValue,
+			nullptr,
+			&type,
+			reinterpret_cast<LPBYTE>(&temp[0]),
+			&size
+		);
+
+		if (status != ERROR_SUCCESS)
+		{
+			RegCloseKey(key);
+			SetLastError(status);
+			return false;
+		}
+
+		size_t index = 0;
+		size_t len = wcslen(&temp[0]);
+		while (len > 0)
+		{
+			filters.emplace_back(&temp[index]);
+			index += len + 1;
+			len = wcslen(&temp[index]);
+		}
+
+		//
+		// Filter not there yet, add
+		// 
+		if (std::find(filters.begin(), filters.end(), filterName) == filters.end())
+		{
+			filters.emplace_back(filterName);
+		}
+
+		const std::vector<wchar_t> multiString = BuildMultiString(filters);
+
+		const DWORD dataSize = static_cast<DWORD>(multiString.size() * sizeof(wchar_t));
+
+		status = RegSetValueExW(
+			key,
+			lowerFilterValue,
+			0, // reserved
+			REG_MULTI_SZ,
+			reinterpret_cast<const BYTE*>(&multiString[0]),
+			dataSize
+		);
+
+		if (status != ERROR_SUCCESS)
+		{
+			RegCloseKey(key);
+			SetLastError(status);
+			return false;
+		}
+
+		RegCloseKey(key);
+		return true;
+	}
+	//
+	// Value doesn't exist, create and populate
+	// 
+	else if (status == ERROR_FILE_NOT_FOUND)
+	{
+		filters.emplace_back(filterName);
+
+		const std::vector<wchar_t> multiString = BuildMultiString(filters);
+
+		const DWORD dataSize = static_cast<DWORD>(multiString.size() * sizeof(wchar_t));
+
+		status = RegSetValueExW(
+			key,
+			lowerFilterValue,
+			0, // reserved
+			REG_MULTI_SZ,
+			reinterpret_cast<const BYTE*>(&multiString[0]),
+			dataSize
+		);
+
+		if (status != ERROR_SUCCESS)
+		{
+			RegCloseKey(key);
+			SetLastError(status);
+			return false;
+		}
+
+		RegCloseKey(key);
+		return true;
+	}
+
+	RegCloseKey(key);
+	return false;
+}
+
+bool devcon::remove_device_class_lower_filter(const GUID* classGuid, const std::wstring& filterName)
+{
+	auto key = SetupDiOpenClassRegKey(classGuid, KEY_ALL_ACCESS);
+
+	if (INVALID_HANDLE_VALUE == key)
+	{
+		return false;
+	}
+
+	LPCWSTR lowerFilterValue = L"LowerFilters";
+	DWORD type, size;
+	std::vector<std::wstring> filters;
+
+	auto status = RegQueryValueExW(
+		key,
+		lowerFilterValue,
+		nullptr,
+		&type,
+		nullptr,
+		&size
+	);
+
+	//
+	// Value exists already, read it with returned buffer size
+	// 
+	if (status == ERROR_SUCCESS)
+	{
+		std::vector<wchar_t> temp(size / sizeof(wchar_t));
+
+		status = RegQueryValueExW(
+			key,
+			lowerFilterValue,
+			nullptr,
+			&type,
+			reinterpret_cast<LPBYTE>(&temp[0]),
+			&size
+		);
+
+		if (status != ERROR_SUCCESS)
+		{
+			RegCloseKey(key);
+			SetLastError(status);
+			return false;
+		}
+
+		//
+		// Remove value, if found
+		//
+		size_t index = 0;
+		size_t len = wcslen(&temp[0]);
+		while (len > 0)
+		{
+			if (filterName != &temp[index])
+			{
+				filters.emplace_back(&temp[index]);
+			}
+			index += len + 1;
+			len = wcslen(&temp[index]);
+		}
+
+		const std::vector<wchar_t> multiString = BuildMultiString(filters);
+
+		const DWORD dataSize = static_cast<DWORD>(multiString.size() * sizeof(wchar_t));
+
+		status = RegSetValueExW(
+			key,
+			lowerFilterValue,
+			0, // reserved
+			REG_MULTI_SZ,
+			reinterpret_cast<const BYTE*>(&multiString[0]),
+			dataSize
+		);
+
+		if (status != ERROR_SUCCESS)
+		{
+			RegCloseKey(key);
+			SetLastError(status);
+			return false;
+		}
+
+		RegCloseKey(key);
+		return true;
+	}
+	//
+	// Value doesn't exist, return
+	// 
+	if (status == ERROR_FILE_NOT_FOUND)
+	{
+		RegCloseKey(key);
+		return true;
+	}
+
+	RegCloseKey(key);
+	return false;
+}
+

@@ -177,7 +177,6 @@
     <ClInclude Include="BthPS3Util.h" />
     <ClInclude Include="colorwin.hpp" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="WinReg.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="BthPS3Util.rc" />

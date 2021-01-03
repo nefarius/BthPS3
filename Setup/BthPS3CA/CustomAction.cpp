@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
-#include <pathcch.h>
+#include <PathCch.h>
+#include <devguid.h>
 
 #include <string>
 #include <Devcon.h>
@@ -77,9 +78,57 @@ UINT __stdcall InstallDrivers(
 	if (!devcon::install_driver(nullInfPath, &rebootRequired))
 	{
 		ExitOnLastError(hr, "Failed to install PDO NULL driver, error: %s",
-		                winapi::GetLastErrorStdStr().c_str());
+		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
 	}
 	WcaLog(LOGMSG_STANDARD, "PDO NULL driver installed.");
+
+	WcaLog(LOGMSG_STANDARD, "Installing BthPS3 driver in driver store.");
+	if (!devcon::install_driver(profileInfPath, &rebootRequired))
+	{
+		ExitOnLastError(hr, "Failed to install BthPS3 driver in driver store, error: %s",
+		                winapi::GetLastErrorStdStr().c_str());
+	}
+	WcaLog(LOGMSG_STANDARD, "BthPS3 driver installed in driver store.");
+
+	WcaLog(LOGMSG_STANDARD, "Enabling profile service for BTHENUM.");
+	if (!bthps3::bluetooth::enable_service())
+	{
+		ExitOnLastError(hr, "Failed to enable profile service for BTHENUM, error: %s",
+		                winapi::GetLastErrorStdStr().c_str());
+	}
+	WcaLog(LOGMSG_STANDARD, "Profile service for BTHENUM enabled.");
+
+	WcaLog(LOGMSG_STANDARD, "Installing BthPS3 driver on BTHENUM PDO.");
+	if (!devcon::install_driver(profileInfPath, &rebootRequired))
+	{
+		ExitOnLastError(hr, "Failed to install BthPS3 driver on BTHENUM PDO, error: %s",
+		                winapi::GetLastErrorStdStr().c_str());
+	}
+	WcaLog(LOGMSG_STANDARD, "BthPS3 driver installed on BTHENUM PDO.");
+
+	WcaLog(LOGMSG_STANDARD, "Installing BthPS3PSM filter driver in driver store.");
+	if (!devcon::install_driver(profileInfPath, &rebootRequired))
+	{
+		ExitOnLastError(hr, "Failed to install BthPS3PSM filter driver in driver store, error: %s",
+		                winapi::GetLastErrorStdStr().c_str());
+	}
+	WcaLog(LOGMSG_STANDARD, "BthPS3PSM filter driver installed in driver store.");
+	
+	WcaLog(LOGMSG_STANDARD, "Creating virtual hardware node for BthPS3PSM filter driver.");
+	if (!devcon::create(L"System", &GUID_DEVCLASS_SYSTEM, BTHPS3PSM_FILTER_HARDWARE_ID))
+	{
+		ExitOnLastError(hr, "Failed to create virtual hardware node for BthPS3PSM filter driver, error: %s",
+		                winapi::GetLastErrorStdStr().c_str());
+	}
+	WcaLog(LOGMSG_STANDARD, "Virtual hardware node for BthPS3PSM filter driver created.");
+
+	WcaLog(LOGMSG_STANDARD, "Installing BthPS3PSM filter driver on virtual hardware node.");
+	if (!devcon::install_driver(filterInfPath, &rebootRequired))
+	{
+		ExitOnLastError(hr, "Failed to install BthPS3 filter driver on virtual hardware node, error: %s",
+		                winapi::GetLastErrorStdStr().c_str());
+	}
+	WcaLog(LOGMSG_STANDARD, "BthPS3 filter driver installed on virtual hardware node.");
 	
 LExit:
 	er = SUCCEEDED(hr) ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;

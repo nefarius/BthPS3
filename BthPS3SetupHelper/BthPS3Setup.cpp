@@ -138,9 +138,9 @@ BOOL winapi::DeleteDriverService(PCSTR ServiceName)
 	return ret;
 }
 
-std::string winapi::GetLastErrorStdStr()
+std::string winapi::GetLastErrorStdStr(DWORD errorCode)
 {
-	DWORD error = GetLastError();
+	DWORD error = (errorCode == ERROR_SUCCESS) ? GetLastError() : errorCode;
 	if (error)
 	{
 		LPVOID lpMsgBuf;
@@ -163,7 +163,7 @@ std::string winapi::GetLastErrorStdStr()
 			return result;
 		}
 	}
-	return std::string();
+	return std::string("LEER");
 }
 
 std::string winapi::GetVersionFromFile(std::string FilePath)

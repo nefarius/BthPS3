@@ -59,10 +59,10 @@ WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll = 1
 %ManufacturerName%=Standard,NTamd64,NTx86
 
 [Standard.NTamd64]
-%BthPS3PSM.DeviceDesc%=BthPS3PSM_Device, Nefarius\BthPS3PSM
+%BthPS3PSM.DeviceDesc%=BthPS3PSM_Device, Nefarius\{a3dc6d41-9e10-46d9-8be2-9b4a279841df}
 
 [Standard.NTx86]
-%BthPS3PSM.DeviceDesc%=BthPS3PSM_Device, Nefarius\BthPS3PSM
+%BthPS3PSM.DeviceDesc%=BthPS3PSM_Device, Nefarius\{a3dc6d41-9e10-46d9-8be2-9b4a279841df}
 
 [BthPS3PSM_Device.NT]
 CopyFiles=Drivers_Dir

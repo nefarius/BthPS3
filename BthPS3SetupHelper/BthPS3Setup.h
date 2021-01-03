@@ -12,7 +12,7 @@ namespace winapi
 
     BOOL DeleteDriverService(PCSTR ServiceName);
 
-    std::string GetLastErrorStdStr();
+    std::string GetLastErrorStdStr(DWORD errorCode = ERROR_SUCCESS);
 
     std::string GetVersionFromFile(std::string FilePath);
 

@@ -39,7 +39,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>$(SolutionDir)bin\</OutDir>
+    <OutDir>bin\$(Configuration)\</OutDir>
     <IntDir>obj\$(Configuration)\</IntDir>
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)BthPS3SetupHelper;$(SolutionDir)\common\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>

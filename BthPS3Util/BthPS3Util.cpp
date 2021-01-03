@@ -32,15 +32,32 @@ int main(int, char* argv[])
 
 	DWORD bytesReturned = 0;
 	DWORD err = ERROR_SUCCESS;
+	BLUETOOTH_LOCAL_SERVICE_INFO SvcInfo = { 0 };
+	wcscpy_s(SvcInfo.szName, sizeof(SvcInfo.szName) / sizeof(WCHAR), BthPS3ServiceName);
 
 #pragma region BTHENUM Profile Driver actions
 
-	if (cmdl[{"--enable-service"}])
+	if (cmdl[{ "--enable-service" }])
 	{
-		if (!bthps3::bluetooth::enable_service())
+		if (FALSE == winapi::AdjustProcessPrivileges())
 		{
 			std::cout << color(red) <<
-				"Enabling service failed, error: "
+				"Failed to gain required privileges, error: "
+				<< winapi::GetLastErrorStdStr() << std::endl;
+			return GetLastError();
+		}
+
+		SvcInfo.Enabled = TRUE;
+
+		if (ERROR_SUCCESS != (err = BluetoothSetLocalServiceInfo(
+			nullptr, //callee would select the first found radio
+			&BTHPS3_SERVICE_GUID,
+			0,
+			&SvcInfo
+		)))
+		{
+			std::cout << color(red) <<
+				"BluetoothSetLocalServiceInfo failed, error: "
 				<< winapi::GetLastErrorStdStr() << std::endl;
 			return GetLastError();
 		}
@@ -50,12 +67,27 @@ int main(int, char* argv[])
 		return EXIT_SUCCESS;
 	}
 
-	if (cmdl[{"--disable-service"}])
+	if (cmdl[{ "--disable-service" }])
 	{
-		if (!bthps3::bluetooth::disable_service())
+		if (FALSE == winapi::AdjustProcessPrivileges())
 		{
 			std::cout << color(red) <<
-				"Disabling service failed, error: "
+				"Failed to gain required privileges, error: "
+				<< winapi::GetLastErrorStdStr() << std::endl;
+			return GetLastError();
+		}
+
+		SvcInfo.Enabled = FALSE;
+
+		if (ERROR_SUCCESS != (err = BluetoothSetLocalServiceInfo(
+			nullptr, //callee would select the first found radio
+			&BTHPS3_SERVICE_GUID,
+			0,
+			&SvcInfo
+		)))
+		{
+			std::cout << color(red) <<
+				"BluetoothSetLocalServiceInfo failed, error: "
 				<< winapi::GetLastErrorStdStr() << std::endl;
 			return GetLastError();
 		}

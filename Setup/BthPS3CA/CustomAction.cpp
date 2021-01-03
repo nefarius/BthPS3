@@ -107,7 +107,7 @@ UINT __stdcall InstallDrivers(
 	WcaLog(LOGMSG_STANDARD, "BthPS3 driver installed on BTHENUM PDO.");
 
 	WcaLog(LOGMSG_STANDARD, "Installing BthPS3PSM filter driver in driver store.");
-	if (!devcon::install_driver(profileInfPath, &rebootRequired))
+	if (!devcon::install_driver(filterInfPath, &rebootRequired))
 	{
 		ExitOnLastError(hr, "Failed to install BthPS3PSM filter driver in driver store, error: %s",
 		                winapi::GetLastErrorStdStr().c_str());

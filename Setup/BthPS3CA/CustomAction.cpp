@@ -137,7 +137,18 @@ UINT __stdcall InstallDrivers(
 	WcaLog(LOGMSG_STANDARD, "BthPS3 driver installed on BTHENUM PDO.");
 
 #pragma endregion
+
+#pragma region Misc.
+
+	WcaLog(LOGMSG_STANDARD, "Adding BthPS3PSM as Bluetooth class filters.");
+	if (!devcon::add_device_class_lower_filter(&GUID_DEVCLASS_BLUETOOTH, BthPS3FilterName))
+	{
+		ExitOnLastError(hr, "Failed to add BthPS3PSM to class filters, error: %s",
+		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
+	}
+	WcaLog(LOGMSG_STANDARD, "BthPS3PSM added to Bluetooth class filters.");
 	
+#pragma endregion
 	
 LExit:
 	er = SUCCEEDED(hr) ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;

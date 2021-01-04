@@ -161,6 +161,14 @@ UINT __stdcall InstallDrivers(
 		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
 	}
 	WcaLog(LOGMSG_STANDARD, "Restarted host radio.");
+
+	WcaLog(LOGMSG_STANDARD, "Enabling PSM patch.");
+	if (!bthps3::filter::enable_psm_patch())
+	{
+		ExitOnLastError(hr, "Failed to enable PSM patch, error: %s",
+		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
+	}
+	WcaLog(LOGMSG_STANDARD, "Enabled PSM patch.");
 	
 #pragma endregion
 	

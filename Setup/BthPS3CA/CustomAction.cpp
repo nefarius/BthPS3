@@ -96,7 +96,7 @@ UINT __stdcall InstallDrivers(
 	if (!devcon::create(L"System", &GUID_DEVCLASS_SYSTEM, BTHPS3PSM_FILTER_HARDWARE_ID))
 	{
 		ExitOnLastError(hr, "Failed to create virtual hardware node for BthPS3PSM filter driver, error: %s",
-		                winapi::GetLastErrorStdStr().c_str());
+		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
 	}
 	WcaLog(LOGMSG_STANDARD, "Virtual hardware node for BthPS3PSM filter driver created.");
 
@@ -104,7 +104,7 @@ UINT __stdcall InstallDrivers(
 	if (!devcon::install_driver(filterInfPath, &rebootRequired))
 	{
 		ExitOnLastError(hr, "Failed to install BthPS3 filter driver on virtual hardware node, error: %s",
-		                winapi::GetLastErrorStdStr().c_str());
+		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
 	}
 	WcaLog(LOGMSG_STANDARD, "BthPS3 filter driver installed on virtual hardware node.");
 
@@ -116,7 +116,7 @@ UINT __stdcall InstallDrivers(
 	if (!devcon::install_driver(profileInfPath, &rebootRequired))
 	{
 		ExitOnLastError(hr, "Failed to install BthPS3 driver in driver store, error: %s",
-		                winapi::GetLastErrorStdStr().c_str());
+		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
 	}
 	WcaLog(LOGMSG_STANDARD, "BthPS3 driver installed in driver store.");
 
@@ -124,7 +124,7 @@ UINT __stdcall InstallDrivers(
 	if (!bthps3::bluetooth::enable_service())
 	{
 		ExitOnLastError(hr, "Failed to enable profile service for BTHENUM, error: %s",
-		                winapi::GetLastErrorStdStr().c_str());
+		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
 	}
 	WcaLog(LOGMSG_STANDARD, "Profile service for BTHENUM enabled.");
 
@@ -132,7 +132,7 @@ UINT __stdcall InstallDrivers(
 	if (!devcon::install_driver(profileInfPath, &rebootRequired))
 	{
 		ExitOnLastError(hr, "Failed to install BthPS3 driver on BTHENUM PDO, error: %s",
-		                winapi::GetLastErrorStdStr().c_str());
+		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
 	}
 	WcaLog(LOGMSG_STANDARD, "BthPS3 driver installed on BTHENUM PDO.");
 

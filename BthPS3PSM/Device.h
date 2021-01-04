@@ -92,11 +92,6 @@ typedef struct _DEVICE_CONTEXT
 	// Symbolic link name of host radio we're loaded onto
 	// 
     WDFSTRING SymbolicLinkName;
-
-	//
-	// Is this a virtual device
-	// 
-	BOOLEAN IsSystemDevice;
 	
 } DEVICE_CONTEXT, *PDEVICE_CONTEXT;
 

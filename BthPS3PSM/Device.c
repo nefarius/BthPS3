@@ -56,7 +56,7 @@ extern WDFWAITLOCK     FilterDeviceCollectionLock;
 #define BTHPS3PSM_POOL_TAG                      'MSP3'
 #define BTHPS3PSM_DEVICE_PROPERTY_LENGTH        0xFF
 #define BTHPS3PSM_USB_ENUMERATOR_NAME           L"USB"
-#define BTHPS3PSM_SYSTEM_ENUMERATOR_NAME        L"System"
+#define BTHPS3PSM_SYSTEM_ENUMERATOR_NAME        L"ROOT"
 
 
 //
@@ -111,20 +111,20 @@ BthPS3PSM_CreateDevice(
             propertyBuffer
         );
 
-        if (0 == wcscmp(propertyBuffer, BTHPS3PSM_USB_ENUMERATOR_NAME))
+        if (0 == _wcsicmp(propertyBuffer, BTHPS3PSM_USB_ENUMERATOR_NAME))
         {
 	        isUsb = TRUE;
         }
-        else if (0 == wcscmp(propertyBuffer, BTHPS3PSM_SYSTEM_ENUMERATOR_NAME))
+        else if (0 == _wcsicmp(propertyBuffer, BTHPS3PSM_SYSTEM_ENUMERATOR_NAME))
         {
 	        isSystem = TRUE;
         }
     }
     else
     {
-        TraceEvents(TRACE_LEVEL_WARNING,
+        TraceEvents(TRACE_LEVEL_ERROR,
             TRACE_DEVICE,
-            "It appears we're not loaded within a USB stack, aborting initialization"
+            "Failed to retreive enumerator name, aborting initialization"
         );
     }
 
@@ -139,23 +139,30 @@ BthPS3PSM_CreateDevice(
     // Don't create a device object and return
     // 
     if (!isUsb && !isSystem) {
+    	TraceEvents(TRACE_LEVEL_WARNING,
+            TRACE_DEVICE,
+            "Unsupported enumerator, aborting initialization"
+        );
         return STATUS_SUCCESS;
     }
 
-    WdfFdoInitSetFilter(DeviceInit);
+    if (!isSystem)
+	    WdfFdoInitSetFilter(DeviceInit);
 
     //
     // PNP/Power callbacks
     // 
     WDF_PNPPOWER_EVENT_CALLBACKS_INIT(&pnpPowerCallbacks);
-    pnpPowerCallbacks.EvtDevicePrepareHardware = BthPS3PSM_EvtDevicePrepareHardware;
+    if (!isSystem)
+	    pnpPowerCallbacks.EvtDevicePrepareHardware = BthPS3PSM_EvtDevicePrepareHardware;
     WdfDeviceInitSetPnpPowerEventCallbacks(DeviceInit, &pnpPowerCallbacks);
 
     //
     // Device object attributes
     // 
     WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&deviceAttributes, DEVICE_CONTEXT);
-    deviceAttributes.EvtCleanupCallback = BthPS3PSM_EvtDeviceContextCleanup;
+    if (!isSystem)
+	    deviceAttributes.EvtCleanupCallback = BthPS3PSM_EvtDeviceContextCleanup;
 
     status = WdfDeviceCreate(&DeviceInit, &deviceAttributes, &device);
 
@@ -165,8 +172,6 @@ BthPS3PSM_CreateDevice(
     	
 	    if (isSystem)
 	    {
-            deviceContext->IsSystemDevice = isSystem;
-	    	
 		    //
 		    // Hide from UI
 		    // 
@@ -411,14 +416,6 @@ BthPS3PSM_EvtDeviceContextCleanup(
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Entry");
 
 	PDEVICE_CONTEXT pDevCtx = DeviceGetContext(Device);
-
-	//
-	// Nothing to clean up in this case
-	// 
-    if (pDevCtx->IsSystemDevice)
-    {
-	    return;
-    }
 	
 #ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
 

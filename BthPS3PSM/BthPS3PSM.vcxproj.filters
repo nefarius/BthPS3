@@ -22,12 +22,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Inf Include="BthPS3PSM_WHQL.inf">
-      <Filter>Driver Files</Filter>
-    </Inf>
-    <Inf Include="BthPS3PSM_Filter.inf">
-      <Filter>Driver Files</Filter>
-    </Inf>
     <Inf Include="BthPS3PSM.inf">
       <Filter>Driver Files</Filter>
     </Inf>

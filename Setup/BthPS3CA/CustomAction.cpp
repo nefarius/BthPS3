@@ -12,6 +12,9 @@ const std::wstring g_profileInf = L"BthPS3.inf";
 const std::wstring g_filterInf = L"BthPS3PSM.inf";
 
 
+//
+// Test if Bluetooth host radio is present, set property "RADIOFOUND" if so
+// 
 UINT __stdcall CheckHostRadioPresence(
 	MSIHANDLE hInstall
 	)
@@ -47,6 +50,9 @@ LExit:
 	return WcaFinalize(er);
 }
 
+//
+// Driver installation logic
+// 
 UINT __stdcall InstallDrivers(
 	MSIHANDLE hInstall
 	)
@@ -147,6 +153,14 @@ UINT __stdcall InstallDrivers(
 		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
 	}
 	WcaLog(LOGMSG_STANDARD, "BthPS3PSM added to Bluetooth class filters.");
+
+	WcaLog(LOGMSG_STANDARD, "Restarting host radio.");
+	if (!devcon::restart_bth_usb_device())
+	{
+		ExitOnLastError(hr, "Failed to restart host radio, error: %s",
+		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
+	}
+	WcaLog(LOGMSG_STANDARD, "Restarted host radio.");
 	
 #pragma endregion
 	
@@ -155,6 +169,9 @@ LExit:
 	return WcaFinalize(er);
 }
 
+//
+// Driver removal logic
+// 
 UINT __stdcall UninstallDrivers(
 	MSIHANDLE hInstall
 	)

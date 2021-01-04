@@ -27,4 +27,13 @@ namespace bthps3
 
 		bool disable_service();
 	}
+
+	namespace filter
+	{
+		bool enable_psm_patch(DWORD deviceIndex = 0);
+
+		bool disable_psm_patch(DWORD deviceIndex = 0);
+
+		bool get_psm_patch(PBTHPS3PSM_GET_PSM_PATCHING request, DWORD deviceIndex = 0);
+	}
 }

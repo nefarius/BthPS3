@@ -215,49 +215,13 @@ int main(int, char* argv[])
 			std::cout << color(yellow) << "Device index missing, defaulting to 0" << std::endl;
 		}
 
-		const auto hDevice = CreateFile(
-			BTHPS3PSM_CONTROL_DEVICE_PATH,
-			GENERIC_READ | GENERIC_WRITE,
-			FILE_SHARE_READ | FILE_SHARE_WRITE,
-			nullptr,
-			OPEN_EXISTING,
-			FILE_ATTRIBUTE_NORMAL,
-			nullptr
-		);
-
-		if (hDevice == INVALID_HANDLE_VALUE)
+		if (!bthps3::filter::enable_psm_patch(deviceIndex))
 		{
-			std::cout << color(red) <<
-				"Couldn't open control device, error: "
-				<< winapi::GetLastErrorStdStr() << std::endl;
-			return GetLastError();
-		}
-
-		BTHPS3PSM_ENABLE_PSM_PATCHING req;
-		req.DeviceIndex = deviceIndex;
-
-		const auto ret = DeviceIoControl(
-			hDevice,
-			IOCTL_BTHPS3PSM_ENABLE_PSM_PATCHING,
-			&req,
-			sizeof(BTHPS3PSM_ENABLE_PSM_PATCHING),
-			nullptr,
-			0,
-			&bytesReturned,
-			nullptr
-		);
-
-		if (!ret)
-		{
-			CloseHandle(hDevice);
-
 			std::cout << color(red) <<
 				"Couldn't enable PSM patch, error: "
 				<< winapi::GetLastErrorStdStr() << std::endl;
 			return GetLastError();
 		}
-
-		CloseHandle(hDevice);
 
 		std::cout << color(green) << "PSM Patch enabled successfully" << std::endl;
 
@@ -269,50 +233,14 @@ int main(int, char* argv[])
 		if (!(cmdl({ "--device-index" }) >> deviceIndex)) {
 			std::cout << color(yellow) << "Device index missing, defaulting to 0" << std::endl;
 		}
-
-		const auto hDevice = CreateFile(
-			BTHPS3PSM_CONTROL_DEVICE_PATH,
-			GENERIC_READ | GENERIC_WRITE,
-			FILE_SHARE_READ | FILE_SHARE_WRITE,
-			nullptr,
-			OPEN_EXISTING,
-			FILE_ATTRIBUTE_NORMAL,
-			nullptr
-		);
-
-		if (hDevice == INVALID_HANDLE_VALUE)
+		
+		if (!bthps3::filter::disable_psm_patch(deviceIndex))
 		{
-			std::cout << color(red) <<
-				"Couldn't open control device, error: "
-				<< winapi::GetLastErrorStdStr() << std::endl;
-			return GetLastError();
-		}
-
-		BTHPS3PSM_DISABLE_PSM_PATCHING req;
-		req.DeviceIndex = deviceIndex;
-
-		const auto ret = DeviceIoControl(
-			hDevice,
-			IOCTL_BTHPS3PSM_DISABLE_PSM_PATCHING,
-			&req,
-			sizeof(BTHPS3PSM_DISABLE_PSM_PATCHING),
-			nullptr,
-			0,
-			&bytesReturned,
-			nullptr
-		);
-
-		if (!ret)
-		{
-			CloseHandle(hDevice);
-
 			std::cout << color(red) <<
 				"Couldn't disable PSM patch, error: "
 				<< winapi::GetLastErrorStdStr() << std::endl;
 			return GetLastError();
 		}
-
-		CloseHandle(hDevice);
 
 		std::cout << color(green) << "PSM Patch disabled successfully" << std::endl;
 
@@ -325,49 +253,15 @@ int main(int, char* argv[])
 			std::cout << color(yellow) << "Device index missing, defaulting to 0" << std::endl;
 		}
 
-		const auto hDevice = CreateFile(
-			BTHPS3PSM_CONTROL_DEVICE_PATH,
-			GENERIC_READ | GENERIC_WRITE,
-			FILE_SHARE_READ | FILE_SHARE_WRITE,
-			nullptr,
-			OPEN_EXISTING,
-			FILE_ATTRIBUTE_NORMAL,
-			nullptr
-		);
-
-		if (hDevice == INVALID_HANDLE_VALUE)
-		{
-			std::cout << color(red) <<
-				"Couldn't open control device, error: "
-				<< winapi::GetLastErrorStdStr() << std::endl;
-			return GetLastError();
-		}
-
 		BTHPS3PSM_GET_PSM_PATCHING req;
-		req.DeviceIndex = deviceIndex;
-
-		const auto ret = DeviceIoControl(
-			hDevice,
-			IOCTL_BTHPS3PSM_GET_PSM_PATCHING,
-			&req,
-			sizeof(req),
-			&req,
-			sizeof(req),
-			&bytesReturned,
-			nullptr
-		);
-
-		if (!ret)
+		
+		if (!bthps3::filter::get_psm_patch(&req))
 		{
-			CloseHandle(hDevice);
-
 			std::cout << color(red) <<
 				"Couldn't fetch PSM patch state, error: "
 				<< winapi::GetLastErrorStdStr() << std::endl;
 			return GetLastError();
 		}
-
-		CloseHandle(hDevice);
 
 		if (req.IsEnabled)
 		{

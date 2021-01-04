@@ -266,3 +266,122 @@ bool bthps3::bluetooth::disable_service()
 	SetLastError(err);
 	return true;
 }
+
+bool bthps3::filter::enable_psm_patch(DWORD deviceIndex)
+{
+	DWORD bytesReturned = 0;
+
+	const auto hDevice = CreateFile(
+		BTHPS3PSM_CONTROL_DEVICE_PATH,
+		GENERIC_READ | GENERIC_WRITE,
+		FILE_SHARE_READ | FILE_SHARE_WRITE,
+		nullptr,
+		OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL,
+		nullptr
+	);
+
+	if (hDevice == INVALID_HANDLE_VALUE)
+	{
+		return false;
+	}
+
+	BTHPS3PSM_ENABLE_PSM_PATCHING req;
+	req.DeviceIndex = deviceIndex;
+
+	const auto ret = DeviceIoControl(
+		hDevice,
+		IOCTL_BTHPS3PSM_ENABLE_PSM_PATCHING,
+		&req,
+		sizeof(BTHPS3PSM_ENABLE_PSM_PATCHING),
+		nullptr,
+		0,
+		&bytesReturned,
+		nullptr
+	);
+
+	DWORD err = GetLastError();
+	CloseHandle(hDevice);
+	SetLastError(err);
+
+	return ret > 0;
+}
+
+bool bthps3::filter::disable_psm_patch(DWORD deviceIndex)
+{
+	DWORD bytesReturned = 0;
+
+	const auto hDevice = CreateFile(
+		BTHPS3PSM_CONTROL_DEVICE_PATH,
+		GENERIC_READ | GENERIC_WRITE,
+		FILE_SHARE_READ | FILE_SHARE_WRITE,
+		nullptr,
+		OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL,
+		nullptr
+	);
+
+	if (hDevice == INVALID_HANDLE_VALUE)
+	{
+		return false;
+	}
+
+	BTHPS3PSM_DISABLE_PSM_PATCHING req;
+	req.DeviceIndex = deviceIndex;
+
+	const auto ret = DeviceIoControl(
+		hDevice,
+		IOCTL_BTHPS3PSM_DISABLE_PSM_PATCHING,
+		&req,
+		sizeof(BTHPS3PSM_DISABLE_PSM_PATCHING),
+		nullptr,
+		0,
+		&bytesReturned,
+		nullptr
+	);
+
+	DWORD err = GetLastError();
+	CloseHandle(hDevice);
+	SetLastError(err);
+
+	return ret > 0;
+}
+
+bool bthps3::filter::get_psm_patch(PBTHPS3PSM_GET_PSM_PATCHING request, DWORD deviceIndex)
+{
+	DWORD bytesReturned = 0;
+
+	const auto hDevice = CreateFile(
+		BTHPS3PSM_CONTROL_DEVICE_PATH,
+		GENERIC_READ | GENERIC_WRITE,
+		FILE_SHARE_READ | FILE_SHARE_WRITE,
+		nullptr,
+		OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL,
+		nullptr
+	);
+
+	if (hDevice == INVALID_HANDLE_VALUE)
+	{
+		return false;
+	}
+
+	request->DeviceIndex = deviceIndex;
+
+	const auto ret = DeviceIoControl(
+		hDevice,
+		IOCTL_BTHPS3PSM_GET_PSM_PATCHING,
+		request,
+		sizeof(*request),
+		request,
+		sizeof(*request),
+		&bytesReturned,
+		nullptr
+	);
+
+	DWORD err = GetLastError();
+	CloseHandle(hDevice);
+	SetLastError(err);
+
+	return ret > 0;
+}

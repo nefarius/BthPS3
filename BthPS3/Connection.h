@@ -105,7 +105,7 @@ ClientConnections_CreateAndInsert(
 
 VOID
 ClientConnections_RemoveAndDestroy(
-    _In_ PBTHPS3_SERVER_CONTEXT Context,
+    _In_ PBTHPS3_DEVICE_CONTEXT_HEADER Context,
     _In_ PBTHPS3_CLIENT_CONNECTION ClientConnection
 );
 

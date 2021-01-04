@@ -356,7 +356,7 @@ exit:
     // 
     if (!NT_SUCCESS(status) && clientConnection)
     {
-        ClientConnections_RemoveAndDestroy(DevCtx, clientConnection);
+        ClientConnections_RemoveAndDestroy(&DevCtx->Header, clientConnection);
     }
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit (%!STATUS!)", status);
@@ -443,14 +443,13 @@ L2CAP_PS3_ControlConnectResponseCompleted(
     }
     else
     {
-        //
-        // TODO: implement me!
-        // 
         TraceEvents(TRACE_LEVEL_ERROR,
             TRACE_L2CAP,
-            "HID Control Channel connection failed with status %!STATUS! (NOT IMPLEMENTED)",
+            "HID Control Channel connection failed with status %!STATUS!",
 			status
         );
+
+    	ClientConnections_RemoveAndDestroy(clientConnection->DevCtxHdr, clientConnection);
     }
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
@@ -543,14 +542,13 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
 
 failedDrop:
 
-    //
-    // TODO: implement me!
-    // 
     TraceEvents(TRACE_LEVEL_ERROR,
         TRACE_L2CAP,
-        "%!FUNC! connection failed with status %!STATUS! (NOT IMPLEMENTED)",
+        "%!FUNC! connection failed with status %!STATUS!",
 		status
     );
+
+	ClientConnections_RemoveAndDestroy(clientConnection->DevCtxHdr, clientConnection);
 
     return;
 }
@@ -848,7 +846,7 @@ L2CAP_PS3_ConnectionIndicationCallback(
                     status);
             }
 
-            ClientConnections_RemoveAndDestroy(deviceCtx, connection);
+            ClientConnections_RemoveAndDestroy(&deviceCtx->Header, connection);
         }
 
         break;

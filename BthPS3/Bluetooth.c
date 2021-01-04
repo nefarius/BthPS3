@@ -540,9 +540,9 @@ BthPS3_ServerContextInit(
 	WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
 	attributes.ParentObject = Device;
 
-	status = WdfSpinLockCreate(
+	status = WdfWaitLockCreate(
 		&attributes,
-		&Context->ClientConnectionsLock
+		&Context->Header.ClientConnectionsLock
 	);
 	if (!NT_SUCCESS(status))
 	{
@@ -554,7 +554,7 @@ BthPS3_ServerContextInit(
 
 	status = WdfCollectionCreate(
 		&attributes,
-		&Context->ClientConnections
+		&Context->Header.ClientConnections
 	);
 	if (!NT_SUCCESS(status))
 	{

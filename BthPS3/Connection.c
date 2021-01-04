@@ -184,7 +184,7 @@ ClientConnections_CreateAndInsert(
     //
     // Insert initialized connection list in connection collection
     // 
-    status = WdfCollectionAdd(Context->ClientConnections, connectionObject);
+    status = WdfCollectionAdd(Context->Header.ClientConnections, connectionObject);
 
     if (!NT_SUCCESS(status)) {
         TraceEvents(TRACE_LEVEL_ERROR,
@@ -219,7 +219,7 @@ exitFailure:
 // 
 VOID
 ClientConnections_RemoveAndDestroy(
-    _In_ PBTHPS3_SERVER_CONTEXT Context,
+    _In_ PBTHPS3_DEVICE_CONTEXT_HEADER Context,
     _In_ PBTHPS3_CLIENT_CONNECTION ClientConnection
 )
 {
@@ -233,7 +233,7 @@ ClientConnections_RemoveAndDestroy(
         ClientConnection
     );
 
-    WdfSpinLockAcquire(Context->ClientConnectionsLock);
+    WdfWaitLockAcquire(Context->ClientConnectionsLock, NULL);
 
     item = WdfObjectContextGetObject(ClientConnection);
     itemCount = WdfCollectionGetCount(Context->ClientConnections);
@@ -255,7 +255,7 @@ ClientConnections_RemoveAndDestroy(
         }
     }
 
-    WdfSpinLockRelease(Context->ClientConnectionsLock);
+    WdfWaitLockRelease(Context->ClientConnectionsLock);
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CONNECTION, "%!FUNC! Exit");
 }
@@ -278,13 +278,13 @@ ClientConnections_RetrieveByBthAddr(
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CONNECTION, "%!FUNC! Entry");
 
-    WdfSpinLockAcquire(Context->ClientConnectionsLock);
+    WdfWaitLockAcquire(Context->Header.ClientConnectionsLock, NULL);
 
-    itemCount = WdfCollectionGetCount(Context->ClientConnections);
+    itemCount = WdfCollectionGetCount(Context->Header.ClientConnections);
 
     for (index = 0; index < itemCount; index++)
     {
-        currentItem = WdfCollectionGetItem(Context->ClientConnections, index);
+        currentItem = WdfCollectionGetItem(Context->Header.ClientConnections, index);
         connection = GetClientConnection(currentItem);
 
         if (connection->RemoteAddress == RemoteAddress)
@@ -300,7 +300,7 @@ ClientConnections_RetrieveByBthAddr(
         }
     }
 
-    WdfSpinLockRelease(Context->ClientConnectionsLock);
+    WdfWaitLockRelease(Context->Header.ClientConnectionsLock);
 
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CONNECTION, "%!FUNC! Exit (%!STATUS!)", status);
 

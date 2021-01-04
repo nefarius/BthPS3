@@ -341,9 +341,9 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
     // 
     // At this stage nobody is updating the connection list so no locking required
     // 
-    while ((currentItem = WdfCollectionGetFirstItem(devCtx->ClientConnections)) != NULL)
+    while ((currentItem = WdfCollectionGetFirstItem(devCtx->Header.ClientConnections)) != NULL)
     {
-        WdfCollectionRemoveItem(devCtx->ClientConnections, 0);
+        WdfCollectionRemoveItem(devCtx->Header.ClientConnections, 0);
         connection = GetClientConnection(currentItem);
 
         //

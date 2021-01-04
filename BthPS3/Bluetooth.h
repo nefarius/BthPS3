@@ -77,6 +77,17 @@ typedef struct _BTHPS3_DEVICE_CONTEXT_HEADER
 	//
 	WDFREQUEST HostInitRequest;
 
+	//
+	// Collection of state information about 
+	// currently established connections
+	// 
+	WDFCOLLECTION ClientConnections;
+
+	//
+	// Lock for ClientConnections collection
+	// 
+	WDFWAITLOCK ClientConnectionsLock;
+
 } BTHPS3_DEVICE_CONTEXT_HEADER, * PBTHPS3_DEVICE_CONTEXT_HEADER;
 
 typedef struct _BTHPS3_SERVER_CONTEXT
@@ -109,17 +120,6 @@ typedef struct _BTHPS3_SERVER_CONTEXT
 	// synchronized.
 	//
 	struct _BRB RegisterUnregisterBrb;
-
-	//
-	// Collection of state information about 
-	// currently established connections
-	// 
-	WDFCOLLECTION ClientConnections;
-
-	//
-	// Lock for ClientConnections collection
-	// 
-	WDFSPINLOCK ClientConnectionsLock;
 
 	struct
 	{

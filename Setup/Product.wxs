@@ -133,10 +133,7 @@
     <!-- use minimalistic UI with EULA approval -->
     <UIRef Id="WixUI_Minimal" />
 
-    <Directory Id="ProgramMenuFolder">
-      <Directory Id="ApplicationProgramsFolder" Name="BthPS3"/>
-    </Directory>
-
+    <!-- start menu shortcuts -->
     <DirectoryRef Id="ApplicationProgramsFolder">
       <Component Id="ApplicationShortcut" Guid="DFAD166B-DDDB-4C97-BDD0-D7C5F030D937">
         <Shortcut Id="ApplicationStartMenuShortcut" 
@@ -161,6 +158,9 @@
         <Directory Id="NSS" Name="Nefarius Software Solutions">
           <Directory Id="INSTALLFOLDER" Name="BthPS3 Bluetooth Drivers" />
         </Directory>
+      </Directory>
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="BthPS3"/>
       </Directory>
     </Directory>
   </Fragment>

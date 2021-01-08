@@ -25,7 +25,7 @@ The solution consists of the following individual projects:
 This solution contains **BSD-3-Clause** and **MIT** licensed components:
 
 - Drivers (BthPS3.sys, BthPS3PSM.sys) - **BSD-3-Clause**
-- [Setup](/Setup) (Advanced Installer project and assets) - **BSD-3-Clause**
+- [Setup](/Setup) (WiX project and assets) - **BSD-3-Clause**
 - User-land utilities (BthPS3Util.exe, BthPS3CfgUI.exe) - **MIT**
 
 For details, please consult the individual `LICENSE` files.

@@ -51,6 +51,8 @@ EXTERN_C_START
 // 
 #define G_SymbolicLinkName  L"SymbolicLinkName"
 
+#define MAX_DEVICE_ID_LEN   200
+
 #pragma endregion
 
 //
@@ -112,5 +114,8 @@ BthPS3PSM_CreateDevice(
 
 EVT_WDF_DEVICE_CONTEXT_CLEANUP BthPS3PSM_EvtDeviceContextCleanup;
 EVT_WDF_DEVICE_PREPARE_HARDWARE BthPS3PSM_EvtDevicePrepareHardware;
+
+NTSTATUS BthPS3PSM_IsVirtualRootDevice(PWDFDEVICE_INIT DeviceInit, PBOOLEAN Result);
+NTSTATUS BthPS3PSM_IsBthUsbDevice(PWDFDEVICE_INIT DeviceInit, PBOOLEAN Result);
 
 EXTERN_C_END

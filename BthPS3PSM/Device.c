@@ -74,10 +74,9 @@ BthPS3PSM_CreateDevice(
     PDEVICE_CONTEXT                 deviceContext;
     WDFKEY                          key;
     WDF_OBJECT_ATTRIBUTES           stringAttribs;
-    PWCHAR                          propertyBuffer;
-    ULONG                           propertyBufferSize;
     BOOLEAN                         isUsb = FALSE, isSystem = FALSE;
     WDF_DEVICE_STATE                deviceState;
+	BOOLEAN							ret;
 
     DECLARE_CONST_UNICODE_STRING(patchPSMRegValue, G_PatchPSMRegValue);
     DECLARE_CONST_UNICODE_STRING(linkNameRegValue, G_SymbolicLinkName);
@@ -85,64 +84,34 @@ BthPS3PSM_CreateDevice(
 
     PAGED_CODE();
 
-    //
-    // Allocate buffer holding enumerator name
-    // 
-    propertyBuffer = ExAllocatePoolWithTag(
-        NonPagedPoolNx,
-        BTHPS3PSM_DEVICE_PROPERTY_LENGTH,
-        BTHPS3PSM_POOL_TAG
-    );
-
-    //
-    // Query for enumerator name before continuing 
-    // 
-    if (propertyBuffer && NT_SUCCESS(IoGetDeviceProperty(
-        WdfFdoInitWdmGetPhysicalDevice(DeviceInit),
-        DevicePropertyEnumeratorName,
-        BTHPS3PSM_DEVICE_PROPERTY_LENGTH,
-        (PVOID)propertyBuffer,
-        &propertyBufferSize
-    )))
+    if (NT_SUCCESS(BthPS3PSM_IsVirtualRootDevice(DeviceInit, &ret)) && ret)
     {
-        TraceEvents(TRACE_LEVEL_VERBOSE,
-            TRACE_QUEUE,
-            "++ DevicePropertyEnumeratorName: %ws",
-            propertyBuffer
+    	TraceEvents(TRACE_LEVEL_VERBOSE,
+            TRACE_DEVICE,
+            "Device is virtual root device"
         );
-
-        if (0 == _wcsicmp(propertyBuffer, BTHPS3PSM_USB_ENUMERATOR_NAME))
-        {
-	        isUsb = TRUE;
-        }
-        else if (0 == _wcsicmp(propertyBuffer, BTHPS3PSM_SYSTEM_ENUMERATOR_NAME))
-        {
-	        isSystem = TRUE;
-        }
+	    isSystem = TRUE;
+    }
+    else if (NT_SUCCESS(BthPS3PSM_IsBthUsbDevice(DeviceInit, &ret)) && ret)
+    {
+    	TraceEvents(TRACE_LEVEL_VERBOSE,
+            TRACE_DEVICE,
+            "Device is USB Bluetooth device"
+        );
+	    isUsb = TRUE;
     }
     else
     {
-        TraceEvents(TRACE_LEVEL_ERROR,
+	    TraceEvents(TRACE_LEVEL_WARNING,
             TRACE_DEVICE,
-            "Failed to retreive enumerator name, aborting initialization"
+            "Unsupported device type, aborting initialization"
         );
-    }
-
-    //
-    // Free buffer
-    // 
-    if (propertyBuffer) {
-        ExFreePoolWithTag(propertyBuffer, BTHPS3PSM_POOL_TAG);
     }
 
     //
     // Don't create a device object and return
     // 
     if (!isUsb && !isSystem) {
-    	TraceEvents(TRACE_LEVEL_WARNING,
-            TRACE_DEVICE,
-            "Unsupported enumerator, aborting initialization"
-        );
         return STATUS_SUCCESS;
     }
 
@@ -321,7 +290,7 @@ BthPS3PSM_CreateDevice(
         status = BthPS3PSM_CreateControlDevice(device);
         if (!NT_SUCCESS(status)) {
             TraceEvents(TRACE_LEVEL_ERROR,
-                TRACE_QUEUE,
+                TRACE_DEVICE,
                 "BthPS3PSM_CreateControlDevice failed with status %!STATUS!",
                 status
             );
@@ -340,6 +309,114 @@ BthPS3PSM_CreateDevice(
     }
 
     return status;
+}
+
+NTSTATUS BthPS3PSM_IsVirtualRootDevice(PWDFDEVICE_INIT DeviceInit, PBOOLEAN Result)
+{
+    NTSTATUS status;
+	WCHAR enumeratorName[MAX_DEVICE_ID_LEN];
+	WCHAR hardwareID[MAX_DEVICE_ID_LEN];
+	WCHAR className[MAX_DEVICE_ID_LEN];
+	ULONG returnSize;
+	UNICODE_STRING lhsEnumeratorName, lhsHardwareID, lhsClassName;
+	UNICODE_STRING rhsEnumeratorName, rhsHardwareID, rhsClassName;
+
+	RtlInitUnicodeString(&rhsEnumeratorName, L"ROOT");
+	RtlInitUnicodeString(&rhsHardwareID, BTHPS3PSM_FILTER_HARDWARE_ID);
+	RtlInitUnicodeString(&rhsClassName, L"System");
+	
+	status = WdfFdoInitQueryProperty(
+		DeviceInit,
+		DevicePropertyEnumeratorName,
+		sizeof(enumeratorName),
+		enumeratorName,
+		&returnSize
+	);
+	if (!NT_SUCCESS(status))
+	{
+		return status;
+	}
+
+	status = WdfFdoInitQueryProperty(
+		DeviceInit,
+		DevicePropertyHardwareID,
+		sizeof(hardwareID),
+		hardwareID,
+		&returnSize
+	);
+	if (!NT_SUCCESS(status))
+	{
+		return status;
+	}
+
+	status = WdfFdoInitQueryProperty(
+		DeviceInit,
+		DevicePropertyClassName,
+		sizeof(className),
+		className,
+		&returnSize
+	);
+	if (!NT_SUCCESS(status))
+	{
+		return status;
+	}
+
+	RtlInitUnicodeString(&lhsEnumeratorName, enumeratorName);
+	RtlInitUnicodeString(&lhsHardwareID, hardwareID);
+	RtlInitUnicodeString(&lhsClassName, className);
+
+	if (Result)
+		*Result = ((RtlCompareUnicodeString(&lhsEnumeratorName, &rhsEnumeratorName, TRUE) == 0)
+			&& (RtlCompareUnicodeString(&lhsHardwareID, &rhsHardwareID, TRUE) == 0)
+			&& (RtlCompareUnicodeString(&lhsClassName, &rhsClassName, TRUE) == 0));
+
+	return status;
+}
+
+NTSTATUS BthPS3PSM_IsBthUsbDevice(PWDFDEVICE_INIT DeviceInit, PBOOLEAN Result)
+{
+    NTSTATUS status;
+	WCHAR enumeratorName[MAX_DEVICE_ID_LEN];
+	WCHAR className[MAX_DEVICE_ID_LEN];
+	ULONG returnSize;
+	UNICODE_STRING lhsEnumeratorName, lhsClassName;
+	UNICODE_STRING rhsEnumeratorName, rhsClassName;
+
+	RtlInitUnicodeString(&rhsEnumeratorName, L"USB");
+	RtlInitUnicodeString(&rhsClassName, L"Bluetooth");
+	
+	status = WdfFdoInitQueryProperty(
+		DeviceInit,
+		DevicePropertyEnumeratorName,
+		sizeof(enumeratorName),
+		enumeratorName,
+		&returnSize
+	);
+	if (!NT_SUCCESS(status))
+	{
+		return status;
+	}
+
+	status = WdfFdoInitQueryProperty(
+		DeviceInit,
+		DevicePropertyClassName,
+		sizeof(className),
+		className,
+		&returnSize
+	);
+	if (!NT_SUCCESS(status))
+	{
+		return status;
+	}
+
+	RtlInitUnicodeString(&lhsEnumeratorName, enumeratorName);
+	RtlInitUnicodeString(&lhsClassName, className);
+
+	if (Result)
+		*Result = ((RtlCompareUnicodeString(&lhsEnumeratorName, &rhsEnumeratorName, TRUE) == 0)
+			&& (RtlCompareUnicodeString(&lhsClassName, &rhsClassName, TRUE) == 0));
+
+	return status;
 }
 
 //

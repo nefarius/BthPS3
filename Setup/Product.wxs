@@ -92,6 +92,7 @@
     <Feature Id="ProductFeature" Title="Nefarius BthPS3 Bluetooth Drivers" Level="1">
       <ComponentGroupRef Id="ProductComponents" />
       <ComponentRef Id="RegistryEntries" />
+      <ComponentRef Id="ApplicationShortcut" />
     </Feature>
 
     <!-- run install code -->
@@ -131,6 +132,24 @@
 
     <!-- use minimalistic UI with EULA approval -->
     <UIRef Id="WixUI_Minimal" />
+
+    <Directory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="BthPS3"/>
+    </Directory>
+
+    <DirectoryRef Id="ApplicationProgramsFolder">
+      <Component Id="ApplicationShortcut" Guid="DFAD166B-DDDB-4C97-BDD0-D7C5F030D937">
+        <Shortcut Id="ApplicationStartMenuShortcut" 
+                  Name="BthPS3 Driver Configuration Tool"
+                  Description="BthPS3 Driver Configuration Tool"
+                  Target="[#BthPS3CfgUI.exe]"
+                  WorkingDirectory="APPLICATIONROOTDIRECTORY"/>
+        <RemoveFolder Id="CleanUpShortCut" Directory="ApplicationProgramsFolder" On="uninstall"/>
+        <RegistryValue Root="HKCU" 
+                       Key="SOFTWARE\Nefarius Software Solutions e.U.\BthPS3 Bluetooth Drivers" 
+                       Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+      </Component>
+    </DirectoryRef>
 
   </Product>
 

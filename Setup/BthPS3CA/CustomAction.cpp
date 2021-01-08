@@ -197,7 +197,29 @@ UINT __stdcall UninstallDrivers(
 
 	(void)MsiGetProperty(hInstall, L"CustomActionData", targetPath, &length);
 
-	MessageBox(NULL, targetPath, L"Path", MB_OK);
+	WcaLog(LOGMSG_STANDARD, "Disabling profile service for BTHENUM.");
+	if (!bthps3::bluetooth::disable_service())
+	{
+		ExitOnLastError(hr, "Failed to disable profile service for BTHENUM, error: %s",
+		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
+	}
+	WcaLog(LOGMSG_STANDARD, "Profile service for BTHENUM disabled.");
+	
+	WcaLog(LOGMSG_STANDARD, "Removing BthPS3PSM from Bluetooth class filters.");
+	if (!devcon::remove_device_class_lower_filter(&GUID_DEVCLASS_BLUETOOTH, BthPS3FilterName))
+	{
+		ExitOnLastError(hr, "Failed to remove BthPS3PSM from class filters, error: %s",
+		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
+	}
+	WcaLog(LOGMSG_STANDARD, "BthPS3PSM removed from Bluetooth class filters.");
+	
+	WcaLog(LOGMSG_STANDARD, "Restarting host radio.");
+	if (!devcon::restart_bth_usb_device())
+	{
+		ExitOnLastError(hr, "Failed to restart host radio, error: %s",
+		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
+	}
+	WcaLog(LOGMSG_STANDARD, "Restarted host radio.");
 	
 LExit:
 	er = SUCCEEDED(hr) ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;

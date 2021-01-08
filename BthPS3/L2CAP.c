@@ -425,16 +425,16 @@ L2CAP_PS3_ControlConnectResponseCompleted(
     // 
     if (NT_SUCCESS(status))
     {
-        WdfSpinLockAcquire(clientConnection->HidControlChannel.ConnectionStateLock);
+	    ExAcquireFastMutex(&clientConnection->HidControlChannel.ConnectionStateLock);
+	    {
+		    clientConnection->HidControlChannel.ConnectionState = ConnectionStateConnected;
 
-        clientConnection->HidControlChannel.ConnectionState = ConnectionStateConnected;
-
-        //
-        // This will be set again once disconnect has occurred
-        // 
-        //KeClearEvent(&clientConnection->HidControlChannel.DisconnectEvent);
-
-        WdfSpinLockRelease(clientConnection->HidControlChannel.ConnectionStateLock);
+		    //
+		    // This will be set again once disconnect has occurred
+		    // 
+		    //KeClearEvent(&clientConnection->HidControlChannel.DisconnectEvent);
+	    }
+	    ExReleaseFastMutex(&clientConnection->HidControlChannel.ConnectionStateLock);
 
         TraceEvents(TRACE_LEVEL_INFORMATION,
             TRACE_L2CAP,
@@ -492,16 +492,16 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
     // 
     if (NT_SUCCESS(status))
     {
-        WdfSpinLockAcquire(clientConnection->HidInterruptChannel.ConnectionStateLock);
+	    ExAcquireFastMutex(&clientConnection->HidInterruptChannel.ConnectionStateLock);
+	    {
+		    clientConnection->HidInterruptChannel.ConnectionState = ConnectionStateConnected;
 
-        clientConnection->HidInterruptChannel.ConnectionState = ConnectionStateConnected;
-
-        //
-        // This will be set again once disconnect has occurred
-        // 
-        //KeClearEvent(&clientConnection->HidInterruptChannel.DisconnectEvent);
-
-        WdfSpinLockRelease(clientConnection->HidInterruptChannel.ConnectionStateLock);
+		    //
+		    // This will be set again once disconnect has occurred
+		    // 
+		    //KeClearEvent(&clientConnection->HidInterruptChannel.DisconnectEvent);
+	    }
+	    ExReleaseFastMutex(&clientConnection->HidInterruptChannel.ConnectionStateLock);
 
         TraceEvents(TRACE_LEVEL_INFORMATION,
             TRACE_L2CAP,
@@ -511,9 +511,9 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
         //
         // Control channel is expected to be established by now
         // 
-        WdfSpinLockAcquire(clientConnection->HidControlChannel.ConnectionStateLock);
+        ExAcquireFastMutex(&clientConnection->HidControlChannel.ConnectionStateLock);
         controlState = clientConnection->HidInterruptChannel.ConnectionState;
-        WdfSpinLockRelease(clientConnection->HidControlChannel.ConnectionStateLock);
+        ExReleaseFastMutex(&clientConnection->HidControlChannel.ConnectionStateLock);
 
         if (controlState != ConnectionStateConnected)
         {
@@ -948,7 +948,7 @@ L2CAP_PS3_RemoteDisconnect(
 {
     struct _BRB_L2CA_CLOSE_CHANNEL* disconnectBrb = NULL;
 
-    WdfSpinLockAcquire(Channel->ConnectionStateLock);
+    ExAcquireFastMutex(&Channel->ConnectionStateLock);
 
     if (Channel->ConnectionState == ConnectionStateConnecting)
     {
@@ -967,7 +967,7 @@ L2CAP_PS3_RemoteDisconnect(
         //
         KeClearEvent(&Channel->DisconnectEvent);
 
-        WdfSpinLockRelease(Channel->ConnectionStateLock);
+        ExReleaseFastMutex(&Channel->ConnectionStateLock);
         return TRUE;
     }
 
@@ -977,12 +977,12 @@ L2CAP_PS3_RemoteDisconnect(
         // Do nothing if we are not connected
         //
 
-        WdfSpinLockRelease(Channel->ConnectionStateLock);
+        ExReleaseFastMutex(&Channel->ConnectionStateLock);
         return FALSE;
     }
 
     Channel->ConnectionState = ConnectionStateDisconnecting;
-    WdfSpinLockRelease(Channel->ConnectionStateLock);
+    ExReleaseFastMutex(&Channel->ConnectionStateLock);
 
     //
     // We are now sending the disconnect, so clear the event.
@@ -1036,9 +1036,9 @@ L2CAP_PS3_ChannelDisconnectCompleted(
     TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry (%!STATUS!)",
         Params->IoStatus.Status);
 
-    WdfSpinLockAcquire(channel->ConnectionStateLock);
+    ExAcquireFastMutex(&channel->ConnectionStateLock);
     channel->ConnectionState = ConnectionStateDisconnected;
-    WdfSpinLockRelease(channel->ConnectionStateLock);
+    ExReleaseFastMutex(&channel->ConnectionStateLock);
 
     //
     // Disconnect complete, set the event

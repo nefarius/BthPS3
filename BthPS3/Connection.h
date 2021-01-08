@@ -62,7 +62,7 @@ typedef struct _BTHPS3_CLIENT_L2CAP_CHANNEL
 {
     BTHPS3_CONNECTION_STATE     ConnectionState;
 
-    WDFSPINLOCK                 ConnectionStateLock;
+    FAST_MUTEX					ConnectionStateLock;
 
     L2CAP_CHANNEL_HANDLE        ChannelHandle;
 

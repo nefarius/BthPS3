@@ -9,6 +9,7 @@
 #include <tchar.h>
 #include <devguid.h>
 #include <newdev.h>
+#include <Shlwapi.h>
 
 //
 // STL
@@ -738,7 +739,7 @@ bool devcon::uninstall_device_and_driver(const GUID* classGuid, const std::wstri
         // 
         for (p = buffer; *p && (p < &buffer[buffersize]); p += lstrlenW(p) + sizeof(TCHAR))
         {
-	        if (!wcscmp(hardwareId.c_str(), p))
+	        if (StrStrI(p, hardwareId.c_str()))
 	        {
 		        succeeded = ::uninstall_device_and_driver(hDevInfo, &spDevInfoData, rebootRequired);
 		        err = GetLastError();
@@ -748,12 +749,6 @@ bool devcon::uninstall_device_and_driver(const GUID* classGuid, const std::wstri
 
         if (buffer)
 	        LocalFree(buffer);
-
-        if (!succeeded)
-        {
-	        SetLastError(err);
-	        break;
-        }
     }
 
 cleanup_DeviceInfo:

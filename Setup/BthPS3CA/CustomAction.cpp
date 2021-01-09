@@ -69,7 +69,7 @@ UINT __stdcall InstallDrivers(
 
 	WcaLog(LOGMSG_STANDARD, "Initialized.");
 
-	bool rebootRequired = false;
+	bool rr1 = false, rr2 = false, rr3 = false;
 	WCHAR targetPath[PATHCCH_MAX_CCH * sizeof(WCHAR)];
 	DWORD length = ARRAYSIZE(targetPath);
 
@@ -81,7 +81,7 @@ UINT __stdcall InstallDrivers(
 
 	
 	WcaLog(LOGMSG_STANDARD, "Installing BthPS3PSM filter driver in driver store.");
-	if (!devcon::install_driver(filterInfPath, &rebootRequired))
+	if (!devcon::install_driver(filterInfPath, &rr1))
 	{
 		ExitOnLastError(hr, "Failed to install BthPS3PSM filter driver in driver store, error: %s",
 		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
@@ -97,13 +97,12 @@ UINT __stdcall InstallDrivers(
 	WcaLog(LOGMSG_STANDARD, "Virtual hardware node for BthPS3PSM filter driver created.");
 
 	WcaLog(LOGMSG_STANDARD, "Installing BthPS3PSM filter driver on virtual hardware node.");
-	if (!devcon::install_driver(filterInfPath, &rebootRequired))
+	if (!devcon::install_driver(filterInfPath, &rr2))
 	{
 		ExitOnLastError(hr, "Failed to install BthPS3 filter driver on virtual hardware node, error: %s",
 		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
 	}
 	WcaLog(LOGMSG_STANDARD, "BthPS3 filter driver installed on virtual hardware node.");
-
 
 	WcaLog(LOGMSG_STANDARD, "Adding BthPS3PSM as Bluetooth class filters.");
 	if (!devcon::add_device_class_lower_filter(&GUID_DEVCLASS_BLUETOOTH, BthPS3FilterName))
@@ -112,25 +111,24 @@ UINT __stdcall InstallDrivers(
 		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
 	}
 	WcaLog(LOGMSG_STANDARD, "BthPS3PSM added to Bluetooth class filters.");
-
-	WcaLog(LOGMSG_STANDARD, "Restarting host radio.");
-	if (!devcon::enable_disable_bth_usb_device(false) 
-		|| !devcon::enable_disable_bth_usb_device(true))
-	{
-		ExitOnLastError(hr, "Failed to restart host radio, error: %s",
-		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
-	}
-	WcaLog(LOGMSG_STANDARD, "Restarted host radio.");
-	
 	
 	WcaLog(LOGMSG_STANDARD, "Installing BthPS3 driver in driver store.");
-	if (!devcon::install_driver(profileInfPath, &rebootRequired))
+	if (!devcon::install_driver(profileInfPath, &rr3))
 	{
 		ExitOnLastError(hr, "Failed to install BthPS3 driver in driver store, error: %s",
 		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
 	}
 	WcaLog(LOGMSG_STANDARD, "BthPS3 driver installed in driver store.");
 
+	WcaLog(LOGMSG_STANDARD, "Installing PDO NULL driver.");
+	if (!devcon::install_driver(nullInfPath, nullptr))
+	{
+		ExitOnLastError(hr, "Failed to install PDO NULL driver, error: %s",
+		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
+	}
+	WcaLog(LOGMSG_STANDARD, "PDO NULL driver installed.");
+	
+		
 	WcaLog(LOGMSG_STANDARD, "Enabling profile service for BTHENUM.");
 	if (!bthps3::bluetooth::enable_service())
 	{
@@ -139,31 +137,13 @@ UINT __stdcall InstallDrivers(
 	}
 	WcaLog(LOGMSG_STANDARD, "Profile service for BTHENUM enabled.");
 
-	WcaLog(LOGMSG_STANDARD, "Installing BthPS3 driver on BTHENUM PDO.");
-	if (!devcon::install_driver(profileInfPath, &rebootRequired))
-	{
-		ExitOnLastError(hr, "Failed to install BthPS3 driver on BTHENUM PDO, error: %s",
-		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
-	}
-	WcaLog(LOGMSG_STANDARD, "BthPS3 driver installed on BTHENUM PDO.");
 
-	WcaLog(LOGMSG_STANDARD, "Restarting host radio.");
-	if (!devcon::enable_disable_bth_usb_device(false) 
-		|| !devcon::enable_disable_bth_usb_device(true))
+	if (!bthps3::filter::enable_psm_patch()
+		|| rr1 || rr2 || rr3)
 	{
-		ExitOnLastError(hr, "Failed to restart host radio, error: %s",
-		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
+		WcaLog(LOGMSG_STANDARD, "A system reboot is required.");
+		MsiSetProperty(hInstall, L"REBOOTREQUIRED", L"1");
 	}
-	WcaLog(LOGMSG_STANDARD, "Restarted host radio.");
-
-
-	WcaLog(LOGMSG_STANDARD, "Installing PDO NULL driver.");
-	if (!devcon::install_driver(nullInfPath, &rebootRequired))
-	{
-		ExitOnLastError(hr, "Failed to install PDO NULL driver, error: %s",
-		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
-	}
-	WcaLog(LOGMSG_STANDARD, "PDO NULL driver installed.");
 	
 LExit:
 
@@ -192,35 +172,45 @@ UINT __stdcall UninstallDrivers(
 
 	WcaLog(LOGMSG_STANDARD, "Initialized.");
 
+	bool rr1 = false, rr2 = false;
 	WCHAR targetPath[MAX_PATH * sizeof(WCHAR)];
 	DWORD length = ARRAYSIZE(targetPath);
 
 	(void)MsiGetProperty(hInstall, L"CustomActionData", targetPath, &length);
 
-	WcaLog(LOGMSG_STANDARD, "Disabling profile service for BTHENUM.");
-	if (!bthps3::bluetooth::disable_service())
-	{
-		ExitOnLastError(hr, "Failed to disable profile service for BTHENUM, error: %s",
-		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
-	}
-	WcaLog(LOGMSG_STANDARD, "Profile service for BTHENUM disabled.");
-	
+
 	WcaLog(LOGMSG_STANDARD, "Removing BthPS3PSM from Bluetooth class filters.");
-	if (!devcon::remove_device_class_lower_filter(&GUID_DEVCLASS_BLUETOOTH, BthPS3FilterName))
-	{
-		ExitOnLastError(hr, "Failed to remove BthPS3PSM from class filters, error: %s",
-		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
-	}
+	(void)devcon::remove_device_class_lower_filter(&GUID_DEVCLASS_BLUETOOTH, BthPS3FilterName);
 	WcaLog(LOGMSG_STANDARD, "BthPS3PSM removed from Bluetooth class filters.");
+
+
+	WcaLog(LOGMSG_STANDARD, "Uninstalling BthPS3PSM filter driver.");
+	(void)devcon::uninstall_device_and_driver(
+		&GUID_DEVCLASS_SYSTEM,
+		BTHPS3PSM_FILTER_HARDWARE_ID,
+		&rr1
+	);
+	WcaLog(LOGMSG_STANDARD, "BthPS3PSM filter driver removed.");
+
+	WcaLog(LOGMSG_STANDARD, "Uninstalling BthPS3 driver.");
+	(void)devcon::uninstall_device_and_driver(
+		&GUID_DEVCLASS_BLUETOOTH,
+		L"BTHENUM\\{1cb831ea-79cd-4508-b0fc-85f7c85ae8e0}",
+		&rr2
+	);
+	WcaLog(LOGMSG_STANDARD, "BthPS3 driver removed.");
 	
-	WcaLog(LOGMSG_STANDARD, "Restarting host radio.");
-	if (!devcon::enable_disable_bth_usb_device(false) 
-		|| !devcon::enable_disable_bth_usb_device(true))
+	
+	WcaLog(LOGMSG_STANDARD, "Disabling profile service for BTHENUM.");
+	(void)bthps3::bluetooth::disable_service();
+	WcaLog(LOGMSG_STANDARD, "Profile service for BTHENUM disabled.");
+
+
+	if (rr1 || rr2)
 	{
-		ExitOnLastError(hr, "Failed to restart host radio, error: %s",
-		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
+		WcaLog(LOGMSG_STANDARD, "A system reboot is required.");
+		MsiSetProperty(hInstall, L"REBOOTREQUIRED", L"1");
 	}
-	WcaLog(LOGMSG_STANDARD, "Restarted host radio.");
 	
 LExit:
 	er = SUCCEEDED(hr) ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;

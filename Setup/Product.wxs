@@ -118,6 +118,9 @@
 
     <!-- custom installation and removal actions -->
     <InstallExecuteSequence>
+      <!-- can't check from custom action, always prompt reboot to be safe -->
+      <ScheduleReboot After="InstallFinalize" />
+
       <Custom Action="CheckHostRadioPresence" Before="LaunchConditions" />
       
       <Custom Action="DevconInstallPropertyAssign" Before="DevconInstall">NOT Installed AND NOT REMOVE</Custom>

@@ -142,7 +142,11 @@ UINT __stdcall InstallDrivers(
 		|| rr1 || rr2 || rr3)
 	{
 		WcaLog(LOGMSG_STANDARD, "A system reboot is required.");
-		MsiSetProperty(hInstall, L"REBOOTREQUIRED", L"1");
+		//
+		// This will fail as deferred custom actions have no access to MSI properties.
+		// Always schedule reboot in installer instead.
+		// 
+		(void)MsiSetMode(hInstall, MSIRUNMODE_REBOOTATEND, TRUE);		
 	}
 	
 LExit:

@@ -80,16 +80,6 @@ UINT __stdcall InstallDrivers(
 	PathCchCombine(&filterInfPath[0], filterInfPath.size(), targetPath, g_filterInf.c_str());
 
 	
-	WcaLog(LOGMSG_STANDARD, "Installing PDO NULL driver.");
-	if (!devcon::install_driver(nullInfPath, &rebootRequired))
-	{
-		ExitOnLastError(hr, "Failed to install PDO NULL driver, error: %s",
-		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
-	}
-	WcaLog(LOGMSG_STANDARD, "PDO NULL driver installed.");
-
-#pragma region BthPS3PSM Installation
-	
 	WcaLog(LOGMSG_STANDARD, "Installing BthPS3PSM filter driver in driver store.");
 	if (!devcon::install_driver(filterInfPath, &rebootRequired))
 	{
@@ -114,9 +104,24 @@ UINT __stdcall InstallDrivers(
 	}
 	WcaLog(LOGMSG_STANDARD, "BthPS3 filter driver installed on virtual hardware node.");
 
-#pragma endregion
 
-#pragma region BthPS3 Installation
+	WcaLog(LOGMSG_STANDARD, "Adding BthPS3PSM as Bluetooth class filters.");
+	if (!devcon::add_device_class_lower_filter(&GUID_DEVCLASS_BLUETOOTH, BthPS3FilterName))
+	{
+		ExitOnLastError(hr, "Failed to add BthPS3PSM to class filters, error: %s",
+		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
+	}
+	WcaLog(LOGMSG_STANDARD, "BthPS3PSM added to Bluetooth class filters.");
+
+	WcaLog(LOGMSG_STANDARD, "Restarting host radio.");
+	if (!devcon::enable_disable_bth_usb_device(false) 
+		|| !devcon::enable_disable_bth_usb_device(true))
+	{
+		ExitOnLastError(hr, "Failed to restart host radio, error: %s",
+		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
+	}
+	WcaLog(LOGMSG_STANDARD, "Restarted host radio.");
+	
 	
 	WcaLog(LOGMSG_STANDARD, "Installing BthPS3 driver in driver store.");
 	if (!devcon::install_driver(profileInfPath, &rebootRequired))
@@ -142,37 +147,32 @@ UINT __stdcall InstallDrivers(
 	}
 	WcaLog(LOGMSG_STANDARD, "BthPS3 driver installed on BTHENUM PDO.");
 
-#pragma endregion
-
-#pragma region Misc.
-
-	WcaLog(LOGMSG_STANDARD, "Adding BthPS3PSM as Bluetooth class filters.");
-	if (!devcon::add_device_class_lower_filter(&GUID_DEVCLASS_BLUETOOTH, BthPS3FilterName))
-	{
-		ExitOnLastError(hr, "Failed to add BthPS3PSM to class filters, error: %s",
-		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
-	}
-	WcaLog(LOGMSG_STANDARD, "BthPS3PSM added to Bluetooth class filters.");
-
 	WcaLog(LOGMSG_STANDARD, "Restarting host radio.");
-	if (!devcon::restart_bth_usb_device())
+	if (!devcon::enable_disable_bth_usb_device(false) 
+		|| !devcon::enable_disable_bth_usb_device(true))
 	{
 		ExitOnLastError(hr, "Failed to restart host radio, error: %s",
 		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
 	}
 	WcaLog(LOGMSG_STANDARD, "Restarted host radio.");
 
-	WcaLog(LOGMSG_STANDARD, "Enabling PSM patch.");
-	if (!bthps3::filter::enable_psm_patch())
+
+	WcaLog(LOGMSG_STANDARD, "Installing PDO NULL driver.");
+	if (!devcon::install_driver(nullInfPath, &rebootRequired))
 	{
-		ExitOnLastError(hr, "Failed to enable PSM patch, error: %s",
+		ExitOnLastError(hr, "Failed to install PDO NULL driver, error: %s",
 		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
 	}
-	WcaLog(LOGMSG_STANDARD, "Enabled PSM patch.");
-	
-#pragma endregion
+	WcaLog(LOGMSG_STANDARD, "PDO NULL driver installed.");
 	
 LExit:
+
+	if (FAILED(hr))
+	{
+		(void)bthps3::bluetooth::disable_service();
+		(void)devcon::remove_device_class_lower_filter(&GUID_DEVCLASS_BLUETOOTH, BthPS3FilterName);
+	}
+	
 	er = SUCCEEDED(hr) ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;
 	return WcaFinalize(er);
 }
@@ -214,7 +214,8 @@ UINT __stdcall UninstallDrivers(
 	WcaLog(LOGMSG_STANDARD, "BthPS3PSM removed from Bluetooth class filters.");
 	
 	WcaLog(LOGMSG_STANDARD, "Restarting host radio.");
-	if (!devcon::restart_bth_usb_device())
+	if (!devcon::enable_disable_bth_usb_device(false) 
+		|| !devcon::enable_disable_bth_usb_device(true))
 	{
 		ExitOnLastError(hr, "Failed to restart host radio, error: %s",
 		                winapi::GetLastErrorStdStr(Dutil_er).c_str());

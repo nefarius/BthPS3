@@ -71,13 +71,13 @@
     <CustomAction Id="CheckHostRadioPresence" 
                   BinaryKey="BthPS3CustomActions" 
                   DllEntry="CheckHostRadioPresence" 
-                  Execute="firstSequence"/>
+                  Execute="immediate"/>
 
     <!-- Custom action for upgrades -->
     <CustomAction Id="CheckOldDriverPresence" 
                   BinaryKey="BthPS3CustomActions" 
                   DllEntry="CheckOldDriverPresence" 
-                  Execute="firstSequence"/>
+                  Execute="immediate"/>
 
     <!-- can't continue if this check fails -->
     <Condition Message="Bluetooth Host Radio not found. A working Bluetooth stack is required for driver installation or removal.">
@@ -85,7 +85,7 @@
     </Condition>
 
     <Condition Message="A previous version of the driver has been found. Please uninstall them and reboot first, then run setup again.">
-      <![CDATA[FILTERNOTFOUND = "1"]]>
+      <![CDATA[Installed OR FILTERNOTFOUND = "1"]]>
     </Condition>
 
     <!-- write version value to registry -->

@@ -221,6 +221,35 @@ LExit:
 	return WcaFinalize(er);
 }
 
+UINT __stdcall CheckOldDriverPresence(
+	MSIHANDLE hInstall
+	)
+{
+	HRESULT hr = S_OK;
+	UINT er = ERROR_SUCCESS;
+
+	hr = WcaInitialize(hInstall, "CheckHostRadioPresence");
+	ExitOnFailure(hr, "Failed to initialize");
+
+	WcaLog(LOGMSG_STANDARD, "Initialized.");
+
+	BTHPS3PSM_GET_PSM_PATCHING req;
+
+	if (bthps3::filter::get_psm_patch(&req))
+	{
+		MsiSetProperty(hInstall, L"OLDDRIVER", L"1");
+		WcaLog(LOGMSG_STANDARD, "Existing driver found.");
+	}
+	else
+	{
+		WcaLog(LOGMSG_STANDARD, "No existing driver found.");
+	}
+		
+LExit:
+	er = SUCCEEDED(hr) ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;
+	return WcaFinalize(er);
+}
+
 
 // DllMain - Initialize and cleanup WiX custom action utils.
 extern "C" BOOL WINAPI DllMain(

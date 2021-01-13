@@ -119,8 +119,20 @@ ClientConnections_CreateAndInsert(
     WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
     attributes.ParentObject = connectionObject;
 
-    ExInitializeFastMutex(&connectionCtx->HidControlChannel.ConnectionStateLock);
-	
+    status = WdfSpinLockCreate(
+        &attributes,
+        &connectionCtx->HidControlChannel.ConnectionStateLock
+    );
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_CONNECTION,
+            "WdfSpinLockCreate for HidControlChannel failed with status %!STATUS!",
+            status
+        );
+
+        goto exitFailure;
+    }
+
     connectionCtx->HidControlChannel.ConnectionState = ConnectionStateInitialized;
 
     //
@@ -153,8 +165,20 @@ ClientConnections_CreateAndInsert(
     WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
     attributes.ParentObject = connectionObject;
 
-    ExInitializeFastMutex(&connectionCtx->HidInterruptChannel.ConnectionStateLock);
-	
+    status = WdfSpinLockCreate(
+        &attributes,
+        &connectionCtx->HidInterruptChannel.ConnectionStateLock
+    );
+    if (!NT_SUCCESS(status)) {
+        TraceEvents(TRACE_LEVEL_ERROR,
+            TRACE_CONNECTION,
+            "WdfSpinLockCreate for HidInterruptChannel failed with status %!STATUS!",
+            status
+        );
+
+        goto exitFailure;
+    }
+
     connectionCtx->HidInterruptChannel.ConnectionState = ConnectionStateInitialized;
 
     //

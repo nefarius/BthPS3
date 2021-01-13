@@ -228,21 +228,19 @@ UINT __stdcall CheckOldDriverPresence(
 	HRESULT hr = S_OK;
 	UINT er = ERROR_SUCCESS;
 
-	hr = WcaInitialize(hInstall, "CheckHostRadioPresence");
+	hr = WcaInitialize(hInstall, "CheckOldDriverPresence");
 	ExitOnFailure(hr, "Failed to initialize");
 
 	WcaLog(LOGMSG_STANDARD, "Initialized.");
-
-	BTHPS3PSM_GET_PSM_PATCHING req;
-
-	if (bthps3::filter::get_psm_patch(&req))
+	
+	if (bthps3::filter::is_present())
 	{
-		MsiSetProperty(hInstall, L"OLDDRIVER", L"1");
 		WcaLog(LOGMSG_STANDARD, "Existing driver found.");
 	}
 	else
 	{
 		WcaLog(LOGMSG_STANDARD, "No existing driver found.");
+		MsiSetProperty(hInstall, L"FILTERNOTFOUND", L"1");
 	}
 		
 LExit:

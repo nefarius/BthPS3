@@ -385,3 +385,30 @@ bool bthps3::filter::get_psm_patch(PBTHPS3PSM_GET_PSM_PATCHING request, DWORD de
 
 	return ret > 0;
 }
+
+bool bthps3::filter::is_present()
+{
+	const auto hDevice = CreateFile(
+		BTHPS3PSM_CONTROL_DEVICE_PATH,
+		GENERIC_READ | GENERIC_WRITE,
+		FILE_SHARE_READ | FILE_SHARE_WRITE,
+		nullptr,
+		OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL,
+		nullptr
+	);
+
+	const auto error = GetLastError();
+	
+	if (hDevice)
+	{
+		CloseHandle(hDevice);
+	}
+
+	if (error == ERROR_SUCCESS || error == ERROR_ACCESS_DENIED)
+	{
+		return true;
+	}
+	
+	return false;
+}

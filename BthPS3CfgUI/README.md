@@ -2,7 +2,7 @@
 
 ## About
 
-Work in progress.
+Simple .NET WPF application to alter driver registry settings in a safe controlled way.
 
 ## Screenshots
 

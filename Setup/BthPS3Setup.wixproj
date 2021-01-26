@@ -6,7 +6,7 @@
     <ProductVersion>3.10</ProductVersion>
     <ProjectGuid>fb0c187d-63cc-45b4-bda9-0ebdbe2ab266</ProjectGuid>
     <SchemaVersion>2.0</SchemaVersion>
-    <OutputName>BthPS3Setup</OutputName>
+    <OutputName>BthPS3Setup_$(Platform)</OutputName>
     <OutputType>Package</OutputType>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">

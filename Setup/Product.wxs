@@ -190,16 +190,16 @@
         <File Name="BthPS3.sys" Source="$(var.ProjectDir)drivers\BthPS3_$(var.ArchDir)\BthPS3.sys" />
         <File Name="BthPS3.inf" Source="$(var.ProjectDir)drivers\BthPS3_$(var.ArchDir)\BthPS3.inf" />
         <File Name="BthPS3.cat" Source="$(var.ProjectDir)drivers\BthPS3_$(var.ArchDir)\BthPS3.cat" />
-        <File Name="BthPS3.pdb" Source="$(var.ProjectDir)drivers\BthPS3_$(var.ArchDir)\BthPS3.pdb" />
+        <File Name="BthPS3.pdb" Source="$(var.SolutionDir)artifacts\bin\$(var.ArchDir)\BthPS3.pdb" />
         <File Name="BthPS3PSM.sys" Source="$(var.ProjectDir)drivers\BthPS3PSM_$(var.ArchDir)\BthPS3PSM.sys" />
         <File Name="BthPS3PSM.inf" Source="$(var.ProjectDir)drivers\BthPS3PSM_$(var.ArchDir)\BthPS3PSM.inf" />
         <File Name="BthPS3PSM.cat" Source="$(var.ProjectDir)drivers\BthPS3PSM_$(var.ArchDir)\BthPS3PSM.cat" />
-        <File Name="BthPS3PSM.pdb" Source="$(var.ProjectDir)drivers\BthPS3PSM_$(var.ArchDir)\BthPS3PSM.pdb" />
+        <File Name="BthPS3PSM.pdb" Source="$(var.SolutionDir)artifacts\bin\$(var.ArchDir)\BthPS3PSM.pdb" />
         <File Name="bthps3_pdo_null_device.cat" Source="$(var.ProjectDir)drivers\BthPS3_$(var.ArchDir)\bthps3_pdo_null_device.cat" />
         <File Name="BthPS3_PDO_NULL_Device.inf" Source="$(var.ProjectDir)drivers\BthPS3_$(var.ArchDir)\BthPS3_PDO_NULL_Device.inf" />
         <File Name="WdfCoinstaller01011.dll" Source="$(var.ProjectDir)drivers\BthPS3_$(var.ArchDir)\WdfCoinstaller01011.dll" />
-        <File Name="BthPS3Util.exe" Source="$(var.SolutionDir)artifacts\$(var.ArchDir)\BthPS3Util.exe" />
-        <File Name="BthPS3CfgUI.exe" Source="$(var.SolutionDir)artifacts\BthPS3CfgUI.exe" />
+        <File Name="BthPS3Util.exe" Source="$(var.SolutionDir)artifacts\bin\$(var.ArchDir)\BthPS3Util.exe" />
+        <File Name="BthPS3CfgUI.exe" Source="$(var.SolutionDir)artifacts\bin\BthPS3CfgUI.exe" />
         <File Name="LICENSE" Source="$(var.SolutionDir)\LICENSE" />
         <?else ?>
         <!-- CI build -->

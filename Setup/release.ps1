@@ -111,6 +111,11 @@ Get-AppVeyorArtifacts -Account "nefarius" -Project "BthPS3" -Path $Path -Token $
 # Download x86 binaries
 Get-AppVeyorArtifacts -Account "nefarius" -Project "BthPS3" -Path $Path -Token $Token -Branch $BuildVersion -JobName "Platform: x86"
 
+# Update setup version variable
+$setupProject = ".\Product.wxs"
+$regex = '(?<=<\?define VERSION = ")[^"]*'
+(Get-Content $setupProject) -replace $regex, $SetupVersion | Set-Content $setupProject -Encoding UTF8
+
 $signTool = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64\signtool.exe"
 $crossCert = "C:\Program Files (x86)\Windows Kits\10\CrossCertificates\DigiCert_High_Assurance_EV_Root_CA.crt"
 $certName = "Nefarius Software Solutions e.U."

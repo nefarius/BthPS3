@@ -6,7 +6,9 @@ Param(
     [Parameter(Mandatory=$true)]
     [string]$Token,
     [Parameter(Mandatory=$false)]
-    [string]$Path
+    [string]$Path,
+    [Parameter(Mandatory=$false)]
+    [Switch]$NoSigning
 ) #end param
 
 if ([string]::IsNullOrWhiteSpace($Path))
@@ -132,4 +134,6 @@ $files = "`"..\artifacts\bin\*.exe`" " +
          "`".\drivers\BthPS3PSM_x64\*.sys`" " +
          "`".\drivers\BthPS3PSM_x86\*.sys`" "
 
-Invoke-Expression "& `"$signTool`" sign /v /as /ac `"$crossCert`" /n `"$certName`" /tr http://timestamp.digicert.com /fd sha256 /td sha256 $files"
+if ($NoSigning -eq $false) {
+    Invoke-Expression "& `"$signTool`" sign /v /as /ac `"$crossCert`" /n `"$certName`" /tr http://timestamp.digicert.com /fd sha256 /td sha256 $files"
+}

@@ -215,337 +215,339 @@ BthPS3_EvtWdfChildListCreateDevice(
 		return status;
 	}
 
+	do {
+
 #pragma region Raw PDO properties
 
-	if (rawPdo)
-	{
-		//
-		// Assign RAW PDO Device Class GUID depending on device type
-		// 
-		// In raw device mode, user-land applications can talk to our
-		// PDO as well with no function driver attached.
-		// 
-		switch (pDesc->ClientConnection->DeviceType)
+		if (rawPdo)
 		{
-		case DS_DEVICE_TYPE_SIXAXIS:
-			status = WdfPdoInitAssignRawDevice(ChildInit,
-				&GUID_DEVCLASS_BTHPS3_SIXAXIS
+			//
+			// Assign RAW PDO Device Class GUID depending on device type
+			// 
+			// In raw device mode, user-land applications can talk to our
+			// PDO as well with no function driver attached.
+			// 
+			switch (pDesc->ClientConnection->DeviceType)
+			{
+			case DS_DEVICE_TYPE_SIXAXIS:
+				status = WdfPdoInitAssignRawDevice(ChildInit,
+					&GUID_DEVCLASS_BTHPS3_SIXAXIS
+				);
+				break;
+			case DS_DEVICE_TYPE_NAVIGATION:
+				status = WdfPdoInitAssignRawDevice(ChildInit,
+					&GUID_DEVCLASS_BTHPS3_NAVIGATION
+				);
+				break;
+			case DS_DEVICE_TYPE_MOTION:
+				status = WdfPdoInitAssignRawDevice(ChildInit,
+					&GUID_DEVCLASS_BTHPS3_MOTION
+				);
+				break;
+			case DS_DEVICE_TYPE_WIRELESS:
+				status = WdfPdoInitAssignRawDevice(ChildInit,
+					&GUID_DEVCLASS_BTHPS3_WIRELESS
+				);
+				break;
+			default:
+				// Doesn't happen
+				break;
+			}
+
+			if (!NT_SUCCESS(status))
+			{
+				TraceEvents(TRACE_LEVEL_ERROR,
+					TRACE_BUSLOGIC,
+					"WdfPdoInitAssignRawDevice failed with status %!STATUS!",
+					status
+				);
+				break;
+			}
+
+			//
+			// Let the world talk to us
+			// 
+			status = WdfDeviceInitAssignSDDLString(ChildInit,
+				(adminOnlyPdo) ? &SDDL_DEVOBJ_SYS_ALL_ADM_ALL : // only elevated allowed
+				&SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_RWX_RES_RWX  // everyone is allowed
 			);
-			break;
-		case DS_DEVICE_TYPE_NAVIGATION:
-			status = WdfPdoInitAssignRawDevice(ChildInit,
-				&GUID_DEVCLASS_BTHPS3_NAVIGATION
-			);
-			break;
-		case DS_DEVICE_TYPE_MOTION:
-			status = WdfPdoInitAssignRawDevice(ChildInit,
-				&GUID_DEVCLASS_BTHPS3_MOTION
-			);
-			break;
-		case DS_DEVICE_TYPE_WIRELESS:
-			status = WdfPdoInitAssignRawDevice(ChildInit,
-				&GUID_DEVCLASS_BTHPS3_WIRELESS
-			);
-			break;
-		default:
-			// Doesn't happen
-			return status;
+
+			if (!NT_SUCCESS(status))
+			{
+				TraceEvents(TRACE_LEVEL_ERROR,
+					TRACE_BUSLOGIC,
+					"WdfDeviceInitAssignSDDLString failed with status %!STATUS!",
+					status
+				);
+				break;
+			}
 		}
-
-		if (!NT_SUCCESS(status))
-		{
-			TraceEvents(TRACE_LEVEL_ERROR,
-				TRACE_BUSLOGIC,
-				"WdfPdoInitAssignRawDevice failed with status %!STATUS!",
-				status
-			);
-			return status;
-		}
-
-		//
-		// Let the world talk to us
-		// 
-		status = WdfDeviceInitAssignSDDLString(ChildInit,
-			(adminOnlyPdo) ? &SDDL_DEVOBJ_SYS_ALL_ADM_ALL : // only elevated allowed
-			&SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_RWX_RES_RWX  // everyone is allowed
-		);
-
-		if (!NT_SUCCESS(status))
-		{
-			TraceEvents(TRACE_LEVEL_ERROR,
-				TRACE_BUSLOGIC,
-				"WdfDeviceInitAssignSDDLString failed with status %!STATUS!",
-				status
-			);
-
-			return status;
-		}
-	}
 
 #pragma endregion
 
 #pragma region Build DeviceID
 
-	status = RtlUnicodeStringPrintf(
-		&deviceId,
-		L"%ws\\%wZ", // e.g. "BTHPS3BUS\{53f88889-1aaf-4353-a047-556b69ec6da6}"
-		BthPS3BusEnumeratorName,
-		guidString
-	);
-	if (!NT_SUCCESS(status)) {
-		TraceEvents(TRACE_LEVEL_ERROR,
-			TRACE_BUSLOGIC,
-			"RtlUnicodeStringPrintf failed for deviceId with status %!STATUS!",
-			status
+		status = RtlUnicodeStringPrintf(
+			&deviceId,
+			L"%ws\\%wZ", // e.g. "BTHPS3BUS\{53f88889-1aaf-4353-a047-556b69ec6da6}"
+			BthPS3BusEnumeratorName,
+			guidString
 		);
-		goto freeAndExit;
-	}
+		if (!NT_SUCCESS(status)) {
+			TraceEvents(TRACE_LEVEL_ERROR,
+				TRACE_BUSLOGIC,
+				"RtlUnicodeStringPrintf failed for deviceId with status %!STATUS!",
+				status
+			);
+			break;
+		}
 
-	status = WdfPdoInitAssignDeviceID(ChildInit, &deviceId);
-	if (!NT_SUCCESS(status)) {
-		TraceEvents(TRACE_LEVEL_ERROR,
-			TRACE_BUSLOGIC,
-			"WdfPdoInitAssignDeviceID failed with status %!STATUS!",
-			status);
-		goto freeAndExit;
-	}
+		status = WdfPdoInitAssignDeviceID(ChildInit, &deviceId);
+		if (!NT_SUCCESS(status)) {
+			TraceEvents(TRACE_LEVEL_ERROR,
+				TRACE_BUSLOGIC,
+				"WdfPdoInitAssignDeviceID failed with status %!STATUS!",
+				status);
+			break;
+		}
 
 #pragma endregion
 
 #pragma region Build HardwareID
 
-	status = RtlUnicodeStringPrintf(
-		&hardwareId,
-		L"%ws\\%wZ", // e.g. "BTHPS3BUS\{53f88889-1aaf-4353-a047-556b69ec6da6}"
-		BthPS3BusEnumeratorName,
-		guidString
-	);
-	if (!NT_SUCCESS(status)) {
-		TraceEvents(TRACE_LEVEL_ERROR,
-			TRACE_BUSLOGIC,
-			"RtlUnicodeStringPrintf failed for hardwareId with status %!STATUS!",
-			status
+		status = RtlUnicodeStringPrintf(
+			&hardwareId,
+			L"%ws\\%wZ", // e.g. "BTHPS3BUS\{53f88889-1aaf-4353-a047-556b69ec6da6}"
+			BthPS3BusEnumeratorName,
+			guidString
 		);
-		goto freeAndExit;
-	}
+		if (!NT_SUCCESS(status)) {
+			TraceEvents(TRACE_LEVEL_ERROR,
+				TRACE_BUSLOGIC,
+				"RtlUnicodeStringPrintf failed for hardwareId with status %!STATUS!",
+				status
+			);
+			break;
+		}
 
-	status = WdfPdoInitAddHardwareID(ChildInit, &deviceId);
-	if (!NT_SUCCESS(status)) {
-		TraceEvents(TRACE_LEVEL_ERROR,
-			TRACE_BUSLOGIC,
-			"WdfPdoInitAddHardwareID failed with status %!STATUS!",
-			status);
-		goto freeAndExit;
-	}
+		status = WdfPdoInitAddHardwareID(ChildInit, &deviceId);
+		if (!NT_SUCCESS(status)) {
+			TraceEvents(TRACE_LEVEL_ERROR,
+				TRACE_BUSLOGIC,
+				"WdfPdoInitAddHardwareID failed with status %!STATUS!",
+				status);
+			break;
+		}
 
 #pragma endregion
 
 #pragma region Build InstanceID
 
-	status = RtlUnicodeStringPrintf(
-		&instanceId,
-		L"%012llX", // e.g. "AC7A4D2819AC"
-		pDesc->ClientConnection->RemoteAddress
-	);
-	if (!NT_SUCCESS(status)) {
-		TraceEvents(TRACE_LEVEL_ERROR,
-			TRACE_BUSLOGIC,
-			"RtlUnicodeStringPrintf failed for instanceId with status %!STATUS!",
-			status
+		status = RtlUnicodeStringPrintf(
+			&instanceId,
+			L"%012llX", // e.g. "AC7A4D2819AC"
+			pDesc->ClientConnection->RemoteAddress
 		);
-		goto freeAndExit;
-	}
+		if (!NT_SUCCESS(status)) {
+			TraceEvents(TRACE_LEVEL_ERROR,
+				TRACE_BUSLOGIC,
+				"RtlUnicodeStringPrintf failed for instanceId with status %!STATUS!",
+				status
+			);
+			break;
+		}
 
-	status = WdfPdoInitAssignInstanceID(ChildInit, &instanceId);
-	if (!NT_SUCCESS(status)) {
-		TraceEvents(TRACE_LEVEL_ERROR,
-			TRACE_BUSLOGIC,
-			"WdfPdoInitAssignInstanceID failed with status %!STATUS!",
-			status);
-		goto freeAndExit;
-	}
+		status = WdfPdoInitAssignInstanceID(ChildInit, &instanceId);
+		if (!NT_SUCCESS(status)) {
+			TraceEvents(TRACE_LEVEL_ERROR,
+				TRACE_BUSLOGIC,
+				"WdfPdoInitAssignInstanceID failed with status %!STATUS!",
+				status);
+			break;
+		}
 
 #pragma endregion
 
 #pragma region PNP/Power Callbacks
 
-	WDF_PNPPOWER_EVENT_CALLBACKS_INIT(&pnpPowerCallbacks);
-	pnpPowerCallbacks.EvtDeviceD0Exit = BthPS3_PDO_EvtWdfDeviceD0Exit;
+		WDF_PNPPOWER_EVENT_CALLBACKS_INIT(&pnpPowerCallbacks);
+		pnpPowerCallbacks.EvtDeviceD0Exit = BthPS3_PDO_EvtWdfDeviceD0Exit;
 
-	WdfDeviceInitSetPnpPowerEventCallbacks(ChildInit, &pnpPowerCallbacks);
+		WdfDeviceInitSetPnpPowerEventCallbacks(ChildInit, &pnpPowerCallbacks);
 
 #pragma endregion 
 
 #pragma region Child device creation
 
-	if (!rawPdo)
-	{
-		WdfDeviceInitSetPowerPolicyOwnership(ChildInit, TRUE);
-	}
+		if (!rawPdo)
+		{
+			WdfDeviceInitSetPowerPolicyOwnership(ChildInit, TRUE);
+		}
 
-	WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(
-		&attributes,
-		BTHPS3_PDO_DEVICE_CONTEXT
-	);
-	attributes.EvtCleanupCallback = BthPS3_PDO_EvtDeviceContextCleanup;
+		WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(
+			&attributes,
+			BTHPS3_PDO_DEVICE_CONTEXT
+		);
+		attributes.EvtCleanupCallback = BthPS3_PDO_EvtDeviceContextCleanup;
 
-	status = WdfDeviceCreate(
-		&ChildInit,
-		&attributes,
-		&hChild
-	);
-	if (!NT_SUCCESS(status)) {
-		TraceEvents(TRACE_LEVEL_ERROR,
-			TRACE_BUSLOGIC,
-			"WdfDeviceCreate failed with status %!STATUS!",
-			status);
-		goto freeAndExit;
-	}
+		status = WdfDeviceCreate(
+			&ChildInit,
+			&attributes,
+			&hChild
+		);
+		if (!NT_SUCCESS(status)) {
+			TraceEvents(TRACE_LEVEL_ERROR,
+				TRACE_BUSLOGIC,
+				"WdfDeviceCreate failed with status %!STATUS!",
+				status);
+			break;
+		}
 
 #pragma endregion
 
 #pragma region Expose device interface
 
-	if (rawPdo)
-	{
-		switch (pDesc->ClientConnection->DeviceType)
+		if (rawPdo)
 		{
-		case DS_DEVICE_TYPE_SIXAXIS:
-			status = WdfDeviceCreateDeviceInterface(hChild,
-				&GUID_DEVINTERFACE_BTHPS3_SIXAXIS,
-				NULL
+			switch (pDesc->ClientConnection->DeviceType)
+			{
+			case DS_DEVICE_TYPE_SIXAXIS:
+				status = WdfDeviceCreateDeviceInterface(hChild,
+					&GUID_DEVINTERFACE_BTHPS3_SIXAXIS,
+					NULL
+				);
+				break;
+			case DS_DEVICE_TYPE_NAVIGATION:
+				status = WdfDeviceCreateDeviceInterface(hChild,
+					&GUID_DEVINTERFACE_BTHPS3_NAVIGATION,
+					NULL
+				);
+				break;
+			case DS_DEVICE_TYPE_MOTION:
+				status = WdfDeviceCreateDeviceInterface(hChild,
+					&GUID_DEVINTERFACE_BTHPS3_MOTION,
+					NULL
+				);
+				break;
+			case DS_DEVICE_TYPE_WIRELESS:
+				status = WdfDeviceCreateDeviceInterface(hChild,
+					&GUID_DEVINTERFACE_BTHPS3_WIRELESS,
+					NULL
+				);
+				break;
+			default:
+				// Doesn't happen
+				break;
+			}
+
+			if (!NT_SUCCESS(status))
+			{
+				TraceEvents(TRACE_LEVEL_ERROR,
+					TRACE_BUSLOGIC,
+					"WdfDeviceCreateDeviceInterface failed with status %!STATUS!",
+					status
+				);
+				break;
+			}
+		}
+
+#pragma endregion
+
+#pragma region Fill device context
+
+		//
+		// This info is used to attach it to incoming requests 
+		// later on so the bus driver knows for which remote
+		// device the request was made for.
+		// 
+
+		pdoCtx = GetPdoDeviceContext(hChild);
+
+		pdoCtx->ClientConnection = pDesc->ClientConnection;
+
+		//
+		// PDO relies on the connection object context so 
+		// we increase the reference count to protect from
+		// it getting freed too soon. See BthPS3_PDO_EvtDeviceContextCleanup
+		// 
+		WdfObjectReference(WdfObjectContextGetObject(pDesc->ClientConnection));
+
+#pragma endregion
+
+#pragma region PNP/Power Caps
+
+		//
+		// PNP Capabilities
+		// 
+
+		WDF_DEVICE_PNP_CAPABILITIES_INIT(&pnpCaps);
+		pnpCaps.Removable = WdfTrue;
+		pnpCaps.SurpriseRemovalOK = WdfTrue;
+		pnpCaps.NoDisplayInUI = (hidePdo) ? WdfTrue : WdfFalse;
+
+		WdfDeviceSetPnpCapabilities(hChild, &pnpCaps);
+
+		//
+		// Idle settings
+		// 
+
+		WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS_INIT(&idleSettings, IdleCannotWakeFromS0);
+		idleSettings.IdleTimeout = idleTimeout;
+		status = WdfDeviceAssignS0IdleSettings(hChild, &idleSettings);
+
+		//
+		// Catch special case more precisely 
+		// 
+		if (status == STATUS_INVALID_DEVICE_REQUEST)
+		{
+			TraceEvents(TRACE_LEVEL_ERROR,
+				TRACE_BUSLOGIC,
+				"!! No function driver attached and not in RAW mode, can't continue"
 			);
 			break;
-		case DS_DEVICE_TYPE_NAVIGATION:
-			status = WdfDeviceCreateDeviceInterface(hChild,
-				&GUID_DEVINTERFACE_BTHPS3_NAVIGATION,
-				NULL
-			);
-			break;
-		case DS_DEVICE_TYPE_MOTION:
-			status = WdfDeviceCreateDeviceInterface(hChild,
-				&GUID_DEVINTERFACE_BTHPS3_MOTION,
-				NULL
-			);
-			break;
-		case DS_DEVICE_TYPE_WIRELESS:
-			status = WdfDeviceCreateDeviceInterface(hChild,
-				&GUID_DEVINTERFACE_BTHPS3_WIRELESS,
-				NULL
-			);
-			break;
-		default:
-			// Doesn't happen
-			return status;
 		}
 
 		if (!NT_SUCCESS(status))
 		{
 			TraceEvents(TRACE_LEVEL_ERROR,
 				TRACE_BUSLOGIC,
-				"WdfDeviceCreateDeviceInterface failed with status %!STATUS!",
+				"WdfDeviceAssignS0IdleSettings failed with status %!STATUS!",
 				status
 			);
-			return status;
+			break;
 		}
-	}
-
-#pragma endregion
-
-#pragma region Fill device context
-
-	//
-	// This info is used to attach it to incoming requests 
-	// later on so the bus driver knows for which remote
-	// device the request was made for.
-	// 
-
-	pdoCtx = GetPdoDeviceContext(hChild);
-
-	pdoCtx->ClientConnection = pDesc->ClientConnection;
-
-	//
-	// PDO relies on the connection object context so 
-	// we increase the reference count to protect from
-	// it getting freed too soon. See BthPS3_PDO_EvtDeviceContextCleanup
-	// 
-	WdfObjectReference(WdfObjectContextGetObject(pDesc->ClientConnection));
-
-#pragma endregion
-
-#pragma region PNP/Power Caps
-
-	//
-	// PNP Capabilities
-	// 
-
-	WDF_DEVICE_PNP_CAPABILITIES_INIT(&pnpCaps);
-	pnpCaps.Removable = WdfTrue;
-	pnpCaps.SurpriseRemovalOK = WdfTrue;
-	pnpCaps.NoDisplayInUI = (hidePdo) ? WdfTrue : WdfFalse;
-
-	WdfDeviceSetPnpCapabilities(hChild, &pnpCaps);
-
-	//
-	// Idle settings
-	// 
-
-	WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS_INIT(&idleSettings, IdleCannotWakeFromS0);
-	idleSettings.IdleTimeout = idleTimeout;
-	status = WdfDeviceAssignS0IdleSettings(hChild, &idleSettings);
-
-	//
-	// Catch special case more precisely 
-	// 
-	if (status == STATUS_INVALID_DEVICE_REQUEST)
-	{
-		TraceEvents(TRACE_LEVEL_ERROR,
-			TRACE_BUSLOGIC,
-			"!! No function driver attached and not in RAW mode, can't continue"
-		);
-		return status;
-	}
-
-	if (!NT_SUCCESS(status))
-	{
-		TraceEvents(TRACE_LEVEL_ERROR,
-			TRACE_BUSLOGIC,
-			"WdfDeviceAssignS0IdleSettings failed with status %!STATUS!",
-			status
-		);
-		return status;
-	}
 
 #pragma endregion
 
 #pragma region Default I/O Queue creation
 
-	//
-	// All of the heavy lifting is done by a function driver
-	// which exchanges data via IRP_MJ_DEVICE_CONTROL
-	// 
-	WDF_IO_QUEUE_CONFIG_INIT_DEFAULT_QUEUE(&defaultQueueCfg, WdfIoQueueDispatchParallel);
+		//
+		// All of the heavy lifting is done by a function driver
+		// which exchanges data via IRP_MJ_DEVICE_CONTROL
+		// 
+		WDF_IO_QUEUE_CONFIG_INIT_DEFAULT_QUEUE(&defaultQueueCfg, WdfIoQueueDispatchParallel);
 
-	defaultQueueCfg.EvtIoStop = BthPS3_EvtIoStop;
-	defaultQueueCfg.EvtIoDeviceControl = BthPS3_PDO_EvtWdfIoQueueIoDeviceControl;
+		defaultQueueCfg.EvtIoStop = BthPS3_EvtIoStop;
+		defaultQueueCfg.EvtIoDeviceControl = BthPS3_PDO_EvtWdfIoQueueIoDeviceControl;
 
-	status = WdfIoQueueCreate(
-		hChild,
-		&defaultQueueCfg,
-		WDF_NO_OBJECT_ATTRIBUTES,
-		&defaultQueue
-	);
-	if (!NT_SUCCESS(status)) {
-		TraceEvents(TRACE_LEVEL_ERROR,
-			TRACE_BUSLOGIC,
-			"WdfIoQueueCreate (Default) failed with status %!STATUS!",
-			status);
-		goto freeAndExit;
-	}
+		status = WdfIoQueueCreate(
+			hChild,
+			&defaultQueueCfg,
+			WDF_NO_OBJECT_ATTRIBUTES,
+			&defaultQueue
+		);
+		if (!NT_SUCCESS(status)) {
+			TraceEvents(TRACE_LEVEL_ERROR,
+				TRACE_BUSLOGIC,
+				"WdfIoQueueCreate (Default) failed with status %!STATUS!",
+				status);
+			break;
+		}
 
 #pragma endregion
 
-	freeAndExit:
+	}
+	while (FALSE);
 
 	RtlFreeUnicodeString(&guidString);
 

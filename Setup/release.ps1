@@ -1,6 +1,8 @@
 Param(
     [Parameter(Mandatory=$true)]
-    [string]$Version,
+    [string]$BuildVersion,
+    [Parameter(Mandatory=$true)]
+    [string]$SetupVersion,
     [Parameter(Mandatory=$true)]
     [string]$Token,
     [Parameter(Mandatory=$false)]
@@ -104,19 +106,22 @@ function Get-AppVeyorArtifacts
 }
 
 # Download x64 binaries
-Get-AppVeyorArtifacts -Account "nefarius" -Project "BthPS3" -Path $Path -Token $Token -Branch $Version -JobName "Platform: x64"
+Get-AppVeyorArtifacts -Account "nefarius" -Project "BthPS3" -Path $Path -Token $Token -Branch $BuildVersion -JobName "Platform: x64"
 
 # Download x86 binaries
-Get-AppVeyorArtifacts -Account "nefarius" -Project "BthPS3" -Path $Path -Token $Token -Branch $Version -JobName "Platform: x86"
+Get-AppVeyorArtifacts -Account "nefarius" -Project "BthPS3" -Path $Path -Token $Token -Branch $BuildVersion -JobName "Platform: x86"
 
 $signTool = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64\signtool.exe"
 $crossCert = "C:\Program Files (x86)\Windows Kits\10\CrossCertificates\DigiCert_High_Assurance_EV_Root_CA.crt"
 $certName = "Nefarius Software Solutions e.U."
 
+# List of files to sign
 $files = "`"..\artifacts\bin\*.exe`" " + 
          "`"..\artifacts\disk1\*.cab`" " + 
          "`"..\artifacts\bin\x64\*.exe`" " + 
+         "`"..\artifacts\bin\x64\*.dll`" " + 
          "`"..\artifacts\bin\x86\*.exe`" " +
+         "`"..\artifacts\bin\x86\*.dll`" " +
          "`".\drivers\BthPS3_x64\*.sys`" " +
          "`".\drivers\BthPS3_x86\*.sys`" " +
          "`".\drivers\BthPS3PSM_x64\*.sys`" " +

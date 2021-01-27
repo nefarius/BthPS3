@@ -68,7 +68,13 @@
     </Condition>
 
     <!-- Custom action (DLL) to detect host radio -->
+    <?if $(var.IsCI) = "no" ?>
+    <!-- local build -->
+    <Binary Id="BthPS3CustomActions" SourceFile="$(var.SolutionDir)artifacts\bin\$(var.ArchDir)\BthPS3CustomActions.dll" />
+    <?else ?>
+    <!-- CI build -->
     <Binary Id="BthPS3CustomActions" SourceFile="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3CustomActions.dll" />
+    <?endif ?>
 
     <!-- Custom action to detect host radio -->
     <CustomAction Id="CheckHostRadioPresence" 

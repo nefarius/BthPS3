@@ -63,7 +63,7 @@ BthPS3_CreateDevice(
     PAGED_CODE();
 
 
-    TraceVerbose( TRACE_DEVICE, "%!FUNC! Entry");
+    FuncEntry(TRACE_DEVICE);
 
     WdfDeviceInitSetDeviceType(DeviceInit, FILE_DEVICE_BUS_EXTENDER);
 
@@ -97,77 +97,88 @@ BthPS3_CreateDevice(
 
     WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&attributes, BTHPS3_SERVER_CONTEXT);
 
-    status = WdfDeviceCreate(&DeviceInit, &attributes, &device);
+    do {
+        status = WdfDeviceCreate(&DeviceInit, &attributes, &device);
 
-    if (!NT_SUCCESS(status))
-    {
-        TraceError( TRACE_DEVICE,
-            "WdfDeviceCreate failed with status %!STATUS!", status);
+        if (!NT_SUCCESS(status))
+        {
+            TraceError(
+                TRACE_DEVICE,
+                "WdfDeviceCreate failed with status %!STATUS!",
+                status
+            );
+            break;
+        }
 
-        goto exit;
-    }
+        pSrvCtx = GetServerDeviceContext(device);
 
-    pSrvCtx = GetServerDeviceContext(device);
+        status = BthPS3_ServerContextInit(pSrvCtx, device);
 
-    status = BthPS3_ServerContextInit(pSrvCtx, device);
+        if (!NT_SUCCESS(status))
+        {
+            TraceError(
+                TRACE_DEVICE,
+                "Initialization of context failed with status %!STATUS!",
+                status
+            );
+            break;
+        }
 
-    if (!NT_SUCCESS(status))
-    {
-        TraceError( TRACE_DEVICE,
-            "Initialization of context failed with status %!STATUS!", status);
+        status = BthPS3QueueInitialize(device);
+        if (!NT_SUCCESS(status))
+        {
+            TraceError(
+                TRACE_DEVICE,
+                "BthPS3QueueInitialize failed with status %!STATUS!",
+                status
+            );
+            break;
+        }
 
-        goto exit;
-    }
+        //
+        // Query for interfaces and pre-allocate BRBs
+        //
 
-    status = BthPS3QueueInitialize(device);
-    if (!NT_SUCCESS(status))
-    {
-        TraceError( TRACE_DEVICE,
-            "BthPS3QueueInitialize failed with status %!STATUS!", status);
-        goto exit;
-    }
+        status = BthPS3_Initialize(GetServerDeviceContext(device));
+        if (!NT_SUCCESS(status))
+        {
+            break;
+        }
 
-    //
-    // Query for interfaces and pre-allocate BRBs
-    //
+        //
+        // Search and open filter remote I/O target
+        // 
 
-    status = BthPS3_Initialize(GetServerDeviceContext(device));
-    if (!NT_SUCCESS(status))
-    {
-        goto exit;
-    }
+        status = BthPS3_OpenFilterIoTarget(device);
+        if (!NT_SUCCESS(status))
+        {
+            break;
+        }
 
-    //
-    // Search and open filter remote I/O target
-    // 
+        //
+        // Allocate request object for async filter communication
+        // 
 
-    status = BthPS3_OpenFilterIoTarget(device);
-    if (!NT_SUCCESS(status))
-    {
-        goto exit;
-    }
+        WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+        attributes.ParentObject = pSrvCtx->PsmFilter.IoTarget;
 
-    //
-    // Allocate request object for async filter communication
-    // 
-
-    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
-    attributes.ParentObject = pSrvCtx->PsmFilter.IoTarget;
-
-    status = WdfRequestCreate(
-        &attributes,
-        pSrvCtx->PsmFilter.IoTarget,
-        &pSrvCtx->PsmFilter.AsyncRequest
-    );
-    if (!NT_SUCCESS(status))
-    {
-        TraceError( TRACE_DEVICE,
-            "WdfRequestCreate failed with status %!STATUS!", status);
-        goto exit;
-    }
-
-exit:
-    TraceVerbose( TRACE_DEVICE, "%!FUNC! Exit");
+        status = WdfRequestCreate(
+            &attributes,
+            pSrvCtx->PsmFilter.IoTarget,
+            &pSrvCtx->PsmFilter.AsyncRequest
+        );
+        if (!NT_SUCCESS(status))
+        {
+            TraceError(
+                TRACE_DEVICE,
+                "WdfRequestCreate failed with status %!STATUS!",
+                status
+            );
+            break;
+        }
+    } while (FALSE);
+		
+    FuncExit(TRACE_DEVICE, "status=%!STATUS!", status);
 
     return status;
 }

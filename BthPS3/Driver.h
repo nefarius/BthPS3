@@ -40,6 +40,7 @@
 #include <ntddk.h>
 #include <wdf.h>
 #include <initguid.h>
+#include <devpkey.h>
 
 #include "device.h"
 #include "queue.h"
@@ -52,6 +53,8 @@
 #include "Util.h"
 
 EXTERN_C_START
+
+#define BTHPS3PSM_POOL_TAG	'MSP3'
 
 //
 // WDFDRIVER Events

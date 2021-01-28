@@ -973,6 +973,14 @@ NTSTATUS BthPS3_PDO_EvtWdfDeviceSelfManagedIoInit(
 			deviceAddress
 		);
 	}
+
+	(void)BthPS3_AssignDeviceProperty(
+		Device,
+		&DEVPKEY_Device_FriendlyName,
+		DEVPROP_TYPE_STRING,
+		pCtx->ClientConnection->RemoteName.Length + sizeof(L'\0'),
+		pCtx->ClientConnection->RemoteName.Buffer
+	);
 	
 	(void)BthPS3_AssignDeviceProperty(
 		Device,
@@ -1012,12 +1020,57 @@ NTSTATUS BthPS3_PDO_EvtWdfDeviceSelfManagedIoInit(
 		break;
 	case DS_DEVICE_TYPE_NAVIGATION:
 
+		(void)BthPS3_AssignDeviceProperty(
+			Device,
+			&DEVPKEY_Bluetooth_DeviceVID,
+			DEVPROP_TYPE_UINT16,
+			sizeof(USHORT),
+			(PUSHORT)&BTHPS3_NAVIGATION_VID
+		);
+		(void)BthPS3_AssignDeviceProperty(
+			Device,
+			&DEVPKEY_Bluetooth_DevicePID,
+			DEVPROP_TYPE_UINT16,
+			sizeof(USHORT),
+			(PVOID)&BTHPS3_NAVIGATION_PID
+		);
+		
 		break;
 	case DS_DEVICE_TYPE_MOTION:
+
+		(void)BthPS3_AssignDeviceProperty(
+			Device,
+			&DEVPKEY_Bluetooth_DeviceVID,
+			DEVPROP_TYPE_UINT16,
+			sizeof(USHORT),
+			(PUSHORT)&BTHPS3_MOTION_VID
+		);
+		(void)BthPS3_AssignDeviceProperty(
+			Device,
+			&DEVPKEY_Bluetooth_DevicePID,
+			DEVPROP_TYPE_UINT16,
+			sizeof(USHORT),
+			(PVOID)&BTHPS3_MOTION_PID
+		);
 
 		break;
 	case DS_DEVICE_TYPE_WIRELESS:
 
+		(void)BthPS3_AssignDeviceProperty(
+			Device,
+			&DEVPKEY_Bluetooth_DeviceVID,
+			DEVPROP_TYPE_UINT16,
+			sizeof(USHORT),
+			(PUSHORT)&BTHPS3_WIRELESS_VID
+		);
+		(void)BthPS3_AssignDeviceProperty(
+			Device,
+			&DEVPKEY_Bluetooth_DevicePID,
+			DEVPROP_TYPE_UINT16,
+			sizeof(USHORT),
+			(PVOID)&BTHPS3_WIRELESS_PID
+		);
+		
 		break;
 	default:
 		// Doesn't happen

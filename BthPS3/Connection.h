@@ -83,6 +83,8 @@ typedef struct _BTHPS3_CLIENT_CONNECTION
 
     BTH_ADDR                            RemoteAddress;
 
+    UNICODE_STRING						RemoteName;
+
     DS_DEVICE_TYPE                      DeviceType;
 
     BTHPS3_CLIENT_L2CAP_CHANNEL         HidControlChannel;

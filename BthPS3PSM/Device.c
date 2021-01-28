@@ -53,7 +53,6 @@ extern WDFWAITLOCK     FilterDeviceCollectionLock;
 #pragma alloc_text (PAGE, BthPS3PSM_EvtDeviceContextCleanup)
 #endif
 
-#define BTHPS3PSM_POOL_TAG                      'MSP3'
 #define BTHPS3PSM_DEVICE_PROPERTY_LENGTH        0xFF
 #define BTHPS3PSM_USB_ENUMERATOR_NAME           L"USB"
 #define BTHPS3PSM_SYSTEM_ENUMERATOR_NAME        L"ROOT"

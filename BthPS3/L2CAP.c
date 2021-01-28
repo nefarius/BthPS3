@@ -253,6 +253,15 @@ L2CAP_PS3_HandleRemoteConnect(
         // Store device type (required to later spawn the right PDO)
         // 
         clientConnection->DeviceType = deviceType;
+    	
+        status = RtlUnicodeStringPrintf(&clientConnection->RemoteName, L"%hs", remoteName);
+
+        if (!NT_SUCCESS(status)) {
+            TraceEvents(TRACE_LEVEL_ERROR,
+                TRACE_L2CAP,
+                "RtlUnicodeStringPrintf failed with status %!STATUS!", status);
+            goto exit;
+        }
     }
 
     //

@@ -201,6 +201,13 @@ ClientConnections_CreateAndInsert(
     // 
     connectionCtx->RemoteAddress = RemoteAddress;
 
+    connectionCtx->RemoteName.MaximumLength = BTH_MAX_NAME_SIZE * sizeof(WCHAR);
+    connectionCtx->RemoteName.Buffer = ExAllocatePoolWithTag(
+	    NonPagedPoolNx,
+	    BTH_MAX_NAME_SIZE * sizeof(WCHAR),
+	    BTHPS3PSM_POOL_TAG
+    );
+	
     //
     // Pass back valid pointer
     // 
@@ -326,6 +333,9 @@ EvtClientConnectionsDestroyConnection(
     );
 
     connection = GetClientConnection(Object);
+
+    if (connection->RemoteName.Buffer)
+        ExFreePoolWithTag(connection->RemoteName.Buffer, BTHPS3PSM_POOL_TAG);
 
     WDF_CHILD_IDENTIFICATION_DESCRIPTION_HEADER_INIT(
         &pdoDesc.Header,

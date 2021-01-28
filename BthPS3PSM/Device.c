@@ -85,7 +85,7 @@ BthPS3PSM_CreateDevice(
 
     if (NT_SUCCESS(BthPS3PSM_IsVirtualRootDevice(DeviceInit, &ret)) && ret)
     {
-    	TraceEvents(TRACE_LEVEL_VERBOSE,
+    	TraceVerbose(
             TRACE_DEVICE,
             "Device is virtual root device"
         );
@@ -93,7 +93,7 @@ BthPS3PSM_CreateDevice(
     }
     else if (NT_SUCCESS(BthPS3PSM_IsBthUsbDevice(DeviceInit, &ret)) && ret)
     {
-    	TraceEvents(TRACE_LEVEL_VERBOSE,
+    	TraceVerbose(
             TRACE_DEVICE,
             "Device is USB Bluetooth device"
         );
@@ -217,7 +217,7 @@ BthPS3PSM_CreateDevice(
             }
             else
             {
-                TraceEvents(TRACE_LEVEL_VERBOSE,
+                TraceVerbose(
                     TRACE_DEVICE,
                     "BthPS3PSMPatchEnabled value retrieved"
                 );
@@ -258,7 +258,7 @@ BthPS3PSM_CreateDevice(
                 }
                 else
                 {
-                    TraceEvents(TRACE_LEVEL_VERBOSE,
+                    TraceVerbose(
                         TRACE_DEVICE,
                         "SymbolicLinkName value retrieved"
                     );
@@ -437,7 +437,7 @@ BthPS3PSM_EvtDevicePrepareHardware(
 
     PAGED_CODE();
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Entry");
+    TraceInformation( TRACE_DEVICE, "%!FUNC! Entry");
 
     deviceContext = DeviceGetContext(Device);
 
@@ -471,7 +471,7 @@ BthPS3PSM_EvtDevicePrepareHardware(
             status);
     }
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Exit");
+    TraceInformation( TRACE_DEVICE, "%!FUNC! Exit");
 
     return status;
 }
@@ -489,7 +489,7 @@ BthPS3PSM_EvtDeviceContextCleanup(
 {
     PAGED_CODE();
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Entry");
+    TraceInformation( TRACE_DEVICE, "%!FUNC! Entry");
 
 	PDEVICE_CONTEXT pDevCtx = DeviceGetContext(Device);
 	
@@ -574,7 +574,7 @@ BthPS3PSM_EvtDeviceContextCleanup(
         }
         else
         {
-            TraceEvents(TRACE_LEVEL_VERBOSE,
+            TraceVerbose(
                 TRACE_DEVICE,
                 "Settings stored"
             );
@@ -597,6 +597,6 @@ BthPS3PSM_EvtDeviceContextCleanup(
     UNREFERENCED_PARAMETER(Device);
 #endif
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Exit");
+    TraceInformation( TRACE_DEVICE, "%!FUNC! Exit");
 }
 #pragma warning(pop) // enable 28118 again

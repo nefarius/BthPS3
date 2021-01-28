@@ -72,7 +72,7 @@ StringUtil_BthNameIsEqual(
         );
     }
 
-    TraceEvents(TRACE_LEVEL_VERBOSE,
+    TraceVerbose(
         TRACE_UTIL,
         "%!FUNC! LHS: \"%wZ\" RHS: \"%wZ\"",
         &usLhs, &usRhs

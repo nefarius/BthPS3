@@ -70,7 +70,7 @@ BthPS3PSM_CreateControlDevice(
     DECLARE_CONST_UNICODE_STRING(ntDeviceName, BTHPS3PSM_NTDEVICE_NAME_STRING);
     DECLARE_CONST_UNICODE_STRING(symbolicLinkName, BTHPS3PSM_SYMBOLIC_NAME_STRING);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_SIDEBAND, "%!FUNC! Entry");
+    TraceInformation( TRACE_SIDEBAND, "%!FUNC! Entry");
 
 
     PAGED_CODE();
@@ -95,7 +95,7 @@ BthPS3PSM_CreateControlDevice(
         return STATUS_SUCCESS;
     }
 
-    TraceEvents(TRACE_LEVEL_INFORMATION,
+    TraceInformation(
         TRACE_SIDEBAND,
         "Creating Control Device");
 
@@ -183,7 +183,7 @@ BthPS3PSM_CreateControlDevice(
 
     ControlDevice = controlDevice;
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_SIDEBAND, "%!FUNC! Exit");
+    TraceInformation( TRACE_SIDEBAND, "%!FUNC! Exit");
 
     return status;
 
@@ -202,7 +202,7 @@ Error:
         controlDevice = NULL;
     }
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_SIDEBAND, "%!FUNC! Exit (%!STATUS!)", status);
+    TraceInformation( TRACE_SIDEBAND, "%!FUNC! Exit (%!STATUS!)", status);
 
     return status;
 }
@@ -220,7 +220,7 @@ BthPS3PSM_DeleteControlDevice(
 
     PAGED_CODE();
 
-    TraceEvents(TRACE_LEVEL_INFORMATION,
+    TraceInformation(
         TRACE_SIDEBAND,
         "Deleting Control Device"
     );
@@ -251,7 +251,7 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
     PBTHPS3PSM_GET_PSM_PATCHING         pGet = NULL;
     UNICODE_STRING                      linkName;
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_SIDEBAND, "%!FUNC! Entry");
+    TraceInformation( TRACE_SIDEBAND, "%!FUNC! Entry");
 
     UNREFERENCED_PARAMETER(Queue);
     UNREFERENCED_PARAMETER(OutputBufferLength);
@@ -453,7 +453,7 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
 
     WdfRequestComplete(Request, status);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_SIDEBAND, "%!FUNC! Exit");
+    TraceInformation( TRACE_SIDEBAND, "%!FUNC! Exit");
 }
 #pragma warning(pop) // enable 28118 again
 

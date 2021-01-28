@@ -61,7 +61,7 @@ L2CAP_PS3_HandleRemoteConnect(
     DS_DEVICE_TYPE deviceType = DS_DEVICE_TYPE_UNKNOWN;
 
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
+    TraceVerbose( TRACE_L2CAP, "%!FUNC! Entry");
 
     //
     // (Try to) refresh settings from registry
@@ -93,7 +93,7 @@ L2CAP_PS3_HandleRemoteConnect(
 
         if (NT_SUCCESS(status))
         {
-            TraceEvents(TRACE_LEVEL_INFORMATION,
+            TraceInformation(
                 TRACE_L2CAP,
                 "++ Device %012llX name: %s",
                 ConnectParams->BtAddress,
@@ -125,7 +125,7 @@ L2CAP_PS3_HandleRemoteConnect(
             && StringUtil_BthNameIsInCollection(remoteName, DevCtx->Settings.SIXAXISSupportedNames)) {
             deviceType = DS_DEVICE_TYPE_SIXAXIS;
 
-            TraceEvents(TRACE_LEVEL_INFORMATION,
+            TraceInformation(
                 TRACE_L2CAP,
                 "++ Device %012llX identified as SIXAXIS compatible",
                 ConnectParams->BtAddress
@@ -139,7 +139,7 @@ L2CAP_PS3_HandleRemoteConnect(
             && StringUtil_BthNameIsInCollection(remoteName, DevCtx->Settings.NAVIGATIONSupportedNames)) {
             deviceType = DS_DEVICE_TYPE_NAVIGATION;
 
-            TraceEvents(TRACE_LEVEL_INFORMATION,
+            TraceInformation(
                 TRACE_L2CAP,
                 "++ Device %012llX identified as NAVIGATION compatible",
                 ConnectParams->BtAddress
@@ -153,7 +153,7 @@ L2CAP_PS3_HandleRemoteConnect(
             && StringUtil_BthNameIsInCollection(remoteName, DevCtx->Settings.MOTIONSupportedNames)) {
             deviceType = DS_DEVICE_TYPE_MOTION;
 
-            TraceEvents(TRACE_LEVEL_INFORMATION,
+            TraceInformation(
                 TRACE_L2CAP,
                 "++ Device %012llX identified as MOTION compatible",
                 ConnectParams->BtAddress
@@ -167,7 +167,7 @@ L2CAP_PS3_HandleRemoteConnect(
             && StringUtil_BthNameIsInCollection(remoteName, DevCtx->Settings.WIRELESSSupportedNames)) {
             deviceType = DS_DEVICE_TYPE_WIRELESS;
 
-            TraceEvents(TRACE_LEVEL_INFORMATION,
+            TraceInformation(
                 TRACE_L2CAP,
                 "++ Device %012llX identified as WIRELESS compatible",
                 ConnectParams->BtAddress
@@ -202,7 +202,7 @@ L2CAP_PS3_HandleRemoteConnect(
                 }
                 else
                 {
-                    TraceEvents(TRACE_LEVEL_INFORMATION,
+                    TraceInformation(
                         TRACE_L2CAP,
                         "Filter disabled"
                     );
@@ -212,7 +212,7 @@ L2CAP_PS3_HandleRemoteConnect(
                     // 
                     if (DevCtx->Settings.AutoEnableFilter)
                     {
-                        TraceEvents(TRACE_LEVEL_INFORMATION,
+                        TraceInformation(
                             TRACE_L2CAP,
                             "Filter disabled, re-enabling in %d seconds",
                             DevCtx->Settings.AutoEnableFilterDelay
@@ -368,7 +368,7 @@ exit:
         ClientConnections_RemoveAndDestroy(&DevCtx->Header, clientConnection);
     }
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit (%!STATUS!)", status);
+    TraceVerbose( TRACE_L2CAP, "%!FUNC! Exit (%!STATUS!)", status);
 
     return status;
 }
@@ -384,7 +384,7 @@ L2CAP_PS3_HandleRemoteConnectAsync(
 {
     PBTHPS3_REMOTE_CONNECT_CONTEXT connectCtx = NULL;
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
+    TraceVerbose( TRACE_L2CAP, "%!FUNC! Entry");
 
     connectCtx = GetRemoteConnectContext(WorkItem);
 
@@ -395,7 +395,7 @@ L2CAP_PS3_HandleRemoteConnectAsync(
 
     WdfObjectDelete(WorkItem);
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
+    TraceVerbose( TRACE_L2CAP, "%!FUNC! Exit");
 }
 
 //
@@ -413,14 +413,14 @@ L2CAP_PS3_ControlConnectResponseCompleted(
     struct _BRB_L2CA_OPEN_CHANNEL* brb = NULL;
     PBTHPS3_CLIENT_CONNECTION clientConnection = NULL;
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
+    TraceVerbose( TRACE_L2CAP, "%!FUNC! Entry");
 
     UNREFERENCED_PARAMETER(Request);
     UNREFERENCED_PARAMETER(Target);
 
     status = Params->IoStatus.Status;
 
-    TraceEvents(TRACE_LEVEL_INFORMATION,
+    TraceInformation(
         TRACE_L2CAP,
         "Connection completion, status: %!STATUS!",
         status
@@ -445,7 +445,7 @@ L2CAP_PS3_ControlConnectResponseCompleted(
 
         WdfSpinLockRelease(clientConnection->HidControlChannel.ConnectionStateLock);
 
-        TraceEvents(TRACE_LEVEL_INFORMATION,
+        TraceInformation(
             TRACE_L2CAP,
             "HID Control Channel connection established"
         );
@@ -461,7 +461,7 @@ L2CAP_PS3_ControlConnectResponseCompleted(
     	ClientConnections_RemoveAndDestroy(clientConnection->DevCtxHdr, clientConnection);
     }
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
+    TraceVerbose( TRACE_L2CAP, "%!FUNC! Exit");
 }
 
 //
@@ -480,14 +480,14 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
     PBTHPS3_CLIENT_CONNECTION clientConnection = NULL;
     BTHPS3_CONNECTION_STATE controlState;
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
+    TraceVerbose( TRACE_L2CAP, "%!FUNC! Entry");
 
     UNREFERENCED_PARAMETER(Request);
     UNREFERENCED_PARAMETER(Target);
 
     status = Params->IoStatus.Status;
 
-    TraceEvents(TRACE_LEVEL_INFORMATION,
+    TraceInformation(
         TRACE_L2CAP,
         "Connection completion, status: %!STATUS!",
         status
@@ -512,7 +512,7 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
 
         WdfSpinLockRelease(clientConnection->HidInterruptChannel.ConnectionStateLock);
 
-        TraceEvents(TRACE_LEVEL_INFORMATION,
+        TraceInformation(
             TRACE_L2CAP,
             "HID Interrupt Channel connection established"
         );
@@ -545,7 +545,7 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
         goto failedDrop;
     }
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
+    TraceVerbose( TRACE_L2CAP, "%!FUNC! Exit");
 
     return;
 
@@ -581,7 +581,7 @@ L2CAP_PS3_DenyRemoteConnect(
     struct _BRB_L2CA_OPEN_CHANNEL* brb = NULL;
 
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
+    TraceVerbose( TRACE_L2CAP, "%!FUNC! Entry");
 
     status = WdfRequestCreate(
         WDF_NO_OBJECT_ATTRIBUTES,
@@ -656,7 +656,7 @@ L2CAP_PS3_DenyRemoteConnect(
         WdfObjectDelete(brbAsyncRequest);
     }
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
+    TraceVerbose( TRACE_L2CAP, "%!FUNC! Exit");
 
     return status;
 }
@@ -678,7 +678,7 @@ L2CAP_PS3_DenyRemoteConnectCompleted(
     UNREFERENCED_PARAMETER(Target);
 
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry (%!STATUS!)",
+    TraceVerbose( TRACE_L2CAP, "%!FUNC! Entry (%!STATUS!)",
         Params->IoStatus.Status);
 
     brb = (struct _BRB_L2CA_OPEN_CHANNEL*)Context;
@@ -686,7 +686,7 @@ L2CAP_PS3_DenyRemoteConnectCompleted(
     deviceCtx->Header.ProfileDrvInterface.BthFreeBrb((PBRB)brb);
     WdfObjectDelete(Request);
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
+    TraceVerbose( TRACE_L2CAP, "%!FUNC! Exit");
 }
 
 #pragma endregion
@@ -715,7 +715,7 @@ L2CAP_PS3_ConnectionIndicationCallback(
     LARGE_INTEGER timeout;
     timeout.QuadPart = 0;
 
-    TraceEvents(TRACE_LEVEL_VERBOSE,
+    TraceVerbose(
         TRACE_L2CAP,
         "%!FUNC! Entry (Indication: 0x%X, Context: 0x%p)",
         Indication, Context
@@ -737,7 +737,7 @@ L2CAP_PS3_ConnectionIndicationCallback(
     }
     case IndicationRemoteDisconnect:
 
-        TraceEvents(TRACE_LEVEL_VERBOSE,
+        TraceVerbose(
             TRACE_L2CAP,
             "++ IndicationRemoteDisconnect [0x%p]",
             Parameters->ConnectionHandle);
@@ -751,7 +751,7 @@ L2CAP_PS3_ConnectionIndicationCallback(
         if (Parameters->ConnectionHandle ==
             connection->HidControlChannel.ChannelHandle)
         {
-            TraceEvents(TRACE_LEVEL_VERBOSE,
+            TraceVerbose(
                 TRACE_L2CAP,
                 "++ HID Control Channel 0x%p disconnected",
                 Parameters->ConnectionHandle);
@@ -769,7 +769,7 @@ L2CAP_PS3_ConnectionIndicationCallback(
         if (Parameters->ConnectionHandle ==
             connection->HidInterruptChannel.ChannelHandle)
         {
-            TraceEvents(TRACE_LEVEL_VERBOSE,
+            TraceVerbose(
                 TRACE_L2CAP,
                 "++ HID Interrupt Channel 0x%p disconnected",
                 Parameters->ConnectionHandle);
@@ -787,7 +787,7 @@ L2CAP_PS3_ConnectionIndicationCallback(
         if (connection->HidControlChannel.ConnectionState == ConnectionStateDisconnected
             && connection->HidInterruptChannel.ConnectionState == ConnectionStateDisconnected)
         {
-            TraceEvents(TRACE_LEVEL_VERBOSE,
+            TraceVerbose(
                 TRACE_L2CAP,
                 "++ Both channels are gone, awaiting clean-up"
             );
@@ -862,7 +862,7 @@ L2CAP_PS3_ConnectionIndicationCallback(
 
     case IndicationRemoteConfigRequest:
 
-        TraceEvents(TRACE_LEVEL_INFORMATION,
+        TraceInformation(
             TRACE_L2CAP,
             "%!FUNC! ++ IndicationRemoteConfigRequest");
 
@@ -874,7 +874,7 @@ L2CAP_PS3_ConnectionIndicationCallback(
 
     case IndicationRemoteConfigResponse:
 
-        TraceEvents(TRACE_LEVEL_INFORMATION,
+        TraceInformation(
             TRACE_L2CAP,
             "%!FUNC! ++ IndicationRemoteConfigResponse");
 
@@ -889,7 +889,7 @@ L2CAP_PS3_ConnectionIndicationCallback(
         NT_ASSERT(FALSE);
     }
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
+    TraceVerbose( TRACE_L2CAP, "%!FUNC! Exit");
 }
 
 //
@@ -904,7 +904,7 @@ L2CAP_PS3_ConnectionStateConnected(
     NTSTATUS status = STATUS_SUCCESS;
     PDO_IDENTIFICATION_DESCRIPTION pdoDesc;
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry");
+    TraceVerbose( TRACE_L2CAP, "%!FUNC! Entry");
 
     WDF_CHILD_IDENTIFICATION_DESCRIPTION_HEADER_INIT(
         &pdoDesc.Header,
@@ -935,7 +935,7 @@ L2CAP_PS3_ConnectionStateConnected(
         return status;
     }
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
+    TraceVerbose( TRACE_L2CAP, "%!FUNC! Exit");
 
     return status;
 }
@@ -1042,7 +1042,7 @@ L2CAP_PS3_ChannelDisconnectCompleted(
     UNREFERENCED_PARAMETER(Request);
     UNREFERENCED_PARAMETER(Target);
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Entry (%!STATUS!)",
+    TraceVerbose( TRACE_L2CAP, "%!FUNC! Entry (%!STATUS!)",
         Params->IoStatus.Status);
 
     WdfSpinLockAcquire(channel->ConnectionStateLock);
@@ -1058,7 +1058,7 @@ L2CAP_PS3_ChannelDisconnectCompleted(
         FALSE
     );
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_L2CAP, "%!FUNC! Exit");
+    TraceVerbose( TRACE_L2CAP, "%!FUNC! Exit");
 }
 
 #pragma endregion
@@ -1357,7 +1357,7 @@ L2CAP_PS3_AsyncSendControlTransferCompleted(
 
     UNREFERENCED_PARAMETER(Target);
 
-    TraceEvents(TRACE_LEVEL_VERBOSE,
+    TraceVerbose(
         TRACE_L2CAP,
         "Control transfer request completed with status %!STATUS!",
         Params->IoStatus.Status
@@ -1386,7 +1386,7 @@ L2CAP_PS3_AsyncReadControlTransferCompleted(
 
     UNREFERENCED_PARAMETER(Target);
 
-    TraceEvents(TRACE_LEVEL_VERBOSE,
+    TraceVerbose(
         TRACE_L2CAP,
         "Control read transfer request completed with status %!STATUS!",
         Params->IoStatus.Status
@@ -1420,7 +1420,7 @@ L2CAP_PS3_AsyncReadInterruptTransferCompleted(
 
     UNREFERENCED_PARAMETER(Target);
 
-    TraceEvents(TRACE_LEVEL_VERBOSE,
+    TraceVerbose(
         TRACE_L2CAP,
         "Interrupt read transfer request completed with status %!STATUS! (remaining: %d)",
         Params->IoStatus.Status,
@@ -1454,7 +1454,7 @@ L2CAP_PS3_AsyncSendInterruptTransferCompleted(
 
     UNREFERENCED_PARAMETER(Target);
 
-    TraceEvents(TRACE_LEVEL_VERBOSE,
+    TraceVerbose(
         TRACE_L2CAP,
         "Interrupt OUT transfer request completed with status %!STATUS!",
         Params->IoStatus.Status

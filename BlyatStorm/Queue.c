@@ -113,7 +113,7 @@ Return Value:
 
 --*/
 {
-    TraceEvents(TRACE_LEVEL_INFORMATION, 
+    TraceInformation( 
                 TRACE_QUEUE, 
                 "%!FUNC! Queue 0x%p, Request 0x%p OutputBufferLength %d InputBufferLength %d IoControlCode %d", 
                 Queue, Request, (int) OutputBufferLength, (int) InputBufferLength, IoControlCode);
@@ -152,7 +152,7 @@ Return Value:
 
 --*/
 {
-    TraceEvents(TRACE_LEVEL_INFORMATION, 
+    TraceInformation( 
                 TRACE_QUEUE, 
                 "%!FUNC! Queue 0x%p, Request 0x%p ActionFlags %d", 
                 Queue, Request, ActionFlags);

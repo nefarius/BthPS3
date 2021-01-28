@@ -89,7 +89,7 @@ Return Value:
     //
     WPP_INIT_TRACING(DriverObject, RegistryPath);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Entry");
+    TraceInformation( TRACE_DRIVER, "%!FUNC! Entry");
 
     //
     // Register a cleanup callback so that we can call WPP_CLEANUP when
@@ -149,7 +149,7 @@ Return Value:
 
 #endif
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Exit");
+    TraceInformation( TRACE_DRIVER, "%!FUNC! Exit");
 
     return status;
 }
@@ -184,11 +184,11 @@ Return Value:
 
     PAGED_CODE();
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Entry");
+    TraceInformation( TRACE_DRIVER, "%!FUNC! Entry");
 
     status = BthPS3PSM_CreateDevice(DeviceInit);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Exit");
+    TraceInformation( TRACE_DRIVER, "%!FUNC! Exit");
 
     return status;
 }
@@ -216,7 +216,7 @@ Return Value:
 
     PAGED_CODE();
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DRIVER, "%!FUNC! Entry");
+    TraceInformation( TRACE_DRIVER, "%!FUNC! Entry");
 
     //
     // Stop WPP Tracing

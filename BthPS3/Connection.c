@@ -234,7 +234,7 @@ ClientConnections_RemoveAndDestroy(
     ULONG index;
     WDFOBJECT item, currentItem;
 
-    TraceEvents(TRACE_LEVEL_VERBOSE,
+    TraceVerbose(
         TRACE_CONNECTION,
         "%!FUNC! Entry (ClientConnection: 0x%p)",
         ClientConnection
@@ -251,7 +251,7 @@ ClientConnections_RemoveAndDestroy(
 
         if (currentItem == item)
         {
-            TraceEvents(TRACE_LEVEL_VERBOSE,
+            TraceVerbose(
                 TRACE_CONNECTION,
                 "++ Found desired connection item in connection list"
             );
@@ -264,7 +264,7 @@ ClientConnections_RemoveAndDestroy(
 
     WdfWaitLockRelease(Context->ClientConnectionsLock);
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CONNECTION, "%!FUNC! Exit");
+    TraceVerbose( TRACE_CONNECTION, "%!FUNC! Exit");
 }
 
 //
@@ -283,7 +283,7 @@ ClientConnections_RetrieveByBthAddr(
     WDFOBJECT currentItem;
     PBTHPS3_CLIENT_CONNECTION connection;
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CONNECTION, "%!FUNC! Entry");
+    TraceVerbose( TRACE_CONNECTION, "%!FUNC! Entry");
 
     WdfWaitLockAcquire(Context->Header.ClientConnectionsLock, NULL);
 
@@ -296,7 +296,7 @@ ClientConnections_RetrieveByBthAddr(
 
         if (connection->RemoteAddress == RemoteAddress)
         {
-            TraceEvents(TRACE_LEVEL_VERBOSE,
+            TraceVerbose(
                 TRACE_CONNECTION,
                 "++ Found desired connection item in connection list"
             );
@@ -309,7 +309,7 @@ ClientConnections_RetrieveByBthAddr(
 
     WdfWaitLockRelease(Context->Header.ClientConnectionsLock);
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CONNECTION, "%!FUNC! Exit (%!STATUS!)", status);
+    TraceVerbose( TRACE_CONNECTION, "%!FUNC! Exit (%!STATUS!)", status);
 
     return status;
 }
@@ -327,7 +327,7 @@ EvtClientConnectionsDestroyConnection(
     PDO_IDENTIFICATION_DESCRIPTION pdoDesc;
     PBTHPS3_CLIENT_CONNECTION connection = NULL;
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, 
+    TraceInformation( 
         TRACE_CONNECTION, 
         "%!FUNC! Entry (DISPOSING CONNECTION MEMORY)"
     );
@@ -365,5 +365,5 @@ EvtClientConnectionsDestroyConnection(
             status);
     }
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_CONNECTION, "%!FUNC! Exit");
+    TraceVerbose( TRACE_CONNECTION, "%!FUNC! Exit");
 }

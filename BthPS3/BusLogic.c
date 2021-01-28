@@ -600,13 +600,13 @@ NTSTATUS BthPS3_PDO_EvtWdfDeviceD0Exit(
 	UNREFERENCED_PARAMETER(Device);
 	UNREFERENCED_PARAMETER(TargetState);
 
-	TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Entry");
+	FuncEntry(TRACE_BUSLOGIC);
 
 	pPdoDevCtx = GetPdoDeviceContext(Device);
 	parentDevice = WdfPdoGetParent(Device);
 	parentTarget = WdfDeviceGetIoTarget(parentDevice);
 
-	TraceEvents(TRACE_LEVEL_INFORMATION,
+	TraceInformation(
 		TRACE_BUSLOGIC,
 		"Requesting device disconnect"
 	);
@@ -639,7 +639,7 @@ NTSTATUS BthPS3_PDO_EvtWdfDeviceD0Exit(
 		);
 	}
 
-	TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Exit");
+	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
 
 	return status;
 }
@@ -654,7 +654,7 @@ BthPS3_PDO_EvtDeviceContextCleanup(
 {
 	PBTHPS3_PDO_DEVICE_CONTEXT devCtx = NULL;
 
-	TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Entry");
+	FuncEntry(TRACE_BUSLOGIC);
 
 	devCtx = GetPdoDeviceContext(Device);
 
@@ -663,7 +663,7 @@ BthPS3_PDO_EvtDeviceContextCleanup(
 	// 
 	WdfObjectDereference(WdfObjectContextGetObject(devCtx->ClientConnection));
 
-	TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Exit");
+	FuncExitNoReturn(TRACE_BUSLOGIC);
 }
 
 //
@@ -687,7 +687,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 	WDF_REQUEST_FORWARD_OPTIONS forwardOptions;
 
 
-	TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Entry");
+	FuncEntry(TRACE_BUSLOGIC);
 
 	child = WdfIoQueueGetDevice(Queue);
 	parent = WdfPdoGetParent(child);
@@ -700,7 +700,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 
 	case IOCTL_BTHPS3_HID_CONTROL_READ:
 
-		TraceEvents(TRACE_LEVEL_VERBOSE,
+		TraceVerbose(
 			TRACE_BUSLOGIC,
 			">> IOCTL_BTHPS3_HID_CONTROL_READ"
 		);
@@ -721,7 +721,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 			break;
 		}
 
-		TraceEvents(TRACE_LEVEL_VERBOSE,
+		TraceVerbose(
 			TRACE_BUSLOGIC,
 			"bufferLength: %d",
 			(ULONG)bufferLength
@@ -755,7 +755,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 
 	case IOCTL_BTHPS3_HID_CONTROL_WRITE:
 
-		TraceEvents(TRACE_LEVEL_VERBOSE,
+		TraceVerbose(
 			TRACE_BUSLOGIC,
 			">> IOCTL_BTHPS3_HID_CONTROL_WRITE"
 		);
@@ -804,7 +804,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 
 	case IOCTL_BTHPS3_HID_INTERRUPT_READ:
 
-		TraceEvents(TRACE_LEVEL_VERBOSE,
+		TraceVerbose(
 			TRACE_BUSLOGIC,
 			">> IOCTL_BTHPS3_HID_INTERRUPT_READ"
 		);
@@ -825,7 +825,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 			break;
 		}
 
-		TraceEvents(TRACE_LEVEL_VERBOSE,
+		TraceVerbose(
 			TRACE_BUSLOGIC,
 			"bufferLength: %d",
 			(ULONG)bufferLength
@@ -859,7 +859,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 
 	case IOCTL_BTHPS3_HID_INTERRUPT_WRITE:
 
-		TraceEvents(TRACE_LEVEL_VERBOSE,
+		TraceVerbose(
 			TRACE_BUSLOGIC,
 			">> IOCTL_BTHPS3_HID_INTERRUPT_WRITE"
 		);
@@ -905,7 +905,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 #pragma endregion
 
 	default:
-		TraceEvents(TRACE_LEVEL_WARNING,
+		TraceVerbose(
 			TRACE_BUSLOGIC,
 			"Unknown IoControlCode received: 0x%X",
 			IoControlCode
@@ -937,7 +937,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 		WdfRequestComplete(Request, status);
 	}
 
-	TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Exit (status: %!STATUS!)", status);
+	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
 }
 
 //
@@ -951,6 +951,8 @@ NTSTATUS BthPS3_PDO_EvtWdfDeviceSelfManagedIoInit(
 	WCHAR deviceAddress[13];
 	PWSTR manufacturer = L"Nefarius Software Solutions e.U.";
 	LARGE_INTEGER lastConnectionTime;
+
+	FuncEntry(TRACE_BUSLOGIC);
 	
 	KeQuerySystemTimePrecise(&lastConnectionTime);
 
@@ -1077,6 +1079,8 @@ NTSTATUS BthPS3_PDO_EvtWdfDeviceSelfManagedIoInit(
 		break;
 	}
 
+	FuncExitNoReturn(TRACE_BUSLOGIC);
+	
 	return STATUS_SUCCESS;
 }
 
@@ -1115,6 +1119,11 @@ NTSTATUS BthPS3_AssignDeviceProperty(
 	UNREFERENCED_PARAMETER(Type);
 	UNREFERENCED_PARAMETER(Size);
 	UNREFERENCED_PARAMETER(Data);
+
+	TraceVerbose(
+		TRACE_BUSLOGIC,
+		"Assigning device properties requires KMDF 1.13 or later"
+	);
 	
 	return STATUS_NOT_SUPPORTED;
 	

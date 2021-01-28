@@ -133,7 +133,7 @@ BthPS3PSMEvtIoInternalDeviceControl(
 
         case URB_FUNCTION_SELECT_CONFIGURATION:
 
-            TraceEvents(TRACE_LEVEL_VERBOSE,
+            TraceVerbose(
                 TRACE_QUEUE,
                 "<< URB_FUNCTION_SELECT_CONFIGURATION");
 
@@ -166,7 +166,7 @@ BthPS3PSMEvtIoInternalDeviceControl(
             if (urb->UrbBulkOrInterruptTransfer.PipeHandle ==
                 WdfUsbTargetPipeWdmGetPipeHandle(pContext->BulkReadPipe))
             {
-                TraceEvents(TRACE_LEVEL_VERBOSE,
+                TraceVerbose(
                     TRACE_QUEUE,
                     ">> Bulk IN transfer (PipeHandle: %p)",
                     urb->UrbBulkOrInterruptTransfer.PipeHandle

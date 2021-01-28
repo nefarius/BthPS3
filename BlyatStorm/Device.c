@@ -66,7 +66,7 @@ Return Value:
 
     WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&deviceAttributes, DEVICE_CONTEXT);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION,
+    TraceInformation(
         TRACE_DEVICE,
         "0x%X, 0x%X, 0x%X, 0x%X",
         IOCTL_BTHPS3_HID_CONTROL_READ,
@@ -245,7 +245,7 @@ TraceDumpBuffer(
         swprintf(&dumpBuffer[i * 3], L"%02X ", ((PUCHAR)Buffer)[i]);
     }
 
-    TraceEvents(TRACE_LEVEL_INFORMATION,
+    TraceInformation(
         TRACE_DEVICE,
         "%ws",
         dumpBuffer);
@@ -266,7 +266,7 @@ OutputReport_EvtTimerFunc(
 
     UNREFERENCED_PARAMETER(devCtx);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Entry");
+    TraceInformation( TRACE_DEVICE, "%!FUNC! Entry");
 
 
     NTSTATUS status;
@@ -297,7 +297,7 @@ OutputReport_EvtTimerFunc(
 
     WdfTimerStart(devCtx->OutputReportTimer, WDF_REL_TIMEOUT_IN_MS(0xFA));
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Exit");
+    TraceInformation( TRACE_DEVICE, "%!FUNC! Exit");
 }
 
 _Use_decl_annotations_
@@ -310,7 +310,7 @@ Init_EvtTimerFunc(
     WDFIOTARGET ioTarget = WdfDeviceGetIoTarget(device);
     PDEVICE_CONTEXT devCtx = DeviceGetContext(device);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Entry");
+    TraceInformation( TRACE_DEVICE, "%!FUNC! Entry");
 
     UNREFERENCED_PARAMETER(devCtx);
 
@@ -358,7 +358,7 @@ Init_EvtTimerFunc(
 
     WdfTimerStart(devCtx->InputReportTimer, WDF_REL_TIMEOUT_IN_MS(0x64));
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Exit");
+    TraceInformation( TRACE_DEVICE, "%!FUNC! Exit");
 }
 
 _Use_decl_annotations_
@@ -371,7 +371,7 @@ InputReport_EvtTimerFunc(
     WDFIOTARGET ioTarget = WdfDeviceGetIoTarget(device);
     PDEVICE_CONTEXT devCtx = DeviceGetContext(device);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Entry");
+    TraceInformation( TRACE_DEVICE, "%!FUNC! Entry");
 
     NTSTATUS status;
     PVOID buffer = NULL;
@@ -414,7 +414,7 @@ InputReport_EvtTimerFunc(
 
     WdfTimerStart(devCtx->InputReportTimer, WDF_REL_TIMEOUT_IN_MS(0x01));
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Exit");
+    TraceInformation( TRACE_DEVICE, "%!FUNC! Exit");
 }
 
 _Use_decl_annotations_
@@ -427,7 +427,7 @@ ControlRead_EvtTimerFunc(
     WDFIOTARGET ioTarget = WdfDeviceGetIoTarget(device);
     PDEVICE_CONTEXT devCtx = DeviceGetContext(device);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Entry");
+    TraceInformation( TRACE_DEVICE, "%!FUNC! Entry");
 
     NTSTATUS status;
     PVOID buffer = NULL;
@@ -470,6 +470,6 @@ ControlRead_EvtTimerFunc(
 
     WdfTimerStart(devCtx->ControlReadTimer, WDF_REL_TIMEOUT_IN_MS(0x0A));
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_DEVICE, "%!FUNC! Exit");
+    TraceInformation( TRACE_DEVICE, "%!FUNC! Exit");
 }
 

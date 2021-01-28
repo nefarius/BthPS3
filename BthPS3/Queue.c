@@ -126,7 +126,7 @@ BthPS3_EvtWdfIoQueueIoDeviceControl(
     UNREFERENCED_PARAMETER(InputBufferLength);
     UNREFERENCED_PARAMETER(IoControlCode);
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_QUEUE, "%!FUNC! Entry");
+    TraceVerbose( TRACE_QUEUE, "%!FUNC! Entry");
 
     device = WdfIoQueueGetDevice(Queue);
     deviceCtx = GetServerDeviceContext(device);
@@ -150,7 +150,7 @@ BthPS3_EvtWdfIoQueueIoDeviceControl(
         WdfRequestComplete(Request, status);
     }
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_QUEUE, "%!FUNC! Exit");
+    TraceVerbose( TRACE_QUEUE, "%!FUNC! Exit");
 }
 
 //
@@ -165,14 +165,14 @@ BthPS3_EvtIoStop(
 {
     BOOLEAN ret;
 
-    TraceEvents(TRACE_LEVEL_INFORMATION,
+    TraceInformation(
         TRACE_QUEUE,
         "%!FUNC! Queue 0x%p, Request 0x%p ActionFlags %d",
         Queue, Request, ActionFlags);
 
     ret = WdfRequestCancelSentRequest(Request);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION,
+    TraceInformation(
         TRACE_QUEUE,
         "WdfRequestCancelSentRequest returned %d",
         ret

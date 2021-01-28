@@ -63,7 +63,7 @@ BthPS3_CreateDevice(
     PAGED_CODE();
 
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "%!FUNC! Entry");
+    TraceVerbose( TRACE_DEVICE, "%!FUNC! Entry");
 
     WdfDeviceInitSetDeviceType(DeviceInit, FILE_DEVICE_BUS_EXTENDER);
 
@@ -167,7 +167,7 @@ BthPS3_CreateDevice(
     }
 
 exit:
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "%!FUNC! Exit");
+    TraceVerbose( TRACE_DEVICE, "%!FUNC! Exit");
 
     return status;
 }
@@ -235,7 +235,7 @@ void BthPS3_EnablePatchEvtWdfTimer(
     NTSTATUS status;
     PBTHPS3_SERVER_CONTEXT devCtx = GetServerDeviceContext(WdfTimerGetParentObject(Timer));
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE,
+    TraceVerbose( TRACE_DEVICE,
         "%!FUNC! called, requesting filter to enable patch"
     );
 
@@ -246,7 +246,7 @@ void BthPS3_EnablePatchEvtWdfTimer(
 
     if (!NT_SUCCESS(status))
     {
-        TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE,
+        TraceVerbose( TRACE_DEVICE,
             "BthPS3PSM_EnablePatchAsync failed with status %!STATUS!",
             status
         );
@@ -265,7 +265,7 @@ BthPS3_EvtWdfDeviceSelfManagedIoInit(
     NTSTATUS status;
     PBTHPS3_SERVER_CONTEXT devCtx = GetServerDeviceContext(Device);
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "%!FUNC! Entry");
+    TraceVerbose( TRACE_DEVICE, "%!FUNC! Entry");
 
     status = BthPS3_RetrieveLocalInfo(&devCtx->Header);
     if (!NT_SUCCESS(status))
@@ -298,7 +298,7 @@ BthPS3_EvtWdfDeviceSelfManagedIoInit(
 
 exit:
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "%!FUNC! Exit");
+    TraceVerbose( TRACE_DEVICE, "%!FUNC! Exit");
 
     return status;
 }
@@ -318,7 +318,7 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
 
     PAGED_CODE();
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "%!FUNC! Entry");
+    TraceVerbose( TRACE_DEVICE, "%!FUNC! Entry");
 
     if (devCtx->PsmFilter.IoTarget != NULL)
     {
@@ -392,7 +392,7 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
         WdfObjectDelete(currentItem);
     }
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_DEVICE, "%!FUNC! Exit");
+    TraceVerbose( TRACE_DEVICE, "%!FUNC! Exit");
 
     return;
 }

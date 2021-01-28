@@ -127,7 +127,7 @@ ProxyUrbSelectConfiguration(
         );
 
         if (WdfUsbPipeTypeInterrupt == pipeInfo.PipeType) {
-            TraceEvents(TRACE_LEVEL_INFORMATION,
+            TraceInformation(
                 TRACE_FILTER,
                 "Interrupt Pipe is 0x%p",
                 WdfUsbTargetPipeWdmGetPipeHandle(pipe)
@@ -138,7 +138,7 @@ ProxyUrbSelectConfiguration(
 
         if (WdfUsbPipeTypeBulk == pipeInfo.PipeType &&
             WdfUsbTargetPipeIsInEndpoint(pipe)) {
-            TraceEvents(TRACE_LEVEL_INFORMATION,
+            TraceInformation(
                 TRACE_FILTER,
                 "BulkInput Pipe is 0x%p",
                 WdfUsbTargetPipeWdmGetPipeHandle(pipe)
@@ -149,7 +149,7 @@ ProxyUrbSelectConfiguration(
 
         if (WdfUsbPipeTypeBulk == pipeInfo.PipeType &&
             WdfUsbTargetPipeIsOutEndpoint(pipe)) {
-            TraceEvents(TRACE_LEVEL_INFORMATION,
+            TraceInformation(
                 TRACE_FILTER,
                 "BulkOutput Pipe is 0x%p",
                 WdfUsbTargetPipeWdmGetPipeHandle(pipe)
@@ -201,7 +201,7 @@ UrbFunctionBulkInTransferCompleted(
 
     UNREFERENCED_PARAMETER(Target);
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_FILTER, "%!FUNC! Entry");
+    TraceVerbose( TRACE_FILTER, "%!FUNC! Entry");
 
     device = (WDFDEVICE)Context;
     pDevCtx = DeviceGetContext(device);
@@ -231,7 +231,7 @@ UrbFunctionBulkInTransferCompleted(
 
             if (pConReq->PSM == PSM_HID_CONTROL)
             {
-                TraceEvents(TRACE_LEVEL_VERBOSE,
+                TraceVerbose(
                     TRACE_FILTER,
                     ">> Connection request for HID Control PSM 0x%04X arrived",
                     pConReq->PSM);
@@ -240,14 +240,14 @@ UrbFunctionBulkInTransferCompleted(
                 {
                     pConReq->PSM = PSM_DS3_HID_CONTROL;
 
-                    TraceEvents(TRACE_LEVEL_INFORMATION,
+                    TraceInformation(
                         TRACE_FILTER,
                         "++ Patching HID Control PSM to 0x%04X",
                         pConReq->PSM);
                 }
                 else
                 {
-                    TraceEvents(TRACE_LEVEL_VERBOSE,
+                    TraceVerbose(
                         TRACE_FILTER,
                         "-- NOT Patching HID Control PSM"
                     );
@@ -256,7 +256,7 @@ UrbFunctionBulkInTransferCompleted(
 
             if (pConReq->PSM == PSM_HID_INTERRUPT)
             {
-                TraceEvents(TRACE_LEVEL_VERBOSE,
+                TraceVerbose(
                     TRACE_FILTER,
                     ">> Connection request for HID Interrupt PSM 0x%04X arrived",
                     pConReq->PSM);
@@ -265,14 +265,14 @@ UrbFunctionBulkInTransferCompleted(
                 {
                     pConReq->PSM = PSM_DS3_HID_INTERRUPT;
 
-                    TraceEvents(TRACE_LEVEL_INFORMATION,
+                    TraceInformation(
                         TRACE_FILTER,
                         "++ Patching HID Interrupt PSM to 0x%04X",
                         pConReq->PSM);
                 }
                 else
                 {
-                    TraceEvents(TRACE_LEVEL_VERBOSE,
+                    TraceVerbose(
                         TRACE_FILTER,
                         "-- NOT Patching HID Interrupt PSM"
                     );
@@ -283,5 +283,5 @@ UrbFunctionBulkInTransferCompleted(
 
     WdfRequestComplete(Request, Params->IoStatus.Status);
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_FILTER, "%!FUNC! Exit");
+    TraceVerbose( TRACE_FILTER, "%!FUNC! Exit");
 }

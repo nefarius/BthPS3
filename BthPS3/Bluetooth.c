@@ -61,89 +61,96 @@ BthPS3_RetrieveLocalInfo(
 	struct _BRB_GET_LOCAL_BD_ADDR* brb = NULL;
 	UCHAR hciVersion;
 
-	TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Entry");
+	FuncEntry(TRACE_BTH);
 
-	brb = (struct _BRB_GET_LOCAL_BD_ADDR*)
-		DevCtxHdr->ProfileDrvInterface.BthAllocateBrb(
-			BRB_HCI_GET_LOCAL_BD_ADDR,
-			POOLTAG_BTHPS3
-		);
-
-	if (brb == NULL)
+	do
 	{
-		status = STATUS_INSUFFICIENT_RESOURCES;
+		brb = (struct _BRB_GET_LOCAL_BD_ADDR*)
+			DevCtxHdr->ProfileDrvInterface.BthAllocateBrb(
+				BRB_HCI_GET_LOCAL_BD_ADDR,
+				POOLTAG_BTHPS3
+			);
 
-		TraceEvents(TRACE_LEVEL_ERROR,
-			TRACE_BTH,
-			"Failed to allocate brb BRB_HCI_GET_LOCAL_BD_ADDR with status %!STATUS!",
-			status
-		);
-
-		goto exit;
-	}
-
-	status = BthPS3_SendBrbSynchronously(
-		DevCtxHdr->IoTarget,
-		DevCtxHdr->HostInitRequest,
-		(PBRB)brb,
-		sizeof(*brb)
-	);
-
-	if (!NT_SUCCESS(status))
-	{
-		TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
-			"Retrieving local bth address failed, Status code %!STATUS!\n", status);
-	}
-	else
-	{
-		DevCtxHdr->LocalBthAddr = brb->BtAddress;
-	}
-
-	DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
-
-	//
-	// Verify HCI major version is high enough
-	// 
-	status = BTHPS3_GET_HCI_VERSION(
-		DevCtxHdr->IoTarget,
-		&hciVersion,
-		NULL
-	);
-	if (!NT_SUCCESS(status))
-	{
-		TraceEvents(TRACE_LEVEL_WARNING, TRACE_BTH,
-			"Retrieving HCI major version failed, status %!STATUS!",
-			status
-		);
-		//
-		// Can still operate without this information
-		// 
-		status = STATUS_SUCCESS;
-	}
-	else
-	{
-		TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_BTH,
-			"++ Host radio HCI major version %d",
-			hciVersion
-		);
-		
-		if (hciVersion < BTHPS3_MIN_SUPPORTED_HCI_MAJOR_VERSION)
+		if (brb == NULL)
 		{
-			TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
-				"Host radio HCI major version %d too low, can't continue",
+			status = STATUS_INSUFFICIENT_RESOURCES;
+
+			TraceError(
+				TRACE_BTH,
+				"Failed to allocate brb BRB_HCI_GET_LOCAL_BD_ADDR with status %!STATUS!",
+				status
+			);
+
+			break;
+		}
+
+		status = BthPS3_SendBrbSynchronously(
+			DevCtxHdr->IoTarget,
+			DevCtxHdr->HostInitRequest,
+			(PBRB)brb,
+			sizeof(*brb)
+		);
+
+		if (!NT_SUCCESS(status))
+		{
+			TraceError(
+				TRACE_BTH,
+				"Retrieving local bth address failed with status %!STATUS!",
+				status
+			);
+		}
+		else
+		{
+			DevCtxHdr->LocalBthAddr = brb->BtAddress;
+		}
+
+		DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+
+		//
+		// Verify HCI major version is high enough
+		// 
+		status = BTHPS3_GET_HCI_VERSION(
+			DevCtxHdr->IoTarget,
+			&hciVersion,
+			NULL
+		);
+		if (!NT_SUCCESS(status))
+		{
+			TraceEvents(TRACE_LEVEL_WARNING, TRACE_BTH,
+			            "Retrieving HCI major version failed, status %!STATUS!",
+			            status
+			);
+			//
+			// Can still operate without this information
+			// 
+			status = STATUS_SUCCESS;
+		}
+		else
+		{
+			TraceInformation(
+				TRACE_BTH,
+				"Host radio HCI major version %d",
 				hciVersion
 			);
 
-			//
-			// Fail initialization
-			// 
-			status = STATUS_NOT_SUPPORTED;
+			if (hciVersion < BTHPS3_MIN_SUPPORTED_HCI_MAJOR_VERSION)
+			{
+				TraceError(
+					TRACE_BTH,
+					"Host radio HCI major version %d too low, can't continue",
+					hciVersion
+				);
+
+				//
+				// Fail initialization
+				// 
+				status = STATUS_NOT_SUPPORTED;
+			}
 		}
 	}
+	while (FALSE);
 
-exit:
-
-	TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Exit");
+	FuncExit(TRACE_BTH, "status=%!STATUS!", status);
 
 	return status;
 }
@@ -159,7 +166,7 @@ BthPS3_RegisterPSM(
 	NTSTATUS status;
 	struct _BRB_PSM* brb;
 
-	TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Entry");
+	FuncEntry(TRACE_BTH);
 
 	DevCtx->Header.ProfileDrvInterface.BthReuseBrb(
 		&(DevCtx->RegisterUnregisterBrb),
@@ -175,9 +182,9 @@ BthPS3_RegisterPSM(
 
 	brb->Psm = PSM_DS3_HID_CONTROL;
 
-	TraceEvents(TRACE_LEVEL_INFORMATION,
+	TraceInformation(
 		TRACE_BTH,
-		"++ Trying to register PSM 0x%04X",
+		"Trying to register PSM 0x%04X",
 		brb->Psm
 	);
 
@@ -190,8 +197,11 @@ BthPS3_RegisterPSM(
 
 	if (!NT_SUCCESS(status))
 	{
-		TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
-			"BRB_REGISTER_PSM failed with status %!STATUS!", status);
+		TraceError(
+			TRACE_BTH,
+			"BRB_REGISTER_PSM failed with status %!STATUS!",
+			status
+		);
 		goto exit;
 	}
 
@@ -200,9 +210,9 @@ BthPS3_RegisterPSM(
 	//
 	DevCtx->PsmHidControl = brb->Psm;
 
-	TraceEvents(TRACE_LEVEL_INFORMATION,
+	TraceInformation(
 		TRACE_BTH,
-		"++ Got PSM 0x%04X",
+		"Got PSM 0x%04X",
 		brb->Psm
 	);
 
@@ -211,7 +221,8 @@ BthPS3_RegisterPSM(
 	// 
 	if (brb->Psm != PSM_DS3_HID_CONTROL)
 	{
-		TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
+		TraceError(
+			TRACE_BTH,
 			"Requested PSM 0x%04X but got 0x%04X instead",
 			PSM_DS3_HID_CONTROL,
 			brb->Psm
@@ -227,9 +238,9 @@ BthPS3_RegisterPSM(
 
 	brb->Psm = PSM_DS3_HID_INTERRUPT;
 
-	TraceEvents(TRACE_LEVEL_INFORMATION,
+	TraceInformation(
 		TRACE_BTH,
-		"++ Trying to register PSM 0x%04X",
+		"Trying to register PSM 0x%04X",
 		brb->Psm
 	);
 
@@ -242,8 +253,11 @@ BthPS3_RegisterPSM(
 
 	if (!NT_SUCCESS(status))
 	{
-		TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
-			"BRB_REGISTER_PSM failed with status %!STATUS!", status);
+		TraceError(
+			TRACE_BTH,
+			"BRB_REGISTER_PSM failed with status %!STATUS!", 
+			status
+		);
 		goto exit;
 	}
 
@@ -252,9 +266,9 @@ BthPS3_RegisterPSM(
 	//
 	DevCtx->PsmHidInterrupt = brb->Psm;
 
-	TraceEvents(TRACE_LEVEL_INFORMATION,
+	TraceInformation(
 		TRACE_BTH,
-		"++ Got PSM 0x%04X",
+		"Got PSM 0x%04X",
 		brb->Psm
 	);
 
@@ -263,7 +277,8 @@ BthPS3_RegisterPSM(
 	// 
 	if (brb->Psm != PSM_DS3_HID_INTERRUPT)
 	{
-		TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
+		TraceError(
+			TRACE_BTH,
 			"Requested PSM 0x%04X but got 0x%04X instead",
 			PSM_DS3_HID_INTERRUPT,
 			brb->Psm
@@ -274,7 +289,7 @@ BthPS3_RegisterPSM(
 
 exit:
 
-	TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Exit");
+	FuncExit(TRACE_BTH, "status=%!STATUS!", status);
 
 	return status;
 }

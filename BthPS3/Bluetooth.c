@@ -376,7 +376,7 @@ BthPS3_RegisterL2CAPServer(
 	NTSTATUS status;
 	struct _BRB_L2CA_REGISTER_SERVER* brb;
 
-	TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Entry");
+	FuncEntry(TRACE_BTH);
 
 	DevCtx->Header.ProfileDrvInterface.BthReuseBrb(
 		&(DevCtx->RegisterUnregisterBrb),
@@ -405,8 +405,11 @@ BthPS3_RegisterL2CAPServer(
 
 	if (!NT_SUCCESS(status))
 	{
-		TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
-			"BRB_REGISTER_PSM failed with status %!STATUS!", status);
+		TraceError(
+			TRACE_BTH,
+			"BRB_REGISTER_PSM failed with status %!STATUS!", 
+			status
+		);
 	}
 	else
 	{
@@ -416,7 +419,7 @@ BthPS3_RegisterL2CAPServer(
 		DevCtx->L2CAPServerHandle = brb->ServerHandle;
 	}
 
-	TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Exit");
+	FuncExit(TRACE_BTH, "status=%!STATUS!", status);
 
 	return status;
 }
@@ -430,6 +433,8 @@ BthPS3_UnregisterL2CAPServer(
 	NTSTATUS status;
 	struct _BRB_L2CA_UNREGISTER_SERVER* brb;
 
+	FuncEntry(TRACE_BTH);
+	
 	PAGED_CODE();
 
 	if (NULL == DevCtx->L2CAPServerHandle)
@@ -461,20 +466,18 @@ BthPS3_UnregisterL2CAPServer(
 
 	if (!NT_SUCCESS(status))
 	{
-		TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
-			"BRB_L2CA_UNREGISTER_SERVER failed with status %!STATUS!", status);
-
-		//
-		// Send does not fail for resource reasons
-		//
-		NT_ASSERT(FALSE);
-
-		return;
+		TraceError(
+			TRACE_BTH,
+			"BRB_L2CA_UNREGISTER_SERVER failed with status %!STATUS!", 
+			status
+		);
+	}
+	else
+	{
+		DevCtx->L2CAPServerHandle = NULL;
 	}
 
-	DevCtx->L2CAPServerHandle = NULL;
-
-	return;
+	FuncExitNoReturn(TRACE_BTH);
 }
 
 #pragma endregion
@@ -489,6 +492,8 @@ BthPS3_DeviceContextHeaderInit(
 	NTSTATUS status;
 	WDF_OBJECT_ATTRIBUTES attributes;
 
+	FuncEntry(TRACE_BTH);
+	
 	Header->Device = Device;
 
 	Header->IoTarget = WdfDeviceGetIoTarget(Device);
@@ -508,12 +513,14 @@ BthPS3_DeviceContextHeaderInit(
 
 	if (!NT_SUCCESS(status))
 	{
-		TraceEvents(TRACE_LEVEL_ERROR,
+		TraceError(
 			TRACE_BTH,
 			"Failed to pre-allocate request in device context with status %!STATUS!",
 			status
 		);
 	}
+
+	FuncExit(TRACE_BTH, "status=%!STATUS!", status);
 
 	return status;
 }
@@ -532,99 +539,104 @@ BthPS3_ServerContextInit(
 	WDF_OBJECT_ATTRIBUTES attributes;
 	WDF_TIMER_CONFIG timerCfg;
 
-	//
-	// Initialize crucial header struct first
-	// 
-	status = BthPS3_DeviceContextHeaderInit(&Context->Header, Device);
-	if (!NT_SUCCESS(status))
-	{
-		goto exit;
-	}
+	FuncEntry(TRACE_BTH);
 
-	WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
-	attributes.ParentObject = Device;
+	do {
+		//
+		// Initialize crucial header struct first
+		// 
+		status = BthPS3_DeviceContextHeaderInit(&Context->Header, Device);
+		if (!NT_SUCCESS(status))
+		{
+			break;
+		}
 
-	status = WdfWaitLockCreate(
-		&attributes,
-		&Context->Header.ClientConnectionsLock
-	);
-	if (!NT_SUCCESS(status))
-	{
-		goto exit;
-	}
+		WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+		attributes.ParentObject = Device;
 
-	WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
-	attributes.ParentObject = Device;
+		status = WdfWaitLockCreate(
+			&attributes,
+			&Context->Header.ClientConnectionsLock
+		);
+		if (!NT_SUCCESS(status))
+		{
+			break;
+		}
 
-	status = WdfCollectionCreate(
-		&attributes,
-		&Context->Header.ClientConnections
-	);
-	if (!NT_SUCCESS(status))
-	{
-		goto exit;
-	}
+		WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+		attributes.ParentObject = Device;
 
-	WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
-	attributes.ParentObject = Device;
+		status = WdfCollectionCreate(
+			&attributes,
+			&Context->Header.ClientConnections
+		);
+		if (!NT_SUCCESS(status))
+		{
+			break;
+		}
 
-	WDF_TIMER_CONFIG_INIT(&timerCfg, BthPS3_EnablePatchEvtWdfTimer);
+		WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+		attributes.ParentObject = Device;
 
-	status = WdfTimerCreate(
-		&timerCfg,
-		&attributes,
-		&Context->PsmFilter.AutoResetTimer
-	);
-	if (!NT_SUCCESS(status))
-	{
-		goto exit;
-	}
+		WDF_TIMER_CONFIG_INIT(&timerCfg, BthPS3_EnablePatchEvtWdfTimer);
 
-	WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
-	attributes.ParentObject = Device;
+		status = WdfTimerCreate(
+			&timerCfg,
+			&attributes,
+			&Context->PsmFilter.AutoResetTimer
+		);
+		if (!NT_SUCCESS(status))
+		{
+			break;
+		}
 
-	status = WdfCollectionCreate(
-		&attributes,
-		&Context->Settings.SIXAXISSupportedNames
-	);
-	if (!NT_SUCCESS(status))
-	{
-		goto exit;
-	}
+		WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+		attributes.ParentObject = Device;
 
-	status = WdfCollectionCreate(
-		&attributes,
-		&Context->Settings.NAVIGATIONSupportedNames
-	);
-	if (!NT_SUCCESS(status))
-	{
-		goto exit;
-	}
+		status = WdfCollectionCreate(
+			&attributes,
+			&Context->Settings.SIXAXISSupportedNames
+		);
+		if (!NT_SUCCESS(status))
+		{
+			break;
+		}
 
-	status = WdfCollectionCreate(
-		&attributes,
-		&Context->Settings.MOTIONSupportedNames
-	);
-	if (!NT_SUCCESS(status))
-	{
-		goto exit;
-	}
+		status = WdfCollectionCreate(
+			&attributes,
+			&Context->Settings.NAVIGATIONSupportedNames
+		);
+		if (!NT_SUCCESS(status))
+		{
+			break;
+		}
 
-	status = WdfCollectionCreate(
-		&attributes,
-		&Context->Settings.WIRELESSSupportedNames
-	);
-	if (!NT_SUCCESS(status))
-	{
-		goto exit;
-	}
+		status = WdfCollectionCreate(
+			&attributes,
+			&Context->Settings.MOTIONSupportedNames
+		);
+		if (!NT_SUCCESS(status))
+		{
+			break;
+		}
 
-	//
-	// Query registry for dynamic values
-	// 
-	status = BthPS3_SettingsContextInit(Context);
+		status = WdfCollectionCreate(
+			&attributes,
+			&Context->Settings.WIRELESSSupportedNames
+		);
+		if (!NT_SUCCESS(status))
+		{
+			break;
+		}
 
-exit:
+		//
+		// Query registry for dynamic values
+		// 
+		status = BthPS3_SettingsContextInit(Context);
+	} while (FALSE);
+
+	FuncExit(TRACE_BTH, "status=%!STATUS!", status);
+	
 	return status;
 }
 
@@ -795,10 +807,12 @@ BthPS3_QueryInterfaces(
 
 	if (!NT_SUCCESS(status))
 	{
-		TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
+		TraceError(
+			TRACE_BTH,
 			"QueryInterface failed for Interface profile driver interface, version %d, Status code %!STATUS!",
 			BTHDDI_PROFILE_DRIVER_INTERFACE_VERSION_FOR_QI,
-			status);
+			status
+		);
 	}
 
 	return status;
@@ -835,7 +849,7 @@ BthPS3_IndicationCallback(
 	WDF_OBJECT_ATTRIBUTES asyncAttribs;
 	PBTHPS3_REMOTE_CONNECT_CONTEXT connectCtx = NULL;
 
-	TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Entry");
+	FuncEntry(TRACE_BTH);
 
 	switch (Indication)
 	{
@@ -846,10 +860,12 @@ BthPS3_IndicationCallback(
 	{
 		PBTHPS3_SERVER_CONTEXT devCtx = (PBTHPS3_SERVER_CONTEXT)Context;
 
-		TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_BTH,
+		TraceInformation(
+			TRACE_BTH,
 			"New connection for PSM 0x%04X from %012llX arrived",
 			Parameters->Parameters.Connect.Request.PSM,
-			Parameters->BtAddress);
+			Parameters->BtAddress
+		);
 
 		if (KeGetCurrentIrql() <= PASSIVE_LEVEL)
 		{
@@ -865,7 +881,8 @@ BthPS3_IndicationCallback(
 		// Can be DPC level, enqueue work item
 		// 
 
-		TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH,
+		TraceVerbose(
+			TRACE_BTH,
 			"IRQL %!irql! too high, preparing async call",
 			KeGetCurrentIrql()
 		);
@@ -885,7 +902,8 @@ BthPS3_IndicationCallback(
 
 		if (!NT_SUCCESS(status))
 		{
-			TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
+			TraceError(
+				TRACE_BTH,
 				"WdfWorkItemCreate failed with status %!STATUS!",
 				status
 			);
@@ -921,7 +939,7 @@ BthPS3_IndicationCallback(
 		break;
 	}
 
-	TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Exit");
+	FuncExitNoReturn(TRACE_BTH);
 }
 
 #pragma region BRB Request submission
@@ -988,7 +1006,8 @@ BthPS3_SendBrbAsync(
 
 	if (BrbSize <= 0)
 	{
-		TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
+		TraceError(
+			TRACE_BTH,
 			"BrbSize has invalid value: %I64d\n",
 			BrbSize
 		);
@@ -1010,9 +1029,9 @@ BthPS3_SendBrbAsync(
 
 	if (!NT_SUCCESS(status))
 	{
-		TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
+		TraceError(TRACE_BTH,
 			"Creating preallocated memory for Brb 0x%p failed, Request to be formatted 0x%p, "
-			"Status code %!STATUS!\n",
+			"Status code %!STATUS!",
 			Brb,
 			Request,
 			status
@@ -1035,7 +1054,8 @@ BthPS3_SendBrbAsync(
 
 	if (!NT_SUCCESS(status))
 	{
-		TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
+		TraceError(
+			TRACE_BTH,
 			"Formatting request 0x%p with Brb 0x%p failed, Status code %!STATUS!",
 			Request,
 			Brb,
@@ -1062,7 +1082,8 @@ BthPS3_SendBrbAsync(
 	{
 		status = WdfRequestGetStatus(Request);
 
-		TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
+		TraceError(
+			TRACE_BTH,
 			"Request send failed for request 0x%p, Brb 0x%p, Status code %!STATUS!",
 			Request,
 			Brb,

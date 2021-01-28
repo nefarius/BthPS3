@@ -197,42 +197,48 @@ NTSTATUS BthPS3_OpenFilterIoTarget(WDFDEVICE Device)
 
     PAGED_CODE();
 
+    FuncEntry(TRACE_DEVICE);
+
     pCtx = GetServerDeviceContext(Device);
 
     WDF_OBJECT_ATTRIBUTES_INIT(&ioTargetAttrib);
 
-    status = WdfIoTargetCreate(
-        Device,
-        &ioTargetAttrib,
-        &pCtx->PsmFilter.IoTarget
-    );
-    if (!NT_SUCCESS(status)) {
-        TraceError(
-            TRACE_DEVICE,
-            "WdfIoTargetCreate failed with status %!STATUS!",
-            status
+    do {
+        status = WdfIoTargetCreate(
+            Device,
+            &ioTargetAttrib,
+            &pCtx->PsmFilter.IoTarget
         );
-        return status;
-    }
-    WDF_IO_TARGET_OPEN_PARAMS_INIT_OPEN_BY_NAME(
-        &openParams,
-        &symbolicLink,
-        STANDARD_RIGHTS_ALL
-    );
-    status = WdfIoTargetOpen(
-        pCtx->PsmFilter.IoTarget,
-        &openParams
-    );
-    if (!NT_SUCCESS(status)) {
-        TraceError(
-            TRACE_DEVICE,
-            "WdfIoTargetOpen failed with status %!STATUS!",
-            status
+        if (!NT_SUCCESS(status)) {
+            TraceError(
+                TRACE_DEVICE,
+                "WdfIoTargetCreate failed with status %!STATUS!",
+                status
+            );
+            break;
+        }
+        WDF_IO_TARGET_OPEN_PARAMS_INIT_OPEN_BY_NAME(
+            &openParams,
+            &symbolicLink,
+            STANDARD_RIGHTS_ALL
         );
-        WdfObjectDelete(pCtx->PsmFilter.IoTarget);
-        return status;
-    }
+        status = WdfIoTargetOpen(
+            pCtx->PsmFilter.IoTarget,
+            &openParams
+        );
+        if (!NT_SUCCESS(status)) {
+            TraceError(
+                TRACE_DEVICE,
+                "WdfIoTargetOpen failed with status %!STATUS!",
+                status
+            );
+            WdfObjectDelete(pCtx->PsmFilter.IoTarget);
+            break;
+        }
+    } while (FALSE);
 
+    FuncExit(TRACE_DEVICE, "status=%!STATUS!", status);
+	
     return status;
 }
 
@@ -246,8 +252,8 @@ void BthPS3_EnablePatchEvtWdfTimer(
     NTSTATUS status;
     PBTHPS3_SERVER_CONTEXT devCtx = GetServerDeviceContext(WdfTimerGetParentObject(Timer));
 
-    TraceVerbose( TRACE_DEVICE,
-        "%!FUNC! called, requesting filter to enable patch"
+    TraceVerbose(TRACE_DEVICE,
+        "Requesting filter to enable patch"
     );
 
     status = BthPS3PSM_EnablePatchAsync(
@@ -276,40 +282,40 @@ BthPS3_EvtWdfDeviceSelfManagedIoInit(
     NTSTATUS status;
     PBTHPS3_SERVER_CONTEXT devCtx = GetServerDeviceContext(Device);
 
-    TraceVerbose( TRACE_DEVICE, "%!FUNC! Entry");
+    FuncEntry(TRACE_DEVICE);
 
-    status = BthPS3_RetrieveLocalInfo(&devCtx->Header);
-    if (!NT_SUCCESS(status))
-    {
-        goto exit;
-    }
+    do {
+        status = BthPS3_RetrieveLocalInfo(&devCtx->Header);
+        if (!NT_SUCCESS(status))
+        {
+            break;
+        }
 
-    status = BthPS3_RegisterPSM(devCtx);
-    if (!NT_SUCCESS(status))
-    {
-        goto exit;
-    }
+        status = BthPS3_RegisterPSM(devCtx);
+        if (!NT_SUCCESS(status))
+        {
+            break;
+        }
 
-    status = BthPS3_RegisterL2CAPServer(devCtx);
-    if (!NT_SUCCESS(status))
-    {
-        goto exit;
-    }
+        status = BthPS3_RegisterL2CAPServer(devCtx);
+        if (!NT_SUCCESS(status))
+        {
+            break;
+        }
 
-    //
-    // Attempt to enable, but ignore failure
-    //
-    if (devCtx->Settings.AutoEnableFilter)
-    {
-        (void)BthPS3PSM_EnablePatchSync(
-            devCtx->PsmFilter.IoTarget,
-            0
-        );
-    }
+        //
+        // Attempt to enable, but ignore failure
+        //
+        if (devCtx->Settings.AutoEnableFilter)
+        {
+            (void)BthPS3PSM_EnablePatchSync(
+                devCtx->PsmFilter.IoTarget,
+                0
+            );
+        }
+    } while (FALSE);
 
-exit:
-
-    TraceVerbose( TRACE_DEVICE, "%!FUNC! Exit");
+    FuncExit(TRACE_DEVICE, "status=%!STATUS!", status);
 
     return status;
 }
@@ -329,7 +335,7 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
 
     PAGED_CODE();
 
-    TraceVerbose( TRACE_DEVICE, "%!FUNC! Entry");
+    FuncEntry(TRACE_DEVICE);
 
     if (devCtx->PsmFilter.IoTarget != NULL)
     {
@@ -403,7 +409,5 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
         WdfObjectDelete(currentItem);
     }
 
-    TraceVerbose( TRACE_DEVICE, "%!FUNC! Exit");
-
-    return;
+    FuncExitNoReturn(TRACE_DEVICE);
 }

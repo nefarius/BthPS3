@@ -162,7 +162,7 @@ BthPS3PSM_CreateDevice(
         //
         status = WdfWaitLockAcquire(FilterDeviceCollectionLock, NULL);
         if (!NT_SUCCESS(status)) {
-            TraceEvents(TRACE_LEVEL_ERROR,
+            TraceError(
                 TRACE_DEVICE,
                 "WdfWaitLockAcquire failed with status %!STATUS!",
                 status
@@ -175,7 +175,7 @@ BthPS3PSM_CreateDevice(
         //
         status = WdfCollectionAdd(FilterDeviceCollection, device);
         if (!NT_SUCCESS(status)) {
-            TraceEvents(TRACE_LEVEL_ERROR,
+            TraceError(
                 TRACE_DEVICE,
                 "WdfCollectionAdd failed with status %!STATUS!",
                 status
@@ -209,7 +209,7 @@ BthPS3PSM_CreateDevice(
 
             if (!NT_SUCCESS(status))
             {
-                TraceEvents(TRACE_LEVEL_ERROR,
+                TraceError(
                     TRACE_DEVICE,
                     "WdfRegistryQueryULong failed with status %!STATUS!",
                     status
@@ -234,7 +234,7 @@ BthPS3PSM_CreateDevice(
 
             if (!NT_SUCCESS(status))
             {
-                TraceEvents(TRACE_LEVEL_ERROR,
+                TraceError(
                     TRACE_DEVICE,
                     "WdfStringCreate failed with status %!STATUS!",
                     status
@@ -250,7 +250,7 @@ BthPS3PSM_CreateDevice(
 
                 if (!NT_SUCCESS(status))
                 {
-                    TraceEvents(TRACE_LEVEL_ERROR,
+                    TraceError(
                         TRACE_DEVICE,
                         "WdfRegistryQueryString failed with status %!STATUS!",
                         status
@@ -269,7 +269,7 @@ BthPS3PSM_CreateDevice(
         }
         else
         {
-            TraceEvents(TRACE_LEVEL_ERROR,
+            TraceError(
                 TRACE_DEVICE,
                 "WdfDeviceOpenRegistryKey failed with status %!STATUS!",
                 status
@@ -288,7 +288,7 @@ BthPS3PSM_CreateDevice(
         //
         status = BthPS3PSM_CreateControlDevice(device);
         if (!NT_SUCCESS(status)) {
-            TraceEvents(TRACE_LEVEL_ERROR,
+            TraceError(
                 TRACE_DEVICE,
                 "BthPS3PSM_CreateControlDevice failed with status %!STATUS!",
                 status
@@ -465,7 +465,7 @@ BthPS3PSM_EvtDevicePrepareHardware(
 
     if (!NT_SUCCESS(status)) {
 
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_QUEUE,
             "WdfUsbTargetDeviceCreateWithParameters failed with status %!STATUS!",
             status);
@@ -504,7 +504,7 @@ BthPS3PSM_EvtDeviceContextCleanup(
     
     status = WdfWaitLockAcquire(FilterDeviceCollectionLock, NULL);
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_QUEUE,
             "WdfWaitLockAcquire failed with status %!STATUS!",
             status
@@ -566,7 +566,7 @@ BthPS3PSM_EvtDeviceContextCleanup(
 
         if (!NT_SUCCESS(status))
         {
-            TraceEvents(TRACE_LEVEL_ERROR,
+            TraceError(
                 TRACE_DEVICE,
                 "WdfRegistryAssignULong failed with status %!STATUS!",
                 status
@@ -584,7 +584,7 @@ BthPS3PSM_EvtDeviceContextCleanup(
     }
     else
     {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_DEVICE,
             "WdfDeviceOpenRegistryKey failed with status %!STATUS!",
             status

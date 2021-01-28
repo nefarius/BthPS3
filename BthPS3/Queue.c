@@ -94,7 +94,7 @@ Return Value:
     );
 
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_QUEUE, "WdfIoQueueCreate failed %!STATUS!", status);
+        TraceError( TRACE_QUEUE, "WdfIoQueueCreate failed %!STATUS!", status);
         return status;
     }
 
@@ -144,7 +144,7 @@ BthPS3_EvtWdfIoQueueIoDeviceControl(
 
     if (ret == FALSE) {
         status = WdfRequestGetStatus(Request);
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_QUEUE,
             "WdfRequestSend failed with status %!STATUS!", status);
         WdfRequestComplete(Request, status);

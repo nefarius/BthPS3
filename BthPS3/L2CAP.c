@@ -102,7 +102,7 @@ L2CAP_PS3_HandleRemoteConnect(
         }
         else
         {
-            TraceEvents(TRACE_LEVEL_ERROR,
+            TraceError(
                 TRACE_L2CAP,
                 "BTHPS3_GET_DEVICE_NAME failed with status %!STATUS!, dropping connection",
                 status
@@ -196,7 +196,7 @@ L2CAP_PS3_HandleRemoteConnect(
                 );
                 if (!NT_SUCCESS(status))
                 {
-                    TraceEvents(TRACE_LEVEL_ERROR,
+                    TraceError(
                         TRACE_L2CAP,
                         "BthPS3PSM_DisablePatchSync failed with status %!STATUS!", status);
                 }
@@ -243,7 +243,7 @@ L2CAP_PS3_HandleRemoteConnect(
         );
 
         if (!NT_SUCCESS(status)) {
-            TraceEvents(TRACE_LEVEL_ERROR,
+            TraceError(
                 TRACE_L2CAP,
                 "ClientConnections_CreateAndInsert failed with status %!STATUS!", status);
             goto exit;
@@ -257,7 +257,7 @@ L2CAP_PS3_HandleRemoteConnect(
         status = RtlUnicodeStringPrintf(&clientConnection->RemoteName, L"%hs", remoteName);
 
         if (!NT_SUCCESS(status)) {
-            TraceEvents(TRACE_LEVEL_ERROR,
+            TraceError(
                 TRACE_L2CAP,
                 "RtlUnicodeStringPrintf failed with status %!STATUS!", status);
             goto exit;
@@ -354,7 +354,7 @@ L2CAP_PS3_HandleRemoteConnect(
 
     if (!NT_SUCCESS(status))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_L2CAP,
+        TraceError( TRACE_L2CAP,
             "BthPS3_SendBrbAsync failed with status %!STATUS!", status);
     }
 
@@ -452,7 +452,7 @@ L2CAP_PS3_ControlConnectResponseCompleted(
     }
     else
     {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_L2CAP,
             "HID Control Channel connection failed with status %!STATUS!",
 			status
@@ -526,7 +526,7 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
 
         if (controlState != ConnectionStateConnected)
         {
-            TraceEvents(TRACE_LEVEL_ERROR,
+            TraceError(
                 TRACE_L2CAP,
                 "HID Control Channel in invalid state (0x%02X), dropping connection",
                 controlState
@@ -551,7 +551,7 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
 
 failedDrop:
 
-    TraceEvents(TRACE_LEVEL_ERROR,
+    TraceError(
         TRACE_L2CAP,
         "%!FUNC! connection failed with status %!STATUS!",
 		status
@@ -590,7 +590,7 @@ L2CAP_PS3_DenyRemoteConnect(
 
     if (!NT_SUCCESS(status))
     {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_L2CAP,
             "WdfRequestCreate failed with status %!STATUS!",
             status
@@ -609,7 +609,7 @@ L2CAP_PS3_DenyRemoteConnect(
     {
         status = STATUS_INSUFFICIENT_RESOURCES;
 
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_L2CAP,
             "Failed to allocate brb BRB_L2CA_OPEN_CHANNEL_RESPONSE with status %!STATUS!",
             status
@@ -649,7 +649,7 @@ L2CAP_PS3_DenyRemoteConnect(
 
     if (!NT_SUCCESS(status))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_L2CAP,
+        TraceError( TRACE_L2CAP,
             "BthPS3_SendBrbAsync failed with status %!STATUS!", status);
 
         DevCtx->Header.ProfileDrvInterface.BthFreeBrb((PBRB)brb);
@@ -801,7 +801,7 @@ L2CAP_PS3_ConnectionIndicationCallback(
             );
         	if(!NT_SUCCESS(status))
         	{
-                TraceEvents(TRACE_LEVEL_ERROR,
+                TraceError(
                     TRACE_L2CAP,
                     "HID Control - KeWaitForSingleObject failed with status %!STATUS!",
                     status
@@ -821,7 +821,7 @@ L2CAP_PS3_ConnectionIndicationCallback(
             );
             if (!NT_SUCCESS(status))
             {
-                TraceEvents(TRACE_LEVEL_ERROR,
+                TraceError(
                     TRACE_L2CAP,
                     "HID Interrupt - KeWaitForSingleObject failed with status %!STATUS!",
                     status
@@ -849,7 +849,7 @@ L2CAP_PS3_ConnectionIndicationCallback(
 
             if (!NT_SUCCESS(status))
             {
-                TraceEvents(TRACE_LEVEL_ERROR,
+                TraceError(
                     TRACE_CONNECTION,
                     "WdfChildListUpdateChildDescriptionAsMissing failed with status %!STATUS!",
                     status);
@@ -928,7 +928,7 @@ L2CAP_PS3_ConnectionStateConnected(
 
     if (!NT_SUCCESS(status))
     {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_L2CAP,
             "WdfChildListAddOrUpdateChildDescriptionAsPresent failed with status %!STATUS!",
             status);
@@ -1124,7 +1124,7 @@ L2CAP_PS3_SendControlTransferAsync(
 
     if (!NT_SUCCESS(status))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_L2CAP,
+        TraceError( TRACE_L2CAP,
             "BthPS3_SendBrbAsync failed with status %!STATUS!", status);
 
         ClientConnection->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
@@ -1192,7 +1192,7 @@ L2CAP_PS3_ReadControlTransferAsync(
 
     if (!NT_SUCCESS(status))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_L2CAP,
+        TraceError( TRACE_L2CAP,
             "BthPS3_SendBrbAsync failed with status %!STATUS!", status);
 
         ClientConnection->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
@@ -1260,7 +1260,7 @@ L2CAP_PS3_ReadInterruptTransferAsync(
 
     if (!NT_SUCCESS(status))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_L2CAP,
+        TraceError( TRACE_L2CAP,
             "BthPS3_SendBrbAsync failed with status %!STATUS!", status);
 
         ClientConnection->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
@@ -1330,7 +1330,7 @@ L2CAP_PS3_SendInterruptTransferAsync(
 
     if (!NT_SUCCESS(status))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_L2CAP,
+        TraceError( TRACE_L2CAP,
             "BthPS3_SendBrbAsync failed with status %!STATUS!", status);
 
         ClientConnection->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);

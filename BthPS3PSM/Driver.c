@@ -110,7 +110,7 @@ Return Value:
                              );
 
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_DRIVER, "WdfDriverCreate failed %!STATUS!", status);
+        TraceError( TRACE_DRIVER, "WdfDriverCreate failed %!STATUS!", status);
         WPP_CLEANUP(DriverObject);
         return status;
     }
@@ -121,7 +121,7 @@ Return Value:
         &FilterDeviceCollection);
     if (!NT_SUCCESS(status))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, 
+        TraceError( 
             TRACE_DRIVER, 
             "WdfCollectionCreate failed with %!STATUS!", 
             status
@@ -138,7 +138,7 @@ Return Value:
         &FilterDeviceCollectionLock);
     if (!NT_SUCCESS(status))
     {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_DRIVER,
             "WdfWaitLockCreate failed with %!STATUS!",
             status

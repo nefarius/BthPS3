@@ -71,7 +71,7 @@ ClientConnections_CreateAndInsert(
     );
 
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_CONNECTION,
             "WdfObjectCreate for connection object failed with status %!STATUS!",
             status
@@ -99,7 +99,7 @@ ClientConnections_CreateAndInsert(
         &connectionCtx->HidControlChannel.ConnectDisconnectRequest
     );
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_CONNECTION,
             "WdfRequestCreate for HidControlChannel failed with status %!STATUS!",
             status
@@ -124,7 +124,7 @@ ClientConnections_CreateAndInsert(
         &connectionCtx->HidControlChannel.ConnectionStateLock
     );
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_CONNECTION,
             "WdfSpinLockCreate for HidControlChannel failed with status %!STATUS!",
             status
@@ -145,7 +145,7 @@ ClientConnections_CreateAndInsert(
         &connectionCtx->HidInterruptChannel.ConnectDisconnectRequest
     );
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_CONNECTION,
             "WdfRequestCreate for HidInterruptChannel failed with status %!STATUS!",
             status
@@ -170,7 +170,7 @@ ClientConnections_CreateAndInsert(
         &connectionCtx->HidInterruptChannel.ConnectionStateLock
     );
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_CONNECTION,
             "WdfSpinLockCreate for HidInterruptChannel failed with status %!STATUS!",
             status
@@ -187,7 +187,7 @@ ClientConnections_CreateAndInsert(
     status = WdfCollectionAdd(Context->Header.ClientConnections, connectionObject);
 
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_CONNECTION,
             "WdfCollectionAdd for connection object failed with status %!STATUS!",
             status
@@ -359,7 +359,7 @@ EvtClientConnectionsDestroyConnection(
     // 
     if (!NT_SUCCESS(status) && status != STATUS_NO_SUCH_DEVICE)
     {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_CONNECTION,
             "WdfChildListUpdateChildDescriptionAsMissing failed with status %!STATUS!",
             status);

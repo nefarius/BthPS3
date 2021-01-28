@@ -84,7 +84,7 @@ ProxyUrbSelectConfiguration(
     );
 
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_FILTER,
             "WdfUsbTargetDeviceSelectConfig failed with status %!STATUS!",
             status
@@ -104,7 +104,7 @@ ProxyUrbSelectConfiguration(
 
     if (NULL == Context->UsbInterface) {
         status = STATUS_UNSUCCESSFUL;
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_FILTER,
             "WdfUsbTargetDeviceGetInterface for interface %d failed with status %!STATUS!",
             pIface->InterfaceNumber,
@@ -166,7 +166,7 @@ ProxyUrbSelectConfiguration(
         && Context->BulkReadPipe && Context->InterruptPipe)) {
         status = STATUS_INVALID_DEVICE_STATE;
 
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_FILTER,
             "Device is not configured properly %!STATUS!",
             status

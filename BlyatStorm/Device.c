@@ -97,7 +97,7 @@ Return Value:
         );
 
         if (!NT_SUCCESS(status)) {
-            TraceEvents(TRACE_LEVEL_ERROR,
+            TraceError(
                 TRACE_DEVICE,
                 "WdfMemoryCreatePreallocated failed with status %!STATUS!",
                 status
@@ -125,7 +125,7 @@ Return Value:
         );
 
         if (!NT_SUCCESS(status)) {
-            TraceEvents(TRACE_LEVEL_ERROR,
+            TraceError(
                 TRACE_DEVICE,
                 "WdfTimerCreate failed with status %!STATUS!",
                 status
@@ -146,7 +146,7 @@ Return Value:
         );
 
         if (!NT_SUCCESS(status)) {
-            TraceEvents(TRACE_LEVEL_ERROR,
+            TraceError(
                 TRACE_DEVICE,
                 "WdfTimerCreate failed with status %!STATUS!",
                 status
@@ -167,7 +167,7 @@ Return Value:
         );
 
         if (!NT_SUCCESS(status)) {
-            TraceEvents(TRACE_LEVEL_ERROR,
+            TraceError(
                 TRACE_DEVICE,
                 "WdfTimerCreate failed with status %!STATUS!",
                 status
@@ -188,7 +188,7 @@ Return Value:
         );
 
         if (!NT_SUCCESS(status)) {
-            TraceEvents(TRACE_LEVEL_ERROR,
+            TraceError(
                 TRACE_DEVICE,
                 "WdfTimerCreate failed with status %!STATUS!",
                 status
@@ -287,7 +287,7 @@ OutputReport_EvtTimerFunc(
     );
 
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_DEVICE,
             "WdfIoTargetSendInternalIoctlSynchronously failed with status %!STATUS!",
             status
@@ -348,7 +348,7 @@ Init_EvtTimerFunc(
     WdfObjectDelete(MemoryHandle);
 
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_DEVICE,
             "WdfIoTargetSendInternalIoctlSynchronously failed with status %!STATUS!",
             status
@@ -404,7 +404,7 @@ InputReport_EvtTimerFunc(
     WdfObjectDelete(MemoryHandle);
 
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_DEVICE,
             "WdfIoTargetSendInternalIoctlSynchronously failed with status %!STATUS!",
             status
@@ -460,7 +460,7 @@ ControlRead_EvtTimerFunc(
     WdfObjectDelete(MemoryHandle);
 
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_DEVICE,
             "WdfIoTargetSendInternalIoctlSynchronously failed with status %!STATUS!",
             status

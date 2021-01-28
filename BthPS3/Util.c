@@ -65,7 +65,7 @@ StringUtil_BthNameIsEqual(
     // 
     status = RtlUnicodeStringPrintf(&usLhs, L"%hs", Lhs);
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_UTIL,
             "RtlUnicodeStringPrintf failed with status %!STATUS!",
             status

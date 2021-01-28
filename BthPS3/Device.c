@@ -101,7 +101,7 @@ BthPS3_CreateDevice(
 
     if (!NT_SUCCESS(status))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_DEVICE,
+        TraceError( TRACE_DEVICE,
             "WdfDeviceCreate failed with status %!STATUS!", status);
 
         goto exit;
@@ -113,7 +113,7 @@ BthPS3_CreateDevice(
 
     if (!NT_SUCCESS(status))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_DEVICE,
+        TraceError( TRACE_DEVICE,
             "Initialization of context failed with status %!STATUS!", status);
 
         goto exit;
@@ -122,7 +122,7 @@ BthPS3_CreateDevice(
     status = BthPS3QueueInitialize(device);
     if (!NT_SUCCESS(status))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_DEVICE,
+        TraceError( TRACE_DEVICE,
             "BthPS3QueueInitialize failed with status %!STATUS!", status);
         goto exit;
     }
@@ -161,7 +161,7 @@ BthPS3_CreateDevice(
     );
     if (!NT_SUCCESS(status))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_DEVICE,
+        TraceError( TRACE_DEVICE,
             "WdfRequestCreate failed with status %!STATUS!", status);
         goto exit;
     }
@@ -196,7 +196,7 @@ NTSTATUS BthPS3_OpenFilterIoTarget(WDFDEVICE Device)
         &pCtx->PsmFilter.IoTarget
     );
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_DEVICE,
             "WdfIoTargetCreate failed with status %!STATUS!",
             status
@@ -213,7 +213,7 @@ NTSTATUS BthPS3_OpenFilterIoTarget(WDFDEVICE Device)
         &openParams
     );
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_DEVICE,
             "WdfIoTargetOpen failed with status %!STATUS!",
             status

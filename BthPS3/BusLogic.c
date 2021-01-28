@@ -87,7 +87,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 	PAGED_CODE();
 
 
-	TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Entry");
+	FuncEntry(TRACE_BUSLOGIC);
 
 	pDesc = CONTAINING_RECORD(
 		IdentificationDescription,
@@ -207,7 +207,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 	if (!NT_SUCCESS(status))
 	{
-		TraceEvents(TRACE_LEVEL_ERROR,
+		TraceError(
 			TRACE_BUSLOGIC,
 			"RtlStringFromGUID failed with status %!STATUS!",
 			status
@@ -256,7 +256,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 			if (!NT_SUCCESS(status))
 			{
-				TraceEvents(TRACE_LEVEL_ERROR,
+				TraceError(
 					TRACE_BUSLOGIC,
 					"WdfPdoInitAssignRawDevice failed with status %!STATUS!",
 					status
@@ -274,7 +274,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 			if (!NT_SUCCESS(status))
 			{
-				TraceEvents(TRACE_LEVEL_ERROR,
+				TraceError(
 					TRACE_BUSLOGIC,
 					"WdfDeviceInitAssignSDDLString failed with status %!STATUS!",
 					status
@@ -294,7 +294,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 			guidString
 		);
 		if (!NT_SUCCESS(status)) {
-			TraceEvents(TRACE_LEVEL_ERROR,
+			TraceError(
 				TRACE_BUSLOGIC,
 				"RtlUnicodeStringPrintf failed for deviceId with status %!STATUS!",
 				status
@@ -304,7 +304,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 		status = WdfPdoInitAssignDeviceID(ChildInit, &deviceId);
 		if (!NT_SUCCESS(status)) {
-			TraceEvents(TRACE_LEVEL_ERROR,
+			TraceError(
 				TRACE_BUSLOGIC,
 				"WdfPdoInitAssignDeviceID failed with status %!STATUS!",
 				status);
@@ -322,7 +322,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 			guidString
 		);
 		if (!NT_SUCCESS(status)) {
-			TraceEvents(TRACE_LEVEL_ERROR,
+			TraceError(
 				TRACE_BUSLOGIC,
 				"RtlUnicodeStringPrintf failed for hardwareId with status %!STATUS!",
 				status
@@ -332,7 +332,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 		status = WdfPdoInitAddHardwareID(ChildInit, &deviceId);
 		if (!NT_SUCCESS(status)) {
-			TraceEvents(TRACE_LEVEL_ERROR,
+			TraceError(
 				TRACE_BUSLOGIC,
 				"WdfPdoInitAddHardwareID failed with status %!STATUS!",
 				status);
@@ -349,7 +349,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 			pDesc->ClientConnection->RemoteAddress
 		);
 		if (!NT_SUCCESS(status)) {
-			TraceEvents(TRACE_LEVEL_ERROR,
+			TraceError(
 				TRACE_BUSLOGIC,
 				"RtlUnicodeStringPrintf failed for instanceId with status %!STATUS!",
 				status
@@ -359,7 +359,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 		status = WdfPdoInitAssignInstanceID(ChildInit, &instanceId);
 		if (!NT_SUCCESS(status)) {
-			TraceEvents(TRACE_LEVEL_ERROR,
+			TraceError(
 				TRACE_BUSLOGIC,
 				"WdfPdoInitAssignInstanceID failed with status %!STATUS!",
 				status);
@@ -397,7 +397,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 			&hChild
 		);
 		if (!NT_SUCCESS(status)) {
-			TraceEvents(TRACE_LEVEL_ERROR,
+			TraceError(
 				TRACE_BUSLOGIC,
 				"WdfDeviceCreate failed with status %!STATUS!",
 				status);
@@ -443,7 +443,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 			if (!NT_SUCCESS(status))
 			{
-				TraceEvents(TRACE_LEVEL_ERROR,
+				TraceError(
 					TRACE_BUSLOGIC,
 					"WdfDeviceCreateDeviceInterface failed with status %!STATUS!",
 					status
@@ -501,7 +501,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 		// 
 		if (status == STATUS_INVALID_DEVICE_REQUEST)
 		{
-			TraceEvents(TRACE_LEVEL_ERROR,
+			TraceError(
 				TRACE_BUSLOGIC,
 				"!! No function driver attached and not in RAW mode, can't continue"
 			);
@@ -510,7 +510,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 		if (!NT_SUCCESS(status))
 		{
-			TraceEvents(TRACE_LEVEL_ERROR,
+			TraceError(
 				TRACE_BUSLOGIC,
 				"WdfDeviceAssignS0IdleSettings failed with status %!STATUS!",
 				status
@@ -538,7 +538,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 			&defaultQueue
 		);
 		if (!NT_SUCCESS(status)) {
-			TraceEvents(TRACE_LEVEL_ERROR,
+			TraceError(
 				TRACE_BUSLOGIC,
 				"WdfIoQueueCreate (Default) failed with status %!STATUS!",
 				status);
@@ -552,7 +552,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 	RtlFreeUnicodeString(&guidString);
 
-	TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Exit");
+	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
 
 	return status;
 }
@@ -632,7 +632,7 @@ NTSTATUS BthPS3_PDO_EvtWdfDeviceD0Exit(
 
 	if (!NT_SUCCESS(status))
 	{
-		TraceEvents(TRACE_LEVEL_ERROR,
+		TraceError(
 			TRACE_BUSLOGIC,
 			"WdfIoTargetSendIoctlSynchronously failed with status %!STATUS!",
 			status
@@ -713,7 +713,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 		);
 
 		if (!NT_SUCCESS(status)) {
-			TraceEvents(TRACE_LEVEL_ERROR,
+			TraceError(
 				TRACE_BUSLOGIC,
 				"WdfRequestRetrieveOutputBuffer failed with status %!STATUS!",
 				status
@@ -736,7 +736,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 		);
 
 		if (!NT_SUCCESS(status)) {
-			TraceEvents(TRACE_LEVEL_ERROR,
+			TraceError(
 				TRACE_BUSLOGIC,
 				"L2CAP_PS3_ReadControlTransferAsync failed with status %!STATUS!",
 				status
@@ -768,7 +768,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 		);
 
 		if (!NT_SUCCESS(status)) {
-			TraceEvents(TRACE_LEVEL_ERROR,
+			TraceError(
 				TRACE_BUSLOGIC,
 				"WdfRequestRetrieveInputBuffer failed with status %!STATUS!",
 				status
@@ -785,7 +785,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 		);
 
 		if (!NT_SUCCESS(status)) {
-			TraceEvents(TRACE_LEVEL_ERROR,
+			TraceError(
 				TRACE_BUSLOGIC,
 				"L2CAP_PS3_SendControlTransferAsync failed with status %!STATUS!",
 				status
@@ -817,7 +817,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 		);
 
 		if (!NT_SUCCESS(status)) {
-			TraceEvents(TRACE_LEVEL_ERROR,
+			TraceError(
 				TRACE_BUSLOGIC,
 				"WdfRequestRetrieveOutputBuffer failed with status %!STATUS!",
 				status
@@ -840,7 +840,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 		);
 
 		if (!NT_SUCCESS(status)) {
-			TraceEvents(TRACE_LEVEL_ERROR,
+			TraceError(
 				TRACE_BUSLOGIC,
 				"L2CAP_PS3_ReadInterruptTransferAsync failed with status %!STATUS!",
 				status
@@ -872,7 +872,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 		);
 
 		if (!NT_SUCCESS(status)) {
-			TraceEvents(TRACE_LEVEL_ERROR,
+			TraceError(
 				TRACE_BUSLOGIC,
 				"WdfRequestRetrieveInputBuffer failed with status %!STATUS!",
 				status
@@ -889,7 +889,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 		);
 
 		if (!NT_SUCCESS(status)) {
-			TraceEvents(TRACE_LEVEL_ERROR,
+			TraceError(
 				TRACE_BUSLOGIC,
 				"L2CAP_PS3_SendInterruptTransferAsync failed with status %!STATUS!",
 				status
@@ -922,7 +922,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 
 		if (!NT_SUCCESS(status))
 		{
-			TraceEvents(TRACE_LEVEL_ERROR,
+			TraceError(
 				TRACE_BUSLOGIC,
 				"WdfRequestForwardToParentDeviceIoQueue failed with status %!STATUS!",
 				status

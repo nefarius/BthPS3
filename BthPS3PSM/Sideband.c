@@ -107,7 +107,7 @@ BthPS3PSM_CreateControlDevice(
 
     if (pInit == NULL) {
         status = STATUS_INSUFFICIENT_RESOURCES;
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_SIDEBAND,
             "WdfControlDeviceInitAllocate failed with %!STATUS!", status);
         goto Error;
@@ -124,7 +124,7 @@ BthPS3PSM_CreateControlDevice(
     status = WdfDeviceInitAssignName(pInit, &ntDeviceName);
 
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_SIDEBAND,
             "WdfDeviceInitAssignName failed with %!STATUS!", status);
         goto Error;
@@ -146,7 +146,7 @@ BthPS3PSM_CreateControlDevice(
         &symbolicLinkName);
 
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_SIDEBAND,
             "WdfDeviceCreateSymbolicLink failed with %!STATUS!", status);
         goto Error;
@@ -167,7 +167,7 @@ BthPS3PSM_CreateControlDevice(
         &queue // pointer to default queue
     );
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_SIDEBAND,
             "WdfIoQueueCreate failed with %!STATUS!",
             status

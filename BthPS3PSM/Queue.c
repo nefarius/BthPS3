@@ -81,7 +81,7 @@ BthPS3PSM_QueueInitialize(
     );
 
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_QUEUE,
             "WdfIoQueueCreate failed with %!STATUS!",
             status
@@ -187,7 +187,7 @@ BthPS3PSMEvtIoInternalDeviceControl(
 
                 if (ret == FALSE) {
                     status = WdfRequestGetStatus(Request);
-                    TraceEvents(TRACE_LEVEL_ERROR,
+                    TraceError(
                         TRACE_QUEUE,
                         "WdfRequestSend failed with status %!STATUS!",
                         status
@@ -219,7 +219,7 @@ BthPS3PSMEvtIoInternalDeviceControl(
 
     if (ret == FALSE) {
         status = WdfRequestGetStatus(Request);
-        TraceEvents(TRACE_LEVEL_ERROR,
+        TraceError(
             TRACE_QUEUE,
             "WdfRequestSend failed: %!STATUS!", status);
         WdfRequestComplete(Request, status);

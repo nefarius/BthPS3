@@ -372,6 +372,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 		WDF_PNPPOWER_EVENT_CALLBACKS_INIT(&pnpPowerCallbacks);
 		pnpPowerCallbacks.EvtDeviceD0Exit = BthPS3_PDO_EvtWdfDeviceD0Exit;
+		pnpPowerCallbacks.EvtDeviceSelfManagedIoInit = BthPS3_PDO_EvtWdfDeviceSelfManagedIoInit;
 
 		WdfDeviceInitSetPnpPowerEventCallbacks(ChildInit, &pnpPowerCallbacks);
 
@@ -452,7 +453,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 		}
 
 #pragma endregion
-
+				
 #pragma region Fill device context
 
 		//
@@ -937,4 +938,132 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 	}
 
 	TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BUSLOGIC, "%!FUNC! Exit (status: %!STATUS!)", status);
+}
+
+//
+// Set device properties
+// 
+NTSTATUS BthPS3_PDO_EvtWdfDeviceSelfManagedIoInit(
+	WDFDEVICE Device
+)
+{
+	PBTHPS3_PDO_DEVICE_CONTEXT pCtx = GetPdoDeviceContext(Device);
+	WCHAR deviceAddress[13];
+	PWSTR manufacturer = L"Nefarius Software Solutions e.U.";
+	LARGE_INTEGER lastConnectionTime;
+	
+	KeQuerySystemTimePrecise(&lastConnectionTime);
+
+	//
+	// Common
+	// 
+
+	if (NT_SUCCESS(RtlStringCbPrintfW(
+		deviceAddress,
+		ARRAYSIZE(deviceAddress) * sizeof(WCHAR),
+		L"%012llX",
+		pCtx->ClientConnection->RemoteAddress
+	)))
+	{
+		(void)BthPS3_AssignDeviceProperty(
+			Device,
+			&DEVPKEY_Bluetooth_DeviceAddress,
+			DEVPROP_TYPE_STRING,
+			ARRAYSIZE(deviceAddress) * sizeof(WCHAR),
+			deviceAddress
+		);
+	}
+	
+	(void)BthPS3_AssignDeviceProperty(
+		Device,
+		&DEVPKEY_Bluetooth_DeviceManufacturer,
+		DEVPROP_TYPE_STRING,
+		sizeof(manufacturer),
+		manufacturer
+	);
+
+	(void)BthPS3_AssignDeviceProperty(
+		Device,
+		&DEVPKEY_Bluetooth_LastConnectedTime,
+		DEVPROP_TYPE_FILETIME,
+		sizeof(LARGE_INTEGER),
+		&lastConnectionTime
+	);
+	
+	switch (pCtx->ClientConnection->DeviceType)
+	{
+	case DS_DEVICE_TYPE_SIXAXIS:
+
+		(void)BthPS3_AssignDeviceProperty(
+			Device,
+			&DEVPKEY_Bluetooth_DeviceVID,
+			DEVPROP_TYPE_UINT16,
+			sizeof(USHORT),
+			(PUSHORT)&BTHPS3_SIXAXIS_VID
+		);
+		(void)BthPS3_AssignDeviceProperty(
+			Device,
+			&DEVPKEY_Bluetooth_DevicePID,
+			DEVPROP_TYPE_UINT16,
+			sizeof(USHORT),
+			(PVOID)&BTHPS3_SIXAXIS_PID
+		);
+
+		break;
+	case DS_DEVICE_TYPE_NAVIGATION:
+
+		break;
+	case DS_DEVICE_TYPE_MOTION:
+
+		break;
+	case DS_DEVICE_TYPE_WIRELESS:
+
+		break;
+	default:
+		// Doesn't happen
+		break;
+	}
+
+	return STATUS_SUCCESS;
+}
+
+NTSTATUS BthPS3_AssignDeviceProperty(
+	WDFDEVICE Device, 
+	const DEVPROPKEY* PropertyKey, 
+	DEVPROPTYPE Type, 
+	ULONG Size, 
+	PVOID Data
+)
+{
+#if KMDF_VERSION_MAJOR == 1 && KMDF_VERSION_MINOR >= 13
+	
+	WDF_DEVICE_PROPERTY_DATA propertyData;
+
+	WDF_DEVICE_PROPERTY_DATA_INIT(&propertyData, PropertyKey);
+	propertyData.Flags |= PLUGPLAY_PROPERTY_PERSISTENT;
+	propertyData.Lcid = LOCALE_NEUTRAL;
+
+	return WdfDeviceAssignProperty(
+		Device,
+		&propertyData,
+		Type,
+		Size,
+		Data
+	);
+
+#else
+
+	//
+	// KMDF version too low to support this
+	// 
+	
+	UNREFERENCED_PARAMETER(Device);
+	UNREFERENCED_PARAMETER(PropertyKey);
+	UNREFERENCED_PARAMETER(Type);
+	UNREFERENCED_PARAMETER(Size);
+	UNREFERENCED_PARAMETER(Data);
+	
+	return STATUS_NOT_SUPPORTED;
+	
+#endif
 }

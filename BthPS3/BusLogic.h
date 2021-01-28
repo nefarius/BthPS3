@@ -79,3 +79,14 @@ EVT_WDF_DEVICE_CONTEXT_CLEANUP BthPS3_PDO_EvtDeviceContextCleanup;
 EVT_WDF_IO_QUEUE_IO_DEVICE_CONTROL BthPS3_PDO_EvtWdfIoQueueIoDeviceControl;
 
 EVT_WDF_DEVICE_D0_EXIT BthPS3_PDO_EvtWdfDeviceD0Exit;
+
+EVT_WDF_DEVICE_SELF_MANAGED_IO_INIT BthPS3_PDO_EvtWdfDeviceSelfManagedIoInit;
+
+NTSTATUS
+BthPS3_AssignDeviceProperty(
+    WDFDEVICE Device,
+    const DEVPROPKEY* PropertyKey,
+    DEVPROPTYPE Type,
+    ULONG Size,
+    PVOID Data
+);

@@ -44,6 +44,7 @@
 #include <bthddi.h>
 #include <bthsdpddi.h>
 #include <bthsdpdef.h>
+#include <bthguid.h>
 
 #define POOLTAG_BTHPS3                  '3SPB'
 #define BTH_DEVICE_INFO_MAX_COUNT       0x0A

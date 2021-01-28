@@ -56,168 +56,180 @@ ClientConnections_CreateAndInsert(
     WDFOBJECT                   connectionObject = NULL;
     PBTHPS3_CLIENT_CONNECTION   connectionCtx = NULL;
 
+    FuncEntry(TRACE_CONNECTION);
 
-    WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&attributes, BTHPS3_CLIENT_CONNECTION);
-    attributes.ParentObject = Context->Header.Device;
-    attributes.EvtCleanupCallback = CleanupCallback;
-    attributes.ExecutionLevel = WdfExecutionLevelPassive;
+    do
+    {
+        WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&attributes, BTHPS3_CLIENT_CONNECTION);
+        attributes.ParentObject = Context->Header.Device;
+        attributes.EvtCleanupCallback = CleanupCallback;
+        attributes.ExecutionLevel = WdfExecutionLevelPassive;
 
-    //
-    // Create piggyback object carrying the context
-    // 
-    status = WdfObjectCreate(
-        &attributes,
-        &connectionObject
-    );
-
-    if (!NT_SUCCESS(status)) {
-        TraceError(
-            TRACE_CONNECTION,
-            "WdfObjectCreate for connection object failed with status %!STATUS!",
-            status
+        //
+        // Create piggyback object carrying the context
+        // 
+        status = WdfObjectCreate(
+            &attributes,
+            &connectionObject
         );
 
-        return status;
-    }
+        if (!NT_SUCCESS(status)) {
+            TraceError(
+                TRACE_CONNECTION,
+                "WdfObjectCreate for connection object failed with status %!STATUS!",
+                status
+            );
 
-    //
-    // Piggyback object is parent
-    // 
-    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
-    attributes.ParentObject = connectionObject;
+            break;
+        }
 
-    connectionCtx = GetClientConnection(connectionObject);
-    connectionCtx->DevCtxHdr = &Context->Header;
+        //
+        // Piggyback object is parent
+        // 
+        WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+        attributes.ParentObject = connectionObject;
 
-    //
-    // Initialize HidControlChannel properties
-    // 
+        connectionCtx = GetClientConnection(connectionObject);
+        connectionCtx->DevCtxHdr = &Context->Header;
 
-    status = WdfRequestCreate(
-        &attributes,
-        connectionCtx->DevCtxHdr->IoTarget,
-        &connectionCtx->HidControlChannel.ConnectDisconnectRequest
-    );
-    if (!NT_SUCCESS(status)) {
-        TraceError(
-            TRACE_CONNECTION,
-            "WdfRequestCreate for HidControlChannel failed with status %!STATUS!",
-            status
+        //
+        // Initialize HidControlChannel properties
+        // 
+
+        status = WdfRequestCreate(
+            &attributes,
+            connectionCtx->DevCtxHdr->IoTarget,
+            &connectionCtx->HidControlChannel.ConnectDisconnectRequest
+        );
+        if (!NT_SUCCESS(status)) {
+            TraceError(
+                TRACE_CONNECTION,
+                "WdfRequestCreate for HidControlChannel failed with status %!STATUS!",
+                status
+            );
+
+            break;
+        }
+
+        //
+        // Initialize signaled, will be cleared once a connection is established
+        // 
+        KeInitializeEvent(&connectionCtx->HidControlChannel.DisconnectEvent,
+            NotificationEvent,
+            TRUE
         );
 
-        goto exitFailure;
-    }
+        WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+        attributes.ParentObject = connectionObject;
 
-    //
-    // Initialize signaled, will be cleared once a connection is established
-    // 
-    KeInitializeEvent(&connectionCtx->HidControlChannel.DisconnectEvent,
-        NotificationEvent,
-        TRUE
-    );
+        status = WdfSpinLockCreate(
+            &attributes,
+            &connectionCtx->HidControlChannel.ConnectionStateLock
+        );
+        if (!NT_SUCCESS(status)) {
+            TraceError(
+                TRACE_CONNECTION,
+                "WdfSpinLockCreate for HidControlChannel failed with status %!STATUS!",
+                status
+            );
 
-    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
-    attributes.ParentObject = connectionObject;
+            break;
+        }
 
-    status = WdfSpinLockCreate(
-        &attributes,
-        &connectionCtx->HidControlChannel.ConnectionStateLock
-    );
-    if (!NT_SUCCESS(status)) {
-        TraceError(
-            TRACE_CONNECTION,
-            "WdfSpinLockCreate for HidControlChannel failed with status %!STATUS!",
-            status
+        connectionCtx->HidControlChannel.ConnectionState = ConnectionStateInitialized;
+
+        //
+        // Initialize HidInterruptChannel properties
+        // 
+
+        status = WdfRequestCreate(
+            &attributes,
+            connectionCtx->DevCtxHdr->IoTarget,
+            &connectionCtx->HidInterruptChannel.ConnectDisconnectRequest
+        );
+        if (!NT_SUCCESS(status)) {
+            TraceError(
+                TRACE_CONNECTION,
+                "WdfRequestCreate for HidInterruptChannel failed with status %!STATUS!",
+                status
+            );
+
+            break;
+        }
+
+        //
+        // Initialize signaled, will be cleared once a connection is established
+        // 
+        KeInitializeEvent(&connectionCtx->HidInterruptChannel.DisconnectEvent,
+            NotificationEvent,
+            TRUE
         );
 
-        goto exitFailure;
-    }
+        WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+        attributes.ParentObject = connectionObject;
 
-    connectionCtx->HidControlChannel.ConnectionState = ConnectionStateInitialized;
+        status = WdfSpinLockCreate(
+            &attributes,
+            &connectionCtx->HidInterruptChannel.ConnectionStateLock
+        );
+        if (!NT_SUCCESS(status)) {
+            TraceError(
+                TRACE_CONNECTION,
+                "WdfSpinLockCreate for HidInterruptChannel failed with status %!STATUS!",
+                status
+            );
 
-    //
-    // Initialize HidInterruptChannel properties
-    // 
+            break;
+        }
 
-    status = WdfRequestCreate(
-        &attributes,
-        connectionCtx->DevCtxHdr->IoTarget,
-        &connectionCtx->HidInterruptChannel.ConnectDisconnectRequest
-    );
-    if (!NT_SUCCESS(status)) {
-        TraceError(
-            TRACE_CONNECTION,
-            "WdfRequestCreate for HidInterruptChannel failed with status %!STATUS!",
-            status
+        connectionCtx->HidInterruptChannel.ConnectionState = ConnectionStateInitialized;
+
+        //
+        // Insert initialized connection list in connection collection
+        // 
+        status = WdfCollectionAdd(Context->Header.ClientConnections, connectionObject);
+
+        if (!NT_SUCCESS(status)) {
+            TraceError(
+                TRACE_CONNECTION,
+                "WdfCollectionAdd for connection object failed with status %!STATUS!",
+                status
+            );
+
+            break;
+        }
+
+        //
+        // This is our "primary key"
+        // 
+        connectionCtx->RemoteAddress = RemoteAddress;
+
+    	//
+    	// Store reported remote name to assign to property later
+    	// 
+        connectionCtx->RemoteName.MaximumLength = BTH_MAX_NAME_SIZE * sizeof(WCHAR);
+        connectionCtx->RemoteName.Buffer = ExAllocatePoolWithTag(
+            NonPagedPoolNx,
+            BTH_MAX_NAME_SIZE * sizeof(WCHAR),
+            BTHPS3PSM_POOL_TAG
         );
 
-        goto exitFailure;
+        //
+        // Pass back valid pointer
+        // 
+        *ClientConnection = connectionCtx;
+
+        status = STATUS_SUCCESS;
+    	
+    } while (FALSE);
+
+    if (!NT_SUCCESS(status) && connectionObject)
+    {
+        WdfObjectDelete(connectionObject);
     }
 
-    //
-    // Initialize signaled, will be cleared once a connection is established
-    // 
-    KeInitializeEvent(&connectionCtx->HidInterruptChannel.DisconnectEvent,
-        NotificationEvent,
-        TRUE
-    );
-
-    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
-    attributes.ParentObject = connectionObject;
-
-    status = WdfSpinLockCreate(
-        &attributes,
-        &connectionCtx->HidInterruptChannel.ConnectionStateLock
-    );
-    if (!NT_SUCCESS(status)) {
-        TraceError(
-            TRACE_CONNECTION,
-            "WdfSpinLockCreate for HidInterruptChannel failed with status %!STATUS!",
-            status
-        );
-
-        goto exitFailure;
-    }
-
-    connectionCtx->HidInterruptChannel.ConnectionState = ConnectionStateInitialized;
-
-    //
-    // Insert initialized connection list in connection collection
-    // 
-    status = WdfCollectionAdd(Context->Header.ClientConnections, connectionObject);
-
-    if (!NT_SUCCESS(status)) {
-        TraceError(
-            TRACE_CONNECTION,
-            "WdfCollectionAdd for connection object failed with status %!STATUS!",
-            status
-        );
-
-        goto exitFailure;
-    }
-
-    //
-    // This is our "primary key"
-    // 
-    connectionCtx->RemoteAddress = RemoteAddress;
-
-    connectionCtx->RemoteName.MaximumLength = BTH_MAX_NAME_SIZE * sizeof(WCHAR);
-    connectionCtx->RemoteName.Buffer = ExAllocatePoolWithTag(
-	    NonPagedPoolNx,
-	    BTH_MAX_NAME_SIZE * sizeof(WCHAR),
-	    BTHPS3PSM_POOL_TAG
-    );
+    FuncExit(TRACE_CONNECTION, "status=%!STATUS!", status);
 	
-    //
-    // Pass back valid pointer
-    // 
-    *ClientConnection = connectionCtx;
-
-    return status;
-
-exitFailure:
-
-    WdfObjectDelete(connectionObject);
     return status;
 }
 
@@ -234,11 +246,12 @@ ClientConnections_RemoveAndDestroy(
     ULONG index;
     WDFOBJECT item, currentItem;
 
-    TraceVerbose(
-        TRACE_CONNECTION,
-        "%!FUNC! Entry (ClientConnection: 0x%p)",
+    FuncEntryArguments(
+        TRACE_CONNECTION, 
+        "ClientConnection=0x%p",
         ClientConnection
     );
+	
 
     WdfWaitLockAcquire(Context->ClientConnectionsLock, NULL);
 
@@ -253,7 +266,7 @@ ClientConnections_RemoveAndDestroy(
         {
             TraceVerbose(
                 TRACE_CONNECTION,
-                "++ Found desired connection item in connection list"
+                "Found desired connection item in connection list"
             );
 
             WdfCollectionRemoveItem(Context->ClientConnections, index);
@@ -264,7 +277,7 @@ ClientConnections_RemoveAndDestroy(
 
     WdfWaitLockRelease(Context->ClientConnectionsLock);
 
-    TraceVerbose( TRACE_CONNECTION, "%!FUNC! Exit");
+    FuncExitNoReturn(TRACE_CONNECTION);
 }
 
 //
@@ -282,8 +295,13 @@ ClientConnections_RetrieveByBthAddr(
     ULONG index;
     WDFOBJECT currentItem;
     PBTHPS3_CLIENT_CONNECTION connection;
-
-    TraceVerbose( TRACE_CONNECTION, "%!FUNC! Entry");
+    
+    FuncEntryArguments(
+        TRACE_CONNECTION, 
+        "RemoteAddress=%012llX",
+        RemoteAddress
+    );
+	
 
     WdfWaitLockAcquire(Context->Header.ClientConnectionsLock, NULL);
 
@@ -298,7 +316,7 @@ ClientConnections_RetrieveByBthAddr(
         {
             TraceVerbose(
                 TRACE_CONNECTION,
-                "++ Found desired connection item in connection list"
+                "Found desired connection item in connection list"
             );
 
             status = STATUS_SUCCESS;
@@ -309,7 +327,7 @@ ClientConnections_RetrieveByBthAddr(
 
     WdfWaitLockRelease(Context->Header.ClientConnectionsLock);
 
-    TraceVerbose( TRACE_CONNECTION, "%!FUNC! Exit (%!STATUS!)", status);
+    FuncExit(TRACE_CONNECTION, "status=%!STATUS!", status);
 
     return status;
 }
@@ -325,14 +343,13 @@ EvtClientConnectionsDestroyConnection(
 {
     NTSTATUS status;
     PDO_IDENTIFICATION_DESCRIPTION pdoDesc;
-    PBTHPS3_CLIENT_CONNECTION connection = NULL;
+    PBTHPS3_CLIENT_CONNECTION connection = GetClientConnection(Object);
 
-    TraceInformation( 
-        TRACE_CONNECTION, 
-        "%!FUNC! Entry (DISPOSING CONNECTION MEMORY)"
+    FuncEntryArguments(
+        TRACE_CONNECTION,
+        "ClientConnection=0x%p",
+        connection
     );
-
-    connection = GetClientConnection(Object);
 
     if (connection->RemoteName.Buffer)
         ExFreePoolWithTag(connection->RemoteName.Buffer, BTHPS3PSM_POOL_TAG);
@@ -365,5 +382,5 @@ EvtClientConnectionsDestroyConnection(
             status);
     }
 
-    TraceVerbose( TRACE_CONNECTION, "%!FUNC! Exit");
+    FuncExitNoReturn(TRACE_CONNECTION);
 }

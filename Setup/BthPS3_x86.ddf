@@ -16,11 +16,13 @@ LICENSE
 bin\x86\BthPS3.pdb
 bin\x86\BthPS3\BthPS3.inf
 bin\x86\BthPS3\BthPS3.sys
-bin\x86\BthPS3\WdfCoinstaller01011.dll
+; uncomment if building for Windows 7
+;bin\x86\BthPS3\WdfCoinstaller01011.dll
 bin\x86\BthPS3\BthPS3_PDO_NULL_Device.inf
 .Set DestinationDir=BthPS3PSM_x86
 LICENSE
 bin\x86\BthPS3PSM.pdb
 bin\x86\BthPS3PSM\BthPS3PSM.inf
 bin\x86\BthPS3PSM\BthPS3PSM.sys
-bin\x86\BthPS3PSM\WdfCoinstaller01011.dll
+; uncomment if building for Windows 7
+;bin\x86\BthPS3PSM\WdfCoinstaller01011.dll

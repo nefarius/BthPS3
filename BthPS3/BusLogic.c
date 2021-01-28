@@ -1122,7 +1122,7 @@ NTSTATUS BthPS3_AssignDeviceProperty(
 
 	TraceVerbose(
 		TRACE_BUSLOGIC,
-		"Assigning device properties requires KMDF 1.13 or later"
+		"Assigning device properties requires KMDF 1.13 (Windows 8.x) or later"
 	);
 	
 	return STATUS_NOT_SUPPORTED;

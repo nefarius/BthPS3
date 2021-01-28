@@ -84,7 +84,7 @@ Return Value:
     //
     WPP_INIT_TRACING(DriverObject, RegistryPath);
 
-    TraceInformation( TRACE_DRIVER, "%!FUNC! Entry");
+    FuncEntry(TRACE_DRIVER);
 
     //
     // Register a cleanup callback so that we can call WPP_CLEANUP when
@@ -105,12 +105,16 @@ Return Value:
                              );
 
     if (!NT_SUCCESS(status)) {
-        TraceError( TRACE_DRIVER, "WdfDriverCreate failed %!STATUS!", status);
+        TraceError( 
+            TRACE_DRIVER, 
+            "WdfDriverCreate failed %!STATUS!", 
+            status
+        );
         WPP_CLEANUP(DriverObject);
         return status;
     }
 
-    TraceInformation( TRACE_DRIVER, "%!FUNC! Exit");
+    FuncExit(TRACE_DRIVER, "status=%!STATUS!", status);
 
     return status;
 }
@@ -145,11 +149,11 @@ Return Value:
 
     PAGED_CODE();
 
-    TraceInformation( TRACE_DRIVER, "%!FUNC! Entry");
+    FuncEntry(TRACE_DRIVER);
 
     status = BthPS3_CreateDevice(DeviceInit);
 
-    TraceInformation( TRACE_DRIVER, "%!FUNC! Exit");
+    FuncExit(TRACE_DRIVER, "status=%!STATUS!", status);
 
     return status;
 }
@@ -177,7 +181,7 @@ Return Value:
 
     PAGED_CODE();
 
-    TraceInformation( TRACE_DRIVER, "%!FUNC! Entry");
+    FuncEntry(TRACE_DRIVER);
 
     //
     // Stop WPP Tracing

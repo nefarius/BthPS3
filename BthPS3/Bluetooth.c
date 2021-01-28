@@ -173,121 +173,122 @@ BthPS3_RegisterPSM(
 		BRB_REGISTER_PSM
 	);
 
-	brb = (struct _BRB_PSM*)
-		& (DevCtx->RegisterUnregisterBrb);
+	do {
+		brb = (struct _BRB_PSM*)
+			&(DevCtx->RegisterUnregisterBrb);
 
-	//
-	// Register PSM_DS3_HID_CONTROL
-	// 
+		//
+		// Register PSM_DS3_HID_CONTROL
+		// 
 
-	brb->Psm = PSM_DS3_HID_CONTROL;
+		brb->Psm = PSM_DS3_HID_CONTROL;
 
-	TraceInformation(
-		TRACE_BTH,
-		"Trying to register PSM 0x%04X",
-		brb->Psm
-	);
-
-	status = BthPS3_SendBrbSynchronously(
-		DevCtx->Header.IoTarget,
-		DevCtx->Header.HostInitRequest,
-		(PBRB)brb,
-		sizeof(*brb)
-	);
-
-	if (!NT_SUCCESS(status))
-	{
-		TraceError(
+		TraceInformation(
 			TRACE_BTH,
-			"BRB_REGISTER_PSM failed with status %!STATUS!",
-			status
-		);
-		goto exit;
-	}
-
-	//
-	// Store PSM obtained
-	//
-	DevCtx->PsmHidControl = brb->Psm;
-
-	TraceInformation(
-		TRACE_BTH,
-		"Got PSM 0x%04X",
-		brb->Psm
-	);
-
-	// 
-	// Shouldn't happen but validate anyway
-	// 
-	if (brb->Psm != PSM_DS3_HID_CONTROL)
-	{
-		TraceError(
-			TRACE_BTH,
-			"Requested PSM 0x%04X but got 0x%04X instead",
-			PSM_DS3_HID_CONTROL,
+			"Trying to register PSM 0x%04X",
 			brb->Psm
 		);
 
-		status = STATUS_INVALID_PARAMETER_1;
-		goto exit;
-	}
-
-	//
-	// Register PSM_DS3_HID_CONTROL
-	// 
-
-	brb->Psm = PSM_DS3_HID_INTERRUPT;
-
-	TraceInformation(
-		TRACE_BTH,
-		"Trying to register PSM 0x%04X",
-		brb->Psm
-	);
-
-	status = BthPS3_SendBrbSynchronously(
-		DevCtx->Header.IoTarget,
-		DevCtx->Header.HostInitRequest,
-		(PBRB)brb,
-		sizeof(*brb)
-	);
-
-	if (!NT_SUCCESS(status))
-	{
-		TraceError(
-			TRACE_BTH,
-			"BRB_REGISTER_PSM failed with status %!STATUS!", 
-			status
+		status = BthPS3_SendBrbSynchronously(
+			DevCtx->Header.IoTarget,
+			DevCtx->Header.HostInitRequest,
+			(PBRB)brb,
+			sizeof(*brb)
 		);
-		goto exit;
-	}
 
-	//
-	// Store PSM obtained
-	//
-	DevCtx->PsmHidInterrupt = brb->Psm;
+		if (!NT_SUCCESS(status))
+		{
+			TraceError(
+				TRACE_BTH,
+				"BRB_REGISTER_PSM failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
 
-	TraceInformation(
-		TRACE_BTH,
-		"Got PSM 0x%04X",
-		brb->Psm
-	);
+		//
+		// Store PSM obtained
+		//
+		DevCtx->PsmHidControl = brb->Psm;
 
-	// 
-	// Shouldn't happen but validate anyway
-	// 
-	if (brb->Psm != PSM_DS3_HID_INTERRUPT)
-	{
-		TraceError(
+		TraceInformation(
 			TRACE_BTH,
-			"Requested PSM 0x%04X but got 0x%04X instead",
-			PSM_DS3_HID_INTERRUPT,
+			"Got PSM 0x%04X",
 			brb->Psm
 		);
 
-		status = STATUS_INVALID_PARAMETER_2;
-	}
+		// 
+		// Shouldn't happen but validate anyway
+		// 
+		if (brb->Psm != PSM_DS3_HID_CONTROL)
+		{
+			TraceError(
+				TRACE_BTH,
+				"Requested PSM 0x%04X but got 0x%04X instead",
+				PSM_DS3_HID_CONTROL,
+				brb->Psm
+			);
 
-exit:
+			status = STATUS_INVALID_PARAMETER_1;
+			break;
+		}
+
+		//
+		// Register PSM_DS3_HID_CONTROL
+		// 
+
+		brb->Psm = PSM_DS3_HID_INTERRUPT;
+
+		TraceInformation(
+			TRACE_BTH,
+			"Trying to register PSM 0x%04X",
+			brb->Psm
+		);
+
+		status = BthPS3_SendBrbSynchronously(
+			DevCtx->Header.IoTarget,
+			DevCtx->Header.HostInitRequest,
+			(PBRB)brb,
+			sizeof(*brb)
+		);
+
+		if (!NT_SUCCESS(status))
+		{
+			TraceError(
+				TRACE_BTH,
+				"BRB_REGISTER_PSM failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
+
+		//
+		// Store PSM obtained
+		//
+		DevCtx->PsmHidInterrupt = brb->Psm;
+
+		TraceInformation(
+			TRACE_BTH,
+			"Got PSM 0x%04X",
+			brb->Psm
+		);
+
+		// 
+		// Shouldn't happen but validate anyway
+		// 
+		if (brb->Psm != PSM_DS3_HID_INTERRUPT)
+		{
+			TraceError(
+				TRACE_BTH,
+				"Requested PSM 0x%04X but got 0x%04X instead",
+				PSM_DS3_HID_INTERRUPT,
+				brb->Psm
+			);
+
+			status = STATUS_INVALID_PARAMETER_2;
+		}
+
+	} while (FALSE);
 
 	FuncExit(TRACE_BTH, "status=%!STATUS!", status);
 
@@ -305,7 +306,7 @@ BthPS3_UnregisterPSM(
 
 	PAGED_CODE();
 
-	TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Entry");
+	FuncEntry(TRACE_BTH);
 
 	DevCtx->Header.ProfileDrvInterface.BthReuseBrb(
 		&(DevCtx->RegisterUnregisterBrb),
@@ -326,15 +327,11 @@ BthPS3_UnregisterPSM(
 
 	if (!NT_SUCCESS(status))
 	{
-		TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
-			"BRB_UNREGISTER_PSM failed with status %!STATUS!", status);
-
-		//
-		// Send does not fail for resource reasons
-		//
-		NT_ASSERT(FALSE);
-
-		goto exit;
+		TraceError(
+			TRACE_BTH,
+			"BRB_UNREGISTER_PSM failed with status %!STATUS!", 
+			status
+		);
 	}
 
 	DevCtx->Header.ProfileDrvInterface.BthReuseBrb(
@@ -356,22 +353,14 @@ BthPS3_UnregisterPSM(
 
 	if (!NT_SUCCESS(status))
 	{
-		TraceEvents(TRACE_LEVEL_ERROR, TRACE_BTH,
-			"BRB_UNREGISTER_PSM failed with status %!STATUS!", status);
-
-		//
-		// Send does not fail for resource reasons
-		//
-		NT_ASSERT(FALSE);
-
-		goto exit;
+		TraceError(
+			TRACE_BTH,
+			"BRB_UNREGISTER_PSM failed with status %!STATUS!", 
+			status
+		);
 	}
 
-exit:
-
-	TraceEvents(TRACE_LEVEL_VERBOSE, TRACE_BTH, "%!FUNC! Exit");
-
-	return;
+	FuncExitNoReturn(TRACE_BTH);
 }
 
 #pragma endregion

@@ -978,6 +978,14 @@ NTSTATUS BthPS3_PDO_EvtWdfDeviceSelfManagedIoInit(
 
 	(void)BthPS3_AssignDeviceProperty(
 		Device,
+		&DEVPKEY_BluetoothRadio_Address,
+		DEVPROP_TYPE_UINT64,
+		sizeof(UINT64),
+		&pCtx->ClientConnection->DevCtxHdr->LocalBthAddr
+	);
+
+	(void)BthPS3_AssignDeviceProperty(
+		Device,
 		&DEVPKEY_Device_FriendlyName,
 		DEVPROP_TYPE_STRING,
 		pCtx->ClientConnection->RemoteName.Length + sizeof(L'\0'),

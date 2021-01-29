@@ -127,6 +127,17 @@ extern __declspec(selectany) PCWSTR BthPS3BusEnumeratorName = L"BTHPS3BUS";
 #define BTHPS3PSM_NTDEVICE_NAME_STRING        L"\\Device\\BthPS3PSMControl"
 #define BTHPS3PSM_SYMBOLIC_NAME_STRING        L"\\DosDevices\\BthPS3PSMControl"
 
+//
+// Host address the device is currently paired to, if supported
+// 
+// NOTE: this is a system-included property, but not defined in the WDK
+// 
+// {a92f26ca-eda7-4b1d-9db2-27b68aa5a2eb}
+DEFINE_DEVPROPKEY(DEVPKEY_BluetoothRadio_Address,
+    0xa92f26ca, 0xeda7, 0x4b1d, 0x9d, 0xb2, 0x27, 0xb6, 0x8a, 0xa5, 0xa2, 0xeb,
+    1
+); // DEVPROP_TYPE_UINT64
+
 #pragma region PDO Hardware IDs
 
 // SIXAXIS/DualShock Hardware ID

@@ -74,7 +74,7 @@ StringUtil_BthNameIsEqual(
 
     TraceVerbose(
         TRACE_UTIL,
-        "%!FUNC! LHS: \"%wZ\" RHS: \"%wZ\"",
+        "LHS: \"%wZ\" RHS: \"%wZ\"",
         &usLhs, &usRhs
     );
 

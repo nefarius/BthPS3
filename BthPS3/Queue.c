@@ -94,8 +94,11 @@ Return Value:
     );
 
     if (!NT_SUCCESS(status)) {
-        TraceError( TRACE_QUEUE, "WdfIoQueueCreate failed %!STATUS!", status);
-        return status;
+        TraceError( 
+            TRACE_QUEUE, 
+            "WdfIoQueueCreate failed with status %!STATUS!", 
+            status
+        );
     }
 
     return status;
@@ -126,7 +129,7 @@ BthPS3_EvtWdfIoQueueIoDeviceControl(
     UNREFERENCED_PARAMETER(InputBufferLength);
     UNREFERENCED_PARAMETER(IoControlCode);
 
-    TraceVerbose( TRACE_QUEUE, "%!FUNC! Entry");
+    FuncEntry(TRACE_QUEUE);
 
     device = WdfIoQueueGetDevice(Queue);
     deviceCtx = GetServerDeviceContext(device);
@@ -146,11 +149,13 @@ BthPS3_EvtWdfIoQueueIoDeviceControl(
         status = WdfRequestGetStatus(Request);
         TraceError(
             TRACE_QUEUE,
-            "WdfRequestSend failed with status %!STATUS!", status);
+            "WdfRequestSend failed with status %!STATUS!", 
+            status
+        );
         WdfRequestComplete(Request, status);
     }
 
-    TraceVerbose( TRACE_QUEUE, "%!FUNC! Exit");
+    FuncExitNoReturn(TRACE_QUEUE);
 }
 
 //
@@ -165,18 +170,13 @@ BthPS3_EvtIoStop(
 {
     BOOLEAN ret;
 
-    TraceInformation(
+    FuncEntryArguments(
         TRACE_QUEUE,
-        "%!FUNC! Queue 0x%p, Request 0x%p ActionFlags %d",
-        Queue, Request, ActionFlags);
-
+        "Queue=0x%p, Request=0x%p ActionFlags=%d",
+        Queue, Request, ActionFlags
+    );
+	
     ret = WdfRequestCancelSentRequest(Request);
 
-    TraceInformation(
-        TRACE_QUEUE,
-        "WdfRequestCancelSentRequest returned %d",
-        ret
-    );
-
-    return;
+    FuncExit(TRACE_QUEUE, "ret=%d", ret);
 }

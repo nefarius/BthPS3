@@ -19,18 +19,22 @@ namespace BthPS3CfgUI
                     "SYSTEM\\CurrentControlSet\\Services\\BthPS3\\Parameters", true);
 
             if (_bthPs3ServiceParameters == null)
-            {
                 throw new Exception("BthPS3 registry path not found. Are the drivers installed?");
-            }
 
-            //
-            // Periodically refresh patch state value
-            // 
-            dispatcherTimer = new DispatcherTimer {Interval = new TimeSpan(0, 0, 1)};
-            dispatcherTimer.Tick += DispatcherTimerOnTick;
-            dispatcherTimer.Start();
+            if (BluetoothHelper.IsBluetoothRadioAvailable)
+            {
+                //
+                // Periodically refresh patch state value
+                // 
+                dispatcherTimer = new DispatcherTimer {Interval = new TimeSpan(0, 0, 1)};
+                dispatcherTimer.Tick += DispatcherTimerOnTick;
+                dispatcherTimer.Start();
+            }
         }
 
+        [UsedImplicitly]
+        public InvertableBool IsBluetoothRadioAvailable => BluetoothHelper.IsBluetoothRadioAvailable;
+        
         #region PSM patch
 
         [UsedImplicitly]

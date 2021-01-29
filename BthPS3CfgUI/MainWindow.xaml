@@ -20,6 +20,11 @@
             -->
         </StackPanel>
     </adonisControls:AdonisWindow.TitleBarContent>
+
+    <adonisControls:AdonisWindow.Resources >
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    </adonisControls:AdonisWindow.Resources>
+
     <Grid>
         <TabControl>
             <!-- Profile Driver Settings -->
@@ -177,6 +182,7 @@
 
                         <!-- Is filter patch enabled/disabled -->
                         <GroupBox Grid.Column="0" Grid.Row="0"
+                                  Visibility="{Binding Path=IsBluetoothRadioAvailable.Value, Converter={StaticResource BoolToVisibilityConverter}}"
                                   Margin="{adonisUi:Space 1}">
                             <GroupBox.Header>
                                 <CheckBox IsChecked="{Binding Path=IsPSMPatchEnabled}">Enable PSM patching</CheckBox>
@@ -204,6 +210,14 @@
                                 </TextBlock>
                             </GroupBox.Content>
                         </GroupBox>
+
+                        <TextBlock
+                            Grid.Column="0" Grid.Row="0"
+                            FontSize="16"
+                            Visibility="{Binding Path=IsBluetoothRadioAvailable.Invert, Converter={StaticResource BoolToVisibilityConverter}}"
+                            Margin="{adonisUi:Space 1}">
+                            Bluetooth Radio not found, these settings can't be altered without a functioning host.
+                        </TextBlock>
                     </Grid>
                 </StackPanel>
             </TabItem>

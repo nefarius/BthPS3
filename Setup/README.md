@@ -7,7 +7,7 @@
 ## release.ps1
 
 ```PowerShell
-.\release.ps1 -Token "APPVEYOR-API-TOKEN-HERE" -Version "1.3.72.0"
+.\release.ps1 -Token "APPVEYOR-API-TOKEN-HERE" -BuildVersion "1.3.79.0" -SetupVersion "1.3.79.0"
 ```
 
 ## Signing cheat sheet for public release

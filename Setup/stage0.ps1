@@ -6,15 +6,15 @@ Param(
     [Parameter(Mandatory=$true)]
     [string]$Token,
     [Parameter(Mandatory=$false)]
-    [string]$Path,
+    [string]$Path = "../artifacts",
     [Parameter(Mandatory=$false)]
     [Switch]$NoSigning
 ) #end param
 
-if ([string]::IsNullOrWhiteSpace($Path))
-{
-   $Path = "../artifacts"
-}
+$signTool = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64\signtool.exe"
+$crossCert = "C:\Program Files (x86)\Windows Kits\10\CrossCertificates\DigiCert_High_Assurance_EV_Root_CA.crt"
+$timestampUrl = "http://timestamp.digicert.com"
+$certName = "Nefarius Software Solutions e.U."
 
 function Get-AppVeyorArtifacts
 {
@@ -113,27 +113,24 @@ Get-AppVeyorArtifacts -Account "nefarius" -Project "BthPS3" -Path $Path -Token $
 # Download x86 binaries
 Get-AppVeyorArtifacts -Account "nefarius" -Project "BthPS3" -Path $Path -Token $Token -Branch $BuildVersion -JobName "Platform: x86"
 
+# List of files to sign
+$files =    "`"..\artifacts\bin\*.exe`" " + 
+            "`"..\artifacts\disk1\*.cab`" " + 
+            "`"..\artifacts\bin\x64\*.exe`" " + 
+            "`"..\artifacts\bin\x64\*.dll`" " + 
+            "`"..\artifacts\bin\x86\*.exe`" " +
+            "`"..\artifacts\bin\x86\*.dll`" " +
+            "`".\drivers\BthPS3_x64\*.sys`" " +
+            "`".\drivers\BthPS3_x86\*.sys`" " +
+            "`".\drivers\BthPS3PSM_x64\*.sys`" " +
+            "`".\drivers\BthPS3PSM_x86\*.sys`" "
+
+if ($NoSigning -eq $false) {
+    # sign with only one certificate
+    Invoke-Expression "& `"$signTool`" sign /v /ac `"$crossCert`" /n `"$certName`" /tr $timestampUrl /fd sha256 /td sha256 $files"
+}
+
 # Update setup version variable
 $setupProject = ".\Product.wxs"
 $regex = '(?<=<\?define VERSION = ")[^"]*'
 (Get-Content $setupProject) -replace $regex, $SetupVersion | Set-Content $setupProject -Encoding UTF8
-
-$signTool = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64\signtool.exe"
-$crossCert = "C:\Program Files (x86)\Windows Kits\10\CrossCertificates\DigiCert_High_Assurance_EV_Root_CA.crt"
-$certName = "Nefarius Software Solutions e.U."
-
-# List of files to sign
-$files = "`"..\artifacts\bin\*.exe`" " + 
-         "`"..\artifacts\disk1\*.cab`" " + 
-         "`"..\artifacts\bin\x64\*.exe`" " + 
-         "`"..\artifacts\bin\x64\*.dll`" " + 
-         "`"..\artifacts\bin\x86\*.exe`" " +
-         "`"..\artifacts\bin\x86\*.dll`" " +
-         "`".\drivers\BthPS3_x64\*.sys`" " +
-         "`".\drivers\BthPS3_x86\*.sys`" " +
-         "`".\drivers\BthPS3PSM_x64\*.sys`" " +
-         "`".\drivers\BthPS3PSM_x86\*.sys`" "
-
-if ($NoSigning -eq $false) {
-    Invoke-Expression "& `"$signTool`" sign /v /as /ac `"$crossCert`" /n `"$certName`" /tr http://timestamp.digicert.com /fd sha256 /td sha256 $files"
-}

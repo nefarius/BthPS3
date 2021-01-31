@@ -134,3 +134,7 @@ if ($NoSigning -eq $false) {
 $setupProject = ".\Product.wxs"
 $regex = '(?<=<\?define VERSION = ")[^"]*'
 (Get-Content $setupProject) -replace $regex, $SetupVersion | Set-Content $setupProject -Encoding UTF8
+
+# Print helper job names for sign portal
+"BthPS3 x86 v$BuildVersion $(Get-Date -Format "dd.MM.yyyy")"
+"BthPS3 x64 v$BuildVersion $(Get-Date -Format "dd.MM.yyyy")"

@@ -503,7 +503,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 		{
 			TraceError(
 				TRACE_BUSLOGIC,
-				"!! No function driver attached and not in RAW mode, can't continue"
+				"No function driver attached and not in RAW mode, can't continue"
 			);
 			break;
 		}

@@ -201,7 +201,7 @@ UrbFunctionBulkInTransferCompleted(
 
     UNREFERENCED_PARAMETER(Target);
 
-    TraceVerbose( TRACE_FILTER, "%!FUNC! Entry");
+    FuncEntry(TRACE_FILTER);
 
     device = (WDFDEVICE)Context;
     pDevCtx = DeviceGetContext(device);
@@ -283,5 +283,5 @@ UrbFunctionBulkInTransferCompleted(
 
     WdfRequestComplete(Request, Params->IoStatus.Status);
 
-    TraceVerbose( TRACE_FILTER, "%!FUNC! Exit");
+    FuncExitNoReturn(TRACE_FILTER);
 }

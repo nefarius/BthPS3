@@ -70,7 +70,7 @@ BthPS3PSM_CreateControlDevice(
     DECLARE_CONST_UNICODE_STRING(ntDeviceName, BTHPS3PSM_NTDEVICE_NAME_STRING);
     DECLARE_CONST_UNICODE_STRING(symbolicLinkName, BTHPS3PSM_SYMBOLIC_NAME_STRING);
 
-    TraceInformation( TRACE_SIDEBAND, "%!FUNC! Entry");
+    FuncEntry(TRACE_SIDEBAND);
 
 
     PAGED_CODE();
@@ -97,7 +97,8 @@ BthPS3PSM_CreateControlDevice(
 
     TraceInformation(
         TRACE_SIDEBAND,
-        "Creating Control Device");
+        "Creating Control Device"
+    );
 
     pInit = WdfControlDeviceInitAllocate(
         WdfDeviceGetDriver(Device),
@@ -109,7 +110,9 @@ BthPS3PSM_CreateControlDevice(
         status = STATUS_INSUFFICIENT_RESOURCES;
         TraceError(
             TRACE_SIDEBAND,
-            "WdfControlDeviceInitAllocate failed with %!STATUS!", status);
+            "WdfControlDeviceInitAllocate failed with %!STATUS!", 
+            status
+        );
         goto Error;
     }
 
@@ -126,7 +129,9 @@ BthPS3PSM_CreateControlDevice(
     if (!NT_SUCCESS(status)) {
         TraceError(
             TRACE_SIDEBAND,
-            "WdfDeviceInitAssignName failed with %!STATUS!", status);
+            "WdfDeviceInitAssignName failed with %!STATUS!", 
+            status
+        );
         goto Error;
     }
 
@@ -148,7 +153,9 @@ BthPS3PSM_CreateControlDevice(
     if (!NT_SUCCESS(status)) {
         TraceError(
             TRACE_SIDEBAND,
-            "WdfDeviceCreateSymbolicLink failed with %!STATUS!", status);
+            "WdfDeviceCreateSymbolicLink failed with %!STATUS!", 
+            status
+        );
         goto Error;
     }
 

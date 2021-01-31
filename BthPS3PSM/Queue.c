@@ -221,7 +221,9 @@ BthPS3PSMEvtIoInternalDeviceControl(
         status = WdfRequestGetStatus(Request);
         TraceError(
             TRACE_QUEUE,
-            "WdfRequestSend failed: %!STATUS!", status);
+            "WdfRequestSend failed with status %!STATUS!", 
+            status
+        );
         WdfRequestComplete(Request, status);
     }
 

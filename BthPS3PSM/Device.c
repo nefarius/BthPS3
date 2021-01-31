@@ -437,7 +437,7 @@ BthPS3PSM_EvtDevicePrepareHardware(
 
     PAGED_CODE();
 
-    TraceInformation( TRACE_DEVICE, "%!FUNC! Entry");
+    FuncEntry(TRACE_DEVICE);
 
     deviceContext = DeviceGetContext(Device);
 
@@ -471,7 +471,7 @@ BthPS3PSM_EvtDevicePrepareHardware(
             status);
     }
 
-    TraceInformation( TRACE_DEVICE, "%!FUNC! Exit");
+    FuncExit(TRACE_DEVICE, "status=%!STATUS!", status);
 
     return status;
 }
@@ -489,7 +489,7 @@ BthPS3PSM_EvtDeviceContextCleanup(
 {
     PAGED_CODE();
 
-    TraceInformation( TRACE_DEVICE, "%!FUNC! Entry");
+    FuncEntry(TRACE_DEVICE);
 
 	PDEVICE_CONTEXT pDevCtx = DeviceGetContext(Device);
 	
@@ -597,6 +597,6 @@ BthPS3PSM_EvtDeviceContextCleanup(
     UNREFERENCED_PARAMETER(Device);
 #endif
 
-    TraceInformation( TRACE_DEVICE, "%!FUNC! Exit");
+    FuncExitNoReturn(TRACE_DEVICE);
 }
 #pragma warning(pop) // enable 28118 again

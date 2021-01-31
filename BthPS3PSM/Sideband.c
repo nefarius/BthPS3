@@ -100,116 +100,116 @@ BthPS3PSM_CreateControlDevice(
         "Creating Control Device"
     );
 
-    pInit = WdfControlDeviceInitAllocate(
-        WdfDeviceGetDriver(Device),
-        /* only system services and elevated users may access us */
-        &SDDL_DEVOBJ_SYS_ALL_ADM_ALL
-    );
-
-    if (pInit == NULL) {
-        status = STATUS_INSUFFICIENT_RESOURCES;
-        TraceError(
-            TRACE_SIDEBAND,
-            "WdfControlDeviceInitAllocate failed with %!STATUS!", 
-            status
+    do
+    {
+        pInit = WdfControlDeviceInitAllocate(
+            WdfDeviceGetDriver(Device),
+            /* only system services and elevated users may access us */
+            &SDDL_DEVOBJ_SYS_ALL_ADM_ALL
         );
-        goto Error;
-    }
 
-    //
-    // Exclusive access isn't required
-    // 
-    WdfDeviceInitSetExclusive(pInit, FALSE);
+        if (pInit == NULL) {
+            status = STATUS_INSUFFICIENT_RESOURCES;
+            TraceError(
+                TRACE_SIDEBAND,
+                "WdfControlDeviceInitAllocate failed with %!STATUS!",
+                status
+            );
+            break;
+        }
 
-    //
-    // Assign name to expose
-    // 
-    status = WdfDeviceInitAssignName(pInit, &ntDeviceName);
-
-    if (!NT_SUCCESS(status)) {
-        TraceError(
-            TRACE_SIDEBAND,
-            "WdfDeviceInitAssignName failed with %!STATUS!", 
-            status
-        );
-        goto Error;
-    }
-
-    status = WdfDeviceCreate(&pInit,
-        WDF_NO_OBJECT_ATTRIBUTES,
-        &controlDevice);
-    if (!NT_SUCCESS(status)) {
-        goto Error;
-    }
-
-    //
-    // Create a symbolic link for the control object so that user-mode can open
-    // the device.
-    //
-
-    status = WdfDeviceCreateSymbolicLink(controlDevice,
-        &symbolicLinkName);
-
-    if (!NT_SUCCESS(status)) {
-        TraceError(
-            TRACE_SIDEBAND,
-            "WdfDeviceCreateSymbolicLink failed with %!STATUS!", 
-            status
-        );
-        goto Error;
-    }
-
-    WDF_IO_QUEUE_CONFIG_INIT_DEFAULT_QUEUE(&ioQueueConfig,
-        WdfIoQueueDispatchSequential);
-
-    ioQueueConfig.EvtIoDeviceControl = BthPS3PSM_SidebandIoDeviceControl;
-
-    //
-    // Framework by default creates non-power managed queues for
-    // filter drivers.
-    //
-    status = WdfIoQueueCreate(controlDevice,
-        &ioQueueConfig,
-        WDF_NO_OBJECT_ATTRIBUTES,
-        &queue // pointer to default queue
-    );
-    if (!NT_SUCCESS(status)) {
-        TraceError(
-            TRACE_SIDEBAND,
-            "WdfIoQueueCreate failed with %!STATUS!",
-            status
-        );
-        goto Error;
-    }
-
-    //
-    // Control devices must notify WDF when they are done initializing.   I/O is
-    // rejected until this call is made.
-    //
-    WdfControlFinishInitializing(controlDevice);
-
-    ControlDevice = controlDevice;
-
-    TraceInformation( TRACE_SIDEBAND, "%!FUNC! Exit");
-
-    return status;
-
-Error:
-
-    if (pInit != NULL) {
-        WdfDeviceInitFree(pInit);
-    }
-
-    if (controlDevice != NULL) {
         //
-        // Release the reference on the newly created object, since
-        // we couldn't initialize it.
+        // Exclusive access isn't required
+        // 
+        WdfDeviceInitSetExclusive(pInit, FALSE);
+
         //
-        WdfObjectDelete(controlDevice);
-        controlDevice = NULL;
+        // Assign name to expose
+        // 
+        status = WdfDeviceInitAssignName(pInit, &ntDeviceName);
+
+        if (!NT_SUCCESS(status)) {
+            TraceError(
+                TRACE_SIDEBAND,
+                "WdfDeviceInitAssignName failed with %!STATUS!",
+                status
+            );
+            break;
+        }
+
+        status = WdfDeviceCreate(&pInit,
+            WDF_NO_OBJECT_ATTRIBUTES,
+            &controlDevice);
+        if (!NT_SUCCESS(status)) {
+            break;
+        }
+
+        //
+        // Create a symbolic link for the control object so that user-mode can open
+        // the device.
+        //
+
+        status = WdfDeviceCreateSymbolicLink(controlDevice,
+            &symbolicLinkName);
+
+        if (!NT_SUCCESS(status)) {
+            TraceError(
+                TRACE_SIDEBAND,
+                "WdfDeviceCreateSymbolicLink failed with %!STATUS!",
+                status
+            );
+            break;
+        }
+
+        WDF_IO_QUEUE_CONFIG_INIT_DEFAULT_QUEUE(&ioQueueConfig,
+            WdfIoQueueDispatchSequential);
+
+        ioQueueConfig.EvtIoDeviceControl = BthPS3PSM_SidebandIoDeviceControl;
+
+        //
+        // Framework by default creates non-power managed queues for
+        // filter drivers.
+        //
+        status = WdfIoQueueCreate(controlDevice,
+            &ioQueueConfig,
+            WDF_NO_OBJECT_ATTRIBUTES,
+            &queue // pointer to default queue
+        );
+        if (!NT_SUCCESS(status)) {
+            TraceError(
+                TRACE_SIDEBAND,
+                "WdfIoQueueCreate failed with %!STATUS!",
+                status
+            );
+            break;
+        }
+
+        //
+        // Control devices must notify WDF when they are done initializing.   I/O is
+        // rejected until this call is made.
+        //
+        WdfControlFinishInitializing(controlDevice);
+
+        ControlDevice = controlDevice;
+
+    } while (FALSE);
+
+    if (pInit != NULL)
+    {
+	    WdfDeviceInitFree(pInit);
     }
 
-    TraceInformation( TRACE_SIDEBAND, "%!FUNC! Exit (%!STATUS!)", status);
+    if (!NT_SUCCESS(status) && controlDevice != NULL)
+    {
+	    //
+	    // Release the reference on the newly created object, since
+	    // we couldn't initialize it.
+	    //
+	    WdfObjectDelete(controlDevice);
+	    controlDevice = NULL;
+    }
+
+    FuncExit(TRACE_SIDEBAND, "status=%!STATUS!", status);
 
     return status;
 }

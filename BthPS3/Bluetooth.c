@@ -554,7 +554,7 @@ BthPS3_ServerContextInit(
 		WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
 		attributes.ParentObject = Device;
 
-		status = WdfWaitLockCreate(
+		status = WdfSpinLockCreate(
 			&attributes,
 			&Context->Header.ClientConnectionsLock
 		);

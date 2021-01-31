@@ -87,7 +87,7 @@ typedef struct _BTHPS3_DEVICE_CONTEXT_HEADER
 	//
 	// Lock for ClientConnections collection
 	// 
-	WDFWAITLOCK ClientConnectionsLock;
+	WDFSPINLOCK ClientConnectionsLock;
 
 } BTHPS3_DEVICE_CONTEXT_HEADER, * PBTHPS3_DEVICE_CONTEXT_HEADER;
 

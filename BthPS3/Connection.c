@@ -245,16 +245,15 @@ ClientConnections_RemoveAndDestroy(
     ULONG itemCount;
     ULONG index;
     WDFOBJECT item, currentItem;
-
+	
     FuncEntryArguments(
         TRACE_CONNECTION, 
         "ClientConnection=0x%p",
         ClientConnection
-    );
-	
-
-    WdfWaitLockAcquire(Context->ClientConnectionsLock, NULL);
-
+    );	
+    
+    WdfSpinLockAcquire(Context->ClientConnectionsLock);
+    
     item = WdfObjectContextGetObject(ClientConnection);
     itemCount = WdfCollectionGetCount(Context->ClientConnections);
 
@@ -275,7 +274,7 @@ ClientConnections_RemoveAndDestroy(
         }
     }
 
-    WdfWaitLockRelease(Context->ClientConnectionsLock);
+    WdfSpinLockRelease(Context->ClientConnectionsLock);
 
     FuncExitNoReturn(TRACE_CONNECTION);
 }
@@ -303,7 +302,7 @@ ClientConnections_RetrieveByBthAddr(
     );
 	
 
-    WdfWaitLockAcquire(Context->Header.ClientConnectionsLock, NULL);
+    WdfSpinLockAcquire(Context->Header.ClientConnectionsLock);
 
     itemCount = WdfCollectionGetCount(Context->Header.ClientConnections);
 
@@ -325,7 +324,7 @@ ClientConnections_RetrieveByBthAddr(
         }
     }
 
-    WdfWaitLockRelease(Context->Header.ClientConnectionsLock);
+    WdfSpinLockRelease(Context->Header.ClientConnectionsLock);
 
     FuncExit(TRACE_CONNECTION, "status=%!STATUS!", status);
 

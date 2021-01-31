@@ -258,7 +258,7 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
     PBTHPS3PSM_GET_PSM_PATCHING         pGet = NULL;
     UNICODE_STRING                      linkName;
 
-    TraceInformation( TRACE_SIDEBAND, "%!FUNC! Entry");
+    FuncEntry(TRACE_SIDEBAND);
 
     UNREFERENCED_PARAMETER(Queue);
     UNREFERENCED_PARAMETER(OutputBufferLength);
@@ -450,7 +450,8 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
 #pragma endregion
 
     default:
-        TraceEvents(TRACE_LEVEL_WARNING,
+        TraceEvents(
+            TRACE_LEVEL_WARNING,
             TRACE_SIDEBAND,
             "Unknown I/O Control Code submitted: %X",
             IoControlCode
@@ -460,7 +461,7 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
 
     WdfRequestComplete(Request, status);
 
-    TraceInformation( TRACE_SIDEBAND, "%!FUNC! Exit");
+    FuncExit(TRACE_SIDEBAND);
 }
 #pragma warning(pop) // enable 28118 again
 

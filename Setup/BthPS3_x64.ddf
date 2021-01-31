@@ -24,5 +24,4 @@ LICENSE
 bin\x64\BthPS3PSM.pdb
 bin\x64\BthPS3PSM\BthPS3PSM.inf
 bin\x64\BthPS3PSM\BthPS3PSM.sys
-; uncomment if building for Windows 7
-;bin\x64\BthPS3PSM\WdfCoinstaller01011.dll
+bin\x64\BthPS3PSM\WdfCoinstaller01011.dll

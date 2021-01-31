@@ -23,7 +23,7 @@
   <?endif ?>
 
   <!-- file version for installer -->
-  <?define VERSION = "1.3.92.0" ?>
+  <?define VERSION = "1.3.104.0" ?>
 
   <!-- basic product properties -->
   <Product Id="*" Name="Nefarius BthPS3 Bluetooth Drivers" Language="1033" Version="$(var.VERSION)"
@@ -206,8 +206,7 @@
         <File Name="BthPS3PSM.pdb" Source="$(var.SolutionDir)Setup\artifacts\bin\$(var.ArchDir)\BthPS3PSM.pdb" />
         <File Name="bthps3_pdo_null_device.cat" Source="$(var.ProjectDir)drivers\BthPS3_$(var.ArchDir)\bthps3_pdo_null_device.cat" />
         <File Name="BthPS3_PDO_NULL_Device.inf" Source="$(var.ProjectDir)drivers\BthPS3_$(var.ArchDir)\BthPS3_PDO_NULL_Device.inf" />
-        <!-- No more co-installer for KMDF >= 1.13, uncomment if building for Windows 7 -->
-        <!-- <File Name="WdfCoinstaller01011.dll" Source="$(var.ProjectDir)drivers\BthPS3_$(var.ArchDir)\WdfCoinstaller01011.dll" /> -->
+        <File Name="WdfCoinstaller01011.dll" Source="$(var.ProjectDir)drivers\BthPS3PSM_$(var.ArchDir)\WdfCoinstaller01011.dll" />
         <File Name="BthPS3Util.exe" Source="$(var.SolutionDir)Setup\artifacts\bin\$(var.ArchDir)\BthPS3Util.exe" />
         <File Name="BthPS3CfgUI.exe" Source="$(var.SolutionDir)Setup\artifacts\bin\BthPS3CfgUI.exe" />
         <File Name="LICENSE" Source="$(var.SolutionDir)\LICENSE" />
@@ -223,8 +222,7 @@
         <File Name="BthPS3PSM.pdb" Source="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3PSM.pdb" />
         <File Name="bthps3_pdo_null_device.cat" Source="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3\bthps3_pdo_null_device.cat" />
         <File Name="BthPS3_PDO_NULL_Device.inf" Source="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3\BthPS3_PDO_NULL_Device.inf" />
-        <!-- No more co-installer for KMDF >= 1.13, uncomment if building for Windows 7 -->
-        <!-- <File Name="WdfCoinstaller01011.dll" Source="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3\WdfCoinstaller01011.dll" /> -->
+        <File Name="WdfCoinstaller01011.dll" Source="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3PSM\WdfCoinstaller01011.dll" />
         <File Name="BthPS3Util.exe" Source="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3Util.exe" />
         <File Name="BthPS3CfgUI.exe" Source="$(var.SolutionDir)bin\BthPS3CfgUI.exe" />
         <File Name="LICENSE" Source="$(var.SolutionDir)LICENSE" />

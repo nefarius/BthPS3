@@ -63,6 +63,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 	WDF_OBJECT_ATTRIBUTES                   attributes;
 	PBTHPS3_PDO_DEVICE_CONTEXT              pdoCtx = NULL;
 	WDF_DEVICE_PNP_CAPABILITIES             pnpCaps;
+	WDF_DEVICE_POWER_CAPABILITIES			powerCaps;
 	WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS   idleSettings;
 	WDF_PNPPOWER_EVENT_CALLBACKS            pnpPowerCallbacks;
 	WDFKEY                                  hKey = NULL;
@@ -489,6 +490,23 @@ BthPS3_EvtWdfChildListCreateDevice(
 		WdfDeviceSetPnpCapabilities(hChild, &pnpCaps);
 
 		//
+		// Power capabilities
+		// 
+
+		WDF_DEVICE_POWER_CAPABILITIES_INIT(&powerCaps);
+		powerCaps.DeviceD1 = WdfFalse;
+		powerCaps.DeviceD2 = WdfTrue;
+		powerCaps.WakeFromD2 = WdfTrue;
+		powerCaps.DeviceState[PowerSystemWorking] = PowerDeviceD0;
+		powerCaps.DeviceState[PowerSystemSleeping1] = PowerDeviceD2;
+		powerCaps.DeviceState[PowerSystemSleeping2] = PowerDeviceD2;
+		powerCaps.DeviceState[PowerSystemSleeping3] = PowerDeviceD2;
+		powerCaps.DeviceState[PowerSystemHibernate] = PowerDeviceD2;
+		powerCaps.DeviceState[PowerSystemShutdown] = PowerDeviceD3;
+
+		WdfDeviceSetPowerCapabilities(hChild, &powerCaps);
+		
+		//
 		// Idle settings
 		// 
 
@@ -635,7 +653,7 @@ NTSTATUS BthPS3_PDO_EvtWdfDeviceD0Exit(
 		NULL
 	);
 
-	if (!NT_SUCCESS(status))
+	if (status != STATUS_DEVICE_NOT_CONNECTED && !NT_SUCCESS(status))
 	{
 		TraceError(
 			TRACE_BUSLOGIC,

@@ -461,7 +461,7 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
 
     WdfRequestComplete(Request, status);
 
-    FuncExit(TRACE_SIDEBAND);
+    FuncExitNoReturn(TRACE_SIDEBAND);
 }
 #pragma warning(pop) // enable 28118 again
 

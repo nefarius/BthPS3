@@ -6,7 +6,7 @@ Param(
     [Parameter(Mandatory=$true)]
     [string]$Token,
     [Parameter(Mandatory=$false)]
-    [string]$Path = "../artifacts",
+    [string]$Path = "./artifacts",
     [Parameter(Mandatory=$false)]
     [Switch]$NoSigning
 ) #end param
@@ -114,12 +114,12 @@ Get-AppVeyorArtifacts -Account "nefarius" -Project "BthPS3" -Path $Path -Token $
 Get-AppVeyorArtifacts -Account "nefarius" -Project "BthPS3" -Path $Path -Token $Token -Branch $BuildVersion -JobName "Platform: x86"
 
 # List of files to sign
-$files =    "`"..\artifacts\bin\*.exe`" " + 
-            "`"..\artifacts\disk1\*.cab`" " + 
-            "`"..\artifacts\bin\x64\*.exe`" " + 
-            "`"..\artifacts\bin\x64\*.dll`" " + 
-            "`"..\artifacts\bin\x86\*.exe`" " +
-            "`"..\artifacts\bin\x86\*.dll`" " +
+$files =    "`".\artifacts\bin\*.exe`" " + 
+            "`".\artifacts\disk1\*.cab`" " + 
+            "`".\artifacts\bin\x64\*.exe`" " + 
+            "`".\artifacts\bin\x64\*.dll`" " + 
+            "`".\artifacts\bin\x86\*.exe`" " +
+            "`".\artifacts\bin\x86\*.dll`" " +
             "`".\drivers\BthPS3_x64\*.sys`" " +
             "`".\drivers\BthPS3_x86\*.sys`" " +
             "`".\drivers\BthPS3PSM_x64\*.sys`" " +

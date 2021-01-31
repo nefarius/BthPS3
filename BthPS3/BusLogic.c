@@ -617,6 +617,11 @@ NTSTATUS BthPS3_PDO_EvtWdfDeviceD0Exit(
 		sizeof(BTH_ADDR)
 	);
 
+	/*
+	 * Low power conditions are not supported by the remote device, 
+	 * if low power or idle was requested, instruct radio to disconnect.
+	 */
+
 	//
 	// Request parent to abandon us :'(
 	// 

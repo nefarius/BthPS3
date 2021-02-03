@@ -204,7 +204,7 @@ void BthPS3PSM_FilterRequestCompletionRoutine(
     UNREFERENCED_PARAMETER(Params);
     UNREFERENCED_PARAMETER(Context);
 
-    TraceError( 
+    TraceVerbose( 
         TRACE_PSM,
         "PSM Filter enable request finished with status %!STATUS!",
         WdfRequestGetStatus(Request)

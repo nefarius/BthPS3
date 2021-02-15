@@ -679,6 +679,21 @@ inline bool uninstall_device_and_driver(HDEVINFO hDevInfo, PSP_DEVINFO_DATA spDe
 	return ret;
 }
 
+static PWSTR wstristr(PCWSTR haystack, PCWSTR needle) {
+	do {
+		PCWSTR h = haystack;
+		PCWSTR n = needle;
+		while (towlower(*h) == towlower(*n) && *n) {
+			h++;
+			n++;
+		}
+		if (*n == 0) {
+			return (PWSTR)haystack;
+		}
+	} while (*haystack++);
+	return NULL;
+}
+
 bool devcon::uninstall_device_and_driver(const GUID* classGuid, const std::wstring& hardwareId, bool* rebootRequired)
 {
     DWORD err = ERROR_SUCCESS;
@@ -737,9 +752,9 @@ bool devcon::uninstall_device_and_driver(const GUID* classGuid, const std::wstri
         //
         // find device matching hardware ID
         // 
-        for (p = buffer; *p && (p < &buffer[buffersize]); p += lstrlenW(p) + sizeof(TCHAR))
+        for (p = buffer; p && *p && (p < &buffer[buffersize]); p += lstrlenW(p) + sizeof(TCHAR))
         {
-	        if (StrStrI(p, hardwareId.c_str()))
+	        if (wstristr(p, hardwareId.c_str()))
 	        {
 		        succeeded = ::uninstall_device_and_driver(hDevInfo, &spDevInfoData, rebootRequired);
 		        err = GetLastError();

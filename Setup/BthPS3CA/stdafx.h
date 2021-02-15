@@ -8,8 +8,3 @@
 
 // WiX Header Files:
 #include <wcautil.h>
-
-//
-// OS Bluetooth APIs
-// 
-#include <bluetoothapis.h>

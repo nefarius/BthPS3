@@ -225,8 +225,9 @@ bool bthps3::bluetooth::enable_service()
 		return false;
 
 	SvcInfo.Enabled = TRUE;
+	Bthprops bth;
 
-	if (ERROR_SUCCESS != (err = BluetoothSetLocalServiceInfo(
+	if (ERROR_SUCCESS != (err = bth.pBluetoothSetLocalServiceInfo(
 		nullptr, //callee would select the first found radio
 		&BTHPS3_SERVICE_GUID,
 		0,
@@ -251,8 +252,9 @@ bool bthps3::bluetooth::disable_service()
 		return false;
 
 	SvcInfo.Enabled = FALSE;
+	Bthprops bth;
 
-	if (ERROR_SUCCESS != (err = BluetoothSetLocalServiceInfo(
+	if (ERROR_SUCCESS != (err = bth.pBluetoothSetLocalServiceInfo(
 		nullptr, //callee would select the first found radio
 		&BTHPS3_SERVICE_GUID,
 		0,

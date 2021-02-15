@@ -58,7 +58,7 @@
                       Root="HKLM" 
                       Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion"
                       Type="raw"
-                      Name="ReleaseId" 
+                      Name="CurrentMajorVersionNumber" 
                       Win64="$(var.Win64)"/>
     </Property>
 

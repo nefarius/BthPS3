@@ -15,3 +15,5 @@
 #include <initguid.h>
 #include <winioctl.h>
 #include <BthPS3.h>
+
+#include "LibraryHelper.hpp"

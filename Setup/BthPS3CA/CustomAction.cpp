@@ -20,22 +20,27 @@ UINT __stdcall CheckHostRadioPresence(
 {
 	HRESULT hr = S_OK;
 	UINT er = ERROR_SUCCESS;
-
+	Bthprops bth;
+	
 	hr = WcaInitialize(hInstall, "CheckHostRadioPresence");
 	ExitOnFailure(hr, "Failed to initialize");
 
 	WcaLog(LOGMSG_STANDARD, "Initialized.");
 
+	
 	HANDLE hRadio = INVALID_HANDLE_VALUE;
 	BLUETOOTH_FIND_RADIO_PARAMS radioParams;
 	ZeroMemory(&radioParams, sizeof(BLUETOOTH_FIND_RADIO_PARAMS));
 	radioParams.dwSize = sizeof(BLUETOOTH_FIND_RADIO_PARAMS);
 
-	auto* const ret = BluetoothFindFirstRadio(&radioParams, &hRadio);
+	ExitOnNull(bth.pBluetoothFindFirstRadio, hr, E_INVALIDARG, "BluetoothFindFirstRadio not found");
+	ExitOnNull(bth.pBluetoothFindRadioClose, hr, E_INVALIDARG, "BluetoothFindRadioClose not found");
+	
+	auto* const ret = bth.pBluetoothFindFirstRadio(&radioParams, &hRadio);
 
 	if (ret)
 	{
-		BluetoothFindRadioClose(ret);
+		bth.pBluetoothFindRadioClose(ret);
 		MsiSetProperty(hInstall, L"RADIOFOUND", L"1");
 		WcaLog(LOGMSG_STANDARD, "Host radio found.");
 	}

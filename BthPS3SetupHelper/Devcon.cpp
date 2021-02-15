@@ -16,6 +16,8 @@
 // 
 #include <vector>
 
+#include "LibraryHelper.hpp"
+
 // Helper function to build a multi-string from a vector<wstring>
 inline std::vector<wchar_t> BuildMultiString(const std::vector<std::wstring>& data)
 {
@@ -309,9 +311,16 @@ cleanup_DeviceInfo:
 
 bool devcon::install_driver(const std::wstring& fullInfPath, bool* rebootRequired)
 {
+	Newdev newdev;
 	BOOL reboot;
-    
-	const auto ret = DiInstallDriver(
+
+	if (!newdev.pDiInstallDriverW)
+	{
+		SetLastError(ERROR_INVALID_FUNCTION);
+		return false;
+	}
+	
+	const auto ret = newdev.pDiInstallDriverW(
 		nullptr,
 		fullInfPath.c_str(),
 		DIIRFLAG_FORCE_INF,
@@ -547,6 +556,14 @@ inline bool uninstall_device_and_driver(HDEVINFO hDevInfo, PSP_DEVINFO_DATA spDe
 	DWORD err = ERROR_SUCCESS;
 	bool ret = false;
 
+	Newdev newdev;
+
+	if (!newdev.pDiUninstallDevice || !newdev.pDiUninstallDriverW)
+	{
+		SetLastError(ERROR_INVALID_FUNCTION);
+		return false;
+	}
+	
 	SP_DRVINFO_DATA_W drvInfoData;
 	drvInfoData.cbSize = sizeof(drvInfoData);
 
@@ -635,7 +652,7 @@ inline bool uninstall_device_and_driver(HDEVINFO hDevInfo, PSP_DEVINFO_DATA spDe
 		//
 		// Remove device
 		// 
-		if (!DiUninstallDevice(
+		if (!newdev.pDiUninstallDevice(
 			nullptr,
 			hDevInfo,
 			spDevInfoData,
@@ -650,7 +667,7 @@ inline bool uninstall_device_and_driver(HDEVINFO hDevInfo, PSP_DEVINFO_DATA spDe
 		//
 		// Uninstall from driver store
 		// 
-		if (!DiUninstallDriver(
+		if (!newdev.pDiUninstallDriverW(
 			nullptr,
 			pDrvInfoDetailData->InfFileName,
 			0,

@@ -1,6 +1,5 @@
 #include "stdafx.h"
 
-#include <PathCch.h>
 #include <devguid.h>
 
 #include <string>
@@ -60,9 +59,9 @@ UINT __stdcall InstallDrivers(
 	HRESULT hr = S_OK;
 	UINT er = ERROR_SUCCESS;
 
-	std::wstring nullInfPath(PATHCCH_MAX_CCH, L'\0');
-	std::wstring profileInfPath(PATHCCH_MAX_CCH, L'\0');
-	std::wstring filterInfPath(PATHCCH_MAX_CCH, L'\0');
+	std::wstring nullInfPath;
+	std::wstring profileInfPath;
+	std::wstring filterInfPath;
 	
 	hr = WcaInitialize(hInstall, "InstallDrivers");
 	ExitOnFailure(hr, "Failed to initialize");
@@ -70,14 +69,14 @@ UINT __stdcall InstallDrivers(
 	WcaLog(LOGMSG_STANDARD, "Initialized.");
 
 	bool rr1 = false, rr2 = false, rr3 = false;
-	WCHAR targetPath[PATHCCH_MAX_CCH * sizeof(WCHAR)];
+	WCHAR targetPath[MAX_PATH * sizeof(WCHAR)];
 	DWORD length = ARRAYSIZE(targetPath);
 
 	(void)MsiGetProperty(hInstall, L"CustomActionData", targetPath, &length);
 	
-	PathCchCombine(&nullInfPath[0], nullInfPath.size(), targetPath, g_nullInf.c_str());
-	PathCchCombine(&profileInfPath[0], profileInfPath.size(), targetPath, g_profileInf.c_str());
-	PathCchCombine(&filterInfPath[0], filterInfPath.size(), targetPath, g_filterInf.c_str());
+	nullInfPath =  std::wstring(targetPath) + L"\\"  + g_nullInf;
+	profileInfPath = std::wstring(targetPath) + L"\\" + g_profileInf;
+	filterInfPath = std::wstring(targetPath) + L"\\" + g_filterInf;
 
 	
 	WcaLog(LOGMSG_STANDARD, "Installing BthPS3PSM filter driver in driver store.");

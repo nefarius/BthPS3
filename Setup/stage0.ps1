@@ -119,11 +119,7 @@ $files =    "`".\artifacts\bin\*.exe`" " +
             "`".\artifacts\bin\x64\*.exe`" " + 
             "`".\artifacts\bin\x64\*.dll`" " + 
             "`".\artifacts\bin\x86\*.exe`" " +
-            "`".\artifacts\bin\x86\*.dll`" " +
-            "`".\drivers\BthPS3_x64\*.sys`" " +
-            "`".\drivers\BthPS3_x86\*.sys`" " +
-            "`".\drivers\BthPS3PSM_x64\*.sys`" " +
-            "`".\drivers\BthPS3PSM_x86\*.sys`" "
+            "`".\artifacts\bin\x86\*.dll`" "
 
 if ($NoSigning -eq $false) {
     # sign with only one certificate

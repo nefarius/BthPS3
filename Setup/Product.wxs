@@ -58,13 +58,13 @@
                       Root="HKLM" 
                       Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion"
                       Type="raw"
-                      Name="ReleaseId" 
+                      Name="CurrentMajorVersionNumber" 
                       Win64="$(var.Win64)"/>
     </Property>
 
     <!-- Abort on non-Windows 10 -->
-    <Condition Message="Windows 10 1607 (RS1) or newer required.">
-      <![CDATA[Installed OR (RELEASEID AND RELEASEID >= "1607")]]>
+    <Condition Message="This application can only be installed on Windows 10.">
+      <![CDATA[Installed OR (RELEASEID AND RELEASEID = "10")]]>
     </Condition>
 
     <!-- Custom action (DLL) to detect host radio -->

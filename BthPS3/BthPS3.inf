@@ -51,7 +51,6 @@ BthPS3_Device_CoInstaller_CopyFiles = 11
 
 [SourceDisksFiles]
 BthPS3.sys  = 1,,
-WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1
 
 ;*****************************************
 ; Install Section
@@ -85,52 +84,38 @@ AddReg         = BthPS3_Service_AddReg
 ; Populate default service values
 [BthPS3_Service_AddReg]
 ; Bring up exposed device in raw mode (no function driver required)
-HKR,Parameters,RawPDO,0x00010001,1
+HKR,Parameters,RawPDO,0x00010003,1
 ; Hide driver-less device in Device Manager UI (cosmetic setting)
-HKR,Parameters,HidePDO,0x00010001,0
+HKR,Parameters,HidePDO,0x00010003,0
 ; Restrict access to RAW PDO device to elevated processes only
-HKR,Parameters,AdminOnlyPDO,0x00010001,0
+HKR,Parameters,AdminOnlyPDO,0x00010003,0
 ; Restrict access to RAW PDO device to one handle only
-HKR,Parameters,ExclusivePDO,0x00010001,1
+HKR,Parameters,ExclusivePDO,0x00010003,1
 ; I/O idle timeout value in milliseconds
-HKR,Parameters,ChildIdleTimeout,0x00010001,10000
+HKR,Parameters,ChildIdleTimeout,0x00010003,10000
 ; Should the profile driver attempt to auto-enable the patch again
-HKR,Parameters,AutoEnableFilter,0x00010001,1
+HKR,Parameters,AutoEnableFilter,0x00010003,1
 ; Should the profile driver attempt to auto-disable the patch
-HKR,Parameters,AutoDisableFilter,0x00010001,1
+HKR,Parameters,AutoDisableFilter,0x00010003,1
 ; Time (in seconds) to wait for patch re-enable
-HKR,Parameters,AutoEnableFilterDelay,0x00010001,10
+HKR,Parameters,AutoEnableFilterDelay,0x00010003,10
 ; SIXAXIS connection requests will be dropped, if 0
-HKR,Parameters,IsSIXAXISSupported,0x00010001,1
+HKR,Parameters,IsSIXAXISSupported,0x00010003,1
 ; NAVIGATION connection requests will be dropped, if 0
-HKR,Parameters,IsNAVIGATIONSupported,0x00010001,1
+HKR,Parameters,IsNAVIGATIONSupported,0x00010003,1
 ; MOTION connection requests will be dropped, if 0
-HKR,Parameters,IsMOTIONSupported,0x00010001,0
+HKR,Parameters,IsMOTIONSupported,0x00010003,0
 ; WIRELESS connection requests will be dropped, if 0
-HKR,Parameters,IsWIRELESSSupported,0x00010001,0
+HKR,Parameters,IsWIRELESSSupported,0x00010003,0
 ; Collection of supported remote names for SIXAXIS device
-HKR,Parameters,SIXAXISSupportedNames,0x00010000,"PLAYSTATION(R)3 Controller","PLAYSTATION(R)3Conteroller-PANHAI","PS(R) Ga`epad","PS3 GamePad","PS(R) Gamepad","PLAYSTATION(3)Conteroller","PLAYSTATION(R)3Conteroller-ghic"
+HKR,Parameters,SIXAXISSupportedNames,0x00010002,"PLAYSTATION(R)3 Controller","PLAYSTATION(R)3Conteroller-PANHAI","PS(R) Ga`epad","PS3 GamePad","PS(R) Gamepad","PLAYSTATION(3)Conteroller","PLAYSTATION(R)3Conteroller-ghic"
 ; Collection of supported remote names for NAVIGATION device
-HKR,Parameters,NAVIGATIONSupportedNames,0x00010000,"Navigation Controller"
+HKR,Parameters,NAVIGATIONSupportedNames,0x00010002,"Navigation Controller"
 ; Collection of supported remote names for MOTION device
-HKR,Parameters,MOTIONSupportedNames,0x00010000,"Motion Controller"
+HKR,Parameters,MOTIONSupportedNames,0x00010002,"Motion Controller"
 ; Collection of supported remote names for WIRELESS device
-HKR,Parameters,WIRELESSSupportedNames,0x00010000,"Wireless Controller"
+HKR,Parameters,WIRELESSSupportedNames,0x00010002,"Wireless Controller"
 
-
-;
-;--- BthPS3_Device Coinstaller installation ------
-;
-
-[BthPS3_Device.NT.CoInstallers]
-AddReg=BthPS3_Device_CoInstaller_AddReg
-CopyFiles=BthPS3_Device_CoInstaller_CopyFiles
-
-[BthPS3_Device_CoInstaller_AddReg]
-HKR,,CoInstallers32,0x00010000, "WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll,WdfCoInstaller"
-
-[BthPS3_Device_CoInstaller_CopyFiles]
-WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll
 
 [BthPS3_Device.NT.Wdf]
 KmdfService =  BthPS3, BthPS3_wdfsect

@@ -82,6 +82,13 @@ EVT_WDF_DEVICE_D0_EXIT BthPS3_PDO_EvtWdfDeviceD0Exit;
 
 EVT_WDF_DEVICE_SELF_MANAGED_IO_INIT BthPS3_PDO_EvtWdfDeviceSelfManagedIoInit;
 
+#if KMDF_VERSION_MAJOR == 1 && KMDF_VERSION_MINOR >= 13
+#if (NTDDI_VERSION < NTDDI_WIN10)
+DEFINE_DEVPROPKEY(DEVPKEY_Bluetooth_LastConnectedTime, 
+    0x2bd67d8b, 0x8beb, 0x48d5, 0x87, 0xe0, 0x6c, 0xda, 0x34, 0x28, 0x04, 0x0a, 11);    // DEVPROP_TYPE_FILETIME
+#endif
+#endif
+
 NTSTATUS
 BthPS3_AssignDeviceProperty(
     WDFDEVICE Device,

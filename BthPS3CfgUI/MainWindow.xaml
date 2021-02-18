@@ -12,12 +12,11 @@
     <adonisControls:AdonisWindow.TitleBarContent>
         <StackPanel Orientation="Horizontal"
                     HorizontalAlignment="Right">
-            <!--
             <Button Content="?"
                     Style="{DynamicResource {x:Static adonisUi:Styles.WindowButton}}"
                     FontFamily="Segoe UI"
-                    FontSize="14"/>
-            -->
+                    FontSize="14"
+                    Click="Help_OnClick"/>
         </StackPanel>
     </adonisControls:AdonisWindow.TitleBarContent>
 

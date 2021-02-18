@@ -23,7 +23,7 @@
   <?endif ?>
 
   <!-- file version for installer -->
-  <?define VERSION = "1.3.125.0" ?>
+  <?define VERSION = "1.3.127.0" ?>
 
   <!-- basic product properties -->
   <Product Id="*" Name="Nefarius BthPS3 Bluetooth Drivers" Language="1033" Version="$(var.VERSION)"
@@ -64,7 +64,7 @@
 
     <!-- Abort on non-Windows 10 -->
     <Condition Message="This application can only be installed on Windows 10.">
-      <![CDATA[Installed OR (RELEASEID AND RELEASEID = "10")]]>
+      <![CDATA[Installed OR RELEASEID]]>
     </Condition>
 
     <!-- Custom action (DLL) to detect host radio -->

@@ -608,12 +608,14 @@ NTSTATUS BthPS3_PDO_EvtWdfDeviceD0Exit(
 	WDF_POWER_DEVICE_STATE TargetState
 )
 {
-	NTSTATUS                    status = STATUS_SUCCESS;
+	NTSTATUS                    status;
 	WDFDEVICE                   parentDevice;
 	WDFIOTARGET                 parentTarget;
-	WDF_MEMORY_DESCRIPTOR       memDesc;
 	PBTHPS3_PDO_DEVICE_CONTEXT  pPdoDevCtx;
-
+	WDFREQUEST					dcRequest;
+	WDF_OBJECT_ATTRIBUTES		attributes;
+	WDFMEMORY					payload;
+	
 
 	UNREFERENCED_PARAMETER(Device);
 	UNREFERENCED_PARAMETER(TargetState);
@@ -629,39 +631,98 @@ NTSTATUS BthPS3_PDO_EvtWdfDeviceD0Exit(
 		"Requesting device disconnect"
 	);
 
-	WDF_MEMORY_DESCRIPTOR_INIT_BUFFER(
-		&memDesc,
-		&pPdoDevCtx->ClientConnection->RemoteAddress,
-		sizeof(BTH_ADDR)
-	);
-
 	/*
 	 * Low power conditions are not supported by the remote device, 
 	 * if low power or idle was requested, instruct radio to disconnect.
 	 */
 
-	//
-	// Request parent to abandon us :'(
-	// 
-	status = WdfIoTargetSendIoctlSynchronously(
-		parentTarget, // send to parent (FDO)
-		NULL, // use internal request object
-		IOCTL_BTH_DISCONNECT_DEVICE,
-		&memDesc, // holds address to disconnect
-		NULL,
-		NULL,
-		NULL
+	WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+	attributes.ParentObject = Device;
+	
+	status = WdfRequestCreate(
+		&attributes,
+		parentTarget,
+		&dcRequest
 	);
-
-	if (status != STATUS_DEVICE_NOT_CONNECTED && !NT_SUCCESS(status))
+	if (!NT_SUCCESS(status))
 	{
 		TraceError(
 			TRACE_BUSLOGIC,
-			"WdfIoTargetSendIoctlSynchronously failed with status %!STATUS!",
+			"WdfRequestCreate failed with status %!STATUS!",
 			status
 		);
 	}
 
+	WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+	attributes.ParentObject = dcRequest;
+
+	status = WdfMemoryCreatePreallocated(
+		&attributes,
+		&pPdoDevCtx->ClientConnection->RemoteAddress,
+		sizeof(BTH_ADDR),
+		&payload
+	);
+	if (!NT_SUCCESS(status))
+	{
+		TraceError(
+			TRACE_BUSLOGIC,
+			"WdfMemoryCreatePreallocated failed with status %!STATUS!",
+			status
+		);
+	}
+
+	status = WdfIoTargetFormatRequestForIoctl(
+		parentTarget,
+		dcRequest,
+		IOCTL_BTH_DISCONNECT_DEVICE,
+		payload,
+		NULL,
+		NULL,
+		NULL
+	);
+	if (!NT_SUCCESS(status))
+	{
+		TraceError(
+			TRACE_BUSLOGIC,
+			"WdfIoTargetFormatRequestForIoctl failed with status %!STATUS!",
+			status
+		);
+	}
+
+	WdfRequestSetCompletionRoutine(
+		dcRequest,
+		BthPS3_PDO_DisconnectRequestCompleted,
+		NULL
+	);
+
+	//
+	// Request parent to abandon us :'(
+	// 
+	if (WdfRequestSend(
+		dcRequest,
+		parentTarget,
+		WDF_NO_SEND_OPTIONS
+	) == FALSE)
+	{
+		status = WdfRequestGetStatus(dcRequest);
+
+		if (status != STATUS_DEVICE_NOT_CONNECTED && !NT_SUCCESS(status))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfRequestSend failed with status %!STATUS!",
+				status
+			);
+		}
+		else
+		{
+			//
+			// Override
+			// 
+			status = STATUS_SUCCESS;
+		}
+	}
+	
 	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
 
 	return status;
@@ -961,6 +1022,30 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 	}
 
 	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
+}
+
+//
+// Disconnect request got completed
+// 
+void BthPS3_PDO_DisconnectRequestCompleted(
+	_In_ WDFREQUEST Request,
+	_In_ WDFIOTARGET Target,
+	_In_ PWDF_REQUEST_COMPLETION_PARAMS Params,
+	_In_ WDFCONTEXT Context
+)
+{
+	UNREFERENCED_PARAMETER(Target);
+	UNREFERENCED_PARAMETER(Context);
+
+	FuncEntryArguments(
+		TRACE_BUSLOGIC, 
+		"status=%!STATUS!",
+		Params->IoStatus.Status
+	);
+	
+	WdfObjectDelete(Request);
+
+	FuncExitNoReturn(TRACE_BUSLOGIC);
 }
 
 //

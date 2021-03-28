@@ -54,7 +54,7 @@
 
 EXTERN_C_START
 
-#define BTHPS3PSM_POOL_TAG	'MSP3'
+#define BTHPS_POOL_TAG	'dP3B'
 
 //
 // WDFDRIVER Events

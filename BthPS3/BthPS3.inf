@@ -84,7 +84,7 @@ AddReg         = BthPS3_Service_AddReg
 ; Populate default service values
 [BthPS3_Service_AddReg]
 ; Bring up exposed device in raw mode (no function driver required)
-HKR,Parameters,RawPDO,0x00010003,1
+HKR,Parameters,RawPDO,0x00010003,0
 ; Hide driver-less device in Device Manager UI (cosmetic setting)
 HKR,Parameters,HidePDO,0x00010003,0
 ; Restrict access to RAW PDO device to elevated processes only

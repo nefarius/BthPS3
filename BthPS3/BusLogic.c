@@ -288,12 +288,60 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 #pragma region Build DeviceID
 
-		status = RtlUnicodeStringPrintf(
-			&deviceId,
-			L"%ws\\%wZ", // e.g. "BTHPS3BUS\{53f88889-1aaf-4353-a047-556b69ec6da6}"
-			BthPS3BusEnumeratorName,
-			guidString
-		);
+		//
+		// Adjust properties depending on device type
+		// 
+		switch (pDesc->ClientConnection->DeviceType)
+		{
+		case DS_DEVICE_TYPE_SIXAXIS:
+			status = RtlUnicodeStringPrintf(
+				&deviceId,
+				L"%ws\\%wZ_DEV_VID&01%04X_PID&%04X_%012llX",
+				BthPS3BusEnumeratorName,
+				guidString,
+				BTHPS3_SIXAXIS_VID,
+				BTHPS3_SIXAXIS_PID,
+				pDesc->ClientConnection->RemoteAddress
+			);
+			break;
+		case DS_DEVICE_TYPE_NAVIGATION:
+			status = RtlUnicodeStringPrintf(
+				&deviceId,
+				L"%ws\\%wZ_DEV_VID&01%04X_PID&%04X_%012llX",
+				BthPS3BusEnumeratorName,
+				guidString,
+				BTHPS3_NAVIGATION_VID,
+				BTHPS3_NAVIGATION_PID,
+				pDesc->ClientConnection->RemoteAddress
+			);
+			break;
+		case DS_DEVICE_TYPE_MOTION:
+			status = RtlUnicodeStringPrintf(
+				&deviceId,
+				L"%ws\\%wZ_DEV_VID&01%04X_PID&%04X_%012llX",
+				BthPS3BusEnumeratorName,
+				guidString,
+				BTHPS3_MOTION_VID,
+				BTHPS3_MOTION_PID,
+				pDesc->ClientConnection->RemoteAddress
+			);
+			break;
+		case DS_DEVICE_TYPE_WIRELESS:
+			status = RtlUnicodeStringPrintf(
+				&deviceId,
+				L"%ws\\%wZ_DEV_VID&01%04X_PID&%04X_%012llX",
+				BthPS3BusEnumeratorName,
+				guidString,
+				BTHPS3_WIRELESS_VID,
+				BTHPS3_WIRELESS_PID,
+				pDesc->ClientConnection->RemoteAddress
+			);
+			break;
+		default:
+			// Doesn't happen
+			return status;
+		}
+				
 		if (!NT_SUCCESS(status)) {
 			TraceError(
 				TRACE_BUSLOGIC,
@@ -316,12 +364,56 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 #pragma region Build HardwareID
 
-		status = RtlUnicodeStringPrintf(
-			&hardwareId,
-			L"%ws\\%wZ", // e.g. "BTHPS3BUS\{53f88889-1aaf-4353-a047-556b69ec6da6}"
-			BthPS3BusEnumeratorName,
-			guidString
-		);
+		//
+		// Adjust properties depending on device type
+		// 
+		switch (pDesc->ClientConnection->DeviceType)
+		{
+		case DS_DEVICE_TYPE_SIXAXIS:
+			status = RtlUnicodeStringPrintf(
+				&hardwareId,
+				L"%ws\\%wZ_Dev_VID&01%04X_PID&%04X",
+				BthPS3BusEnumeratorName,
+				guidString,
+				BTHPS3_SIXAXIS_VID,
+				BTHPS3_SIXAXIS_PID
+			);
+			break;
+		case DS_DEVICE_TYPE_NAVIGATION:
+			status = RtlUnicodeStringPrintf(
+				&hardwareId,
+				L"%ws\\%wZ_Dev_VID&01%04X_PID&%04X",
+				BthPS3BusEnumeratorName,
+				guidString,
+				BTHPS3_NAVIGATION_VID,
+				BTHPS3_NAVIGATION_PID
+			);
+			break;
+		case DS_DEVICE_TYPE_MOTION:
+			status = RtlUnicodeStringPrintf(
+				&hardwareId,
+				L"%ws\\%wZ_Dev_VID&01%04X_PID&%04X",
+				BthPS3BusEnumeratorName,
+				guidString,
+				BTHPS3_MOTION_VID,
+				BTHPS3_MOTION_PID
+			);
+			break;
+		case DS_DEVICE_TYPE_WIRELESS:
+			status = RtlUnicodeStringPrintf(
+				&hardwareId,
+				L"%ws\\%wZ_Dev_VID&01%04X_PID&%04X",
+				BthPS3BusEnumeratorName,
+				guidString,
+				BTHPS3_WIRELESS_VID,
+				BTHPS3_WIRELESS_PID
+			);
+			break;
+		default:
+			// Doesn't happen
+			return status;
+		}
+		
 		if (!NT_SUCCESS(status)) {
 			TraceError(
 				TRACE_BUSLOGIC,

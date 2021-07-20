@@ -36,11 +36,20 @@
 
 
 #include "Driver.h"
+#include <limits.h>
 #include "buslogic.tmh"
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (PAGE, BthPS3_EvtWdfChildListCreateDevice)
 #endif
+
+
+//
+// Source: https://stackoverflow.com/a/30590727/490629
+// 
+#define SetBit(A,k)     ( A[(k/32)] |= (1 << (k%32)) )
+#define ClearBit(A,k)   ( A[(k/32)] &= ~(1 << (k%32)) )
+#define TestBit(A,k)    ( A[(k/32)] & (1 << (k%32)) )
 
 
  //
@@ -56,6 +65,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 {
 	NTSTATUS                                status = STATUS_UNSUCCESSFUL;
 	PPDO_IDENTIFICATION_DESCRIPTION         pDesc;
+	PBTHPS3_SERVER_CONTEXT					pServerCtx;
 	UNICODE_STRING                          guidString;
 	WDFDEVICE                               hChild = NULL;
 	WDF_IO_QUEUE_CONFIG                     defaultQueueCfg;
@@ -75,7 +85,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 	DECLARE_UNICODE_STRING_SIZE(deviceId, MAX_DEVICE_ID_LEN);
 	DECLARE_UNICODE_STRING_SIZE(hardwareId, MAX_DEVICE_ID_LEN);
-	DECLARE_UNICODE_STRING_SIZE(instanceId, BTH_ADDR_HEX_LEN);
+	DECLARE_UNICODE_STRING_SIZE(instanceId, sizeof(INT32));
 
 	DECLARE_CONST_UNICODE_STRING(rawPdoValue, BTHPS3_REG_VALUE_RAW_PDO);
 	DECLARE_CONST_UNICODE_STRING(hidePdoValue, BTHPS3_REG_VALUE_HIDE_PDO);
@@ -95,6 +105,8 @@ BthPS3_EvtWdfChildListCreateDevice(
 		PDO_IDENTIFICATION_DESCRIPTION,
 		Header);
 
+	pServerCtx = GetServerDeviceContext(pDesc->ClientConnection->DevCtxHdr->Device);
+	
 	//
 	// Open
 	//   HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\BthPS3\Parameters
@@ -296,7 +308,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 		case DS_DEVICE_TYPE_SIXAXIS:
 			status = RtlUnicodeStringPrintf(
 				&deviceId,
-				L"%ws\\%wZ_DEV_VID&01%04X_PID&%04X_%012llX",
+				L"%ws\\%wZ&DEV&VID_%04X&PID_%04X&%012llX",
 				BthPS3BusEnumeratorName,
 				guidString,
 				BTHPS3_SIXAXIS_VID,
@@ -307,7 +319,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 		case DS_DEVICE_TYPE_NAVIGATION:
 			status = RtlUnicodeStringPrintf(
 				&deviceId,
-				L"%ws\\%wZ_DEV_VID&01%04X_PID&%04X_%012llX",
+				L"%ws\\%wZ&DEV&VID_%04X&PID_%04X&%012llX",
 				BthPS3BusEnumeratorName,
 				guidString,
 				BTHPS3_NAVIGATION_VID,
@@ -318,7 +330,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 		case DS_DEVICE_TYPE_MOTION:
 			status = RtlUnicodeStringPrintf(
 				&deviceId,
-				L"%ws\\%wZ_DEV_VID&01%04X_PID&%04X_%012llX",
+				L"%ws\\%wZ&DEV&VID_%04X&PID_%04X&%012llX",
 				BthPS3BusEnumeratorName,
 				guidString,
 				BTHPS3_MOTION_VID,
@@ -329,7 +341,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 		case DS_DEVICE_TYPE_WIRELESS:
 			status = RtlUnicodeStringPrintf(
 				&deviceId,
-				L"%ws\\%wZ_DEV_VID&01%04X_PID&%04X_%012llX",
+				L"%ws\\%wZ&DEV&VID_%04X&PID_%04X&%012llX",
 				BthPS3BusEnumeratorName,
 				guidString,
 				BTHPS3_WIRELESS_VID,
@@ -372,7 +384,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 		case DS_DEVICE_TYPE_SIXAXIS:
 			status = RtlUnicodeStringPrintf(
 				&hardwareId,
-				L"%ws\\%wZ_Dev_VID&01%04X_PID&%04X",
+				L"%ws\\%wZ&Dev&VID_%04X&PID_%04X",
 				BthPS3BusEnumeratorName,
 				guidString,
 				BTHPS3_SIXAXIS_VID,
@@ -382,7 +394,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 		case DS_DEVICE_TYPE_NAVIGATION:
 			status = RtlUnicodeStringPrintf(
 				&hardwareId,
-				L"%ws\\%wZ_Dev_VID&01%04X_PID&%04X",
+				L"%ws\\%wZ&Dev&VID_%04X&PID_%04X",
 				BthPS3BusEnumeratorName,
 				guidString,
 				BTHPS3_NAVIGATION_VID,
@@ -392,7 +404,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 		case DS_DEVICE_TYPE_MOTION:
 			status = RtlUnicodeStringPrintf(
 				&hardwareId,
-				L"%ws\\%wZ_Dev_VID&01%04X_PID&%04X",
+				L"%ws\\%wZ&Dev&VID_%04X&PID_%04X",
 				BthPS3BusEnumeratorName,
 				guidString,
 				BTHPS3_MOTION_VID,
@@ -402,7 +414,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 		case DS_DEVICE_TYPE_WIRELESS:
 			status = RtlUnicodeStringPrintf(
 				&hardwareId,
-				L"%ws\\%wZ_Dev_VID&01%04X_PID&%04X",
+				L"%ws\\%wZ&Dev&VID_%04X&PID_%04X",
 				BthPS3BusEnumeratorName,
 				guidString,
 				BTHPS3_WIRELESS_VID,
@@ -423,7 +435,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 			break;
 		}
 
-		status = WdfPdoInitAddHardwareID(ChildInit, &deviceId);
+		status = WdfPdoInitAddHardwareID(ChildInit, &hardwareId);
 		if (!NT_SUCCESS(status)) {
 			TraceError(
 				TRACE_BUSLOGIC,
@@ -436,15 +448,35 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 #pragma region Build InstanceID
 
-		status = RtlUnicodeStringPrintf(
-			&instanceId,
-			L"%012llX", // e.g. "AC7A4D2819AC"
-			pDesc->ClientConnection->RemoteAddress
+		for (
+			pDesc->ClientConnection->InstanceSlotIndex = 0;
+			pDesc->ClientConnection->InstanceSlotIndex < UCHAR_MAX;
+			pDesc->ClientConnection->InstanceSlotIndex++
+		)
+		{
+			if (!TestBit(pServerCtx->InstanceSlots, pDesc->ClientConnection->InstanceSlotIndex))
+			{
+				TraceVerbose(
+					TRACE_BUSLOGIC,
+					"Assigned Instance ID: %d",
+					pDesc->ClientConnection->InstanceSlotIndex
+				);
+
+				SetBit(pServerCtx->InstanceSlots, pDesc->ClientConnection->InstanceSlotIndex);
+				break;
+			}
+		}
+
+		status = RtlIntegerToUnicodeString(
+			pDesc->ClientConnection->InstanceSlotIndex,
+			16,
+			&instanceId
 		);
-		if (!NT_SUCCESS(status)) {
+		if (!NT_SUCCESS(status))
+		{
 			TraceError(
 				TRACE_BUSLOGIC,
-				"RtlUnicodeStringPrintf failed for instanceId with status %!STATUS!",
+				"RtlIntegerToUnicodeString failed for instanceId with status %!STATUS!",
 				status
 			);
 			break;
@@ -828,16 +860,20 @@ BthPS3_PDO_EvtDeviceContextCleanup(
 	IN WDFOBJECT Device
 )
 {
-	PBTHPS3_PDO_DEVICE_CONTEXT devCtx = NULL;
+	PBTHPS3_PDO_DEVICE_CONTEXT pDevCtx;
+	PBTHPS3_SERVER_CONTEXT pServerCtx;
 
 	FuncEntry(TRACE_BUSLOGIC);
 
-	devCtx = GetPdoDeviceContext(Device);
+	pDevCtx = GetPdoDeviceContext(Device);
+	pServerCtx = GetServerDeviceContext(pDevCtx->ClientConnection->DevCtxHdr->Device);
+
+	ClearBit(pServerCtx->InstanceSlots, pDevCtx->ClientConnection->InstanceSlotIndex);
 
 	//
 	// At this point it's safe (for us, the PDO) to dispose the connection object
 	// 
-	WdfObjectDereference(WdfObjectContextGetObject(devCtx->ClientConnection));
+	WdfObjectDereference(WdfObjectContextGetObject(pDevCtx->ClientConnection));
 
 	FuncExitNoReturn(TRACE_BUSLOGIC);
 }

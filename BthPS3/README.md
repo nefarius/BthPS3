@@ -20,16 +20,16 @@ The following set of models/revisions of PS3 peripherals (and more) are currentl
 
 ### SIXAXIS/DualShock 3
 
-The `SIXAXIS` PDO gets exposed as hardware ID `BTHPS3BUS\{53F88889-1AAF-4353-A047-556B69EC6DA6}` and can be enumerated with interface ID `{7B0EAE3D-4414-4024-BCBD-1C21523768CE}`.
+The `SIXAXIS` PDO gets exposed as hardware ID `BTHPS3BUS\{53F88889-1AAF-4353-A047-556B69EC6DA6}&Dev&VID_054C&PID_0268` and can be enumerated with interface ID `{7B0EAE3D-4414-4024-BCBD-1C21523768CE}`.
 
 ### PS Move Navigation Controller
 
-The `NAVIGATION` PDO gets exposed as hardware ID `BTHPS3BUS\{206F84FC-1615-4D9F-954D-21F5A5D388C5}` and can be enumerated with interface ID `{3E53723A-440C-40AF-8895-EA439D75E7BE}`.
+The `NAVIGATION` PDO gets exposed as hardware ID `BTHPS3BUS\{206F84FC-1615-4D9F-954D-21F5A5D388C5}&Dev&VID_054C&PID_042F` and can be enumerated with interface ID `{3E53723A-440C-40AF-8895-EA439D75E7BE}`.
 
 ### PS Move Motion Controller
 
-The `MOTION` PDO gets exposed as hardware ID `BTHPS3BUS\{84957238-D867-421F-89C1-67847A3B55B5}` and can be enumerated with interface ID `{BCEC605D-233C-4BEF-9A10-F2B81B5297F6}`.
+The `MOTION` PDO gets exposed as hardware ID `BTHPS3BUS\{84957238-D867-421F-89C1-67847A3B55B5}&Dev&VID_054C&PID_03D5` and can be enumerated with interface ID `{BCEC605D-233C-4BEF-9A10-F2B81B5297F6}`.
 
 ### Wireless Controller/DualShock 4
 
-The `WIRELESS` PDO gets exposed as hardware ID `BTHPS3BUS\{13D12A06-D0B0-4D7E-8D1F-F55914A2ED7C}` and can be enumerated with interface ID `{64CB1EE2-B428-4CE8-8794-F68036E57BE5}`.
+The `WIRELESS` PDO gets exposed as hardware ID `BTHPS3BUS\{13D12A06-D0B0-4D7E-8D1F-F55914A2ED7C}&Dev&VID_054C&PID_05C4` and can be enumerated with interface ID `{64CB1EE2-B428-4CE8-8794-F68036E57BE5}`.

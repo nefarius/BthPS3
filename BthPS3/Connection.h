@@ -91,6 +91,8 @@ typedef struct _BTHPS3_CLIENT_CONNECTION
 
     BTHPS3_CLIENT_L2CAP_CHANNEL         HidInterruptChannel;
 
+	USHORT                              InstanceSlotIndex;
+
 } BTHPS3_CLIENT_CONNECTION, *PBTHPS3_CLIENT_CONNECTION;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_CLIENT_CONNECTION, GetClientConnection)

@@ -44,14 +44,6 @@
 #endif
 
 
-//
-// Source: https://stackoverflow.com/a/30590727/490629
-// 
-#define SetBit(A,k)     ( A[(k/32)] |= (1 << (k%32)) )
-#define ClearBit(A,k)   ( A[(k/32)] &= ~(1 << (k%32)) )
-#define TestBit(A,k)    ( A[(k/32)] & (1 << (k%32)) )
-
-
  //
  // Spawn new child device (PDO)
  // 
@@ -65,7 +57,6 @@ BthPS3_EvtWdfChildListCreateDevice(
 {
 	NTSTATUS                                status = STATUS_UNSUCCESSFUL;
 	PPDO_IDENTIFICATION_DESCRIPTION         pDesc;
-	PBTHPS3_SERVER_CONTEXT					pServerCtx;
 	UNICODE_STRING                          guidString;
 	WDFDEVICE                               hChild = NULL;
 	WDF_IO_QUEUE_CONFIG                     defaultQueueCfg;
@@ -104,8 +95,6 @@ BthPS3_EvtWdfChildListCreateDevice(
 		IdentificationDescription,
 		PDO_IDENTIFICATION_DESCRIPTION,
 		Header);
-
-	pServerCtx = GetServerDeviceContext(pDesc->ClientConnection->DevCtxHdr->Device);
 	
 	//
 	// Open
@@ -447,28 +436,9 @@ BthPS3_EvtWdfChildListCreateDevice(
 #pragma endregion
 
 #pragma region Build InstanceID
-
-		for (
-			pDesc->ClientConnection->InstanceSlotIndex = 0;
-			pDesc->ClientConnection->InstanceSlotIndex < UCHAR_MAX;
-			pDesc->ClientConnection->InstanceSlotIndex++
-		)
-		{
-			if (!TestBit(pServerCtx->InstanceSlots, pDesc->ClientConnection->InstanceSlotIndex))
-			{
-				TraceVerbose(
-					TRACE_BUSLOGIC,
-					"Assigned Instance ID: %d",
-					pDesc->ClientConnection->InstanceSlotIndex
-				);
-
-				SetBit(pServerCtx->InstanceSlots, pDesc->ClientConnection->InstanceSlotIndex);
-				break;
-			}
-		}
-
+		
 		status = RtlIntegerToUnicodeString(
-			pDesc->ClientConnection->InstanceSlotIndex,
+			0,
 			16,
 			&instanceId
 		);
@@ -861,14 +831,10 @@ BthPS3_PDO_EvtDeviceContextCleanup(
 )
 {
 	PBTHPS3_PDO_DEVICE_CONTEXT pDevCtx;
-	PBTHPS3_SERVER_CONTEXT pServerCtx;
 
 	FuncEntry(TRACE_BUSLOGIC);
 
 	pDevCtx = GetPdoDeviceContext(Device);
-	pServerCtx = GetServerDeviceContext(pDevCtx->ClientConnection->DevCtxHdr->Device);
-
-	ClearBit(pServerCtx->InstanceSlots, pDevCtx->ClientConnection->InstanceSlotIndex);
 
 	//
 	// At this point it's safe (for us, the PDO) to dispose the connection object

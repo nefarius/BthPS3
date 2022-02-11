@@ -472,8 +472,37 @@ DmfDeviceModulesAdd(
 {
 	FuncEntry(TRACE_DEVICE);
 
-	UNREFERENCED_PARAMETER(Device);
+	DMF_MODULE_ATTRIBUTES moduleAttributes;
+	DMF_CONFIG_Pdo moduleConfigPdo;
+	DMF_CONFIG_IoctlHandler moduleConfigIoctlHandler;
+
+	PBTHPS3_SERVER_CONTEXT pSrvCtx = GetServerDeviceContext(Device);
+
 	UNREFERENCED_PARAMETER(DmfModuleInit);
+
+	DMF_CONFIG_Pdo_AND_ATTRIBUTES_INIT(
+		&moduleConfigPdo,
+		&moduleAttributes
+	);
+
+	moduleConfigPdo.DeviceLocation = L"Nefarius Bluetooth PS Enumerator";
+	moduleConfigPdo.InstanceIdFormatString = L"BTHPS3_DEVICE_%02d";
+	// Do not create any PDOs during Module create.
+	// PDOs will be created dynamically through Module Method.
+	//
+	moduleConfigPdo.PdoRecordCount = 0;
+	moduleConfigPdo.PdoRecords = NULL;
+	moduleConfigPdo.EvtPdoPnpCapabilities = NULL;
+	moduleConfigPdo.EvtPdoPowerCapabilities = NULL;
+
+	DMF_DmfModuleAdd(
+		DmfModuleInit,
+		&moduleAttributes,
+		WDF_NO_OBJECT_ATTRIBUTES,
+		&pSrvCtx->Header.DmfModulePdo
+	);
+
+	UNREFERENCED_PARAMETER(moduleConfigIoctlHandler);
 
 	FuncExitNoReturn(TRACE_DEVICE);
 }

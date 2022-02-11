@@ -47,7 +47,6 @@
 #include <devpkey.h>
 
 #include "device.h"
-#include "queue.h"
 #include "trace.h"
 #include "Bluetooth.h"
 #include "PSM.h"

@@ -84,6 +84,7 @@ BthPS3_CreateDevice(
 		goto exitFailure;
 	}
 
+	DMF_DmfDeviceInitHookFileObjectConfig(dmfDeviceInit, NULL);
 	DMF_DmfDeviceInitHookPowerPolicyEventCallbacks(dmfDeviceInit, NULL);
 
 	//
@@ -137,16 +138,6 @@ BthPS3_CreateDevice(
 			TraceError(
 				TRACE_DEVICE,
 				"Initialization of context failed with status %!STATUS!",
-				status
-			);
-			break;
-		}
-
-		if (!NT_SUCCESS(status = BthPS3QueueInitialize(device)))
-		{
-			TraceError(
-				TRACE_DEVICE,
-				"BthPS3QueueInitialize failed with status %!STATUS!",
 				status
 			);
 			break;

@@ -37,6 +37,10 @@
 
 #pragma once
 
+#pragma warning(disable:5040)
+#include <DmfModules.Library.h>
+#pragma warning(default:5040)
+
 #include <ntddk.h>
 #include <wdf.h>
 #include <initguid.h>

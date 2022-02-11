@@ -480,6 +480,10 @@ DmfDeviceModulesAdd(
 
 	UNREFERENCED_PARAMETER(DmfModuleInit);
 
+	//
+	// PDO module
+	// 
+
 	DMF_CONFIG_Pdo_AND_ATTRIBUTES_INIT(
 		&moduleConfigPdo,
 		&moduleAttributes
@@ -502,7 +506,29 @@ DmfDeviceModulesAdd(
 		&pSrvCtx->Header.DmfModulePdo
 	);
 
-	UNREFERENCED_PARAMETER(moduleConfigIoctlHandler);
+	//
+	// IOCTL Handler Module
+	// 
+
+	DMF_CONFIG_IoctlHandler_AND_ATTRIBUTES_INIT(
+		&moduleConfigIoctlHandler,
+		&moduleAttributes
+	);
+
+	moduleConfigIoctlHandler.DeviceInterfaceGuid = GUID_DEVINTERFACE_BTHPS3;
+	moduleConfigIoctlHandler.AccessModeFilter = IoctlHandler_AccessModeDefault;
+	moduleConfigIoctlHandler.EvtIoctlHandlerAccessModeFilter = NULL;
+	moduleConfigIoctlHandler.IoctlRecordCount = 0;
+	moduleConfigIoctlHandler.IoctlRecords = NULL;
+	moduleConfigIoctlHandler.ForwardUnhandledRequests = TRUE;
+	moduleConfigIoctlHandler.ManualMode = TRUE;
+
+	DMF_DmfModuleAdd(
+		DmfModuleInit,
+		&moduleAttributes,
+		WDF_NO_OBJECT_ATTRIBUTES,
+		&pSrvCtx->Header.DmfModuleIoctlHandler
+	);
 
 	FuncExitNoReturn(TRACE_DEVICE);
 }

@@ -60,4 +60,11 @@ BthPS3_OpenFilterIoTarget(
     _In_ WDFDEVICE Device
 );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
+VOID
+DmfDeviceModulesAdd(
+    _In_ WDFDEVICE Device,
+    _In_ PDMFMODULE_INIT DmfModuleInit
+    );
+
 EXTERN_C_END

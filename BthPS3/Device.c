@@ -53,12 +53,14 @@ BthPS3_CreateDevice(
 	_Inout_ PWDFDEVICE_INIT DeviceInit
 )
 {
-	WDF_OBJECT_ATTRIBUTES           attributes;
-	WDFDEVICE                       device;
-	NTSTATUS                        status;
-	WDF_PNPPOWER_EVENT_CALLBACKS    pnpPowerCallbacks;
-	WDF_CHILD_LIST_CONFIG           childListCfg;
-	PBTHPS3_SERVER_CONTEXT          pSrvCtx;
+	WDF_OBJECT_ATTRIBUTES attributes;
+	WDFDEVICE device = NULL;
+	NTSTATUS status;
+	WDF_PNPPOWER_EVENT_CALLBACKS pnpPowerCallbacks;
+	WDF_CHILD_LIST_CONFIG childListCfg;
+	PBTHPS3_SERVER_CONTEXT pSrvCtx = NULL;
+	PDMFDEVICE_INIT dmfDeviceInit = NULL;
+	DMF_EVENT_CALLBACKS dmfEventCallbacks;
 
 	PAGED_CODE();
 
@@ -66,6 +68,23 @@ BthPS3_CreateDevice(
 	FuncEntry(TRACE_DEVICE);
 
 	WdfDeviceInitSetDeviceType(DeviceInit, FILE_DEVICE_BUS_EXTENDER);
+
+	dmfDeviceInit = DMF_DmfDeviceInitAllocate(DeviceInit);
+
+	if (dmfDeviceInit == NULL)
+	{
+		TraceEvents(
+			TRACE_LEVEL_ERROR,
+			TRACE_DEVICE,
+			"DMF_DmfDeviceInitAllocate failed"
+		);
+
+		status = STATUS_INSUFFICIENT_RESOURCES;
+
+		goto exitFailure;
+	}
+
+	DMF_DmfDeviceInitHookPowerPolicyEventCallbacks(dmfDeviceInit, NULL);
 
 	//
 	// Prepare child list
@@ -89,6 +108,8 @@ BthPS3_CreateDevice(
 	WDF_PNPPOWER_EVENT_CALLBACKS_INIT(&pnpPowerCallbacks);
 	pnpPowerCallbacks.EvtDeviceSelfManagedIoInit = BthPS3_EvtWdfDeviceSelfManagedIoInit;
 	pnpPowerCallbacks.EvtDeviceSelfManagedIoCleanup = BthPS3_EvtWdfDeviceSelfManagedIoCleanup;
+
+	DMF_DmfDeviceInitHookPnpPowerEventCallbacks(dmfDeviceInit, &pnpPowerCallbacks);
 
 	WdfDeviceInitSetPnpPowerEventCallbacks(
 		DeviceInit,
@@ -170,7 +191,42 @@ BthPS3_CreateDevice(
 			break;
 		}
 
+		//
+		// DMF Module initialization
+		// 
+		DMF_EVENT_CALLBACKS_INIT(&dmfEventCallbacks);
+		dmfEventCallbacks.EvtDmfDeviceModulesAdd = DmfDeviceModulesAdd;
+		DMF_DmfDeviceInitSetEventCallbacks(
+			dmfDeviceInit,
+			&dmfEventCallbacks
+		);
+
+		status = DMF_ModulesCreate(device, &dmfDeviceInit);
+
+		if (!NT_SUCCESS(status))
+		{
+			TraceEvents(
+				TRACE_LEVEL_ERROR,
+				TRACE_DEVICE,
+				"DMF_ModulesCreate failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
+
 	} while (FALSE);
+
+exitFailure:
+
+	if (dmfDeviceInit != NULL)
+	{
+		DMF_DmfDeviceInitFree(&dmfDeviceInit);
+	}
+
+	if (!NT_SUCCESS(status) && device != NULL)
+	{
+		WdfObjectDelete(device);
+	}
 
 	FuncExit(TRACE_DEVICE, "status=%!STATUS!", status);
 
@@ -403,6 +459,21 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
 		// 
 		WdfObjectDelete(currentItem);
 	}
+
+	FuncExitNoReturn(TRACE_DEVICE);
+}
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+VOID
+DmfDeviceModulesAdd(
+	_In_ WDFDEVICE Device,
+	_In_ PDMFMODULE_INIT DmfModuleInit
+)
+{
+	FuncEntry(TRACE_DEVICE);
+
+	UNREFERENCED_PARAMETER(Device);
+	UNREFERENCED_PARAMETER(DmfModuleInit);
 
 	FuncExitNoReturn(TRACE_DEVICE);
 }

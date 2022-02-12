@@ -630,20 +630,6 @@ BthPS3_SettingsContextInit(
 	WDFKEY                  hKey = NULL;
 	WDF_OBJECT_ATTRIBUTES   attribs;
 
-	DECLARE_CONST_UNICODE_STRING(autoEnableFilter, BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER);
-	DECLARE_CONST_UNICODE_STRING(autoDisableFilter, BTHPS3_REG_VALUE_AUTO_DISABLE_FILTER);
-	DECLARE_CONST_UNICODE_STRING(autoEnableFilterDelay, BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER_DELAY);
-
-	DECLARE_CONST_UNICODE_STRING(isSIXAXISSupported, BTHPS3_REG_VALUE_IS_SIXAXIS_SUPPORTED);
-	DECLARE_CONST_UNICODE_STRING(isNAVIGATIONSupported, BTHPS3_REG_VALUE_IS_NAVIGATION_SUPPORTED);
-	DECLARE_CONST_UNICODE_STRING(isMOTIONSupported, BTHPS3_REG_VALUE_IS_MOTION_SUPPORTED);
-	DECLARE_CONST_UNICODE_STRING(isWIRELESSSupported, BTHPS3_REG_VALUE_IS_WIRELESS_SUPPORTED);
-
-	DECLARE_CONST_UNICODE_STRING(SIXAXISSupportedNames, BTHPS3_REG_VALUE_SIXAXIS_SUPPORTED_NAMES);
-	DECLARE_CONST_UNICODE_STRING(NAVIGATIONSupportedNames, BTHPS3_REG_VALUE_NAVIGATION_SUPPORTED_NAMES);
-	DECLARE_CONST_UNICODE_STRING(MOTIONSupportedNames, BTHPS3_REG_VALUE_MOTION_SUPPORTED_NAMES);
-	DECLARE_CONST_UNICODE_STRING(WIRELESSSupportedNames, BTHPS3_REG_VALUE_WIRELESS_SUPPORTED_NAMES);
-
 	//
 	// Set default values
 	//
@@ -678,43 +664,43 @@ BthPS3_SettingsContextInit(
 		// 
 		(void)WdfRegistryQueryULong(
 			hKey,
-			&autoEnableFilter,
+			&BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER,
 			&Context->Settings.AutoEnableFilter
 		);
 
 		(void)WdfRegistryQueryULong(
 			hKey,
-			&autoDisableFilter,
+			&BTHPS3_REG_VALUE_AUTO_DISABLE_FILTER,
 			&Context->Settings.AutoDisableFilter
 		);
 
 		(void)WdfRegistryQueryULong(
 			hKey,
-			&autoEnableFilterDelay,
+			&BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER_DELAY,
 			&Context->Settings.AutoEnableFilterDelay
 		);
 
 		(void)WdfRegistryQueryULong(
 			hKey,
-			&isSIXAXISSupported,
+			&BTHPS3_REG_VALUE_IS_SIXAXIS_SUPPORTED,
 			&Context->Settings.IsSIXAXISSupported
 		);
 
 		(void)WdfRegistryQueryULong(
 			hKey,
-			&isNAVIGATIONSupported,
+			&BTHPS3_REG_VALUE_IS_NAVIGATION_SUPPORTED,
 			&Context->Settings.IsNAVIGATIONSupported
 		);
 
 		(void)WdfRegistryQueryULong(
 			hKey,
-			&isMOTIONSupported,
+			&BTHPS3_REG_VALUE_IS_MOTION_SUPPORTED,
 			&Context->Settings.IsMOTIONSupported
 		);
 
 		(void)WdfRegistryQueryULong(
 			hKey,
-			&isWIRELESSSupported,
+			&BTHPS3_REG_VALUE_IS_WIRELESS_SUPPORTED,
 			&Context->Settings.IsWIRELESSSupported
 		);
 
@@ -722,7 +708,7 @@ BthPS3_SettingsContextInit(
 		attribs.ParentObject = Context->Settings.SIXAXISSupportedNames;
 		(void)WdfRegistryQueryMultiString(
 			hKey,
-			&SIXAXISSupportedNames,
+			&BTHPS3_REG_VALUE_SIXAXIS_SUPPORTED_NAMES,
 			&attribs,
 			Context->Settings.SIXAXISSupportedNames
 		);
@@ -731,7 +717,7 @@ BthPS3_SettingsContextInit(
 		attribs.ParentObject = Context->Settings.NAVIGATIONSupportedNames;
 		(void)WdfRegistryQueryMultiString(
 			hKey,
-			&NAVIGATIONSupportedNames,
+			&BTHPS3_REG_VALUE_NAVIGATION_SUPPORTED_NAMES,
 			&attribs,
 			Context->Settings.NAVIGATIONSupportedNames
 		);
@@ -740,7 +726,7 @@ BthPS3_SettingsContextInit(
 		attribs.ParentObject = Context->Settings.MOTIONSupportedNames;
 		(void)WdfRegistryQueryMultiString(
 			hKey,
-			&MOTIONSupportedNames,
+			&BTHPS3_REG_VALUE_MOTION_SUPPORTED_NAMES,
 			&attribs,
 			Context->Settings.MOTIONSupportedNames
 		);
@@ -749,7 +735,7 @@ BthPS3_SettingsContextInit(
 		attribs.ParentObject = Context->Settings.WIRELESSSupportedNames;
 		(void)WdfRegistryQueryMultiString(
 			hKey,
-			&WIRELESSSupportedNames,
+			&BTHPS3_REG_VALUE_WIRELESS_SUPPORTED_NAMES,
 			&attribs,
 			Context->Settings.WIRELESSSupportedNames
 		);

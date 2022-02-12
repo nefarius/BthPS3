@@ -18,8 +18,8 @@ before_build:
 - cmd: vpatch.exe --stamp-version "%APPVEYOR_BUILD_VERSION%" --target-file ".\BthPS3Util\BthPS3Util.rc" --resource.file-version --resource.product-version
 - cmd: vpatch.exe --stamp-version "%APPVEYOR_BUILD_VERSION%" --target-file ".\Setup\BthPS3CA\BthPS3CA.rc" --resource.file-version --resource.product-version
 - cmd: vpatch.exe --stamp-version "%APPVEYOR_BUILD_VERSION%" --target-file ".\BthPS3CfgUI\Properties\AssemblyInfo.cs" --assembly.version --assembly.file-version
-build:
-  project: $(APPVEYOR_BUILD_FOLDER)\$(APPVEYOR_PROJECT_NAME).sln
+build_script:
+- cmd: .\build.cmd
 after_build:
 - cmd: makecab.exe /f .\setup\BthPS3_%PLATFORM%.ddf
 artifacts:

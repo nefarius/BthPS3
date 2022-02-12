@@ -223,84 +223,84 @@ DEFINE_GUID(GUID_DEVINTERFACE_BTHPS3_WIRELESS,
 //
 // Bring up exposed device in raw mode (no function driver required)
 // 
-DECLARE_GLOBAL_CONST_UNICODE_STRING(BTHPS3_REG_VALUE_RAW_PDO, L"RawPDO");
+#define BTHPS3_REG_VALUE_RAW_PDO                L"RawPDO"
 
 //
 // Hide driver-less device in Device Manager UI (cosmetic setting)
 // 
-DECLARE_GLOBAL_CONST_UNICODE_STRING(BTHPS3_REG_VALUE_HIDE_PDO, L"HidePDO");
+#define BTHPS3_REG_VALUE_HIDE_PDO               L"HidePDO"
 
 //
 // Restrict access to RAW PDO device to elevated processes only
 // 
-DECLARE_GLOBAL_CONST_UNICODE_STRING(BTHPS3_REG_VALUE_ADMIN_ONLY_PDO, L"AdminOnlyPDO");
+#define BTHPS3_REG_VALUE_ADMIN_ONLY_PDO			L"AdminOnlyPDO"
 
 //
 // Restrict access to RAW PDO device to one handle only
 // 
-DECLARE_GLOBAL_CONST_UNICODE_STRING(BTHPS3_REG_VALUE_EXCLUSIVE_PDO, L"ExclusivePDO");
+#define BTHPS3_REG_VALUE_EXCLUSIVE_PDO			L"ExclusivePDO"
 
 //
 // I/O idle timeout value in milliseconds
 // 
-DECLARE_GLOBAL_CONST_UNICODE_STRING(BTHPS3_REG_VALUE_CHILD_IDLE_TIMEOUT, L"ChildIdleTimeout");
+#define BTHPS3_REG_VALUE_CHILD_IDLE_TIMEOUT     L"ChildIdleTimeout"
 
 //
 // Should the profile driver attempt to auto-enable the patch again
 // 
-DECLARE_GLOBAL_CONST_UNICODE_STRING(BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER, L"AutoEnableFilter");
+#define BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER         L"AutoEnableFilter"
 
 //
 // Should the profile driver attempt to auto-disable the patch
 // 
-DECLARE_GLOBAL_CONST_UNICODE_STRING(BTHPS3_REG_VALUE_AUTO_DISABLE_FILTER, L"AutoDisableFilter");
+#define BTHPS3_REG_VALUE_AUTO_DISABLE_FILTER        L"AutoDisableFilter"
 
 //
 // Time (in seconds) to wait for patch re-enable
 // 
-DECLARE_GLOBAL_CONST_UNICODE_STRING(BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER_DELAY, L"AutoEnableFilterDelay");
+#define BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER_DELAY   L"AutoEnableFilterDelay"
 
 
 //
 // SIXAXIS connection requests will be dropped, if FALSE
 // 
-DECLARE_GLOBAL_CONST_UNICODE_STRING(BTHPS3_REG_VALUE_IS_SIXAXIS_SUPPORTED, L"IsSIXAXISSupported");
+#define BTHPS3_REG_VALUE_IS_SIXAXIS_SUPPORTED           L"IsSIXAXISSupported"
 
 //
 // NAVIGATION connection requests will be dropped, if FALSE
 // 
-DECLARE_GLOBAL_CONST_UNICODE_STRING(BTHPS3_REG_VALUE_IS_NAVIGATION_SUPPORTED, L"IsNAVIGATIONSupported");
+#define BTHPS3_REG_VALUE_IS_NAVIGATION_SUPPORTED        L"IsNAVIGATIONSupported"
 
 //
 // MOTION connection requests will be dropped, if FALSE
 // 
-DECLARE_GLOBAL_CONST_UNICODE_STRING(BTHPS3_REG_VALUE_IS_MOTION_SUPPORTED, L"IsMOTIONSupported");
+#define BTHPS3_REG_VALUE_IS_MOTION_SUPPORTED            L"IsMOTIONSupported"
 
 //
 // WIRELESS connection requests will be dropped, if FALSE
 // 
-DECLARE_GLOBAL_CONST_UNICODE_STRING(BTHPS3_REG_VALUE_IS_WIRELESS_SUPPORTED, L"IsWIRELESSSupported");
+#define BTHPS3_REG_VALUE_IS_WIRELESS_SUPPORTED          L"IsWIRELESSSupported"
 
 
 //
 // Collection of supported remote names for SIXAXIS device
 // 
-DECLARE_GLOBAL_CONST_UNICODE_STRING(BTHPS3_REG_VALUE_SIXAXIS_SUPPORTED_NAMES, L"SIXAXISSupportedNames");
+#define BTHPS3_REG_VALUE_SIXAXIS_SUPPORTED_NAMES        L"SIXAXISSupportedNames"
 
 //
 // Collection of supported remote names for NAVIGATION device
 // 
-DECLARE_GLOBAL_CONST_UNICODE_STRING(BTHPS3_REG_VALUE_NAVIGATION_SUPPORTED_NAMES, L"NAVIGATIONSupportedNames");
+#define BTHPS3_REG_VALUE_NAVIGATION_SUPPORTED_NAMES     L"NAVIGATIONSupportedNames"
 
 //
 // Collection of supported remote names for MOTION device
 // 
-DECLARE_GLOBAL_CONST_UNICODE_STRING(BTHPS3_REG_VALUE_MOTION_SUPPORTED_NAMES, L"MOTIONSupportedNames");
+#define BTHPS3_REG_VALUE_MOTION_SUPPORTED_NAMES         L"MOTIONSupportedNames"
 
 //
 // Collection of supported remote names for WIRELESS device
 // 
-DECLARE_GLOBAL_CONST_UNICODE_STRING(BTHPS3_REG_VALUE_WIRELESS_SUPPORTED_NAMES, L"WIRELESSSupportedNames");
+#define BTHPS3_REG_VALUE_WIRELESS_SUPPORTED_NAMES       L"WIRELESSSupportedNames"
 
 #pragma endregion
 

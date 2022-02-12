@@ -78,6 +78,12 @@ BthPS3_EvtWdfChildListCreateDevice(
 	DECLARE_UNICODE_STRING_SIZE(hardwareId, MAX_DEVICE_ID_LEN);
 	DECLARE_UNICODE_STRING_SIZE(instanceId, sizeof(INT32));
 
+	DECLARE_CONST_UNICODE_STRING(rawPdoValue, BTHPS3_REG_VALUE_RAW_PDO);
+	DECLARE_CONST_UNICODE_STRING(hidePdoValue, BTHPS3_REG_VALUE_HIDE_PDO);
+	DECLARE_CONST_UNICODE_STRING(adminOnlyPdoValue, BTHPS3_REG_VALUE_ADMIN_ONLY_PDO);
+	DECLARE_CONST_UNICODE_STRING(exclusivePdoValue, BTHPS3_REG_VALUE_EXCLUSIVE_PDO);
+	DECLARE_CONST_UNICODE_STRING(idleTimeoutValue, BTHPS3_REG_VALUE_CHILD_IDLE_TIMEOUT);
+
 	UNREFERENCED_PARAMETER(ChildList);
 
 	PAGED_CODE();
@@ -112,7 +118,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 		// 
 		(void)WdfRegistryQueryULong(
 			hKey,
-			&BTHPS3_REG_VALUE_RAW_PDO,
+			&rawPdoValue,
 			&rawPdo
 		);
 
@@ -121,7 +127,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 		// 
 		(void)WdfRegistryQueryULong(
 			hKey,
-			&BTHPS3_REG_VALUE_HIDE_PDO,
+			&hidePdoValue,
 			&hidePdo
 		);
 
@@ -130,7 +136,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 		// 
 		(void)WdfRegistryQueryULong(
 			hKey,
-			&BTHPS3_REG_VALUE_ADMIN_ONLY_PDO,
+			&adminOnlyPdoValue,
 			&adminOnlyPdo
 		);
 
@@ -139,7 +145,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 		// 
 		(void)WdfRegistryQueryULong(
 			hKey,
-			&BTHPS3_REG_VALUE_EXCLUSIVE_PDO,
+			&exclusivePdoValue,
 			&exclusivePdo
 		);
 
@@ -148,7 +154,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 		// 
 		(void)WdfRegistryQueryULong(
 			hKey,
-			&BTHPS3_REG_VALUE_CHILD_IDLE_TIMEOUT,
+			&idleTimeoutValue,
 			&idleTimeout
 		);
 

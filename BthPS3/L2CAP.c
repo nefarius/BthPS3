@@ -346,16 +346,14 @@ L2CAP_PS3_HandleRemoteConnect(
     //
     // Submit response
     // 
-    status = BthPS3_SendBrbAsync(
+    if (!NT_SUCCESS(status = BthPS3_SendBrbAsync(
         DevCtx->Header.IoTarget,
         brbAsyncRequest,
         (PBRB)brb,
         sizeof(*brb),
         completionRoutine,
         brb
-    );
-
-    if (!NT_SUCCESS(status))
+    )))
     {
         TraceError( 
             TRACE_L2CAP,
@@ -579,12 +577,10 @@ L2CAP_PS3_DenyRemoteConnect(
 
     FuncEntry(TRACE_L2CAP);
 
-    status = WdfRequestCreate(
+    if (!NT_SUCCESS(status = WdfRequestCreate(
         WDF_NO_OBJECT_ATTRIBUTES,
         DevCtx->Header.IoTarget,
-        &brbAsyncRequest);
-
-    if (!NT_SUCCESS(status))
+        &brbAsyncRequest)))
     {
         TraceError(
             TRACE_L2CAP,
@@ -634,16 +630,14 @@ L2CAP_PS3_DenyRemoteConnect(
     //
     // Submit response
     // 
-    status = BthPS3_SendBrbAsync(
+    if (!NT_SUCCESS(status = BthPS3_SendBrbAsync(
         DevCtx->Header.IoTarget,
         brbAsyncRequest,
         (PBRB)brb,
         sizeof(*brb),
         L2CAP_PS3_DenyRemoteConnectCompleted,
         brb
-    );
-
-    if (!NT_SUCCESS(status))
+    )))
     {
         TraceError( 
             TRACE_L2CAP,

@@ -39,9 +39,9 @@
 #include "psm.tmh"
 
 
-//
-// Request filter driver to disable PSM patching (PASSIVE_LEVEL only)
-// 
+ //
+ // Request filter driver to disable PSM patching (PASSIVE_LEVEL only)
+ // 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3PSM_DisablePatchSync(
@@ -56,7 +56,7 @@ BthPS3PSM_DisablePatchSync(
 
 	WDF_MEMORY_DESCRIPTOR_INIT_BUFFER(
 		&MemoryDescriptor,
-		(PVOID)& payload,
+		(PVOID)&payload,
 		sizeof(payload)
 	);
 
@@ -88,7 +88,7 @@ BthPS3PSM_EnablePatchSync(
 
 	WDF_MEMORY_DESCRIPTOR_INIT_BUFFER(
 		&MemoryDescriptor,
-		(PVOID)& payload,
+		(PVOID)&payload,
 		sizeof(payload)
 	);
 
@@ -111,104 +111,104 @@ BthPS3PSM_EnablePatchAsync(
 )
 {
 	NTSTATUS                        status = STATUS_UNSUCCESSFUL;
-    WDFREQUEST                      request;
+	WDFREQUEST                      request;
 	WDF_OBJECT_ATTRIBUTES           attribs;
-    PBTHPS3PSM_ENABLE_PSM_PATCHING  pPayload;
-    WDFMEMORY                       memory;
+	PBTHPS3PSM_ENABLE_PSM_PATCHING  pPayload;
+	WDFMEMORY                       memory;
 
 	UNREFERENCED_PARAMETER(IoTarget);
 	UNREFERENCED_PARAMETER(DeviceIndex);
 
-    WDF_OBJECT_ATTRIBUTES_INIT(&attribs);
+	WDF_OBJECT_ATTRIBUTES_INIT(&attribs);
 
-    //
-    // Create new request (this is fired infrequently so no reuse)
-    // 
-    status = WdfRequestCreate(&attribs,
-        IoTarget,
-        &request);
-    if (!NT_SUCCESS(status)) {
-        return status;
-    }
+	//
+	// Create new request (this is fired infrequently so no reuse)
+	// 
+	if (!NT_SUCCESS(status = WdfRequestCreate(&attribs,
+		IoTarget,
+		&request)))
+	{
+		return status;
+	}
 
-    //
-    // Associate payload with request
-    // 
-    WDF_OBJECT_ATTRIBUTES_INIT(&attribs);
-    attribs.ParentObject = request;
+	//
+	// Associate payload with request
+	// 
+	WDF_OBJECT_ATTRIBUTES_INIT(&attribs);
+	attribs.ParentObject = request;
 
-    //
-    // Create payload memory
-    // 
-    status = WdfMemoryCreate(&attribs,
-        NonPagedPoolNx,
-        POOLTAG_BTHPS3,
-        sizeof(BTHPS3PSM_ENABLE_PSM_PATCHING),
-        &memory,
-        (PVOID)&pPayload);
-    if (!NT_SUCCESS(status)) {
-        return status;
-    }
+	//
+	// Create payload memory
+	// 
+	if (!NT_SUCCESS(status = WdfMemoryCreate(&attribs,
+		NonPagedPoolNx,
+		POOLTAG_BTHPS3,
+		sizeof(BTHPS3PSM_ENABLE_PSM_PATCHING),
+		&memory,
+		(PVOID)&pPayload)))
+	{
+		return status;
+	}
 
-    pPayload->DeviceIndex = DeviceIndex;
+	pPayload->DeviceIndex = DeviceIndex;
 
-    //
-    // Format async request
-    // 
-    status = WdfIoTargetFormatRequestForIoctl(
-        IoTarget,
-        request,
-        IOCTL_BTHPS3PSM_ENABLE_PSM_PATCHING,
-        memory,
-        NULL,
-        NULL,
-        NULL
-    );
-    if (!NT_SUCCESS(status)) {
-        return status;
-    }
+	//
+	// Format async request
+	// 
+	if (!NT_SUCCESS(status = WdfIoTargetFormatRequestForIoctl(
+		IoTarget,
+		request,
+		IOCTL_BTHPS3PSM_ENABLE_PSM_PATCHING,
+		memory,
+		NULL,
+		NULL,
+		NULL
+	)))
+	{
+		return status;
+	}
 
-    //
-    // Assign a fixed completion routine
-    // 
-    WdfRequestSetCompletionRoutine(
-        request,
-        BthPS3PSM_FilterRequestCompletionRoutine,
-        NULL
-    );
+	//
+	// Assign a fixed completion routine
+	// 
+	WdfRequestSetCompletionRoutine(
+		request,
+		BthPS3PSM_FilterRequestCompletionRoutine,
+		NULL
+	);
 
-    //
-    // Send it
-    // 
-    if (WdfRequestSend(request,
-        IoTarget,
-        NULL) == FALSE)
-    {
-        return WdfRequestGetStatus(request);
-    }
+	//
+	// Send it
+	// 
+	if (WdfRequestSend(request,
+		IoTarget,
+		NULL) == FALSE)
+	{
+		return WdfRequestGetStatus(request);
+	}
 
-    return status;
+	return status;
 }
 
 //
 // Async filter enable request has completed
 // 
 void BthPS3PSM_FilterRequestCompletionRoutine(
-    WDFREQUEST Request,
-    WDFIOTARGET Target,
-    PWDF_REQUEST_COMPLETION_PARAMS Params,
-    WDFCONTEXT Context
+	WDFREQUEST Request,
+	WDFIOTARGET Target,
+	PWDF_REQUEST_COMPLETION_PARAMS Params,
+	WDFCONTEXT Context
 )
 {
-    UNREFERENCED_PARAMETER(Target);
-    UNREFERENCED_PARAMETER(Params);
-    UNREFERENCED_PARAMETER(Context);
+	UNREFERENCED_PARAMETER(Target);
+	UNREFERENCED_PARAMETER(Params);
+	UNREFERENCED_PARAMETER(Context);
 
-    TraceVerbose( 
-        TRACE_PSM,
-        "PSM Filter enable request finished with status %!STATUS!",
-        WdfRequestGetStatus(Request)
-    );
+	TraceVerbose(
+		TRACE_PSM,
+		"PSM Filter enable request finished with status %!STATUS!",
+		WdfRequestGetStatus(Request)
+	);
 
-    WdfObjectDelete(Request);
+	WdfObjectDelete(Request);
 }

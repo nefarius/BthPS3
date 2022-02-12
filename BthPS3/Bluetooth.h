@@ -317,18 +317,18 @@ BTHPS3_GET_DEVICE_NAME(
 	for (retryCount = 0; (retryCount <= BTH_DEVICE_INFO_MAX_RETRIES
 		&& status == STATUS_INVALID_BUFFER_SIZE); retryCount++)
 	{
-		if (MemoryHandle != NULL) {
+		if (MemoryHandle != NULL)
+		{
 			WdfObjectDelete(MemoryHandle);
 		}
 
-		status = WdfMemoryCreate(NULL,
+		if (!NT_SUCCESS(status = WdfMemoryCreate(NULL,
 			NonPagedPoolNx,
 			POOLTAG_BTHPS3,
 			sizeof(BTH_DEVICE_INFO_LIST) + (sizeof(BTH_DEVICE_INFO) * maxDevices),
 			&MemoryHandle,
-			NULL);
-
-		if (!NT_SUCCESS(status)) {
+			NULL)))
+		{
 			return status;
 		}
 
@@ -406,14 +406,13 @@ BTHPS3_GET_HCI_VERSION(
 	ULONGLONG bytesReturned;
 #endif
 	
-	status = WdfMemoryCreate(NULL,
+	if (!NT_SUCCESS(status = WdfMemoryCreate(NULL,
 		NonPagedPoolNx,
 		POOLTAG_BTHPS3,
 		sizeof(BTH_LOCAL_RADIO_INFO),
 		&MemoryHandle,
-		NULL);
-
-	if (!NT_SUCCESS(status)) {
+		NULL))) 
+	{
 		return status;
 	}
 

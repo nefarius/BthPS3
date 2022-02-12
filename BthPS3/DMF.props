@@ -4,9 +4,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_PropertySheetDisplayName>Driver Module Framework</_PropertySheetDisplayName>
-    <DmfRootPath Condition="'$(DmfRootPath)' == ''">
-      ..\..\DMF
-    </DmfRootPath>
+    <DmfRootPath Condition="'$(DmfRootPath)' == ''">..\..\DMF</DmfRootPath>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>

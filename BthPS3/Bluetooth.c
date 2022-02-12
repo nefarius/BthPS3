@@ -36,7 +36,7 @@
 
 
 #include "Driver.h"
-#include "bluetooth.tmh"
+#include "Bluetooth.tmh"
 #include <bthguid.h>
 #include "BthPS3.h"
 
@@ -84,14 +84,12 @@ BthPS3_RetrieveLocalInfo(
 			break;
 		}
 
-		status = BthPS3_SendBrbSynchronously(
+		if (!NT_SUCCESS(status = BthPS3_SendBrbSynchronously(
 			DevCtxHdr->IoTarget,
 			DevCtxHdr->HostInitRequest,
 			(PBRB)brb,
 			sizeof(*brb)
-		);
-
-		if (!NT_SUCCESS(status))
+		)))
 		{
 			TraceError(
 				TRACE_BTH,
@@ -109,16 +107,15 @@ BthPS3_RetrieveLocalInfo(
 		//
 		// Verify HCI major version is high enough
 		// 
-		status = BTHPS3_GET_HCI_VERSION(
+		if (!NT_SUCCESS(status = BTHPS3_GET_HCI_VERSION(
 			DevCtxHdr->IoTarget,
 			&hciVersion,
 			NULL
-		);
-		if (!NT_SUCCESS(status))
+		)))
 		{
 			TraceEvents(TRACE_LEVEL_WARNING, TRACE_BTH,
-			            "Retrieving HCI major version failed, status %!STATUS!",
-			            status
+				"Retrieving HCI major version failed, status %!STATUS!",
+				status
 			);
 			//
 			// Can still operate without this information
@@ -147,8 +144,7 @@ BthPS3_RetrieveLocalInfo(
 				status = STATUS_NOT_SUPPORTED;
 			}
 		}
-	}
-	while (FALSE);
+	} while (FALSE);
 
 	FuncExit(TRACE_BTH, "status=%!STATUS!", status);
 
@@ -173,7 +169,8 @@ BthPS3_RegisterPSM(
 		BRB_REGISTER_PSM
 	);
 
-	do {
+	do 
+	{
 		brb = (struct _BRB_PSM*)
 			&(DevCtx->RegisterUnregisterBrb);
 
@@ -189,14 +186,12 @@ BthPS3_RegisterPSM(
 			brb->Psm
 		);
 
-		status = BthPS3_SendBrbSynchronously(
+		if (!NT_SUCCESS(status = BthPS3_SendBrbSynchronously(
 			DevCtx->Header.IoTarget,
 			DevCtx->Header.HostInitRequest,
 			(PBRB)brb,
 			sizeof(*brb)
-		);
-
-		if (!NT_SUCCESS(status))
+		)))
 		{
 			TraceError(
 				TRACE_BTH,
@@ -245,14 +240,12 @@ BthPS3_RegisterPSM(
 			brb->Psm
 		);
 
-		status = BthPS3_SendBrbSynchronously(
+		if (!NT_SUCCESS(status = BthPS3_SendBrbSynchronously(
 			DevCtx->Header.IoTarget,
 			DevCtx->Header.HostInitRequest,
 			(PBRB)brb,
 			sizeof(*brb)
-		);
-
-		if (!NT_SUCCESS(status))
+		)))
 		{
 			TraceError(
 				TRACE_BTH,
@@ -314,22 +307,20 @@ BthPS3_UnregisterPSM(
 	);
 
 	brb = (struct _BRB_PSM*)
-		& (DevCtx->RegisterUnregisterBrb);
+		&(DevCtx->RegisterUnregisterBrb);
 
 	brb->Psm = DevCtx->PsmHidControl;
 
-	status = BthPS3_SendBrbSynchronously(
+	if (!NT_SUCCESS(status = BthPS3_SendBrbSynchronously(
 		DevCtx->Header.IoTarget,
 		DevCtx->Header.HostInitRequest,
 		(PBRB)brb,
 		sizeof(*(brb))
-	);
-
-	if (!NT_SUCCESS(status))
+	)))
 	{
 		TraceError(
 			TRACE_BTH,
-			"BRB_UNREGISTER_PSM failed with status %!STATUS!", 
+			"BRB_UNREGISTER_PSM failed with status %!STATUS!",
 			status
 		);
 	}
@@ -340,22 +331,20 @@ BthPS3_UnregisterPSM(
 	);
 
 	brb = (struct _BRB_PSM*)
-		& (DevCtx->RegisterUnregisterBrb);
+		&(DevCtx->RegisterUnregisterBrb);
 
 	brb->Psm = DevCtx->PsmHidInterrupt;
 
-	status = BthPS3_SendBrbSynchronously(
+	if (!NT_SUCCESS(status = BthPS3_SendBrbSynchronously(
 		DevCtx->Header.IoTarget,
 		DevCtx->Header.HostInitRequest,
 		(PBRB)brb,
 		sizeof(*(brb))
-	);
-
-	if (!NT_SUCCESS(status))
+	)))
 	{
 		TraceError(
 			TRACE_BTH,
-			"BRB_UNREGISTER_PSM failed with status %!STATUS!", 
+			"BRB_UNREGISTER_PSM failed with status %!STATUS!",
 			status
 		);
 	}
@@ -384,7 +373,7 @@ BthPS3_RegisterL2CAPServer(
 	);
 
 	brb = (struct _BRB_L2CA_REGISTER_SERVER*)
-		& (DevCtx->RegisterUnregisterBrb);
+		&(DevCtx->RegisterUnregisterBrb);
 
 	//
 	// Format brb
@@ -396,18 +385,16 @@ BthPS3_RegisterL2CAPServer(
 	brb->IndicationFlags = 0;
 	brb->ReferenceObject = WdfDeviceWdmGetDeviceObject(DevCtx->Header.Device);
 
-	status = BthPS3_SendBrbSynchronously(
+	if (!NT_SUCCESS(status = BthPS3_SendBrbSynchronously(
 		DevCtx->Header.IoTarget,
 		DevCtx->Header.HostInitRequest,
 		(PBRB)brb,
 		sizeof(*brb)
-	);
-
-	if (!NT_SUCCESS(status))
+	)))
 	{
 		TraceError(
 			TRACE_BTH,
-			"BRB_REGISTER_PSM failed with status %!STATUS!", 
+			"BRB_REGISTER_PSM failed with status %!STATUS!",
 			status
 		);
 	}
@@ -434,7 +421,7 @@ BthPS3_UnregisterL2CAPServer(
 	struct _BRB_L2CA_UNREGISTER_SERVER* brb;
 
 	FuncEntry(TRACE_BTH);
-	
+
 	PAGED_CODE();
 
 	if (NULL == DevCtx->L2CAPServerHandle)
@@ -448,7 +435,7 @@ BthPS3_UnregisterL2CAPServer(
 	);
 
 	brb = (struct _BRB_L2CA_UNREGISTER_SERVER*)
-		& (DevCtx->RegisterUnregisterBrb);
+		&(DevCtx->RegisterUnregisterBrb);
 
 	//
 	// Format Brb
@@ -457,18 +444,16 @@ BthPS3_UnregisterL2CAPServer(
 	brb->Psm = 0; //since we will use unregister PSM to unregister.
 	brb->ServerHandle = DevCtx->L2CAPServerHandle;
 
-	status = BthPS3_SendBrbSynchronously(
+	if (!NT_SUCCESS(status = BthPS3_SendBrbSynchronously(
 		DevCtx->Header.IoTarget,
 		DevCtx->Header.HostInitRequest,
 		(PBRB)brb,
 		sizeof(*(brb))
-	);
-
-	if (!NT_SUCCESS(status))
+	)))
 	{
 		TraceError(
 			TRACE_BTH,
-			"BRB_L2CA_UNREGISTER_SERVER failed with status %!STATUS!", 
+			"BRB_L2CA_UNREGISTER_SERVER failed with status %!STATUS!",
 			status
 		);
 	}
@@ -493,7 +478,7 @@ BthPS3_DeviceContextHeaderInit(
 	WDF_OBJECT_ATTRIBUTES attributes;
 
 	FuncEntry(TRACE_BTH);
-	
+
 	Header->Device = Device;
 
 	Header->IoTarget = WdfDeviceGetIoTarget(Device);
@@ -505,13 +490,11 @@ BthPS3_DeviceContextHeaderInit(
 	WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
 	attributes.ParentObject = Device;
 
-	status = WdfRequestCreate(
+	if (!NT_SUCCESS(status = WdfRequestCreate(
 		&attributes,
 		Header->IoTarget,
 		&Header->HostInitRequest
-	);
-
-	if (!NT_SUCCESS(status))
+	)))
 	{
 		TraceError(
 			TRACE_BTH,
@@ -541,12 +524,12 @@ BthPS3_ServerContextInit(
 
 	FuncEntry(TRACE_BTH);
 
-	do {
+	do 
+	{
 		//
 		// Initialize crucial header struct first
 		// 
-		status = BthPS3_DeviceContextHeaderInit(&Context->Header, Device);
-		if (!NT_SUCCESS(status))
+		if (!NT_SUCCESS(status = BthPS3_DeviceContextHeaderInit(&Context->Header, Device)))
 		{
 			break;
 		}
@@ -554,11 +537,10 @@ BthPS3_ServerContextInit(
 		WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
 		attributes.ParentObject = Device;
 
-		status = WdfSpinLockCreate(
+		if (!NT_SUCCESS(status = WdfSpinLockCreate(
 			&attributes,
 			&Context->Header.ClientConnectionsLock
-		);
-		if (!NT_SUCCESS(status))
+		)))
 		{
 			break;
 		}
@@ -566,11 +548,10 @@ BthPS3_ServerContextInit(
 		WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
 		attributes.ParentObject = Device;
 
-		status = WdfCollectionCreate(
+		if (!NT_SUCCESS(status = WdfCollectionCreate(
 			&attributes,
 			&Context->Header.ClientConnections
-		);
-		if (!NT_SUCCESS(status))
+		)))
 		{
 			break;
 		}
@@ -580,12 +561,11 @@ BthPS3_ServerContextInit(
 
 		WDF_TIMER_CONFIG_INIT(&timerCfg, BthPS3_EnablePatchEvtWdfTimer);
 
-		status = WdfTimerCreate(
+		if (!NT_SUCCESS(status = WdfTimerCreate(
 			&timerCfg,
 			&attributes,
 			&Context->PsmFilter.AutoResetTimer
-		);
-		if (!NT_SUCCESS(status))
+		)))
 		{
 			break;
 		}
@@ -593,38 +573,34 @@ BthPS3_ServerContextInit(
 		WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
 		attributes.ParentObject = Device;
 
-		status = WdfCollectionCreate(
+		if (!NT_SUCCESS(status = WdfCollectionCreate(
 			&attributes,
 			&Context->Settings.SIXAXISSupportedNames
-		);
-		if (!NT_SUCCESS(status))
+		)))
 		{
 			break;
 		}
 
-		status = WdfCollectionCreate(
+		if (!NT_SUCCESS(status = WdfCollectionCreate(
 			&attributes,
 			&Context->Settings.NAVIGATIONSupportedNames
-		);
-		if (!NT_SUCCESS(status))
+		)))
 		{
 			break;
 		}
 
-		status = WdfCollectionCreate(
+		if (!NT_SUCCESS(status = WdfCollectionCreate(
 			&attributes,
 			&Context->Settings.MOTIONSupportedNames
-		);
-		if (!NT_SUCCESS(status))
+		)))
 		{
 			break;
 		}
 
-		status = WdfCollectionCreate(
+		if (!NT_SUCCESS(status = WdfCollectionCreate(
 			&attributes,
 			&Context->Settings.WIRELESSSupportedNames
-		);
-		if (!NT_SUCCESS(status))
+		)))
 		{
 			break;
 		}
@@ -633,10 +609,11 @@ BthPS3_ServerContextInit(
 		// Query registry for dynamic values
 		// 
 		status = BthPS3_SettingsContextInit(Context);
+
 	} while (FALSE);
 
 	FuncExit(TRACE_BTH, "status=%!STATUS!", status);
-	
+
 	return status;
 }
 
@@ -796,16 +773,14 @@ BthPS3_QueryInterfaces(
 
 	PAGED_CODE();
 
-	status = WdfFdoQueryForInterface(
+	if (!NT_SUCCESS(status = WdfFdoQueryForInterface(
 		DevCtx->Header.Device,
 		&GUID_BTHDDI_PROFILE_DRIVER_INTERFACE,
 		(PINTERFACE)(&DevCtx->Header.ProfileDrvInterface),
 		sizeof(DevCtx->Header.ProfileDrvInterface),
 		BTHDDI_PROFILE_DRIVER_INTERFACE_VERSION_FOR_QI,
 		NULL
-	);
-
-	if (!NT_SUCCESS(status))
+	)))
 	{
 		TraceError(
 			TRACE_BTH,
@@ -894,13 +869,11 @@ BthPS3_IndicationCallback(
 		WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&asyncAttribs, BTHPS3_REMOTE_CONNECT_CONTEXT);
 		asyncAttribs.ParentObject = devCtx->Header.Device;
 
-		status = WdfWorkItemCreate(
+		if (!NT_SUCCESS(status = WdfWorkItemCreate(
 			&asyncConfig,
 			&asyncAttribs,
 			&asyncRemoteConnect
-		);
-
-		if (!NT_SUCCESS(status))
+		)))
 		{
 			TraceError(
 				TRACE_BTH,
@@ -957,14 +930,15 @@ BthPS3_SendBrbSynchronously(
 	WDF_REQUEST_REUSE_PARAMS reuseParams;
 	WDF_MEMORY_DESCRIPTOR OtherArg1Desc;
 
+	FuncEntry(TRACE_BTH);
+
 	WDF_REQUEST_REUSE_PARAMS_INIT(
 		&reuseParams,
 		WDF_REQUEST_REUSE_NO_FLAGS,
 		STATUS_NOT_SUPPORTED
 	);
 
-	status = WdfRequestReuse(Request, &reuseParams);
-	if (!NT_SUCCESS(status))
+	if (!NT_SUCCESS(status = WdfRequestReuse(Request, &reuseParams)))
 	{
 		return status;
 	}
@@ -985,6 +959,8 @@ BthPS3_SendBrbSynchronously(
 		NULL, //RequestOptions
 		NULL  //BytesReturned
 	);
+
+	FuncExit(TRACE_BTH, "status=%!STATUS!", status);
 
 	return status;
 }
@@ -1020,14 +996,12 @@ BthPS3_SendBrbAsync(
 	WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
 	attributes.ParentObject = Request;
 
-	status = WdfMemoryCreatePreallocated(
+	if (!NT_SUCCESS(status = WdfMemoryCreatePreallocated(
 		&attributes,
 		Brb,
 		BrbSize,
 		&memoryArg1
-	);
-
-	if (!NT_SUCCESS(status))
+	)))
 	{
 		TraceError(TRACE_BTH,
 			"Creating preallocated memory for Brb 0x%p failed, Request to be formatted 0x%p, "
@@ -1040,7 +1014,7 @@ BthPS3_SendBrbAsync(
 		return status;
 	}
 
-	status = WdfIoTargetFormatRequestForInternalIoctlOthers(
+	if (!NT_SUCCESS(status = WdfIoTargetFormatRequestForInternalIoctlOthers(
 		IoTarget,
 		Request,
 		IOCTL_INTERNAL_BTH_SUBMIT_BRB,
@@ -1050,9 +1024,7 @@ BthPS3_SendBrbAsync(
 		NULL, //OtherArg2Offset
 		NULL, //OtherArg4
 		NULL  //OtherArg4Offset
-	);
-
-	if (!NT_SUCCESS(status))
+	)))
 	{
 		TraceError(
 			TRACE_BTH,

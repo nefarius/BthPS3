@@ -7,6 +7,12 @@ Windows kernel-mode Bluetooth Profile & Filter Drivers for PS3 peripherals.
 [![Build status](https://ci.appveyor.com/api/projects/status/lna6ewnbck5diu6l/branch/master?svg=true)](https://ci.appveyor.com/project/nefarius/bthps3/branch/master)
  [![GitHub All Releases](https://img.shields.io/github/downloads/ViGEm/BthPS3/total)](https://somsubhra.github.io/github-release-stats/?username=ViGEm&repository=BthPS3) [![Discord](https://img.shields.io/discord/346756263763378176.svg)](https://discord.vigem.org) [![Website](https://img.shields.io/website-up-down-green-red/https/vigem.org.svg?label=ViGEm.org)](https://vigem.org/) [![GitHub followers](https://img.shields.io/github/followers/nefarius.svg?style=social&label=Follow)](https://github.com/nefarius) [![Twitter Follow](https://img.shields.io/twitter/follow/nefariusmaximus.svg?style=social&label=Follow)](https://twitter.com/nefariusmaximus)
 
+---
+
+## ⚠️ ATTENTION: can cause crash under certain conditions, [see here](https://github.com/ViGEm/BthPS3/issues/19) for details!
+
+---
+
 ## About
 
 **TL;DR:** these drivers allow popular PlayStation(R) 3 gaming peripherals (SIXAXIS/DualShock 3, PS Move Navigation & Motion Controllers) to connect to Windows via Bluetooth without losing any standard functionality. 😊

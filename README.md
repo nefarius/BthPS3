@@ -9,7 +9,9 @@ Windows kernel-mode Bluetooth Profile & Filter Drivers for PS3 peripherals.
 
 ---
 
-## ⚠️ ATTENTION: can cause crash under certain conditions, [see here](https://github.com/ViGEm/BthPS3/issues/19) for details!
+## ⚠️ ATTENTION ⚠️
+
+**Can cause crash under certain conditions, [see here](https://github.com/ViGEm/BthPS3/issues/19) for details!**
 
 ---
 

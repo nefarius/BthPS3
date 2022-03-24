@@ -149,7 +149,7 @@ Below representation attempts to visualize the relationships between the drivers
 
 ## Installation
 
-Pre-built binaries and instructions are provided by `Nefarius Software Solutions e.U.` and [available as an all-in-one setup](https://github.com/ViGEm/BthPS3/releases/latest) (**note:** officially supports **Windows 10** only).
+Pre-built binaries and instructions are provided by `Nefarius Software Solutions e.U.` and [available as an all-in-one setup](https://github.com/ViGEm/BthPS3/releases/latest) (**note:** officially supports **Windows 10/11** only).
 
 Check out the companion solution [DsHidMini](https://github.com/ViGEm/DsHidMini) for using the controller in games!
 

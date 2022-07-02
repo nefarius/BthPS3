@@ -37,6 +37,7 @@
 
 #include "Driver.h"
 #include "Bluetooth.Connection.tmh"
+#include "BthPS3ETW.h"
 
 
 //

@@ -308,6 +308,10 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="BthPS3.rc" />
+	<MessageCompile Include="BthPS3.man">
+      <GenerateKernelModeLoggingMacros>true</GenerateKernelModeLoggingMacros>
+      <GeneratedFilesBaseName>%(Filename)ETW</GeneratedFilesBaseName>
+    </MessageCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

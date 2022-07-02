@@ -69,8 +69,6 @@ BthPS3_EvtWdfChildListCreateDevice(
 	PPDO_IDENTIFICATION_DESCRIPTION         pDesc;
 	UNICODE_STRING                          guidString;
 	WDFDEVICE                               hChild = NULL;
-	WDF_IO_QUEUE_CONFIG                     defaultQueueCfg;
-	WDFQUEUE                                defaultQueue;
 	WDF_OBJECT_ATTRIBUTES                   attributes;
 	PBTHPS3_PDO_DEVICE_CONTEXT              pdoCtx = NULL;
 	WDF_DEVICE_PNP_CAPABILITIES             pnpCaps;
@@ -642,33 +640,6 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 #pragma endregion
 
-#pragma region Default I/O Queue creation
-
-		//
-		// All of the heavy lifting is done by a function driver
-		// which exchanges data via IRP_MJ_DEVICE_CONTROL
-		// 
-		WDF_IO_QUEUE_CONFIG_INIT_DEFAULT_QUEUE(&defaultQueueCfg, WdfIoQueueDispatchParallel);
-
-		//defaultQueueCfg.EvtIoStop = BthPS3_EvtIoStop;
-		defaultQueueCfg.EvtIoDeviceControl = BthPS3_PDO_EvtWdfIoQueueIoDeviceControl;
-
-		status = WdfIoQueueCreate(
-			hChild,
-			&defaultQueueCfg,
-			WDF_NO_OBJECT_ATTRIBUTES,
-			&defaultQueue
-		);
-		if (!NT_SUCCESS(status)) {
-			TraceError(
-				TRACE_BUSLOGIC,
-				"WdfIoQueueCreate (Default) failed with status %!STATUS!",
-				status);
-			break;
-		}
-
-#pragma endregion
-
 	} while (FALSE);
 
 	RtlFreeUnicodeString(&guidString);
@@ -854,280 +825,6 @@ BthPS3_PDO_EvtDeviceContextCleanup(
 	WdfObjectDereference(WdfObjectContextGetObject(pDevCtx->ClientConnection));
 
 	FuncExitNoReturn(TRACE_BUSLOGIC);
-}
-
-//
-// Handle IRP_MJ_DEVICE_CONTROL sent to PDO
-// 
-void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
-	WDFQUEUE Queue,
-	WDFREQUEST Request,
-	size_t OutputBufferLength,
-	size_t InputBufferLength,
-	ULONG IoControlCode
-)
-{
-	NTSTATUS                    status = STATUS_UNSUCCESSFUL;
-	WDFDEVICE                   child = NULL;
-	WDFDEVICE                   parent = NULL;
-	PBTHPS3_PDO_DEVICE_CONTEXT  childCtx = NULL;
-	PBTHPS3_CLIENT_CONNECTION   clientConnection = NULL;
-	PVOID                       buffer = NULL;
-	size_t                      bufferLength = 0;
-	WDF_REQUEST_FORWARD_OPTIONS forwardOptions;
-
-
-	FuncEntry(TRACE_BUSLOGIC);
-
-	child = WdfIoQueueGetDevice(Queue);
-	parent = WdfPdoGetParent(child);
-	childCtx = GetPdoDeviceContext(child);
-	clientConnection = childCtx->ClientConnection;
-
-	switch (IoControlCode)
-	{
-#pragma region IOCTL_BTHPS3_HID_CONTROL_READ
-
-	case IOCTL_BTHPS3_HID_CONTROL_READ:
-
-		TraceVerbose(
-			TRACE_BUSLOGIC,
-			">> IOCTL_BTHPS3_HID_CONTROL_READ"
-		);
-
-		status = WdfRequestRetrieveOutputBuffer(
-			Request,
-			OutputBufferLength,
-			&buffer,
-			&bufferLength
-		);
-
-		if (!NT_SUCCESS(status)) {
-			TraceError(
-				TRACE_BUSLOGIC,
-				"WdfRequestRetrieveOutputBuffer failed with status %!STATUS!",
-				status
-			);
-			break;
-		}
-
-		TraceVerbose(
-			TRACE_BUSLOGIC,
-			"bufferLength: %d",
-			(ULONG)bufferLength
-		);
-
-		status = L2CAP_PS3_ReadControlTransferAsync(
-			(PBTHPS3_PDO_CONTEXT)clientConnection,
-			Request,
-			buffer,
-			bufferLength,
-			L2CAP_PS3_AsyncReadControlTransferCompleted
-		);
-
-		if (!NT_SUCCESS(status)) {
-			TraceError(
-				TRACE_BUSLOGIC,
-				"L2CAP_PS3_ReadControlTransferAsync failed with status %!STATUS!",
-				status
-			);
-		}
-		else
-		{
-			status = STATUS_PENDING;
-		}
-
-		break;
-
-#pragma endregion
-
-#pragma region IOCTL_BTHPS3_HID_CONTROL_WRITE
-
-	case IOCTL_BTHPS3_HID_CONTROL_WRITE:
-
-		TraceVerbose(
-			TRACE_BUSLOGIC,
-			">> IOCTL_BTHPS3_HID_CONTROL_WRITE"
-		);
-
-		status = WdfRequestRetrieveInputBuffer(
-			Request,
-			InputBufferLength,
-			&buffer,
-			&bufferLength
-		);
-
-		if (!NT_SUCCESS(status)) {
-			TraceError(
-				TRACE_BUSLOGIC,
-				"WdfRequestRetrieveInputBuffer failed with status %!STATUS!",
-				status
-			);
-			break;
-		}
-
-		status = L2CAP_PS3_SendControlTransferAsync(
-			(PBTHPS3_PDO_CONTEXT)clientConnection,
-			Request,
-			buffer,
-			bufferLength,
-			L2CAP_PS3_AsyncSendControlTransferCompleted
-		);
-
-		if (!NT_SUCCESS(status)) {
-			TraceError(
-				TRACE_BUSLOGIC,
-				"L2CAP_PS3_SendControlTransferAsync failed with status %!STATUS!",
-				status
-			);
-		}
-		else
-		{
-			status = STATUS_PENDING;
-		}
-
-		break;
-
-#pragma endregion
-
-#pragma region IOCTL_BTHPS3_HID_INTERRUPT_READ
-
-	case IOCTL_BTHPS3_HID_INTERRUPT_READ:
-
-		TraceVerbose(
-			TRACE_BUSLOGIC,
-			">> IOCTL_BTHPS3_HID_INTERRUPT_READ"
-		);
-
-		status = WdfRequestRetrieveOutputBuffer(
-			Request,
-			OutputBufferLength,
-			&buffer,
-			&bufferLength
-		);
-
-		if (!NT_SUCCESS(status)) {
-			TraceError(
-				TRACE_BUSLOGIC,
-				"WdfRequestRetrieveOutputBuffer failed with status %!STATUS!",
-				status
-			);
-			break;
-		}
-
-		TraceVerbose(
-			TRACE_BUSLOGIC,
-			"bufferLength: %d",
-			(ULONG)bufferLength
-		);
-
-		status = L2CAP_PS3_ReadInterruptTransferAsync(
-			(PBTHPS3_PDO_CONTEXT)clientConnection,
-			Request,
-			buffer,
-			bufferLength,
-			L2CAP_PS3_AsyncReadInterruptTransferCompleted
-		);
-
-		if (!NT_SUCCESS(status)) {
-			TraceError(
-				TRACE_BUSLOGIC,
-				"L2CAP_PS3_ReadInterruptTransferAsync failed with status %!STATUS!",
-				status
-			);
-		}
-		else
-		{
-			status = STATUS_PENDING;
-		}
-
-		break;
-
-#pragma endregion
-
-#pragma region IOCTL_BTHPS3_HID_INTERRUPT_WRITE
-
-	case IOCTL_BTHPS3_HID_INTERRUPT_WRITE:
-
-		TraceVerbose(
-			TRACE_BUSLOGIC,
-			">> IOCTL_BTHPS3_HID_INTERRUPT_WRITE"
-		);
-
-		status = WdfRequestRetrieveInputBuffer(
-			Request,
-			InputBufferLength,
-			&buffer,
-			&bufferLength
-		);
-
-		if (!NT_SUCCESS(status)) {
-			TraceError(
-				TRACE_BUSLOGIC,
-				"WdfRequestRetrieveInputBuffer failed with status %!STATUS!",
-				status
-			);
-			break;
-		}
-
-		status = L2CAP_PS3_SendInterruptTransferAsync(
-			(PBTHPS3_PDO_CONTEXT)clientConnection,
-			Request,
-			buffer,
-			bufferLength,
-			L2CAP_PS3_AsyncSendInterruptTransferCompleted
-		);
-
-		if (!NT_SUCCESS(status)) {
-			TraceError(
-				TRACE_BUSLOGIC,
-				"L2CAP_PS3_SendInterruptTransferAsync failed with status %!STATUS!",
-				status
-			);
-		}
-		else
-		{
-			status = STATUS_PENDING;
-		}
-
-		break;
-
-#pragma endregion
-
-	default:
-		TraceVerbose(
-			TRACE_BUSLOGIC,
-			"Unknown IoControlCode received: 0x%X",
-			IoControlCode
-		);
-
-		WDF_REQUEST_FORWARD_OPTIONS_INIT(&forwardOptions);
-		forwardOptions.Flags = WDF_REQUEST_FORWARD_OPTION_SEND_AND_FORGET;
-
-		status = WdfRequestForwardToParentDeviceIoQueue(
-			Request,
-			WdfDeviceGetDefaultQueue(parent),
-			&forwardOptions
-		);
-
-		if (!NT_SUCCESS(status))
-		{
-			TraceError(
-				TRACE_BUSLOGIC,
-				"WdfRequestForwardToParentDeviceIoQueue failed with status %!STATUS!",
-				status
-			);
-			WdfRequestComplete(Request, status);
-		}
-
-		return;
-	}
-
-	if (status != STATUS_PENDING) {
-		WdfRequestComplete(Request, status);
-	}
-
-	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
 }
 
 //
@@ -1585,6 +1282,9 @@ BthPS3_PDO_EvtDmfModulesAdd(
 	FuncExitNoReturn(TRACE_BUSLOGIC);
 }
 
+//
+// Called before PDO creation
+// 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 _IRQL_requires_same_
 NTSTATUS
@@ -1603,6 +1303,9 @@ BthPS3_PDO_EvtPreCreate(
 	return STATUS_UNSUCCESSFUL;
 }
 
+//
+// Called after PDO creation
+// 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 _IRQL_requires_same_
 NTSTATUS
@@ -1635,6 +1338,9 @@ BthPS3_PDO_EvtPostCreate(
 	return status;
 }
 
+//
+// Handles IOCTL_BTHPS3_HID_CONTROL_READ
+// 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_PDO_HandleHidControlRead(
@@ -1681,6 +1387,9 @@ BthPS3_PDO_HandleHidControlRead(
 	return status;
 }
 
+//
+// Handles IOCTL_BTHPS3_HID_CONTROL_WRITE
+// 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_PDO_HandleHidControlWrite(
@@ -1727,6 +1436,9 @@ BthPS3_PDO_HandleHidControlWrite(
 	return status;
 }
 
+//
+// Handles IOCTL_BTHPS3_HID_INTERRUPT_READ
+// 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_PDO_HandleHidInterruptRead(
@@ -1773,6 +1485,9 @@ BthPS3_PDO_HandleHidInterruptRead(
 	return status;
 }
 
+//
+// Handles IOCTL_BTHPS3_HID_INTERRUPT_WRITE
+// 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_PDO_HandleHidInterruptWrite(

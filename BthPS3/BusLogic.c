@@ -44,6 +44,7 @@
 #endif
 
 
+#pragma region REMOVE
  //
  // Spawn new child device (PDO)
  // 
@@ -668,7 +669,9 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 	return status;
 }
+#pragma endregion
 
+#pragma region REMOVE
 //
 // Used to compare two bus children
 // 
@@ -693,6 +696,7 @@ BOOLEAN BthPS3_PDO_EvtChildListIdentificationDescriptionCompare(
 	return (lhs->ClientConnection->RemoteAddress ==
 		rhs->ClientConnection->RemoteAddress) ? TRUE : FALSE;
 }
+#pragma endregion
 
 //
 // Triggered on entering I/O idle state

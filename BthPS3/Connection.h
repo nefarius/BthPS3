@@ -60,17 +60,17 @@ typedef enum _BTHPS3_CONNECTION_STATE {
 // 
 typedef struct _BTHPS3_CLIENT_L2CAP_CHANNEL
 {
-    BTHPS3_CONNECTION_STATE     ConnectionState;
+    BTHPS3_CONNECTION_STATE ConnectionState;
 
-    WDFSPINLOCK                 ConnectionStateLock;
+    WDFSPINLOCK ConnectionStateLock;
 
-    L2CAP_CHANNEL_HANDLE        ChannelHandle;
+    L2CAP_CHANNEL_HANDLE ChannelHandle;
 
-    struct _BRB                 ConnectDisconnectBrb;
+    struct _BRB ConnectDisconnectBrb;
 
-    WDFREQUEST                  ConnectDisconnectRequest;
+    WDFREQUEST ConnectDisconnectRequest;
 
-    KEVENT                      DisconnectEvent;
+    KEVENT DisconnectEvent;
 
 } BTHPS3_CLIENT_L2CAP_CHANNEL, *PBTHPS3_CLIENT_L2CAP_CHANNEL;
 
@@ -79,17 +79,17 @@ typedef struct _BTHPS3_CLIENT_L2CAP_CHANNEL
 // 
 typedef struct _BTHPS3_CLIENT_CONNECTION
 {
-    PBTHPS3_DEVICE_CONTEXT_HEADER       DevCtxHdr;
+    PBTHPS3_DEVICE_CONTEXT_HEADER DevCtxHdr;
 
-    BTH_ADDR                            RemoteAddress;
+    BTH_ADDR RemoteAddress;
 
-    UNICODE_STRING						RemoteName;
+    UNICODE_STRING RemoteName;
 
-    DS_DEVICE_TYPE                      DeviceType;
+    DS_DEVICE_TYPE DeviceType;
 
-    BTHPS3_CLIENT_L2CAP_CHANNEL         HidControlChannel;
+    BTHPS3_CLIENT_L2CAP_CHANNEL HidControlChannel;
 
-    BTHPS3_CLIENT_L2CAP_CHANNEL         HidInterruptChannel;
+    BTHPS3_CLIENT_L2CAP_CHANNEL HidInterruptChannel;
 
 } BTHPS3_CLIENT_CONNECTION, *PBTHPS3_CLIENT_CONNECTION;
 

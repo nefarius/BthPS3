@@ -35,8 +35,8 @@
  **********************************************************************************/
 
 
-#include "driver.h"
-#include "device.tmh"
+#include "Driver.h"
+#include "Device.tmh"
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (PAGE, BthPS3_CreateDevice)
@@ -57,7 +57,6 @@ BthPS3_CreateDevice(
 	WDFDEVICE device = NULL;
 	NTSTATUS status;
 	WDF_PNPPOWER_EVENT_CALLBACKS pnpPowerCallbacks;
-	WDF_CHILD_LIST_CONFIG childListCfg;
 	PBTHPS3_SERVER_CONTEXT pSrvCtx = NULL;
 	PDMFDEVICE_INIT dmfDeviceInit = NULL;
 	DMF_EVENT_CALLBACKS dmfEventCallbacks;
@@ -86,24 +85,6 @@ BthPS3_CreateDevice(
 
 	DMF_DmfDeviceInitHookFileObjectConfig(dmfDeviceInit, NULL);
 	DMF_DmfDeviceInitHookPowerPolicyEventCallbacks(dmfDeviceInit, NULL);
-
-#pragma region REMOVE
-	//
-	// Prepare child list
-	// 
-	WDF_CHILD_LIST_CONFIG_INIT(
-		&childListCfg,
-		sizeof(PDO_IDENTIFICATION_DESCRIPTION),
-		BthPS3_EvtWdfChildListCreateDevice
-	);
-	childListCfg.EvtChildListIdentificationDescriptionCompare =
-		BthPS3_PDO_EvtChildListIdentificationDescriptionCompare;
-
-	WdfFdoInitSetDefaultChildListConfig(DeviceInit,
-		&childListCfg,
-		WDF_NO_OBJECT_ATTRIBUTES
-	);
-#pragma endregion
 
 	//
 	// Configure PNP/power callbacks

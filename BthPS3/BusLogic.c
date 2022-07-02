@@ -650,33 +650,6 @@ BthPS3_EvtWdfChildListCreateDevice(
 }
 #pragma endregion
 
-#pragma region REMOVE
-//
-// Used to compare two bus children
-// 
-BOOLEAN BthPS3_PDO_EvtChildListIdentificationDescriptionCompare(
-	WDFCHILDLIST DeviceList,
-	PWDF_CHILD_IDENTIFICATION_DESCRIPTION_HEADER FirstIdentificationDescription,
-	PWDF_CHILD_IDENTIFICATION_DESCRIPTION_HEADER SecondIdentificationDescription)
-{
-	PPDO_IDENTIFICATION_DESCRIPTION lhs, rhs;
-
-	UNREFERENCED_PARAMETER(DeviceList);
-
-	lhs = CONTAINING_RECORD(FirstIdentificationDescription,
-		PDO_IDENTIFICATION_DESCRIPTION,
-		Header);
-	rhs = CONTAINING_RECORD(SecondIdentificationDescription,
-		PDO_IDENTIFICATION_DESCRIPTION,
-		Header);
-	//
-	// BTH_ADDR of remote device is used to distinguish between children
-	// 
-	return (lhs->ClientConnection->RemoteAddress ==
-		rhs->ClientConnection->RemoteAddress) ? TRUE : FALSE;
-}
-#pragma endregion
-
 //
 // Triggered on entering I/O idle state
 // 

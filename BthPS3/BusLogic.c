@@ -44,6 +44,9 @@
 #endif
 
 
+ //
+ // IOCTLs handled by each PDO
+ // 
 IoctlHandler_IoctlRecord G_PDO_IoctlSpecification[] =
 {
 	{IOCTL_BTHPS3_HID_CONTROL_READ, 0, 1, BthPS3_PDO_HandleHidControlRead},
@@ -1027,6 +1030,7 @@ NTSTATUS BthPS3_AssignDeviceProperty(
 // The new stuff
 // 
 
+
 //
 // Creates a new PDO and connection context for a given remote address
 // 
@@ -1268,12 +1272,22 @@ BthPS3_PDO_EvtPreCreate(
 	_In_ PDO_RECORD* PdoRecord
 )
 {
+	FuncEntry(TRACE_BUSLOGIC);
+
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+
 	UNREFERENCED_PARAMETER(DmfModule);
 	UNREFERENCED_PARAMETER(DeviceInit);
 	UNREFERENCED_PARAMETER(DmfDeviceInit);
 	UNREFERENCED_PARAMETER(PdoRecord);
 
-	return STATUS_UNSUCCESSFUL;
+	WdfDeviceInitSetDeviceType(DeviceInit, FILE_DEVICE_BUS_EXTENDER);
+
+	WdfPdoInitAllowForwardingRequestToParent(DeviceInit);
+
+	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
+
+	return status;
 }
 
 //
@@ -1292,17 +1306,81 @@ BthPS3_PDO_EvtPostCreate(
 	FuncEntry(TRACE_BUSLOGIC);
 
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	//WDF_OBJECT_ATTRIBUTES attributes;
-	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(ChildDevice);
+	WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS idleSettings;
+	WDFKEY hKey = NULL;
+	ULONG idleTimeout = 10000; // 10 secs idle timeout
+
+	DECLARE_CONST_UNICODE_STRING(idleTimeoutValue, BTHPS3_REG_VALUE_CHILD_IDLE_TIMEOUT);
 
 	do
 	{
+		//
+		// Open
+		//   HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\BthPS3\Parameters
+		// key
+		// 
+		if (!NT_SUCCESS(status = WdfDriverOpenParametersRegistryKey(
+			WdfGetDriver(),
+			STANDARD_RIGHTS_ALL,
+			WDF_NO_OBJECT_ATTRIBUTES,
+			&hKey
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfDriverOpenParametersRegistryKey failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
 
+		//
+		// Don't care, if it fails, keep default value
+		// 
+		(void)WdfRegistryQueryULong(
+			hKey,
+			&idleTimeoutValue,
+			&idleTimeout
+		);
+
+		//
+		// Idle settings
+		// 
+
+		WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS_INIT(&idleSettings, IdleCannotWakeFromS0);
+		idleSettings.IdleTimeout = idleTimeout;
+		status = WdfDeviceAssignS0IdleSettings(ChildDevice, &idleSettings);
+
+		//
+		// Catch special case more precisely 
+		// 
+		if (status == STATUS_INVALID_DEVICE_REQUEST)
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"No function driver attached and not in RAW mode, can't continue"
+			);
+			break;
+		}
+
+		if (!NT_SUCCESS(status))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfDeviceAssignS0IdleSettings failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
 
 	} while (FALSE);
 
+	if (hKey)
+	{
+		WdfRegistryClose(hKey);
+	}
+
 	UNREFERENCED_PARAMETER(DmfModule);
-	UNREFERENCED_PARAMETER(pPdoCtx);
 	UNREFERENCED_PARAMETER(DmfDeviceInit);
 	UNREFERENCED_PARAMETER(PdoRecord);
 

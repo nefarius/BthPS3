@@ -1172,6 +1172,9 @@ BthPS3_PDO_Create(
 			break;
 		}
 
+		//
+		// Set Hardware ID previously built
+		// 
 		record.HardwareIds[0] = hardwareId.Buffer;
 		record.HardwareIdsCount = 1;
 		

@@ -1039,6 +1039,7 @@ NTSTATUS
 BthPS3_PDO_Create(
 	_In_ PBTHPS3_SERVER_CONTEXT Context,
 	_In_ BTH_ADDR RemoteAddress,
+	_In_ DS_DEVICE_TYPE DeviceType,
 	_In_ PFN_WDF_OBJECT_CONTEXT_CLEANUP CleanupCallback,
 	_Out_ PBTHPS3_PDO_CONTEXT* PdoContext
 )
@@ -1049,6 +1050,9 @@ BthPS3_PDO_Create(
 	WDF_OBJECT_ATTRIBUTES attributes;
 	PDO_RECORD record;
 	WDFDEVICE device;
+	UNICODE_STRING guidString = {0};
+
+	DECLARE_UNICODE_STRING_SIZE(hardwareId, MAX_DEVICE_ID_LEN);
 
 	WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&attributes, BTHPS3_PDO_CONTEXT);
 
@@ -1056,10 +1060,121 @@ BthPS3_PDO_Create(
 	attributes.EvtCleanupCallback = CleanupCallback;
 	attributes.ExecutionLevel = WdfExecutionLevelPassive;
 
-	record.CustomClientContext = &attributes;
+	RtlZeroMemory(&record, sizeof(PDO_RECORD));
 
+	record.CustomClientContext = &attributes;
+	record.SerialNumber = 1; // TODO: implement
+	record.EnableDmf = TRUE;
+	record.EvtDmfDeviceModulesAdd = BthPS3_PDO_EvtDmfModulesAdd;
+	
 	do
 	{
+		//
+		// Prepare Hardware ID GUID segment and description based on device type
+		// 
+		switch (DeviceType)
+		{
+		case DS_DEVICE_TYPE_SIXAXIS:
+			record.Description = L"PLAYSTATION(R)3 Controller";
+			status = RtlStringFromGUID(&GUID_BUSENUM_BTHPS3_SIXAXIS,
+				&guidString
+			);
+			break;
+		case DS_DEVICE_TYPE_NAVIGATION:
+			record.Description = L"Navigation Controller";
+			status = RtlStringFromGUID(&GUID_BUSENUM_BTHPS3_NAVIGATION,
+				&guidString
+			);
+			break;
+		case DS_DEVICE_TYPE_MOTION:
+			record.Description = L"Motion Controller";
+			status = RtlStringFromGUID(&GUID_BUSENUM_BTHPS3_MOTION,
+				&guidString
+			);
+			break;
+		case DS_DEVICE_TYPE_WIRELESS:
+			record.Description = L"Wireless Controller";
+			status = RtlStringFromGUID(&GUID_BUSENUM_BTHPS3_WIRELESS,
+				&guidString
+			);
+			break;
+		default:
+			status = STATUS_INVALID_PARAMETER;
+			break;
+		}
+
+		if (!NT_SUCCESS(status))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"RtlStringFromGUID failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
+
+		//
+		// Build Hardware ID depending on device type
+		// 
+		switch (DeviceType)
+		{
+		case DS_DEVICE_TYPE_SIXAXIS:
+			status = RtlUnicodeStringPrintf(
+				&hardwareId,
+				L"%ws\\%wZ&Dev&VID_%04X&PID_%04X",
+				BthPS3BusEnumeratorName,
+				guidString,
+				BTHPS3_SIXAXIS_VID,
+				BTHPS3_SIXAXIS_PID
+			);
+			break;
+		case DS_DEVICE_TYPE_NAVIGATION:
+			status = RtlUnicodeStringPrintf(
+				&hardwareId,
+				L"%ws\\%wZ&Dev&VID_%04X&PID_%04X",
+				BthPS3BusEnumeratorName,
+				guidString,
+				BTHPS3_NAVIGATION_VID,
+				BTHPS3_NAVIGATION_PID
+			);
+			break;
+		case DS_DEVICE_TYPE_MOTION:
+			status = RtlUnicodeStringPrintf(
+				&hardwareId,
+				L"%ws\\%wZ&Dev&VID_%04X&PID_%04X",
+				BthPS3BusEnumeratorName,
+				guidString,
+				BTHPS3_MOTION_VID,
+				BTHPS3_MOTION_PID
+			);
+			break;
+		case DS_DEVICE_TYPE_WIRELESS:
+			status = RtlUnicodeStringPrintf(
+				&hardwareId,
+				L"%ws\\%wZ&Dev&VID_%04X&PID_%04X",
+				BthPS3BusEnumeratorName,
+				guidString,
+				BTHPS3_WIRELESS_VID,
+				BTHPS3_WIRELESS_PID
+			);
+			break;
+		default:
+			status = STATUS_INVALID_PARAMETER;
+			break;
+		}
+
+		if (!NT_SUCCESS(status)) {
+			TraceError(
+				TRACE_BUSLOGIC,
+				"RtlUnicodeStringPrintf failed for hardwareId with status %!STATUS!",
+				status
+			);
+			break;
+		}
+
+		record.HardwareIds[0] = hardwareId.Buffer;
+		record.HardwareIdsCount = 1;
+		
 		//
 		// Create PDO, DMF modules and allocate PDO context
 		// 
@@ -1100,6 +1215,7 @@ BthPS3_PDO_Create(
 		// 
 		pPdoCtx->RemoteAddress = RemoteAddress;
 		pPdoCtx->DevCtxHdr = &Context->Header;
+		pPdoCtx->DeviceType = DeviceType;
 
 		//
 		// Initialize HidControlChannel properties
@@ -1257,330 +1373,5 @@ BthPS3_PDO_EvtDmfModulesAdd(
 	);
 
 	FuncExitNoReturn(TRACE_BUSLOGIC);
-}
-
-//
-// Called before PDO creation
-// 
-_IRQL_requires_max_(PASSIVE_LEVEL)
-_IRQL_requires_same_
-NTSTATUS
-BthPS3_PDO_EvtPreCreate(
-	_In_ DMFMODULE DmfModule,
-	_In_ PWDFDEVICE_INIT DeviceInit,
-	_In_ PDMFDEVICE_INIT DmfDeviceInit,
-	_In_ PDO_RECORD* PdoRecord
-)
-{
-	FuncEntry(TRACE_BUSLOGIC);
-
-	NTSTATUS status = STATUS_SUCCESS;
-
-	UNREFERENCED_PARAMETER(DmfModule);
-	UNREFERENCED_PARAMETER(DmfDeviceInit);
-	UNREFERENCED_PARAMETER(PdoRecord);
-
-	WdfDeviceInitSetDeviceType(DeviceInit, FILE_DEVICE_BUS_EXTENDER);
-
-	WdfPdoInitAllowForwardingRequestToParent(DeviceInit);
-
-	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
-
-	return status;
-}
-
-//
-// Called after PDO creation
-// 
-_IRQL_requires_max_(PASSIVE_LEVEL)
-_IRQL_requires_same_
-NTSTATUS
-BthPS3_PDO_EvtPostCreate(
-	_In_ DMFMODULE DmfModule,
-	_In_ WDFDEVICE ChildDevice,
-	_In_ PDMFDEVICE_INIT DmfDeviceInit,
-	_In_ PDO_RECORD* PdoRecord
-)
-{
-	FuncEntry(TRACE_BUSLOGIC);
-
-	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS idleSettings;
-	WDFKEY hKey = NULL;
-	ULONG idleTimeout = 10000; // 10 secs idle timeout
-
-	DECLARE_CONST_UNICODE_STRING(idleTimeoutValue, BTHPS3_REG_VALUE_CHILD_IDLE_TIMEOUT);
-
-	do
-	{
-		//
-		// Open
-		//   HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\BthPS3\Parameters
-		// key
-		// 
-		if (!NT_SUCCESS(status = WdfDriverOpenParametersRegistryKey(
-			WdfGetDriver(),
-			STANDARD_RIGHTS_ALL,
-			WDF_NO_OBJECT_ATTRIBUTES,
-			&hKey
-		)))
-		{
-			TraceError(
-				TRACE_BUSLOGIC,
-				"WdfDriverOpenParametersRegistryKey failed with status %!STATUS!",
-				status
-			);
-			break;
-		}
-
-		//
-		// Don't care, if it fails, keep default value
-		// 
-		(void)WdfRegistryQueryULong(
-			hKey,
-			&idleTimeoutValue,
-			&idleTimeout
-		);
-
-		//
-		// Idle settings
-		// 
-
-		WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS_INIT(&idleSettings, IdleCannotWakeFromS0);
-		idleSettings.IdleTimeout = idleTimeout;
-		status = WdfDeviceAssignS0IdleSettings(ChildDevice, &idleSettings);
-
-		//
-		// Catch special case more precisely 
-		// 
-		if (status == STATUS_INVALID_DEVICE_REQUEST)
-		{
-			TraceError(
-				TRACE_BUSLOGIC,
-				"No function driver attached and not in RAW mode, can't continue"
-			);
-			break;
-		}
-
-		if (!NT_SUCCESS(status))
-		{
-			TraceError(
-				TRACE_BUSLOGIC,
-				"WdfDeviceAssignS0IdleSettings failed with status %!STATUS!",
-				status
-			);
-			break;
-		}
-
-	} while (FALSE);
-
-	if (hKey)
-	{
-		WdfRegistryClose(hKey);
-	}
-
-	UNREFERENCED_PARAMETER(DmfModule);
-	UNREFERENCED_PARAMETER(DmfDeviceInit);
-	UNREFERENCED_PARAMETER(PdoRecord);
-
-	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
-
-	return status;
-}
-
-//
-// Handles IOCTL_BTHPS3_HID_CONTROL_READ
-// 
-_IRQL_requires_max_(PASSIVE_LEVEL)
-NTSTATUS
-BthPS3_PDO_HandleHidControlRead(
-	_In_ DMFMODULE DmfModule,
-	_In_ WDFQUEUE Queue,
-	_In_ WDFREQUEST Request,
-	_In_ ULONG IoctlCode,
-	_In_reads_(InputBufferSize) VOID* InputBuffer,
-	_In_ size_t InputBufferSize,
-	_Out_writes_(OutputBufferSize) VOID* OutputBuffer,
-	_In_ size_t OutputBufferSize,
-	_Out_ size_t* BytesReturned
-)
-{
-	UNREFERENCED_PARAMETER(Queue);
-	UNREFERENCED_PARAMETER(IoctlCode);
-	UNREFERENCED_PARAMETER(InputBuffer);
-	UNREFERENCED_PARAMETER(InputBufferSize);
-	UNREFERENCED_PARAMETER(BytesReturned);
-
-	NTSTATUS status;
-	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
-	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
-
-	if (!NT_SUCCESS(status = L2CAP_PS3_ReadControlTransferAsync(
-		pPdoCtx,
-		Request,
-		OutputBuffer,
-		OutputBufferSize,
-		L2CAP_PS3_AsyncReadControlTransferCompleted
-	)))
-	{
-		TraceError(
-			TRACE_BUSLOGIC,
-			"L2CAP_PS3_ReadControlTransferAsync failed with status %!STATUS!",
-			status
-		);
-	}
-	else
-	{
-		status = STATUS_PENDING;
-	}
-
-	return status;
-}
-
-//
-// Handles IOCTL_BTHPS3_HID_CONTROL_WRITE
-// 
-_IRQL_requires_max_(PASSIVE_LEVEL)
-NTSTATUS
-BthPS3_PDO_HandleHidControlWrite(
-	_In_ DMFMODULE DmfModule,
-	_In_ WDFQUEUE Queue,
-	_In_ WDFREQUEST Request,
-	_In_ ULONG IoctlCode,
-	_In_reads_(InputBufferSize) VOID* InputBuffer,
-	_In_ size_t InputBufferSize,
-	_Out_writes_(OutputBufferSize) VOID* OutputBuffer,
-	_In_ size_t OutputBufferSize,
-	_Out_ size_t* BytesReturned
-)
-{
-	UNREFERENCED_PARAMETER(Queue);
-	UNREFERENCED_PARAMETER(IoctlCode);
-	UNREFERENCED_PARAMETER(OutputBuffer);
-	UNREFERENCED_PARAMETER(OutputBufferSize);
-	UNREFERENCED_PARAMETER(BytesReturned);
-
-	NTSTATUS status;
-	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
-	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
-
-	if (!NT_SUCCESS(status = L2CAP_PS3_SendControlTransferAsync(
-		pPdoCtx,
-		Request,
-		InputBuffer,
-		InputBufferSize,
-		L2CAP_PS3_AsyncReadControlTransferCompleted
-	)))
-	{
-		TraceError(
-			TRACE_BUSLOGIC,
-			"L2CAP_PS3_SendControlTransferAsync failed with status %!STATUS!",
-			status
-		);
-	}
-	else
-	{
-		status = STATUS_PENDING;
-	}
-
-	return status;
-}
-
-//
-// Handles IOCTL_BTHPS3_HID_INTERRUPT_READ
-// 
-_IRQL_requires_max_(PASSIVE_LEVEL)
-NTSTATUS
-BthPS3_PDO_HandleHidInterruptRead(
-	_In_ DMFMODULE DmfModule,
-	_In_ WDFQUEUE Queue,
-	_In_ WDFREQUEST Request,
-	_In_ ULONG IoctlCode,
-	_In_reads_(InputBufferSize) VOID* InputBuffer,
-	_In_ size_t InputBufferSize,
-	_Out_writes_(OutputBufferSize) VOID* OutputBuffer,
-	_In_ size_t OutputBufferSize,
-	_Out_ size_t* BytesReturned
-)
-{
-	UNREFERENCED_PARAMETER(Queue);
-	UNREFERENCED_PARAMETER(IoctlCode);
-	UNREFERENCED_PARAMETER(InputBuffer);
-	UNREFERENCED_PARAMETER(InputBufferSize);
-	UNREFERENCED_PARAMETER(BytesReturned);
-
-	NTSTATUS status;
-	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
-	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
-
-	if (!NT_SUCCESS(status = L2CAP_PS3_ReadInterruptTransferAsync(
-		pPdoCtx,
-		Request,
-		OutputBuffer,
-		OutputBufferSize,
-		L2CAP_PS3_AsyncReadControlTransferCompleted
-	)))
-	{
-		TraceError(
-			TRACE_BUSLOGIC,
-			"L2CAP_PS3_ReadInterruptTransferAsync failed with status %!STATUS!",
-			status
-		);
-	}
-	else
-	{
-		status = STATUS_PENDING;
-	}
-
-	return status;
-}
-
-//
-// Handles IOCTL_BTHPS3_HID_INTERRUPT_WRITE
-// 
-_IRQL_requires_max_(PASSIVE_LEVEL)
-NTSTATUS
-BthPS3_PDO_HandleHidInterruptWrite(
-	_In_ DMFMODULE DmfModule,
-	_In_ WDFQUEUE Queue,
-	_In_ WDFREQUEST Request,
-	_In_ ULONG IoctlCode,
-	_In_reads_(InputBufferSize) VOID* InputBuffer,
-	_In_ size_t InputBufferSize,
-	_Out_writes_(OutputBufferSize) VOID* OutputBuffer,
-	_In_ size_t OutputBufferSize,
-	_Out_ size_t* BytesReturned
-)
-{
-	UNREFERENCED_PARAMETER(Queue);
-	UNREFERENCED_PARAMETER(IoctlCode);
-	UNREFERENCED_PARAMETER(OutputBuffer);
-	UNREFERENCED_PARAMETER(OutputBufferSize);
-	UNREFERENCED_PARAMETER(BytesReturned);
-
-	NTSTATUS status;
-	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
-	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
-
-	if (!NT_SUCCESS(status = L2CAP_PS3_SendInterruptTransferAsync(
-		pPdoCtx,
-		Request,
-		InputBuffer,
-		InputBufferSize,
-		L2CAP_PS3_AsyncReadControlTransferCompleted
-	)))
-	{
-		TraceError(
-			TRACE_BUSLOGIC,
-			"L2CAP_PS3_SendInterruptTransferAsync failed with status %!STATUS!",
-			status
-		);
-	}
-	else
-	{
-		status = STATUS_PENDING;
-	}
-
-	return status;
 }
 

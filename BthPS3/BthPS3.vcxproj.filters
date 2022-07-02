@@ -86,6 +86,12 @@
     <ClCompile Include="Util.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BusLogic.IO.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BusLogic.State.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="BthPS3.rc">

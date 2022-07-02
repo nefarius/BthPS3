@@ -37,6 +37,8 @@
   <ItemGroup>
     <ClCompile Include="Bluetooth.c" />
     <ClCompile Include="BusLogic.c" />
+    <ClCompile Include="BusLogic.IO.c" />
+    <ClCompile Include="BusLogic.State.c" />
     <ClCompile Include="Connection.c" />
     <ClCompile Include="Device.c" />
     <ClCompile Include="Driver.c" />

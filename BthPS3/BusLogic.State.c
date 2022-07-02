@@ -35,120 +35,136 @@
  **********************************************************************************/
 
 
-#pragma once
+#include "Driver.h"
+#include "BusLogic.State.tmh"
 
-#define MAX_DEVICE_ID_LEN   200
-#define BTH_ADDR_HEX_LEN    12
-
-#pragma region REMOVE
-//
-// Identification information for dynamically enumerated bus children (PDOs)
-// 
-typedef struct _PDO_IDENTIFICATION_DESCRIPTION
-{
-    //
-    // Mandatory header
-    // 
-    WDF_CHILD_IDENTIFICATION_DESCRIPTION_HEADER Header;
-
-    //
-    // Client connection context
-    // 
-    PBTHPS3_CLIENT_CONNECTION ClientConnection;
-
-} PDO_IDENTIFICATION_DESCRIPTION, *PPDO_IDENTIFICATION_DESCRIPTION;
 
 //
-// Context data of child device (PDO)
+// Called before PDO creation
 // 
-typedef struct _BTHPS3_PDO_DEVICE_CONTEXT
-{
-    //
-    // Client connection context
-    // 
-    PBTHPS3_CLIENT_CONNECTION ClientConnection;
-
-} BTHPS3_PDO_DEVICE_CONTEXT, *PBTHPS3_PDO_DEVICE_CONTEXT;
-
-WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_PDO_DEVICE_CONTEXT, GetPdoDeviceContext)
-#pragma endregion
-
-#pragma region REMOVE
-EVT_WDF_CHILD_LIST_CREATE_DEVICE BthPS3_EvtWdfChildListCreateDevice;
-#pragma endregion
-
-EVT_WDF_DEVICE_CONTEXT_CLEANUP BthPS3_PDO_EvtDeviceContextCleanup;
-
-EVT_WDF_DEVICE_D0_EXIT BthPS3_PDO_EvtWdfDeviceD0Exit;
-
-EVT_WDF_DEVICE_SELF_MANAGED_IO_INIT BthPS3_PDO_EvtWdfDeviceSelfManagedIoInit;
-
-EVT_WDF_REQUEST_COMPLETION_ROUTINE BthPS3_PDO_DisconnectRequestCompleted;
-
-#if KMDF_VERSION_MAJOR == 1 && KMDF_VERSION_MINOR >= 13
-#if (NTDDI_VERSION < NTDDI_WIN10)
-DEFINE_DEVPROPKEY(DEVPKEY_Bluetooth_LastConnectedTime, 
-    0x2bd67d8b, 0x8beb, 0x48d5, 0x87, 0xe0, 0x6c, 0xda, 0x34, 0x28, 0x04, 0x0a, 11);    // DEVPROP_TYPE_FILETIME
-#endif
-#endif
-
-NTSTATUS
-BthPS3_AssignDeviceProperty(
-    WDFDEVICE Device,
-    const DEVPROPKEY* PropertyKey,
-    DEVPROPTYPE Type,
-    ULONG Size,
-    PVOID Data
-);
-
-//
-// The new fun
-// 
-
-//
-// TODO: this deprecates struct _BTHPS3_CLIENT_CONNECTION
-// 
-typedef struct _BTHPS3_PDO_CONTEXT
-{
-    PBTHPS3_DEVICE_CONTEXT_HEADER DevCtxHdr;
-
-    BTH_ADDR RemoteAddress;
-
-    UNICODE_STRING RemoteName;
-
-    DS_DEVICE_TYPE DeviceType;
-
-    BTHPS3_CLIENT_L2CAP_CHANNEL HidControlChannel;
-
-    BTHPS3_CLIENT_L2CAP_CHANNEL HidInterruptChannel;
-
-    DMFMODULE DmfModuleIoctlHandler; 
-
-} BTHPS3_PDO_CONTEXT, *PBTHPS3_PDO_CONTEXT;
-
-WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_PDO_CONTEXT, GetPdoContext)
-
-
 _IRQL_requires_max_(PASSIVE_LEVEL)
+_IRQL_requires_same_
 NTSTATUS
-BthPS3_PDO_Create(
-    _In_ PBTHPS3_SERVER_CONTEXT Context,
-    _In_ BTH_ADDR RemoteAddress,
-    _In_ DS_DEVICE_TYPE DeviceType,
-    _In_ PFN_WDF_OBJECT_CONTEXT_CLEANUP CleanupCallback,
-    _Out_ PBTHPS3_PDO_CONTEXT *PdoContext
-);
+BthPS3_PDO_EvtPreCreate(
+	_In_ DMFMODULE DmfModule,
+	_In_ PWDFDEVICE_INIT DeviceInit,
+	_In_ PDMFDEVICE_INIT DmfDeviceInit,
+	_In_ PDO_RECORD* PdoRecord
+)
+{
+	FuncEntry(TRACE_BUSLOGIC);
 
-EVT_DMF_DEVICE_MODULES_ADD BthPS3_PDO_EvtDmfModulesAdd;
+	NTSTATUS status = STATUS_SUCCESS;
 
-EVT_DMF_Pdo_PreCreate BthPS3_PDO_EvtPreCreate;
+	UNREFERENCED_PARAMETER(DmfModule);
+	UNREFERENCED_PARAMETER(DmfDeviceInit);
+	UNREFERENCED_PARAMETER(PdoRecord);
 
-EVT_DMF_Pdo_PostCreate BthPS3_PDO_EvtPostCreate;
+	WdfDeviceInitSetDeviceType(DeviceInit, FILE_DEVICE_BUS_EXTENDER);
 
-EVT_DMF_IoctlHandler_Callback BthPS3_PDO_HandleHidControlRead;
+	WdfPdoInitAllowForwardingRequestToParent(DeviceInit);
 
-EVT_DMF_IoctlHandler_Callback BthPS3_PDO_HandleHidControlWrite;
+	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
 
-EVT_DMF_IoctlHandler_Callback BthPS3_PDO_HandleHidInterruptRead;
+	return status;
+}
 
-EVT_DMF_IoctlHandler_Callback BthPS3_PDO_HandleHidInterruptWrite;
+//
+// Called after PDO creation
+// 
+_IRQL_requires_max_(PASSIVE_LEVEL)
+_IRQL_requires_same_
+NTSTATUS
+BthPS3_PDO_EvtPostCreate(
+	_In_ DMFMODULE DmfModule,
+	_In_ WDFDEVICE ChildDevice,
+	_In_ PDMFDEVICE_INIT DmfDeviceInit,
+	_In_ PDO_RECORD* PdoRecord
+)
+{
+	FuncEntry(TRACE_BUSLOGIC);
+
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS idleSettings;
+	WDFKEY hKey = NULL;
+	ULONG idleTimeout = 10000; // 10 secs idle timeout
+
+	DECLARE_CONST_UNICODE_STRING(idleTimeoutValue, BTHPS3_REG_VALUE_CHILD_IDLE_TIMEOUT);
+
+	do
+	{
+		//
+		// Open
+		//   HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\BthPS3\Parameters
+		// key
+		// 
+		if (!NT_SUCCESS(status = WdfDriverOpenParametersRegistryKey(
+			WdfGetDriver(),
+			STANDARD_RIGHTS_ALL,
+			WDF_NO_OBJECT_ATTRIBUTES,
+			&hKey
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfDriverOpenParametersRegistryKey failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
+
+		//
+		// Don't care, if it fails, keep default value
+		// 
+		(void)WdfRegistryQueryULong(
+			hKey,
+			&idleTimeoutValue,
+			&idleTimeout
+		);
+
+		//
+		// Idle settings
+		// 
+
+		WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS_INIT(&idleSettings, IdleCannotWakeFromS0);
+		idleSettings.IdleTimeout = idleTimeout;
+		status = WdfDeviceAssignS0IdleSettings(ChildDevice, &idleSettings);
+
+		//
+		// Catch special case more precisely 
+		// 
+		if (status == STATUS_INVALID_DEVICE_REQUEST)
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"No function driver attached and not in RAW mode, can't continue"
+			);
+			break;
+		}
+
+		if (!NT_SUCCESS(status))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfDeviceAssignS0IdleSettings failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
+
+	} while (FALSE);
+
+	if (hKey)
+	{
+		WdfRegistryClose(hKey);
+	}
+
+	UNREFERENCED_PARAMETER(DmfModule);
+	UNREFERENCED_PARAMETER(DmfDeviceInit);
+	UNREFERENCED_PARAMETER(PdoRecord);
+
+	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
+
+	return status;
+}
+

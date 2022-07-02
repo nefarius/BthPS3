@@ -92,6 +92,9 @@
     <ClCompile Include="BusLogic.State.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="L2CAP.Transfer.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="BthPS3.rc">

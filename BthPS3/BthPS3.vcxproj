@@ -42,6 +42,7 @@
     <ClCompile Include="Connection.c" />
     <ClCompile Include="Device.c" />
     <ClCompile Include="Driver.c" />
+    <ClCompile Include="L2CAP.Transfer.c" />
     <ClCompile Include="PSM.c" />
     <ClCompile Include="L2CAP.c" />
     <ClCompile Include="Util.c" />

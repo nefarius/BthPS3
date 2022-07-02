@@ -91,6 +91,7 @@ typedef struct _BTHPS3_DEVICE_CONTEXT_HEADER
 
 	//
 	// TODO: required?
+	// 
 	DMFMODULE DmfModuleIoctlHandler;
 
 	//

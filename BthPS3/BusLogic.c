@@ -44,10 +44,19 @@
 #endif
 
 
+IoctlHandler_IoctlRecord G_PDO_IoctlSpecification[] =
+{
+	{IOCTL_BTHPS3_HID_CONTROL_READ, 0, 1, BthPS3_PDO_HandleHidControlRead},
+	{IOCTL_BTHPS3_HID_CONTROL_WRITE, 1, 0, BthPS3_PDO_HandleHidControlWrite},
+	{IOCTL_BTHPS3_HID_INTERRUPT_READ, 0, 1, BthPS3_PDO_HandleHidInterruptRead},
+	{IOCTL_BTHPS3_HID_INTERRUPT_WRITE, 1, 0, BthPS3_PDO_HandleHidInterruptWrite},
+};
+
+
 #pragma region REMOVE
- //
- // Spawn new child device (PDO)
- // 
+//
+// Spawn new child device (PDO)
+// 
 _Use_decl_annotations_
 NTSTATUS
 BthPS3_EvtWdfChildListCreateDevice(
@@ -96,7 +105,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 		IdentificationDescription,
 		PDO_IDENTIFICATION_DESCRIPTION,
 		Header);
-	
+
 	//
 	// Open
 	//   HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\BthPS3\Parameters
@@ -343,7 +352,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 			// Doesn't happen
 			return status;
 		}
-				
+
 		if (!NT_SUCCESS(status)) {
 			TraceError(
 				TRACE_BUSLOGIC,
@@ -415,7 +424,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 			// Doesn't happen
 			return status;
 		}
-		
+
 		if (!NT_SUCCESS(status)) {
 			TraceError(
 				TRACE_BUSLOGIC,
@@ -437,7 +446,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 #pragma endregion
 
 #pragma region Build InstanceID
-		
+
 		status = RtlIntegerToUnicodeString(
 			0,
 			16,
@@ -549,7 +558,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 		}
 
 #pragma endregion
-				
+
 #pragma region Fill device context
 
 		//
@@ -600,7 +609,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 		powerCaps.DeviceState[PowerSystemShutdown] = PowerDeviceD3;
 
 		WdfDeviceSetPowerCapabilities(hChild, &powerCaps);
-		
+
 		//
 		// Idle settings
 		// 
@@ -660,8 +669,7 @@ BthPS3_EvtWdfChildListCreateDevice(
 
 #pragma endregion
 
-	}
-	while (FALSE);
+	} while (FALSE);
 
 	RtlFreeUnicodeString(&guidString);
 
@@ -713,7 +721,7 @@ NTSTATUS BthPS3_PDO_EvtWdfDeviceD0Exit(
 	WDFREQUEST					dcRequest;
 	WDF_OBJECT_ATTRIBUTES		attributes;
 	WDFMEMORY					payload;
-	
+
 
 	UNREFERENCED_PARAMETER(Device);
 	UNREFERENCED_PARAMETER(TargetState);
@@ -730,13 +738,13 @@ NTSTATUS BthPS3_PDO_EvtWdfDeviceD0Exit(
 	);
 
 	/*
-	 * Low power conditions are not supported by the remote device, 
+	 * Low power conditions are not supported by the remote device,
 	 * if low power or idle was requested, instruct radio to disconnect.
 	 */
 
 	WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
 	attributes.ParentObject = Device;
-	
+
 	status = WdfRequestCreate(
 		&attributes,
 		parentTarget,
@@ -820,7 +828,7 @@ NTSTATUS BthPS3_PDO_EvtWdfDeviceD0Exit(
 			status = STATUS_SUCCESS;
 		}
 	}
-	
+
 	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
 
 	return status;
@@ -1136,11 +1144,11 @@ void BthPS3_PDO_DisconnectRequestCompleted(
 	UNREFERENCED_PARAMETER(Context);
 
 	FuncEntryArguments(
-		TRACE_BUSLOGIC, 
+		TRACE_BUSLOGIC,
 		"status=%!STATUS!",
 		Params->IoStatus.Status
 	);
-	
+
 	WdfObjectDelete(Request);
 
 	FuncExitNoReturn(TRACE_BUSLOGIC);
@@ -1159,7 +1167,7 @@ NTSTATUS BthPS3_PDO_EvtWdfDeviceSelfManagedIoInit(
 	LARGE_INTEGER lastConnectionTime;
 
 	FuncEntry(TRACE_BUSLOGIC);
-	
+
 	KeQuerySystemTimePrecise(&lastConnectionTime);
 
 	//
@@ -1197,7 +1205,7 @@ NTSTATUS BthPS3_PDO_EvtWdfDeviceSelfManagedIoInit(
 		pCtx->ClientConnection->RemoteName.Length + sizeof(L'\0'),
 		pCtx->ClientConnection->RemoteName.Buffer
 	);
-	
+
 	(void)BthPS3_AssignDeviceProperty(
 		Device,
 		&DEVPKEY_Bluetooth_DeviceManufacturer,
@@ -1213,7 +1221,7 @@ NTSTATUS BthPS3_PDO_EvtWdfDeviceSelfManagedIoInit(
 		sizeof(LARGE_INTEGER),
 		&lastConnectionTime
 	);
-	
+
 	switch (pCtx->ClientConnection->DeviceType)
 	{
 	case DS_DEVICE_TYPE_SIXAXIS:
@@ -1250,7 +1258,7 @@ NTSTATUS BthPS3_PDO_EvtWdfDeviceSelfManagedIoInit(
 			sizeof(USHORT),
 			(PVOID)&BTHPS3_NAVIGATION_PID
 		);
-		
+
 		break;
 	case DS_DEVICE_TYPE_MOTION:
 
@@ -1286,7 +1294,7 @@ NTSTATUS BthPS3_PDO_EvtWdfDeviceSelfManagedIoInit(
 			sizeof(USHORT),
 			(PVOID)&BTHPS3_WIRELESS_PID
 		);
-		
+
 		break;
 	default:
 		// Doesn't happen
@@ -1294,20 +1302,20 @@ NTSTATUS BthPS3_PDO_EvtWdfDeviceSelfManagedIoInit(
 	}
 
 	FuncExitNoReturn(TRACE_BUSLOGIC);
-	
+
 	return STATUS_SUCCESS;
 }
 
 NTSTATUS BthPS3_AssignDeviceProperty(
-	WDFDEVICE Device, 
-	const DEVPROPKEY* PropertyKey, 
-	DEVPROPTYPE Type, 
-	ULONG Size, 
+	WDFDEVICE Device,
+	const DEVPROPKEY* PropertyKey,
+	DEVPROPTYPE Type,
+	ULONG Size,
 	PVOID Data
 )
 {
 #if KMDF_VERSION_MAJOR == 1 && KMDF_VERSION_MINOR >= 13
-	
+
 	WDF_DEVICE_PROPERTY_DATA propertyData;
 
 	WDF_DEVICE_PROPERTY_DATA_INIT(&propertyData, PropertyKey);
@@ -1327,7 +1335,7 @@ NTSTATUS BthPS3_AssignDeviceProperty(
 	//
 	// KMDF version too low to support this
 	// 
-	
+
 	UNREFERENCED_PARAMETER(Device);
 	UNREFERENCED_PARAMETER(PropertyKey);
 	UNREFERENCED_PARAMETER(Type);
@@ -1338,8 +1346,203 @@ NTSTATUS BthPS3_AssignDeviceProperty(
 		TRACE_BUSLOGIC,
 		"Assigning device properties requires KMDF 1.13 (Windows 8.x) or later"
 	);
-	
+
 	return STATUS_NOT_SUPPORTED;
-	
+
 #endif
 }
+
+
+//
+// The new stuff
+// 
+
+
+//
+// Called when initializing DMF modules for the PDO
+// 
+_IRQL_requires_max_(PASSIVE_LEVEL)
+VOID
+BthPS3_PDO_EvtDmfModulesAdd(
+	_In_ WDFDEVICE Device,
+	_In_ PDMFMODULE_INIT DmfModuleInit
+)
+{
+	FuncEntry(TRACE_BUSLOGIC);
+
+	DMF_MODULE_ATTRIBUTES moduleAttributes;
+	DMF_CONFIG_IoctlHandler moduleConfigIoctlHandler;
+
+	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(Device);
+
+	//
+	// IOCTL Handler Module
+	// 
+
+	DMF_CONFIG_IoctlHandler_AND_ATTRIBUTES_INIT(
+		&moduleConfigIoctlHandler,
+		&moduleAttributes
+	);
+
+	moduleConfigIoctlHandler.DeviceInterfaceGuid = GUID_DEVINTERFACE_BTHPS3;
+	moduleConfigIoctlHandler.AccessModeFilter = IoctlHandler_AccessModeDefault;
+	moduleConfigIoctlHandler.EvtIoctlHandlerAccessModeFilter = NULL;
+	moduleConfigIoctlHandler.IoctlRecordCount = ARRAYSIZE(G_PDO_IoctlSpecification);
+	moduleConfigIoctlHandler.IoctlRecords = G_PDO_IoctlSpecification;
+	moduleConfigIoctlHandler.ForwardUnhandledRequests = TRUE;
+	moduleConfigIoctlHandler.ManualMode = TRUE;
+
+	DMF_DmfModuleAdd(
+		DmfModuleInit,
+		&moduleAttributes,
+		WDF_NO_OBJECT_ATTRIBUTES,
+		&pPdoCtx->DmfModuleIoctlHandler
+	);
+
+	FuncExitNoReturn(TRACE_BUSLOGIC);
+}
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+_IRQL_requires_same_
+NTSTATUS
+BthPS3_PDO_EvtPreCreate(
+	_In_ DMFMODULE DmfModule,
+	_In_ PWDFDEVICE_INIT DeviceInit,
+	_In_ PDMFDEVICE_INIT DmfDeviceInit,
+	_In_ PDO_RECORD* PdoRecord
+)
+{
+	UNREFERENCED_PARAMETER(DmfModule);
+	UNREFERENCED_PARAMETER(DeviceInit);
+	UNREFERENCED_PARAMETER(DmfDeviceInit);
+	UNREFERENCED_PARAMETER(PdoRecord);
+
+	return STATUS_UNSUCCESSFUL;
+}
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+_IRQL_requires_same_
+NTSTATUS
+BthPS3_PDO_EvtPostCreate(
+	_In_ DMFMODULE DmfModule,
+	_In_ WDFDEVICE ChildDevice,
+	_In_ PDMFDEVICE_INIT DmfDeviceInit,
+	_In_ PDO_RECORD* PdoRecord
+)
+{
+	UNREFERENCED_PARAMETER(DmfModule);
+	UNREFERENCED_PARAMETER(ChildDevice);
+	UNREFERENCED_PARAMETER(DmfDeviceInit);
+	UNREFERENCED_PARAMETER(PdoRecord);
+
+	return STATUS_UNSUCCESSFUL;
+}
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS
+BthPS3_PDO_HandleHidControlRead(
+	_In_ DMFMODULE DmfModule,
+	_In_ WDFQUEUE Queue,
+	_In_ WDFREQUEST Request,
+	_In_ ULONG IoctlCode,
+	_In_reads_(InputBufferSize) VOID* InputBuffer,
+	_In_ size_t InputBufferSize,
+	_Out_writes_(OutputBufferSize) VOID* OutputBuffer,
+	_In_ size_t OutputBufferSize,
+	_Out_ size_t* BytesReturned
+)
+{
+	UNREFERENCED_PARAMETER(DmfModule);
+	UNREFERENCED_PARAMETER(Queue);
+	UNREFERENCED_PARAMETER(Request);
+	UNREFERENCED_PARAMETER(IoctlCode);
+	UNREFERENCED_PARAMETER(InputBuffer);
+	UNREFERENCED_PARAMETER(InputBufferSize);
+	UNREFERENCED_PARAMETER(OutputBufferSize);
+	UNREFERENCED_PARAMETER(OutputBuffer);
+	UNREFERENCED_PARAMETER(BytesReturned);
+
+	return STATUS_UNSUCCESSFUL;
+}
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS
+BthPS3_PDO_HandleHidControlWrite(
+	_In_ DMFMODULE DmfModule,
+	_In_ WDFQUEUE Queue,
+	_In_ WDFREQUEST Request,
+	_In_ ULONG IoctlCode,
+	_In_reads_(InputBufferSize) VOID* InputBuffer,
+	_In_ size_t InputBufferSize,
+	_Out_writes_(OutputBufferSize) VOID* OutputBuffer,
+	_In_ size_t OutputBufferSize,
+	_Out_ size_t* BytesReturned
+)
+{
+	UNREFERENCED_PARAMETER(DmfModule);
+	UNREFERENCED_PARAMETER(Queue);
+	UNREFERENCED_PARAMETER(Request);
+	UNREFERENCED_PARAMETER(IoctlCode);
+	UNREFERENCED_PARAMETER(InputBuffer);
+	UNREFERENCED_PARAMETER(InputBufferSize);
+	UNREFERENCED_PARAMETER(OutputBufferSize);
+	UNREFERENCED_PARAMETER(OutputBuffer);
+	UNREFERENCED_PARAMETER(BytesReturned);
+
+	return STATUS_UNSUCCESSFUL;
+}
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS
+BthPS3_PDO_HandleHidInterruptRead(
+	_In_ DMFMODULE DmfModule,
+	_In_ WDFQUEUE Queue,
+	_In_ WDFREQUEST Request,
+	_In_ ULONG IoctlCode,
+	_In_reads_(InputBufferSize) VOID* InputBuffer,
+	_In_ size_t InputBufferSize,
+	_Out_writes_(OutputBufferSize) VOID* OutputBuffer,
+	_In_ size_t OutputBufferSize,
+	_Out_ size_t* BytesReturned
+)
+{
+	UNREFERENCED_PARAMETER(DmfModule);
+	UNREFERENCED_PARAMETER(Queue);
+	UNREFERENCED_PARAMETER(Request);
+	UNREFERENCED_PARAMETER(IoctlCode);
+	UNREFERENCED_PARAMETER(InputBuffer);
+	UNREFERENCED_PARAMETER(InputBufferSize);
+	UNREFERENCED_PARAMETER(OutputBufferSize);
+	UNREFERENCED_PARAMETER(OutputBuffer);
+	UNREFERENCED_PARAMETER(BytesReturned);
+
+	return STATUS_UNSUCCESSFUL;
+}
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS
+BthPS3_PDO_HandleHidInterruptWrite(
+	_In_ DMFMODULE DmfModule,
+	_In_ WDFQUEUE Queue,
+	_In_ WDFREQUEST Request,
+	_In_ ULONG IoctlCode,
+	_In_reads_(InputBufferSize) VOID* InputBuffer,
+	_In_ size_t InputBufferSize,
+	_Out_writes_(OutputBufferSize) VOID* OutputBuffer,
+	_In_ size_t OutputBufferSize,
+	_Out_ size_t* BytesReturned
+)
+{
+	UNREFERENCED_PARAMETER(DmfModule);
+	UNREFERENCED_PARAMETER(Queue);
+	UNREFERENCED_PARAMETER(Request);
+	UNREFERENCED_PARAMETER(IoctlCode);
+	UNREFERENCED_PARAMETER(InputBuffer);
+	UNREFERENCED_PARAMETER(InputBufferSize);
+	UNREFERENCED_PARAMETER(OutputBufferSize);
+	UNREFERENCED_PARAMETER(OutputBuffer);
+	UNREFERENCED_PARAMETER(BytesReturned);
+
+	return STATUS_UNSUCCESSFUL;
+}
+

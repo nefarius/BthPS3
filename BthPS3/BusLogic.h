@@ -40,6 +40,7 @@
 #define MAX_DEVICE_ID_LEN   200
 #define BTH_ADDR_HEX_LEN    12
 
+#pragma region REMOVE
 //
 // Identification information for dynamically enumerated bus children (PDOs)
 // 
@@ -70,6 +71,7 @@ typedef struct _BTHPS3_PDO_DEVICE_CONTEXT
 } BTHPS3_PDO_DEVICE_CONTEXT, *PBTHPS3_PDO_DEVICE_CONTEXT;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_PDO_DEVICE_CONTEXT, GetPdoDeviceContext)
+#pragma endregion
 
 #pragma region REMOVE
 EVT_WDF_CHILD_LIST_CREATE_DEVICE BthPS3_EvtWdfChildListCreateDevice;
@@ -101,3 +103,45 @@ BthPS3_AssignDeviceProperty(
     ULONG Size,
     PVOID Data
 );
+
+//
+// The new fun
+// 
+
+//
+// TODO: this deprecates struct _BTHPS3_CLIENT_CONNECTION
+// 
+typedef struct _BTHPS3_PDO_CONTEXT
+{
+    PBTHPS3_DEVICE_CONTEXT_HEADER DevCtxHdr;
+
+    BTH_ADDR RemoteAddress;
+
+    UNICODE_STRING RemoteName;
+
+    DS_DEVICE_TYPE DeviceType;
+
+    BTHPS3_CLIENT_L2CAP_CHANNEL HidControlChannel;
+
+    BTHPS3_CLIENT_L2CAP_CHANNEL HidInterruptChannel;
+
+    DMFMODULE DmfModuleIoctlHandler; 
+
+} BTHPS3_PDO_CONTEXT, *PBTHPS3_PDO_CONTEXT;
+
+WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_PDO_CONTEXT, GetPdoContext)
+
+
+EVT_DMF_DEVICE_MODULES_ADD BthPS3_PDO_EvtDmfModulesAdd;
+
+EVT_DMF_Pdo_PreCreate BthPS3_PDO_EvtPreCreate;
+
+EVT_DMF_Pdo_PostCreate BthPS3_PDO_EvtPostCreate;
+
+EVT_DMF_IoctlHandler_Callback BthPS3_PDO_HandleHidControlRead;
+
+EVT_DMF_IoctlHandler_Callback BthPS3_PDO_HandleHidControlWrite;
+
+EVT_DMF_IoctlHandler_Callback BthPS3_PDO_HandleHidInterruptRead;
+
+EVT_DMF_IoctlHandler_Callback BthPS3_PDO_HandleHidInterruptWrite;

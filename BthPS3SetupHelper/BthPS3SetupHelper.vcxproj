@@ -151,7 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\Setup\BthPS3CA\LibraryHelper.hpp" />
+    <ClInclude Include="LibraryHelper.hpp" />
     <ClInclude Include="BthPS3Setup.h" />
     <ClInclude Include="Devcon.h" />
     <ClInclude Include="framework.h" />

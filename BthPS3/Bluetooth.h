@@ -4,7 +4,7 @@
  *                                                                                *
  * BSD 3-Clause License                                                           *
  *                                                                                *
- * Copyright (c) 2018-2021, Nefarius Software Solutions e.U.                      *
+ * Copyright (c) 2018-2022, Nefarius Software Solutions e.U.                      *
  * All rights reserved.                                                           *
  *                                                                                *
  * Redistribution and use in source and binary forms, with or without             *
@@ -89,8 +89,13 @@ typedef struct _BTHPS3_DEVICE_CONTEXT_HEADER
 	// 
 	WDFSPINLOCK ClientConnectionsLock;
 
+	//
+	// TODO: required?
 	DMFMODULE DmfModuleIoctlHandler;
 
+	//
+	// DMF module to handle PDO creation
+	// 
 	DMFMODULE DmfModulePdo;
 
 } BTHPS3_DEVICE_CONTEXT_HEADER, * PBTHPS3_DEVICE_CONTEXT_HEADER;

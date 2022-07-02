@@ -95,6 +95,18 @@
     <ClCompile Include="L2CAP.Transfer.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Bluetooth.Request.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Bluetooth.PSM.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Bluetooth.L2CAP.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Bluetooth.Connection.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="BthPS3.rc">

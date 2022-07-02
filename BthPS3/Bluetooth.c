@@ -42,8 +42,6 @@
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text (PAGE, BthPS3_UnregisterPSM)
-#pragma alloc_text (PAGE, BthPS3_UnregisterL2CAPServer)
 #pragma alloc_text (PAGE, BthPS3_QueryInterfaces)
 #pragma alloc_text (PAGE, BthPS3_Initialize)
 #endif
@@ -107,7 +105,7 @@ BthPS3_RetrieveLocalInfo(
 		//
 		// Verify HCI major version is high enough
 		// 
-		if (!NT_SUCCESS(status = BTHPS3_GET_HCI_VERSION(
+		if (!NT_SUCCESS(status = BthPS3_GetHciVersion(
 			DevCtxHdr->IoTarget,
 			&hciVersion,
 			NULL
@@ -150,322 +148,6 @@ BthPS3_RetrieveLocalInfo(
 
 	return status;
 }
-
-#pragma region PSM
-
-_IRQL_requires_max_(PASSIVE_LEVEL)
-NTSTATUS
-BthPS3_RegisterPSM(
-	_In_ PBTHPS3_SERVER_CONTEXT DevCtx
-)
-{
-	NTSTATUS status;
-	struct _BRB_PSM* brb;
-
-	FuncEntry(TRACE_BTH);
-
-	DevCtx->Header.ProfileDrvInterface.BthReuseBrb(
-		&(DevCtx->RegisterUnregisterBrb),
-		BRB_REGISTER_PSM
-	);
-
-	do 
-	{
-		brb = (struct _BRB_PSM*)
-			&(DevCtx->RegisterUnregisterBrb);
-
-		//
-		// Register PSM_DS3_HID_CONTROL
-		// 
-
-		brb->Psm = PSM_DS3_HID_CONTROL;
-
-		TraceInformation(
-			TRACE_BTH,
-			"Trying to register PSM 0x%04X",
-			brb->Psm
-		);
-
-		if (!NT_SUCCESS(status = BthPS3_SendBrbSynchronously(
-			DevCtx->Header.IoTarget,
-			DevCtx->Header.HostInitRequest,
-			(PBRB)brb,
-			sizeof(*brb)
-		)))
-		{
-			TraceError(
-				TRACE_BTH,
-				"BRB_REGISTER_PSM failed with status %!STATUS!",
-				status
-			);
-			break;
-		}
-
-		//
-		// Store PSM obtained
-		//
-		DevCtx->PsmHidControl = brb->Psm;
-
-		TraceInformation(
-			TRACE_BTH,
-			"Got PSM 0x%04X",
-			brb->Psm
-		);
-
-		// 
-		// Shouldn't happen but validate anyway
-		// 
-		if (brb->Psm != PSM_DS3_HID_CONTROL)
-		{
-			TraceError(
-				TRACE_BTH,
-				"Requested PSM 0x%04X but got 0x%04X instead",
-				PSM_DS3_HID_CONTROL,
-				brb->Psm
-			);
-
-			status = STATUS_INVALID_PARAMETER_1;
-			break;
-		}
-
-		//
-		// Register PSM_DS3_HID_CONTROL
-		// 
-
-		brb->Psm = PSM_DS3_HID_INTERRUPT;
-
-		TraceInformation(
-			TRACE_BTH,
-			"Trying to register PSM 0x%04X",
-			brb->Psm
-		);
-
-		if (!NT_SUCCESS(status = BthPS3_SendBrbSynchronously(
-			DevCtx->Header.IoTarget,
-			DevCtx->Header.HostInitRequest,
-			(PBRB)brb,
-			sizeof(*brb)
-		)))
-		{
-			TraceError(
-				TRACE_BTH,
-				"BRB_REGISTER_PSM failed with status %!STATUS!",
-				status
-			);
-			break;
-		}
-
-		//
-		// Store PSM obtained
-		//
-		DevCtx->PsmHidInterrupt = brb->Psm;
-
-		TraceInformation(
-			TRACE_BTH,
-			"Got PSM 0x%04X",
-			brb->Psm
-		);
-
-		// 
-		// Shouldn't happen but validate anyway
-		// 
-		if (brb->Psm != PSM_DS3_HID_INTERRUPT)
-		{
-			TraceError(
-				TRACE_BTH,
-				"Requested PSM 0x%04X but got 0x%04X instead",
-				PSM_DS3_HID_INTERRUPT,
-				brb->Psm
-			);
-
-			status = STATUS_INVALID_PARAMETER_2;
-		}
-
-	} while (FALSE);
-
-	FuncExit(TRACE_BTH, "status=%!STATUS!", status);
-
-	return status;
-}
-
-_IRQL_requires_max_(PASSIVE_LEVEL)
-VOID
-BthPS3_UnregisterPSM(
-	_In_ PBTHPS3_SERVER_CONTEXT DevCtx
-)
-{
-	NTSTATUS status;
-	struct _BRB_PSM* brb;
-
-	PAGED_CODE();
-
-	FuncEntry(TRACE_BTH);
-
-	DevCtx->Header.ProfileDrvInterface.BthReuseBrb(
-		&(DevCtx->RegisterUnregisterBrb),
-		BRB_UNREGISTER_PSM
-	);
-
-	brb = (struct _BRB_PSM*)
-		&(DevCtx->RegisterUnregisterBrb);
-
-	brb->Psm = DevCtx->PsmHidControl;
-
-	if (!NT_SUCCESS(status = BthPS3_SendBrbSynchronously(
-		DevCtx->Header.IoTarget,
-		DevCtx->Header.HostInitRequest,
-		(PBRB)brb,
-		sizeof(*(brb))
-	)))
-	{
-		TraceError(
-			TRACE_BTH,
-			"BRB_UNREGISTER_PSM failed with status %!STATUS!",
-			status
-		);
-	}
-
-	DevCtx->Header.ProfileDrvInterface.BthReuseBrb(
-		&(DevCtx->RegisterUnregisterBrb),
-		BRB_UNREGISTER_PSM
-	);
-
-	brb = (struct _BRB_PSM*)
-		&(DevCtx->RegisterUnregisterBrb);
-
-	brb->Psm = DevCtx->PsmHidInterrupt;
-
-	if (!NT_SUCCESS(status = BthPS3_SendBrbSynchronously(
-		DevCtx->Header.IoTarget,
-		DevCtx->Header.HostInitRequest,
-		(PBRB)brb,
-		sizeof(*(brb))
-	)))
-	{
-		TraceError(
-			TRACE_BTH,
-			"BRB_UNREGISTER_PSM failed with status %!STATUS!",
-			status
-		);
-	}
-
-	FuncExitNoReturn(TRACE_BTH);
-}
-
-#pragma endregion
-
-#pragma region L2CAP
-
-_IRQL_requires_max_(PASSIVE_LEVEL)
-NTSTATUS
-BthPS3_RegisterL2CAPServer(
-	_In_ PBTHPS3_SERVER_CONTEXT DevCtx
-)
-{
-	NTSTATUS status;
-	struct _BRB_L2CA_REGISTER_SERVER* brb;
-
-	FuncEntry(TRACE_BTH);
-
-	DevCtx->Header.ProfileDrvInterface.BthReuseBrb(
-		&(DevCtx->RegisterUnregisterBrb),
-		BRB_L2CA_REGISTER_SERVER
-	);
-
-	brb = (struct _BRB_L2CA_REGISTER_SERVER*)
-		&(DevCtx->RegisterUnregisterBrb);
-
-	//
-	// Format brb
-	//
-	brb->BtAddress = BTH_ADDR_NULL;
-	brb->PSM = 0; //we have already registered the PSMs
-	brb->IndicationCallback = &BthPS3_IndicationCallback;
-	brb->IndicationCallbackContext = DevCtx;
-	brb->IndicationFlags = 0;
-	brb->ReferenceObject = WdfDeviceWdmGetDeviceObject(DevCtx->Header.Device);
-
-	if (!NT_SUCCESS(status = BthPS3_SendBrbSynchronously(
-		DevCtx->Header.IoTarget,
-		DevCtx->Header.HostInitRequest,
-		(PBRB)brb,
-		sizeof(*brb)
-	)))
-	{
-		TraceError(
-			TRACE_BTH,
-			"BRB_REGISTER_PSM failed with status %!STATUS!",
-			status
-		);
-	}
-	else
-	{
-		//
-		// Store server handle
-		//
-		DevCtx->L2CAPServerHandle = brb->ServerHandle;
-	}
-
-	FuncExit(TRACE_BTH, "status=%!STATUS!", status);
-
-	return status;
-}
-
-_IRQL_requires_max_(PASSIVE_LEVEL)
-VOID
-BthPS3_UnregisterL2CAPServer(
-	_In_ PBTHPS3_SERVER_CONTEXT DevCtx
-)
-{
-	NTSTATUS status;
-	struct _BRB_L2CA_UNREGISTER_SERVER* brb;
-
-	FuncEntry(TRACE_BTH);
-
-	PAGED_CODE();
-
-	if (NULL == DevCtx->L2CAPServerHandle)
-	{
-		return;
-	}
-
-	DevCtx->Header.ProfileDrvInterface.BthReuseBrb(
-		&(DevCtx->RegisterUnregisterBrb),
-		BRB_L2CA_UNREGISTER_SERVER
-	);
-
-	brb = (struct _BRB_L2CA_UNREGISTER_SERVER*)
-		&(DevCtx->RegisterUnregisterBrb);
-
-	//
-	// Format Brb
-	//
-	brb->BtAddress = BTH_ADDR_NULL;//DevCtx->LocalAddress;
-	brb->Psm = 0; //since we will use unregister PSM to unregister.
-	brb->ServerHandle = DevCtx->L2CAPServerHandle;
-
-	if (!NT_SUCCESS(status = BthPS3_SendBrbSynchronously(
-		DevCtx->Header.IoTarget,
-		DevCtx->Header.HostInitRequest,
-		(PBRB)brb,
-		sizeof(*(brb))
-	)))
-	{
-		TraceError(
-			TRACE_BTH,
-			"BRB_L2CA_UNREGISTER_SERVER failed with status %!STATUS!",
-			status
-		);
-	}
-	else
-	{
-		DevCtx->L2CAPServerHandle = NULL;
-	}
-
-	FuncExitNoReturn(TRACE_BTH);
-}
-
-#pragma endregion
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
@@ -807,265 +489,163 @@ BthPS3_Initialize(
 	return BthPS3_QueryInterfaces(DevCtx);
 }
 
-//
-// Gets invoked by parent bus if there's work for our driver
-// 
-_IRQL_requires_max_(DISPATCH_LEVEL)
-void
-BthPS3_IndicationCallback(
-	_In_ PVOID Context,
-	_In_ INDICATION_CODE Indication,
-	_In_ PINDICATION_PARAMETERS Parameters
-)
-{
-	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	WDFWORKITEM asyncRemoteConnect;
-	WDF_WORKITEM_CONFIG asyncConfig;
-	WDF_OBJECT_ATTRIBUTES asyncAttribs;
-	PBTHPS3_REMOTE_CONNECT_CONTEXT connectCtx = NULL;
-
-	FuncEntry(TRACE_BTH);
-
-	switch (Indication)
-	{
-	case IndicationAddReference:
-	case IndicationReleaseReference:
-		break;
-	case IndicationRemoteConnect:
-	{
-		PBTHPS3_SERVER_CONTEXT devCtx = (PBTHPS3_SERVER_CONTEXT)Context;
-
-		TraceInformation(
-			TRACE_BTH,
-			"New connection for PSM 0x%04X from %012llX arrived",
-			Parameters->Parameters.Connect.Request.PSM,
-			Parameters->BtAddress
-		);
-
-		if (KeGetCurrentIrql() <= PASSIVE_LEVEL)
-		{
-			//
-			// Main entry point for a new connection, decides if valid etc.
-			// 
-			L2CAP_PS3_HandleRemoteConnect(devCtx, Parameters);
-
-			break;
-		}
-
-		//
-		// Can be DPC level, enqueue work item
-		// 
-
-		TraceVerbose(
-			TRACE_BTH,
-			"IRQL %!irql! too high, preparing async call",
-			KeGetCurrentIrql()
-		);
-
-		WDF_WORKITEM_CONFIG_INIT(
-			&asyncConfig,
-			L2CAP_PS3_HandleRemoteConnectAsync
-		);
-		WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&asyncAttribs, BTHPS3_REMOTE_CONNECT_CONTEXT);
-		asyncAttribs.ParentObject = devCtx->Header.Device;
-
-		if (!NT_SUCCESS(status = WdfWorkItemCreate(
-			&asyncConfig,
-			&asyncAttribs,
-			&asyncRemoteConnect
-		)))
-		{
-			TraceError(
-				TRACE_BTH,
-				"WdfWorkItemCreate failed with status %!STATUS!",
-				status
-			);
-
-			break;
-		}
-
-		//
-		// Pass on parameters as work item context
-		// 
-		connectCtx = GetRemoteConnectContext(asyncRemoteConnect);
-		connectCtx->ServerContext = devCtx;
-		connectCtx->IndicationParameters = *Parameters;
-
-		//
-		// Kick off async call
-		// 
-		WdfWorkItemEnqueue(asyncRemoteConnect);
-
-		break;
-	}
-	case IndicationRemoteDisconnect:
-	{
-		//
-		// We register L2CAP_PS3_ConnectionIndicationCallback for disconnect
-		//
-		NT_ASSERT(FALSE);
-		break;
-	}
-	case IndicationRemoteConfigRequest:
-	case IndicationRemoteConfigResponse:
-	case IndicationFreeExtraOptions:
-		break;
-	}
-
-	FuncExitNoReturn(TRACE_BTH);
-}
-
-#pragma region BRB Request submission
-
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-BthPS3_SendBrbSynchronously(
-	_In_ WDFIOTARGET IoTarget,
-	_In_ WDFREQUEST Request,
-	_In_ PBRB Brb,
-	_In_ ULONG BrbSize
+BthPS3_GetDeviceName(
+	WDFIOTARGET IoTarget,
+	BTH_ADDR RemoteAddress,
+	PCHAR Name
 )
 {
-	NTSTATUS status;
-	WDF_REQUEST_REUSE_PARAMS reuseParams;
-	WDF_MEMORY_DESCRIPTOR OtherArg1Desc;
-
 	FuncEntry(TRACE_BTH);
 
-	WDF_REQUEST_REUSE_PARAMS_INIT(
-		&reuseParams,
-		WDF_REQUEST_REUSE_NO_FLAGS,
-		STATUS_NOT_SUPPORTED
-	);
+	NTSTATUS status = STATUS_INVALID_BUFFER_SIZE;
+	ULONG index = 0;
+	WDF_MEMORY_DESCRIPTOR MemoryDescriptor;
+	WDFMEMORY MemoryHandle = NULL;
+	PBTH_DEVICE_INFO_LIST pDeviceInfoList = NULL;
+	ULONG maxDevices = BTH_DEVICE_INFO_MAX_COUNT;
+	ULONG retryCount = 0;
 
-	if (!NT_SUCCESS(status = WdfRequestReuse(Request, &reuseParams)))
+	//
+	// Retry increasing the buffer a few times if _a lot_ of devices
+	// are cached and the allocated memory can't store them all.
+	// 
+	for (retryCount = 0; (retryCount <= BTH_DEVICE_INFO_MAX_RETRIES
+		&& status == STATUS_INVALID_BUFFER_SIZE); retryCount++)
 	{
+		if (MemoryHandle != NULL)
+		{
+			WdfObjectDelete(MemoryHandle);
+		}
+
+		if (!NT_SUCCESS(status = WdfMemoryCreate(NULL,
+			NonPagedPoolNx,
+			POOLTAG_BTHPS3,
+			sizeof(BTH_DEVICE_INFO_LIST) + (sizeof(BTH_DEVICE_INFO) * maxDevices),
+			&MemoryHandle,
+			NULL)))
+		{
+			return status;
+		}
+
+		WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(
+			&MemoryDescriptor,
+			MemoryHandle,
+			NULL
+		);
+
+		status = WdfIoTargetSendIoctlSynchronously(
+			IoTarget,
+			NULL,
+			IOCTL_BTH_GET_DEVICE_INFO,
+			&MemoryDescriptor,
+			&MemoryDescriptor,
+			NULL,
+			NULL
+		);
+
+		//
+		// Increase memory to allocate
+		// 
+		maxDevices += BTH_DEVICE_INFO_MAX_COUNT;
+	}
+
+	if (!NT_SUCCESS(status)) {
+		WdfObjectDelete(MemoryHandle);
 		return status;
 	}
 
-	WDF_MEMORY_DESCRIPTOR_INIT_BUFFER(
-		&OtherArg1Desc,
-		Brb,
-		BrbSize
-	);
+	pDeviceInfoList = WdfMemoryGetBuffer(MemoryHandle, NULL);
+	status = STATUS_NOT_FOUND;
 
-	status = WdfIoTargetSendInternalIoctlOthersSynchronously(
-		IoTarget,
-		Request,
-		IOCTL_INTERNAL_BTH_SUBMIT_BRB,
-		&OtherArg1Desc,
-		NULL, //OtherArg2
-		NULL, //OtherArg4
-		NULL, //RequestOptions
-		NULL  //BytesReturned
-	);
+	for (index = 0; index < pDeviceInfoList->numOfDevices; index++)
+	{
+		PBTH_DEVICE_INFO pDeviceInfo = &pDeviceInfoList->deviceList[index];
+
+		if (pDeviceInfo->address == RemoteAddress)
+		{
+			if (strlen(pDeviceInfo->name) == 0)
+			{
+				status = STATUS_INVALID_PARAMETER;
+				break;
+			}
+
+			strcpy_s(Name, BTH_MAX_NAME_SIZE, pDeviceInfo->name);
+			status = STATUS_SUCCESS;
+			break;
+		}
+	}
+
+	WdfObjectDelete(MemoryHandle);
 
 	FuncExit(TRACE_BTH, "status=%!STATUS!", status);
 
 	return status;
 }
 
-_IRQL_requires_max_(DISPATCH_LEVEL)
+_IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-BthPS3_SendBrbAsync(
+BthPS3_GetHciVersion(
 	_In_ WDFIOTARGET IoTarget,
-	_In_ WDFREQUEST Request,
-	_In_ PBRB Brb,
-	_In_ size_t BrbSize,
-	_In_ PFN_WDF_REQUEST_COMPLETION_ROUTINE ComplRoutine,
-	_In_opt_ WDFCONTEXT Context
+	_Out_ PUCHAR HciVersion,
+	_Out_opt_ PUSHORT HciRevision
 )
 {
-	NTSTATUS status = BTH_ERROR_SUCCESS;
-	WDF_OBJECT_ATTRIBUTES attributes;
-	WDFMEMORY memoryArg1 = NULL;
+	FuncEntry(TRACE_BTH);
 
-	if (BrbSize <= 0)
+	NTSTATUS status;
+	WDF_MEMORY_DESCRIPTOR MemoryDescriptor;
+	WDFMEMORY MemoryHandle = NULL;
+	PBTH_LOCAL_RADIO_INFO pLocalInfo = NULL;
+#ifdef _M_IX86
+	ULONG bytesReturned;
+#else
+	ULONGLONG bytesReturned;
+#endif
+	
+	if (!NT_SUCCESS(status = WdfMemoryCreate(NULL,
+		NonPagedPoolNx,
+		POOLTAG_BTHPS3,
+		sizeof(BTH_LOCAL_RADIO_INFO),
+		&MemoryHandle,
+		NULL))) 
 	{
-		TraceError(
-			TRACE_BTH,
-			"BrbSize has invalid value: %I64d\n",
-			BrbSize
-		);
-
-		status = STATUS_INVALID_PARAMETER;
-
 		return status;
 	}
 
-	WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
-	attributes.ParentObject = Request;
-
-	if (!NT_SUCCESS(status = WdfMemoryCreatePreallocated(
-		&attributes,
-		Brb,
-		BrbSize,
-		&memoryArg1
-	)))
-	{
-		TraceError(TRACE_BTH,
-			"Creating preallocated memory for Brb 0x%p failed, Request to be formatted 0x%p, "
-			"Status code %!STATUS!",
-			Brb,
-			Request,
-			status
-		);
-
-		return status;
-	}
-
-	if (!NT_SUCCESS(status = WdfIoTargetFormatRequestForInternalIoctlOthers(
-		IoTarget,
-		Request,
-		IOCTL_INTERNAL_BTH_SUBMIT_BRB,
-		memoryArg1,
-		NULL, //OtherArg1Offset
-		NULL, //OtherArg2
-		NULL, //OtherArg2Offset
-		NULL, //OtherArg4
-		NULL  //OtherArg4Offset
-	)))
-	{
-		TraceError(
-			TRACE_BTH,
-			"Formatting request 0x%p with Brb 0x%p failed, Status code %!STATUS!",
-			Request,
-			Brb,
-			status
-		);
-
-		return status;
-	}
-
-	//
-	// Set a CompletionRoutine callback function.
-	//
-	WdfRequestSetCompletionRoutine(
-		Request,
-		ComplRoutine,
-		Context
+	WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(
+		&MemoryDescriptor,
+		MemoryHandle,
+		NULL
 	);
 
-	if (FALSE == WdfRequestSend(
-		Request,
+	status = WdfIoTargetSendIoctlSynchronously(
 		IoTarget,
-		NULL
-	))
-	{
-		status = WdfRequestGetStatus(Request);
+		NULL,
+		IOCTL_BTH_GET_LOCAL_INFO,
+		&MemoryDescriptor,
+		&MemoryDescriptor,
+		NULL,
+		&bytesReturned
+	);
 
-		TraceError(
-			TRACE_BTH,
-			"Request send failed for request 0x%p, Brb 0x%p, Status code %!STATUS!",
-			Request,
-			Brb,
-			status
-		);
-
+	if (!NT_SUCCESS(status) || bytesReturned < sizeof(BTH_LOCAL_RADIO_INFO)) {
+		WdfObjectDelete(MemoryHandle);
 		return status;
 	}
+
+	pLocalInfo = WdfMemoryGetBuffer(MemoryHandle, NULL);
+
+	if (HciVersion)
+		*HciVersion = pLocalInfo->hciVersion;
+		
+	if (HciRevision)
+		*HciRevision = pLocalInfo->hciRevision;
+
+	WdfObjectDelete(MemoryHandle);
+
+	FuncExit(TRACE_BTH, "status=%!STATUS!", status);
 
 	return status;
 }
-
-#pragma endregion

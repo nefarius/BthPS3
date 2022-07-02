@@ -85,7 +85,7 @@ L2CAP_PS3_HandleRemoteConnect(
         //
         // Request remote name from radio for device identification
         // 
-        status = BTHPS3_GET_DEVICE_NAME(
+        status = BthPS3_GetDeviceName(
             DevCtx->Header.IoTarget,
             ConnectParams->BtAddress,
             remoteName

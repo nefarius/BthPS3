@@ -296,156 +296,19 @@ BthPS3_SendBrbAsync(
 // 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-FORCEINLINE
-BTHPS3_GET_DEVICE_NAME(
+BthPS3_GetDeviceName(
 	WDFIOTARGET IoTarget,
 	BTH_ADDR RemoteAddress,
 	PCHAR Name
-)
-{
-	NTSTATUS status = STATUS_INVALID_BUFFER_SIZE;
-	ULONG index = 0;
-	WDF_MEMORY_DESCRIPTOR MemoryDescriptor;
-	WDFMEMORY MemoryHandle = NULL;
-	PBTH_DEVICE_INFO_LIST pDeviceInfoList = NULL;
-	ULONG maxDevices = BTH_DEVICE_INFO_MAX_COUNT;
-	ULONG retryCount = 0;
-
-	//
-	// Retry increasing the buffer a few times if _a lot_ of devices
-	// are cached and the allocated memory can't store them all.
-	// 
-	for (retryCount = 0; (retryCount <= BTH_DEVICE_INFO_MAX_RETRIES
-		&& status == STATUS_INVALID_BUFFER_SIZE); retryCount++)
-	{
-		if (MemoryHandle != NULL)
-		{
-			WdfObjectDelete(MemoryHandle);
-		}
-
-		if (!NT_SUCCESS(status = WdfMemoryCreate(NULL,
-			NonPagedPoolNx,
-			POOLTAG_BTHPS3,
-			sizeof(BTH_DEVICE_INFO_LIST) + (sizeof(BTH_DEVICE_INFO) * maxDevices),
-			&MemoryHandle,
-			NULL)))
-		{
-			return status;
-		}
-
-		WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(
-			&MemoryDescriptor,
-			MemoryHandle,
-			NULL
-		);
-
-		status = WdfIoTargetSendIoctlSynchronously(
-			IoTarget,
-			NULL,
-			IOCTL_BTH_GET_DEVICE_INFO,
-			&MemoryDescriptor,
-			&MemoryDescriptor,
-			NULL,
-			NULL
-		);
-
-		//
-		// Increase memory to allocate
-		// 
-		maxDevices += BTH_DEVICE_INFO_MAX_COUNT;
-	}
-
-	if (!NT_SUCCESS(status)) {
-		WdfObjectDelete(MemoryHandle);
-		return status;
-	}
-
-	pDeviceInfoList = WdfMemoryGetBuffer(MemoryHandle, NULL);
-	status = STATUS_NOT_FOUND;
-
-	for (index = 0; index < pDeviceInfoList->numOfDevices; index++)
-	{
-		PBTH_DEVICE_INFO pDeviceInfo = &pDeviceInfoList->deviceList[index];
-
-		if (pDeviceInfo->address == RemoteAddress)
-		{
-			if (strlen(pDeviceInfo->name) == 0)
-			{
-				status = STATUS_INVALID_PARAMETER;
-				break;
-			}
-
-			strcpy_s(Name, BTH_MAX_NAME_SIZE, pDeviceInfo->name);
-			status = STATUS_SUCCESS;
-			break;
-		}
-	}
-
-	WdfObjectDelete(MemoryHandle);
-	return status;
-}
+);
 
 //
-// Request remote device friendly name from radio
+// Request HCI version from radio
 // 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-FORCEINLINE
-BTHPS3_GET_HCI_VERSION(
+BthPS3_GetHciVersion(
 	_In_ WDFIOTARGET IoTarget,
 	_Out_ PUCHAR HciVersion,
 	_Out_opt_ PUSHORT HciRevision
-)
-{
-	NTSTATUS status;
-	WDF_MEMORY_DESCRIPTOR MemoryDescriptor;
-	WDFMEMORY MemoryHandle = NULL;
-	PBTH_LOCAL_RADIO_INFO pLocalInfo = NULL;
-#ifdef _M_IX86
-	ULONG bytesReturned;
-#else
-	ULONGLONG bytesReturned;
-#endif
-	
-	if (!NT_SUCCESS(status = WdfMemoryCreate(NULL,
-		NonPagedPoolNx,
-		POOLTAG_BTHPS3,
-		sizeof(BTH_LOCAL_RADIO_INFO),
-		&MemoryHandle,
-		NULL))) 
-	{
-		return status;
-	}
-
-	WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(
-		&MemoryDescriptor,
-		MemoryHandle,
-		NULL
-	);
-
-	status = WdfIoTargetSendIoctlSynchronously(
-		IoTarget,
-		NULL,
-		IOCTL_BTH_GET_LOCAL_INFO,
-		&MemoryDescriptor,
-		&MemoryDescriptor,
-		NULL,
-		&bytesReturned
-	);
-
-	if (!NT_SUCCESS(status) || bytesReturned < sizeof(BTH_LOCAL_RADIO_INFO)) {
-		WdfObjectDelete(MemoryHandle);
-		return status;
-	}
-
-	pLocalInfo = WdfMemoryGetBuffer(MemoryHandle, NULL);
-
-	if (HciVersion)
-		*HciVersion = pLocalInfo->hciVersion;
-		
-	if (HciRevision)
-		*HciRevision = pLocalInfo->hciRevision;
-
-	WdfObjectDelete(MemoryHandle);
-	return status;
-}
+);

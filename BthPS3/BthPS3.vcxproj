@@ -312,7 +312,6 @@
   </ItemGroup>
   <ItemGroup>
     <MessageCompile Include="BthPS3.man">
-      <FileType>MessageCompile</FileType>
       <GenerateKernelModeLoggingMacros Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</GenerateKernelModeLoggingMacros>
       <UseBaseNameOfInput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</UseBaseNameOfInput>
       <GenerateKernelModeLoggingMacros Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</GenerateKernelModeLoggingMacros>

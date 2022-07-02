@@ -918,7 +918,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 		);
 
 		status = L2CAP_PS3_ReadControlTransferAsync(
-			clientConnection,
+			(PBTHPS3_PDO_CONTEXT)clientConnection,
 			Request,
 			buffer,
 			bufferLength,
@@ -967,7 +967,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 		}
 
 		status = L2CAP_PS3_SendControlTransferAsync(
-			clientConnection,
+			(PBTHPS3_PDO_CONTEXT)clientConnection,
 			Request,
 			buffer,
 			bufferLength,
@@ -1022,7 +1022,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 		);
 
 		status = L2CAP_PS3_ReadInterruptTransferAsync(
-			clientConnection,
+			(PBTHPS3_PDO_CONTEXT)clientConnection,
 			Request,
 			buffer,
 			bufferLength,
@@ -1071,7 +1071,7 @@ void BthPS3_PDO_EvtWdfIoQueueIoDeviceControl(
 		}
 
 		status = L2CAP_PS3_SendInterruptTransferAsync(
-			clientConnection,
+			(PBTHPS3_PDO_CONTEXT)clientConnection,
 			Request,
 			buffer,
 			bufferLength,
@@ -1357,6 +1357,9 @@ NTSTATUS BthPS3_AssignDeviceProperty(
 // The new stuff
 // 
 
+//
+// Creates a new PDO and connection context for a given remote address
+// 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_PDO_Create(
@@ -1432,7 +1435,8 @@ BthPS3_PDO_Create(
 			&attributes,
 			pPdoCtx->DevCtxHdr->IoTarget,
 			&pPdoCtx->HidControlChannel.ConnectDisconnectRequest
-		))) {
+		)))
+		{
 			TraceError(
 				TRACE_BUSLOGIC,
 				"WdfRequestCreate for HidControlChannel failed with status %!STATUS!",
@@ -1455,7 +1459,8 @@ BthPS3_PDO_Create(
 		if (!NT_SUCCESS(status = WdfSpinLockCreate(
 			&attributes,
 			&pPdoCtx->HidControlChannel.ConnectionStateLock
-		))) {
+		)))
+		{
 			TraceError(
 				TRACE_BUSLOGIC,
 				"WdfSpinLockCreate for HidControlChannel failed with status %!STATUS!",
@@ -1474,7 +1479,8 @@ BthPS3_PDO_Create(
 			&attributes,
 			pPdoCtx->DevCtxHdr->IoTarget,
 			&pPdoCtx->HidInterruptChannel.ConnectDisconnectRequest
-		))) {
+		)))
+		{
 			TraceError(
 				TRACE_BUSLOGIC,
 				"WdfRequestCreate for HidInterruptChannel failed with status %!STATUS!",
@@ -1497,7 +1503,8 @@ BthPS3_PDO_Create(
 		if (!NT_SUCCESS(status = WdfSpinLockCreate(
 			&attributes,
 			&pPdoCtx->HidInterruptChannel.ConnectionStateLock
-		))) {
+		)))
+		{
 			TraceError(
 				TRACE_BUSLOGIC,
 				"WdfSpinLockCreate for HidInterruptChannel failed with status %!STATUS!",
@@ -1524,6 +1531,10 @@ BthPS3_PDO_Create(
 		DMF_IoctlHandler_IoctlStateSet(pPdoCtx->DmfModuleIoctlHandler, TRUE);
 
 	} while (FALSE);
+
+	//
+	// TODO: add error handling
+	// 
 
 	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
 
@@ -1638,17 +1649,36 @@ BthPS3_PDO_HandleHidControlRead(
 	_Out_ size_t* BytesReturned
 )
 {
-	UNREFERENCED_PARAMETER(DmfModule);
 	UNREFERENCED_PARAMETER(Queue);
-	UNREFERENCED_PARAMETER(Request);
 	UNREFERENCED_PARAMETER(IoctlCode);
 	UNREFERENCED_PARAMETER(InputBuffer);
 	UNREFERENCED_PARAMETER(InputBufferSize);
-	UNREFERENCED_PARAMETER(OutputBufferSize);
-	UNREFERENCED_PARAMETER(OutputBuffer);
 	UNREFERENCED_PARAMETER(BytesReturned);
 
-	return STATUS_UNSUCCESSFUL;
+	NTSTATUS status;
+	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
+	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
+
+	if (!NT_SUCCESS(status = L2CAP_PS3_ReadControlTransferAsync(
+		pPdoCtx,
+		Request,
+		OutputBuffer,
+		OutputBufferSize,
+		L2CAP_PS3_AsyncReadControlTransferCompleted
+	)))
+	{
+		TraceError(
+			TRACE_BUSLOGIC,
+			"L2CAP_PS3_ReadControlTransferAsync failed with status %!STATUS!",
+			status
+		);
+	}
+	else
+	{
+		status = STATUS_PENDING;
+	}
+
+	return status;
 }
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
@@ -1665,17 +1695,36 @@ BthPS3_PDO_HandleHidControlWrite(
 	_Out_ size_t* BytesReturned
 )
 {
-	UNREFERENCED_PARAMETER(DmfModule);
 	UNREFERENCED_PARAMETER(Queue);
-	UNREFERENCED_PARAMETER(Request);
 	UNREFERENCED_PARAMETER(IoctlCode);
-	UNREFERENCED_PARAMETER(InputBuffer);
-	UNREFERENCED_PARAMETER(InputBufferSize);
-	UNREFERENCED_PARAMETER(OutputBufferSize);
 	UNREFERENCED_PARAMETER(OutputBuffer);
+	UNREFERENCED_PARAMETER(OutputBufferSize);
 	UNREFERENCED_PARAMETER(BytesReturned);
 
-	return STATUS_UNSUCCESSFUL;
+	NTSTATUS status;
+	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
+	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
+
+	if (!NT_SUCCESS(status = L2CAP_PS3_SendControlTransferAsync(
+		pPdoCtx,
+		Request,
+		InputBuffer,
+		InputBufferSize,
+		L2CAP_PS3_AsyncReadControlTransferCompleted
+	)))
+	{
+		TraceError(
+			TRACE_BUSLOGIC,
+			"L2CAP_PS3_SendControlTransferAsync failed with status %!STATUS!",
+			status
+		);
+	}
+	else
+	{
+		status = STATUS_PENDING;
+	}
+
+	return status;
 }
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
@@ -1692,17 +1741,36 @@ BthPS3_PDO_HandleHidInterruptRead(
 	_Out_ size_t* BytesReturned
 )
 {
-	UNREFERENCED_PARAMETER(DmfModule);
 	UNREFERENCED_PARAMETER(Queue);
-	UNREFERENCED_PARAMETER(Request);
 	UNREFERENCED_PARAMETER(IoctlCode);
 	UNREFERENCED_PARAMETER(InputBuffer);
 	UNREFERENCED_PARAMETER(InputBufferSize);
-	UNREFERENCED_PARAMETER(OutputBufferSize);
-	UNREFERENCED_PARAMETER(OutputBuffer);
 	UNREFERENCED_PARAMETER(BytesReturned);
 
-	return STATUS_UNSUCCESSFUL;
+	NTSTATUS status;
+	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
+	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
+
+	if (!NT_SUCCESS(status = L2CAP_PS3_ReadInterruptTransferAsync(
+		pPdoCtx,
+		Request,
+		OutputBuffer,
+		OutputBufferSize,
+		L2CAP_PS3_AsyncReadControlTransferCompleted
+	)))
+	{
+		TraceError(
+			TRACE_BUSLOGIC,
+			"L2CAP_PS3_ReadInterruptTransferAsync failed with status %!STATUS!",
+			status
+		);
+	}
+	else
+	{
+		status = STATUS_PENDING;
+	}
+
+	return status;
 }
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
@@ -1719,16 +1787,35 @@ BthPS3_PDO_HandleHidInterruptWrite(
 	_Out_ size_t* BytesReturned
 )
 {
-	UNREFERENCED_PARAMETER(DmfModule);
 	UNREFERENCED_PARAMETER(Queue);
-	UNREFERENCED_PARAMETER(Request);
 	UNREFERENCED_PARAMETER(IoctlCode);
-	UNREFERENCED_PARAMETER(InputBuffer);
-	UNREFERENCED_PARAMETER(InputBufferSize);
-	UNREFERENCED_PARAMETER(OutputBufferSize);
 	UNREFERENCED_PARAMETER(OutputBuffer);
+	UNREFERENCED_PARAMETER(OutputBufferSize);
 	UNREFERENCED_PARAMETER(BytesReturned);
 
-	return STATUS_UNSUCCESSFUL;
+	NTSTATUS status;
+	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
+	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
+
+	if (!NT_SUCCESS(status = L2CAP_PS3_SendInterruptTransferAsync(
+		pPdoCtx,
+		Request,
+		InputBuffer,
+		InputBufferSize,
+		L2CAP_PS3_AsyncReadControlTransferCompleted
+	)))
+	{
+		TraceError(
+			TRACE_BUSLOGIC,
+			"L2CAP_PS3_SendInterruptTransferAsync failed with status %!STATUS!",
+			status
+		);
+	}
+	else
+	{
+		status = STATUS_PENDING;
+	}
+
+	return status;
 }
 

@@ -38,6 +38,8 @@
 #pragma once
 
 
+typedef struct _BTHPS3_PDO_CONTEXT *PBTHPS3_PDO_CONTEXT;
+
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_HandleRemoteConnect(
@@ -76,7 +78,7 @@ L2CAP_PS3_ConnectionStateConnected(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_SendControlTransferAsync(
-    PBTHPS3_CLIENT_CONNECTION ClientConnection,
+    PBTHPS3_PDO_CONTEXT ClientConnection,
     WDFREQUEST Request,
     PVOID Buffer,
     size_t BufferLength,
@@ -86,7 +88,7 @@ L2CAP_PS3_SendControlTransferAsync(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_ReadControlTransferAsync(
-    PBTHPS3_CLIENT_CONNECTION ClientConnection,
+    PBTHPS3_PDO_CONTEXT ClientConnection,
     WDFREQUEST Request,
     PVOID Buffer,
     size_t BufferLength,
@@ -96,7 +98,7 @@ L2CAP_PS3_ReadControlTransferAsync(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_ReadInterruptTransferAsync(
-    _In_ PBTHPS3_CLIENT_CONNECTION ClientConnection,
+    _In_ PBTHPS3_PDO_CONTEXT ClientConnection,
     _In_ WDFREQUEST Request,
     _In_ PVOID Buffer,
     _In_ size_t BufferLength,
@@ -106,7 +108,7 @@ L2CAP_PS3_ReadInterruptTransferAsync(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_SendInterruptTransferAsync(
-    _In_ PBTHPS3_CLIENT_CONNECTION ClientConnection,
+    _In_ PBTHPS3_PDO_CONTEXT ClientConnection,
     _In_ WDFREQUEST Request,
     _In_ PVOID Buffer,
     _In_ size_t BufferLength,

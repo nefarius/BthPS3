@@ -472,7 +472,6 @@ DmfDeviceModulesAdd(
 
 	DMF_MODULE_ATTRIBUTES moduleAttributes;
 	DMF_CONFIG_Pdo moduleConfigPdo;
-	DMF_CONFIG_IoctlHandler moduleConfigIoctlHandler;
 
 	const PBTHPS3_SERVER_CONTEXT pSrvCtx = GetServerDeviceContext(Device);
 
@@ -500,30 +499,6 @@ DmfDeviceModulesAdd(
 		&moduleAttributes,
 		WDF_NO_OBJECT_ATTRIBUTES,
 		&pSrvCtx->Header.DmfModulePdo
-	);
-
-	//
-	// IOCTL Handler Module (TODO: in use?)
-	// 
-
-	DMF_CONFIG_IoctlHandler_AND_ATTRIBUTES_INIT(
-		&moduleConfigIoctlHandler,
-		&moduleAttributes
-	);
-
-	moduleConfigIoctlHandler.DeviceInterfaceGuid = GUID_DEVINTERFACE_BTHPS3;
-	moduleConfigIoctlHandler.AccessModeFilter = IoctlHandler_AccessModeDefault;
-	moduleConfigIoctlHandler.EvtIoctlHandlerAccessModeFilter = NULL;
-	moduleConfigIoctlHandler.IoctlRecordCount = 0;
-	moduleConfigIoctlHandler.IoctlRecords = NULL;
-	moduleConfigIoctlHandler.ForwardUnhandledRequests = TRUE;
-	moduleConfigIoctlHandler.ManualMode = TRUE;
-
-	DMF_DmfModuleAdd(
-		DmfModuleInit,
-		&moduleAttributes,
-		WDF_NO_OBJECT_ATTRIBUTES,
-		&pSrvCtx->Header.DmfModuleIoctlHandler
 	);
 
 	FuncExitNoReturn(TRACE_DEVICE);

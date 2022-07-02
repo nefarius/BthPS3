@@ -1357,6 +1357,178 @@ NTSTATUS BthPS3_AssignDeviceProperty(
 // The new stuff
 // 
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS
+BthPS3_PDO_Create(
+	_In_ PBTHPS3_SERVER_CONTEXT Context,
+	_In_ BTH_ADDR RemoteAddress,
+	_In_ PFN_WDF_OBJECT_CONTEXT_CLEANUP CleanupCallback,
+	_Out_ PBTHPS3_PDO_CONTEXT* PdoContext
+)
+{
+	FuncEntry(TRACE_BUSLOGIC);
+
+	NTSTATUS status;
+	WDF_OBJECT_ATTRIBUTES attributes;
+	PDO_RECORD record;
+	WDFDEVICE device;
+
+	WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&attributes, BTHPS3_PDO_CONTEXT);
+
+	attributes.ParentObject = Context->Header.Device;
+	attributes.EvtCleanupCallback = CleanupCallback;
+	attributes.ExecutionLevel = WdfExecutionLevelPassive;
+
+	record.CustomClientContext = &attributes;
+
+	do
+	{
+		//
+		// Create PDO, DMF modules and allocate PDO context
+		// 
+		if (!NT_SUCCESS(status = DMF_Pdo_DevicePlugEx(
+			Context->Header.DmfModulePdo,
+			&record,
+			&device
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"DMF_Pdo_DevicePlugEx failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
+
+		//
+		// Insert PDO in connection collection
+		// 
+		if (!NT_SUCCESS(status = WdfCollectionAdd(
+			Context->Header.ClientConnections,
+			device
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfCollectionAdd for PDO device object failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
+
+		const PBTHPS3_PDO_CONTEXT pPdoCtx = *PdoContext = GetPdoContext(device);
+
+		//
+		// This is our "primary key"
+		// 
+		pPdoCtx->RemoteAddress = RemoteAddress;
+		pPdoCtx->DevCtxHdr = &Context->Header;
+
+		//
+		// Initialize HidControlChannel properties
+		// 
+
+		if (!NT_SUCCESS(status = WdfRequestCreate(
+			&attributes,
+			pPdoCtx->DevCtxHdr->IoTarget,
+			&pPdoCtx->HidControlChannel.ConnectDisconnectRequest
+		))) {
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfRequestCreate for HidControlChannel failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
+
+		//
+		// Initialize signaled, will be cleared once a connection is established
+		// 
+		KeInitializeEvent(&pPdoCtx->HidControlChannel.DisconnectEvent,
+			NotificationEvent,
+			TRUE
+		);
+
+		WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+		attributes.ParentObject = device;
+
+		if (!NT_SUCCESS(status = WdfSpinLockCreate(
+			&attributes,
+			&pPdoCtx->HidControlChannel.ConnectionStateLock
+		))) {
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfSpinLockCreate for HidControlChannel failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
+
+		pPdoCtx->HidControlChannel.ConnectionState = ConnectionStateInitialized;
+
+		//
+		// Initialize HidInterruptChannel properties
+		// 
+
+		if (!NT_SUCCESS(status = WdfRequestCreate(
+			&attributes,
+			pPdoCtx->DevCtxHdr->IoTarget,
+			&pPdoCtx->HidInterruptChannel.ConnectDisconnectRequest
+		))) {
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfRequestCreate for HidInterruptChannel failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
+
+		//
+		// Initialize signaled, will be cleared once a connection is established
+		// 
+		KeInitializeEvent(&pPdoCtx->HidInterruptChannel.DisconnectEvent,
+			NotificationEvent,
+			TRUE
+		);
+
+		WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+		attributes.ParentObject = device;
+
+		if (!NT_SUCCESS(status = WdfSpinLockCreate(
+			&attributes,
+			&pPdoCtx->HidInterruptChannel.ConnectionStateLock
+		))) {
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfSpinLockCreate for HidInterruptChannel failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
+
+		pPdoCtx->HidInterruptChannel.ConnectionState = ConnectionStateInitialized;
+
+		//
+		// Store reported remote name to assign to property later
+		// 
+		pPdoCtx->RemoteName.MaximumLength = BTH_MAX_NAME_SIZE * sizeof(WCHAR);
+		pPdoCtx->RemoteName.Buffer = ExAllocatePoolWithTag(
+			NonPagedPoolNx,
+			BTH_MAX_NAME_SIZE * sizeof(WCHAR),
+			BTHPS_POOL_TAG
+		);
+
+		//
+		// We're ready, expose interface
+		// 
+		DMF_IoctlHandler_IoctlStateSet(pPdoCtx->DmfModuleIoctlHandler, TRUE);
+
+	} while (FALSE);
+
+	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
+
+	return status;
+}
 
 //
 // Called when initializing DMF modules for the PDO
@@ -1430,12 +1602,26 @@ BthPS3_PDO_EvtPostCreate(
 	_In_ PDO_RECORD* PdoRecord
 )
 {
+	FuncEntry(TRACE_BUSLOGIC);
+
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	//WDF_OBJECT_ATTRIBUTES attributes;
+	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(ChildDevice);
+
+	do
+	{
+
+
+	} while (FALSE);
+
 	UNREFERENCED_PARAMETER(DmfModule);
-	UNREFERENCED_PARAMETER(ChildDevice);
+	UNREFERENCED_PARAMETER(pPdoCtx);
 	UNREFERENCED_PARAMETER(DmfDeviceInit);
 	UNREFERENCED_PARAMETER(PdoRecord);
 
-	return STATUS_UNSUCCESSFUL;
+	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
+
+	return status;
 }
 
 _IRQL_requires_max_(PASSIVE_LEVEL)

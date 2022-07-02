@@ -61,6 +61,8 @@ DriverEntry(
 
     FuncEntry(TRACE_DRIVER);
 
+    ExInitializeDriverRuntime(DrvRtPoolNxOptIn);
+
     //
     // Register a cleanup callback so that we can call WPP_CLEANUP when
     // the framework driver object is deleted during driver unload.

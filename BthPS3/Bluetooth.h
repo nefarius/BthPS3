@@ -90,11 +90,6 @@ typedef struct _BTHPS3_DEVICE_CONTEXT_HEADER
 	WDFSPINLOCK ClientConnectionsLock;
 
 	//
-	// TODO: required?
-	// 
-	DMFMODULE DmfModuleIoctlHandler;
-
-	//
 	// DMF module to handle PDO creation
 	// 
 	DMFMODULE DmfModulePdo;

@@ -132,6 +132,15 @@ typedef struct _BTHPS3_PDO_CONTEXT
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_PDO_CONTEXT, GetPdoContext)
 
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS
+BthPS3_PDO_Create(
+    _In_ PBTHPS3_SERVER_CONTEXT Context,
+    _In_ BTH_ADDR RemoteAddress,
+    _In_ PFN_WDF_OBJECT_CONTEXT_CLEANUP CleanupCallback,
+    _Out_ PBTHPS3_PDO_CONTEXT *PdoContext
+);
+
 EVT_DMF_DEVICE_MODULES_ADD BthPS3_PDO_EvtDmfModulesAdd;
 
 EVT_DMF_Pdo_PreCreate BthPS3_PDO_EvtPreCreate;

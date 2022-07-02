@@ -35,8 +35,9 @@
  **********************************************************************************/
 
 
-#include "driver.h"
-#include "driver.tmh"
+#include "Driver.h"
+#include "Driver.tmh"
+#include "BthPS3ETW.h"
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (INIT, DriverEntry)
@@ -58,6 +59,8 @@ DriverEntry(
     // Initialize WPP Tracing
     //
     WPP_INIT_TRACING(DriverObject, RegistryPath);
+
+    EventRegisterNefarius_BthPS3_Profile_Driver();
 
     FuncEntry(TRACE_DRIVER);
 
@@ -90,6 +93,8 @@ DriverEntry(
         WPP_CLEANUP(DriverObject);
         return status;
     }
+
+    EventWriteStartEvent(NULL, DriverObject, status);
 
     FuncExit(TRACE_DRIVER, "status=%!STATUS!", status);
 
@@ -127,6 +132,10 @@ BthPS3EvtDriverContextCleanup(
     PAGED_CODE();
 
     FuncEntry(TRACE_DRIVER);
+
+    EventWriteUnloadEvent(NULL, DriverObject);
+
+    EventUnregisterNefarius_BthPS3_Profile_Driver();
 
     //
     // Stop WPP Tracing

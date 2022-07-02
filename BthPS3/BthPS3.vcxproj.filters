@@ -113,4 +113,9 @@
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
+  <ItemGroup>
+    <MessageCompile Include="BthPS3.man">
+      <Filter>Resource Files</Filter>
+    </MessageCompile>
+  </ItemGroup>
 </Project>

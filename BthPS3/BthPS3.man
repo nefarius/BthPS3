@@ -11,7 +11,7 @@
       <provider
           guid="{37dcd579-e844-4c80-9c8b-a10850b6fac6}"
           messageFileName="%WinDir%\System32\drivers\BthPS3.sys"
-          name="Nefarius Bluetooth PS Enumerator"
+          name="Nefarius BthPS3 Profile Driver"
           resourceFileName="%WinDir%\System32\drivers\BthPS3.sys"
           symbol="DriverControlGuid"
           >
@@ -23,15 +23,10 @@
         </channels>
         <templates>
           <template tid="tid_load_template">
-            <data
-                inType="win:UInt16"
-                name="DeviceNameLength"
-                outType="xs:unsignedShort"
-                />
-            <data
-                inType="win:UnicodeString"
-                name="name"
-                outType="xs:string"
+			<data
+                inType="win:Pointer"
+                name="DriverObjPtr"
+                outType="win:HexInt64"
                 />
             <data
                 inType="win:UInt32"
@@ -42,7 +37,7 @@
           <template tid="tid_unload_template">
             <data
                 inType="win:Pointer"
-                name="DeviceObjPtr"
+                name="DriverObjPtr"
                 outType="win:HexInt64"
                 />
           </template>

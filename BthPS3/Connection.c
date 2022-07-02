@@ -68,12 +68,10 @@ ClientConnections_CreateAndInsert(
         //
         // Create piggyback object carrying the context
         // 
-        status = WdfObjectCreate(
+        if (!NT_SUCCESS(status = WdfObjectCreate(
             &attributes,
             &connectionObject
-        );
-
-        if (!NT_SUCCESS(status)) {
+        ))) {
             TraceError(
                 TRACE_CONNECTION,
                 "WdfObjectCreate for connection object failed with status %!STATUS!",
@@ -96,12 +94,11 @@ ClientConnections_CreateAndInsert(
         // Initialize HidControlChannel properties
         // 
 
-        status = WdfRequestCreate(
+        if (!NT_SUCCESS(status = WdfRequestCreate(
             &attributes,
             connectionCtx->DevCtxHdr->IoTarget,
             &connectionCtx->HidControlChannel.ConnectDisconnectRequest
-        );
-        if (!NT_SUCCESS(status)) {
+        ))) {
             TraceError(
                 TRACE_CONNECTION,
                 "WdfRequestCreate for HidControlChannel failed with status %!STATUS!",
@@ -122,11 +119,10 @@ ClientConnections_CreateAndInsert(
         WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
         attributes.ParentObject = connectionObject;
 
-        status = WdfSpinLockCreate(
+        if (!NT_SUCCESS(status = WdfSpinLockCreate(
             &attributes,
             &connectionCtx->HidControlChannel.ConnectionStateLock
-        );
-        if (!NT_SUCCESS(status)) {
+        ))) {
             TraceError(
                 TRACE_CONNECTION,
                 "WdfSpinLockCreate for HidControlChannel failed with status %!STATUS!",
@@ -142,12 +138,11 @@ ClientConnections_CreateAndInsert(
         // Initialize HidInterruptChannel properties
         // 
 
-        status = WdfRequestCreate(
+        if (!NT_SUCCESS(status = WdfRequestCreate(
             &attributes,
             connectionCtx->DevCtxHdr->IoTarget,
             &connectionCtx->HidInterruptChannel.ConnectDisconnectRequest
-        );
-        if (!NT_SUCCESS(status)) {
+        ))) {
             TraceError(
                 TRACE_CONNECTION,
                 "WdfRequestCreate for HidInterruptChannel failed with status %!STATUS!",
@@ -168,11 +163,10 @@ ClientConnections_CreateAndInsert(
         WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
         attributes.ParentObject = connectionObject;
 
-        status = WdfSpinLockCreate(
+        if (!NT_SUCCESS(status = WdfSpinLockCreate(
             &attributes,
             &connectionCtx->HidInterruptChannel.ConnectionStateLock
-        );
-        if (!NT_SUCCESS(status)) {
+        ))) {
             TraceError(
                 TRACE_CONNECTION,
                 "WdfSpinLockCreate for HidInterruptChannel failed with status %!STATUS!",
@@ -187,9 +181,7 @@ ClientConnections_CreateAndInsert(
         //
         // Insert initialized connection list in connection collection
         // 
-        status = WdfCollectionAdd(Context->Header.ClientConnections, connectionObject);
-
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status = WdfCollectionAdd(Context->Header.ClientConnections, connectionObject))) {
             TraceError(
                 TRACE_CONNECTION,
                 "WdfCollectionAdd for connection object failed with status %!STATUS!",

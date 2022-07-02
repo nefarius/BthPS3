@@ -1032,6 +1032,50 @@ NTSTATUS BthPS3_AssignDeviceProperty(
 
 
 //
+// Called when initializing DMF modules for the PDO
+// 
+_IRQL_requires_max_(PASSIVE_LEVEL)
+VOID
+BthPS3_PDO_EvtDmfModulesAdd(
+	_In_ WDFDEVICE Device,
+	_In_ PDMFMODULE_INIT DmfModuleInit
+)
+{
+	FuncEntry(TRACE_BUSLOGIC);
+
+	DMF_MODULE_ATTRIBUTES moduleAttributes;
+	DMF_CONFIG_IoctlHandler moduleConfigIoctlHandler;
+
+	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(Device);
+
+	//
+	// IOCTL Handler Module
+	// 
+
+	DMF_CONFIG_IoctlHandler_AND_ATTRIBUTES_INIT(
+		&moduleConfigIoctlHandler,
+		&moduleAttributes
+	);
+
+	moduleConfigIoctlHandler.DeviceInterfaceGuid = GUID_DEVINTERFACE_BTHPS3;
+	moduleConfigIoctlHandler.AccessModeFilter = IoctlHandler_AccessModeDefault;
+	moduleConfigIoctlHandler.EvtIoctlHandlerAccessModeFilter = NULL;
+	moduleConfigIoctlHandler.IoctlRecordCount = ARRAYSIZE(G_PDO_IoctlSpecification);
+	moduleConfigIoctlHandler.IoctlRecords = G_PDO_IoctlSpecification;
+	moduleConfigIoctlHandler.ForwardUnhandledRequests = TRUE;
+	moduleConfigIoctlHandler.ManualMode = TRUE;
+
+	DMF_DmfModuleAdd(
+		DmfModuleInit,
+		&moduleAttributes,
+		WDF_NO_OBJECT_ATTRIBUTES,
+		&pPdoCtx->DmfModuleIoctlHandler
+	);
+
+	FuncExitNoReturn(TRACE_BUSLOGIC);
+}
+
+//
 // Creates a new PDO and connection context for a given remote address
 // 
 _IRQL_requires_max_(PASSIVE_LEVEL)
@@ -1050,7 +1094,7 @@ BthPS3_PDO_Create(
 	WDF_OBJECT_ATTRIBUTES attributes;
 	PDO_RECORD record;
 	WDFDEVICE device;
-	UNICODE_STRING guidString = {0};
+	UNICODE_STRING guidString = { 0 };
 
 	DECLARE_UNICODE_STRING_SIZE(hardwareId, MAX_DEVICE_ID_LEN);
 
@@ -1066,7 +1110,7 @@ BthPS3_PDO_Create(
 	record.SerialNumber = 1; // TODO: implement
 	record.EnableDmf = TRUE;
 	record.EvtDmfDeviceModulesAdd = BthPS3_PDO_EvtDmfModulesAdd;
-	
+
 	do
 	{
 		//
@@ -1177,7 +1221,7 @@ BthPS3_PDO_Create(
 		// 
 		record.HardwareIds[0] = hardwareId.Buffer;
 		record.HardwareIdsCount = 1;
-		
+
 		//
 		// Create PDO, DMF modules and allocate PDO context
 		// 
@@ -1219,6 +1263,35 @@ BthPS3_PDO_Create(
 		pPdoCtx->RemoteAddress = RemoteAddress;
 		pPdoCtx->DevCtxHdr = &Context->Header;
 		pPdoCtx->DeviceType = DeviceType;
+		pPdoCtx->SerialNumber = record.SerialNumber;
+
+		WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+		attributes.ParentObject = device;
+
+		PUCHAR pBuffer = NULL;
+		const size_t hwIdByteCount = (wcslen(hardwareId.Buffer) * sizeof(WCHAR)) + sizeof(L'\0');
+
+		//
+		// Save Hardware ID for later unplug
+		// 
+		if (!NT_SUCCESS(status = WdfMemoryCreate(
+			&attributes,
+			NonPagedPoolNx,
+			POOLTAG_BTHPS3,
+			hwIdByteCount,
+			&pPdoCtx->HardwareId,
+			(PVOID*)&pBuffer
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfMemoryCreate failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
+
+		RtlCopyMemory(pBuffer, hardwareId.Buffer, hwIdByteCount);
 
 		//
 		// Initialize HidControlChannel properties
@@ -1335,46 +1408,99 @@ BthPS3_PDO_Create(
 }
 
 //
-// Called when initializing DMF modules for the PDO
+// Retrieves an existing connection from connection list identified by BTH_ADDR
 // 
-_IRQL_requires_max_(PASSIVE_LEVEL)
-VOID
-BthPS3_PDO_EvtDmfModulesAdd(
-	_In_ WDFDEVICE Device,
-	_In_ PDMFMODULE_INIT DmfModuleInit
+NTSTATUS
+BthPS3_PDO_RetrieveByBthAddr(
+	_In_ PBTHPS3_SERVER_CONTEXT Context,
+	_In_ BTH_ADDR RemoteAddress,
+	_Out_ PBTHPS3_PDO_CONTEXT* PdoContext
 )
 {
-	FuncEntry(TRACE_BUSLOGIC);
+	NTSTATUS status = STATUS_NOT_FOUND;
+	ULONG itemCount;
+	ULONG index;
+	WDFDEVICE currentPdo;
+	PBTHPS3_PDO_CONTEXT pPdoCtx;
 
-	DMF_MODULE_ATTRIBUTES moduleAttributes;
-	DMF_CONFIG_IoctlHandler moduleConfigIoctlHandler;
-
-	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(Device);
-
-	//
-	// IOCTL Handler Module
-	// 
-
-	DMF_CONFIG_IoctlHandler_AND_ATTRIBUTES_INIT(
-		&moduleConfigIoctlHandler,
-		&moduleAttributes
+	FuncEntryArguments(
+		TRACE_BUSLOGIC,
+		"RemoteAddress=%012llX",
+		RemoteAddress
 	);
 
-	moduleConfigIoctlHandler.DeviceInterfaceGuid = GUID_DEVINTERFACE_BTHPS3;
-	moduleConfigIoctlHandler.AccessModeFilter = IoctlHandler_AccessModeDefault;
-	moduleConfigIoctlHandler.EvtIoctlHandlerAccessModeFilter = NULL;
-	moduleConfigIoctlHandler.IoctlRecordCount = ARRAYSIZE(G_PDO_IoctlSpecification);
-	moduleConfigIoctlHandler.IoctlRecords = G_PDO_IoctlSpecification;
-	moduleConfigIoctlHandler.ForwardUnhandledRequests = TRUE;
-	moduleConfigIoctlHandler.ManualMode = TRUE;
+	WdfSpinLockAcquire(Context->Header.ClientConnectionsLock);
 
-	DMF_DmfModuleAdd(
-		DmfModuleInit,
-		&moduleAttributes,
-		WDF_NO_OBJECT_ATTRIBUTES,
-		&pPdoCtx->DmfModuleIoctlHandler
+	itemCount = WdfCollectionGetCount(Context->Header.ClientConnections);
+
+	for (index = 0; index < itemCount; index++)
+	{
+		currentPdo = WdfCollectionGetItem(Context->Header.ClientConnections, index);
+		pPdoCtx = GetPdoContext(currentPdo);
+
+		if (pPdoCtx->RemoteAddress == RemoteAddress)
+		{
+			TraceVerbose(
+				TRACE_BUSLOGIC,
+				"Found desired connection item in connection list"
+			);
+
+			status = STATUS_SUCCESS;
+			*PdoContext = pPdoCtx;
+			break;
+		}
+	}
+
+	WdfSpinLockRelease(Context->Header.ClientConnectionsLock);
+
+	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
+
+	return status;
+}
+
+VOID
+BthPS3_PDO_Destroy(
+	_In_ PBTHPS3_DEVICE_CONTEXT_HEADER Context,
+	_In_ PBTHPS3_PDO_CONTEXT ClientConnection
+)
+{
+	ULONG itemCount;
+	ULONG index;
+	WDFDEVICE device, currentPdo;
+
+	FuncEntryArguments(
+		TRACE_BUSLOGIC,
+		"ClientConnection=0x%p",
+		ClientConnection
 	);
+
+	WdfSpinLockAcquire(Context->ClientConnectionsLock);
+
+	device = WdfObjectContextGetObject(ClientConnection);
+	itemCount = WdfCollectionGetCount(Context->ClientConnections);
+
+	for (index = 0; index < itemCount; index++)
+	{
+		currentPdo = WdfCollectionGetItem(Context->ClientConnections, index);
+
+		if (currentPdo == device)
+		{
+			TraceVerbose(
+				TRACE_BUSLOGIC,
+				"Found desired connection item in connection list"
+			);
+
+			WdfCollectionRemoveItem(Context->ClientConnections, index);
+
+			//
+			// TODO: implement me!
+			// 
+
+			break;
+		}
+	}
+
+	WdfSpinLockRelease(Context->ClientConnectionsLock);
 
 	FuncExitNoReturn(TRACE_BUSLOGIC);
 }
-

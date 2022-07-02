@@ -122,7 +122,11 @@ typedef struct _BTHPS3_PDO_CONTEXT
 
     BTHPS3_CLIENT_L2CAP_CHANNEL HidInterruptChannel;
 
-    DMFMODULE DmfModuleIoctlHandler; 
+    DMFMODULE DmfModuleIoctlHandler;
+
+    ULONG SerialNumber;
+
+    WDFMEMORY HardwareId;
 
 } BTHPS3_PDO_CONTEXT, *PBTHPS3_PDO_CONTEXT;
 
@@ -137,6 +141,19 @@ BthPS3_PDO_Create(
     _In_ DS_DEVICE_TYPE DeviceType,
     _In_ PFN_WDF_OBJECT_CONTEXT_CLEANUP CleanupCallback,
     _Out_ PBTHPS3_PDO_CONTEXT *PdoContext
+);
+
+NTSTATUS
+BthPS3_PDO_RetrieveByBthAddr(
+    _In_ PBTHPS3_SERVER_CONTEXT Context,
+    _In_ BTH_ADDR RemoteAddress,
+    _Out_ PBTHPS3_PDO_CONTEXT *PdoContext
+);
+
+VOID
+BthPS3_PDO_Destroy(
+    _In_ PBTHPS3_DEVICE_CONTEXT_HEADER Context,
+    _In_ PBTHPS3_PDO_CONTEXT ClientConnection
 );
 
 EVT_DMF_DEVICE_MODULES_ADD BthPS3_PDO_EvtDmfModulesAdd;

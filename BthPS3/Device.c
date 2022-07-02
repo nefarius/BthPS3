@@ -87,6 +87,7 @@ BthPS3_CreateDevice(
 	DMF_DmfDeviceInitHookFileObjectConfig(dmfDeviceInit, NULL);
 	DMF_DmfDeviceInitHookPowerPolicyEventCallbacks(dmfDeviceInit, NULL);
 
+#pragma region REMOVE
 	//
 	// Prepare child list
 	// 
@@ -102,6 +103,7 @@ BthPS3_CreateDevice(
 		&childListCfg,
 		WDF_NO_OBJECT_ATTRIBUTES
 	);
+#pragma endregion
 
 	//
 	// Configure PNP/power callbacks
@@ -227,7 +229,9 @@ exitFailure:
 //
 // Locate and attempt to open instance of BTHPS3PSM filter device
 // 
-NTSTATUS BthPS3_OpenFilterIoTarget(WDFDEVICE Device)
+NTSTATUS BthPS3_OpenFilterIoTarget(
+	_In_ WDFDEVICE Device
+)
 {
 	NTSTATUS                    status = STATUS_UNSUCCESSFUL;
 	WDF_OBJECT_ATTRIBUTES       ioTargetAttrib;
@@ -319,7 +323,7 @@ void BthPS3_EnablePatchEvtWdfTimer(
 _Use_decl_annotations_
 NTSTATUS
 BthPS3_EvtWdfDeviceSelfManagedIoInit(
-	WDFDEVICE  Device
+	WDFDEVICE Device
 )
 {
 	NTSTATUS status;
@@ -368,7 +372,7 @@ BthPS3_EvtWdfDeviceSelfManagedIoInit(
 _Use_decl_annotations_
 VOID
 BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
-	WDFDEVICE  Device
+	WDFDEVICE Device
 )
 {
 	PBTHPS3_SERVER_CONTEXT devCtx = GetServerDeviceContext(Device);
@@ -454,6 +458,9 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
 	FuncExitNoReturn(TRACE_DEVICE);
 }
 
+//
+// Initializes DMF modules
+// 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 VOID
 DmfDeviceModulesAdd(
@@ -467,9 +474,7 @@ DmfDeviceModulesAdd(
 	DMF_CONFIG_Pdo moduleConfigPdo;
 	DMF_CONFIG_IoctlHandler moduleConfigIoctlHandler;
 
-	PBTHPS3_SERVER_CONTEXT pSrvCtx = GetServerDeviceContext(Device);
-
-	UNREFERENCED_PARAMETER(DmfModuleInit);
+	const PBTHPS3_SERVER_CONTEXT pSrvCtx = GetServerDeviceContext(Device);
 
 	//
 	// PDO module
@@ -498,7 +503,7 @@ DmfDeviceModulesAdd(
 	);
 
 	//
-	// IOCTL Handler Module
+	// IOCTL Handler Module (TODO: in use?)
 	// 
 
 	DMF_CONFIG_IoctlHandler_AND_ATTRIBUTES_INIT(

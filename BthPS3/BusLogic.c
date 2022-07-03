@@ -1446,10 +1446,6 @@ BthPS3_PDO_RetrieveByBthAddr(
 )
 {
 	NTSTATUS status = STATUS_NOT_FOUND;
-	ULONG itemCount;
-	ULONG index;
-	WDFDEVICE currentPdo;
-	PBTHPS3_PDO_CONTEXT pPdoCtx;
 
 	FuncEntryArguments(
 		TRACE_BUSLOGIC,
@@ -1459,12 +1455,12 @@ BthPS3_PDO_RetrieveByBthAddr(
 
 	WdfSpinLockAcquire(Context->Header.ClientsLock);
 
-	itemCount = WdfCollectionGetCount(Context->Header.Clients);
+	const ULONG itemCount = WdfCollectionGetCount(Context->Header.Clients);
 
-	for (index = 0; index < itemCount; index++)
+	for (ULONG index = 0; index < itemCount; index++)
 	{
-		currentPdo = WdfCollectionGetItem(Context->Header.Clients, index);
-		pPdoCtx = GetPdoContext(currentPdo);
+		const WDFDEVICE currentPdo = WdfCollectionGetItem(Context->Header.Clients, index);
+		const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(currentPdo);
 
 		if (pPdoCtx->RemoteAddress == RemoteAddress)
 		{
@@ -1492,10 +1488,6 @@ BthPS3_PDO_Destroy(
 	_In_ PBTHPS3_PDO_CONTEXT ClientConnection
 )
 {
-	ULONG itemCount;
-	ULONG index;
-	WDFDEVICE device, currentPdo;
-
 	FuncEntryArguments(
 		TRACE_BUSLOGIC,
 		"ClientConnection=0x%p",
@@ -1504,12 +1496,12 @@ BthPS3_PDO_Destroy(
 
 	WdfSpinLockAcquire(Context->ClientsLock);
 
-	device = WdfObjectContextGetObject(ClientConnection);
-	itemCount = WdfCollectionGetCount(Context->Clients);
+	const WDFDEVICE device = WdfObjectContextGetObject(ClientConnection);
+	const ULONG itemCount = WdfCollectionGetCount(Context->Clients);
 
-	for (index = 0; index < itemCount; index++)
+	for (ULONG index = 0; index < itemCount; index++)
 	{
-		currentPdo = WdfCollectionGetItem(Context->Clients, index);
+		const WDFDEVICE currentPdo = WdfCollectionGetItem(Context->Clients, index);
 
 		if (currentPdo == device)
 		{

@@ -181,7 +181,7 @@ ClientConnections_CreateAndInsert(
         //
         // Insert initialized connection list in connection collection
         // 
-        if (!NT_SUCCESS(status = WdfCollectionAdd(Context->Header.ClientConnections, connectionObject))) {
+        if (!NT_SUCCESS(status = WdfCollectionAdd(Context->Header.Clients, connectionObject))) {
             TraceError(
                 TRACE_CONNECTION,
                 "WdfCollectionAdd for connection object failed with status %!STATUS!",
@@ -244,14 +244,14 @@ ClientConnections_RemoveAndDestroy(
         ClientConnection
     );	
     
-    WdfSpinLockAcquire(Context->ClientConnectionsLock);
+    WdfSpinLockAcquire(Context->ClientsLock);
     
     item = WdfObjectContextGetObject(ClientConnection);
-    itemCount = WdfCollectionGetCount(Context->ClientConnections);
+    itemCount = WdfCollectionGetCount(Context->Clients);
 
     for (index = 0; index < itemCount; index++)
     {
-        currentItem = WdfCollectionGetItem(Context->ClientConnections, index);
+        currentItem = WdfCollectionGetItem(Context->Clients, index);
 
         if (currentItem == item)
         {
@@ -260,13 +260,13 @@ ClientConnections_RemoveAndDestroy(
                 "Found desired connection item in connection list"
             );
 
-            WdfCollectionRemoveItem(Context->ClientConnections, index);
+            WdfCollectionRemoveItem(Context->Clients, index);
             WdfObjectDelete(item);
             break;
         }
     }
 
-    WdfSpinLockRelease(Context->ClientConnectionsLock);
+    WdfSpinLockRelease(Context->ClientsLock);
 
     FuncExitNoReturn(TRACE_CONNECTION);
 }
@@ -294,13 +294,13 @@ ClientConnections_RetrieveByBthAddr(
     );
 	
 
-    WdfSpinLockAcquire(Context->Header.ClientConnectionsLock);
+    WdfSpinLockAcquire(Context->Header.ClientsLock);
 
-    itemCount = WdfCollectionGetCount(Context->Header.ClientConnections);
+    itemCount = WdfCollectionGetCount(Context->Header.Clients);
 
     for (index = 0; index < itemCount; index++)
     {
-        currentItem = WdfCollectionGetItem(Context->Header.ClientConnections, index);
+        currentItem = WdfCollectionGetItem(Context->Header.Clients, index);
         connection = GetClientConnection(currentItem);
 
         if (connection->RemoteAddress == RemoteAddress)
@@ -316,7 +316,7 @@ ClientConnections_RetrieveByBthAddr(
         }
     }
 
-    WdfSpinLockRelease(Context->Header.ClientConnectionsLock);
+    WdfSpinLockRelease(Context->Header.ClientsLock);
 
     FuncExit(TRACE_CONNECTION, "status=%!STATUS!", status);
 

@@ -1274,7 +1274,7 @@ BthPS3_PDO_Create(
 		// Insert PDO in connection collection
 		// 
 		if (!NT_SUCCESS(status = WdfCollectionAdd(
-			Context->Header.ClientConnections,
+			Context->Header.Clients,
 			device
 		)))
 		{
@@ -1457,13 +1457,13 @@ BthPS3_PDO_RetrieveByBthAddr(
 		RemoteAddress
 	);
 
-	WdfSpinLockAcquire(Context->Header.ClientConnectionsLock);
+	WdfSpinLockAcquire(Context->Header.ClientsLock);
 
-	itemCount = WdfCollectionGetCount(Context->Header.ClientConnections);
+	itemCount = WdfCollectionGetCount(Context->Header.Clients);
 
 	for (index = 0; index < itemCount; index++)
 	{
-		currentPdo = WdfCollectionGetItem(Context->Header.ClientConnections, index);
+		currentPdo = WdfCollectionGetItem(Context->Header.Clients, index);
 		pPdoCtx = GetPdoContext(currentPdo);
 
 		if (pPdoCtx->RemoteAddress == RemoteAddress)
@@ -1479,7 +1479,7 @@ BthPS3_PDO_RetrieveByBthAddr(
 		}
 	}
 
-	WdfSpinLockRelease(Context->Header.ClientConnectionsLock);
+	WdfSpinLockRelease(Context->Header.ClientsLock);
 
 	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
 
@@ -1502,14 +1502,14 @@ BthPS3_PDO_Destroy(
 		ClientConnection
 	);
 
-	WdfSpinLockAcquire(Context->ClientConnectionsLock);
+	WdfSpinLockAcquire(Context->ClientsLock);
 
 	device = WdfObjectContextGetObject(ClientConnection);
-	itemCount = WdfCollectionGetCount(Context->ClientConnections);
+	itemCount = WdfCollectionGetCount(Context->Clients);
 
 	for (index = 0; index < itemCount; index++)
 	{
-		currentPdo = WdfCollectionGetItem(Context->ClientConnections, index);
+		currentPdo = WdfCollectionGetItem(Context->Clients, index);
 
 		if (currentPdo == device)
 		{
@@ -1518,7 +1518,7 @@ BthPS3_PDO_Destroy(
 				"Found desired connection item in connection list"
 			);
 
-			WdfCollectionRemoveItem(Context->ClientConnections, index);
+			WdfCollectionRemoveItem(Context->Clients, index);
 
 			//
 			// TODO: implement me!
@@ -1528,7 +1528,7 @@ BthPS3_PDO_Destroy(
 		}
 	}
 
-	WdfSpinLockRelease(Context->ClientConnectionsLock);
+	WdfSpinLockRelease(Context->ClientsLock);
 
 	FuncExitNoReturn(TRACE_BUSLOGIC);
 }

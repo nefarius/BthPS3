@@ -226,7 +226,7 @@ BthPS3_ServerContextInit(
 
 		if (!NT_SUCCESS(status = WdfSpinLockCreate(
 			&attributes,
-			&Context->Header.ClientConnectionsLock
+			&Context->Header.ClientsLock
 		)))
 		{
 			break;
@@ -237,7 +237,7 @@ BthPS3_ServerContextInit(
 
 		if (!NT_SUCCESS(status = WdfCollectionCreate(
 			&attributes,
-			&Context->Header.ClientConnections
+			&Context->Header.Clients
 		)))
 		{
 			break;

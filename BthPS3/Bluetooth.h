@@ -83,12 +83,12 @@ typedef struct _BTHPS3_DEVICE_CONTEXT_HEADER
 	// Collection of state information about 
 	// currently established connections
 	// 
-	WDFCOLLECTION ClientConnections;
+	WDFCOLLECTION Clients;
 
 	//
 	// Lock for ClientConnections collection
 	// 
-	WDFSPINLOCK ClientConnectionsLock;
+	WDFSPINLOCK ClientsLock;
 
 	//
 	// DMF module to handle PDO creation

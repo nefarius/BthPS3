@@ -79,7 +79,7 @@
               />
 		  <event
               channel="SYSTEM"
-              level="win:Informational"
+              level="win:Error"
               message="$(string.HciVersionTooLow.EventMessage)"
               opcode="win:Info"
               symbol="HciVersionTooLow"
@@ -107,7 +107,7 @@
             />
 		<string
             id="HciVersionTooLow.EventMessage"
-            value="Host radio HCI major version %1 too low, can't continue driver startup"
+            value="Host radio HCI major version %1 too low, can't continue driver startup. You need a newer Bluetooth Host Radio to use this driver."
             />
       </stringTable>
     </resources>

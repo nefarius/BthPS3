@@ -49,6 +49,7 @@
 #define POOLTAG_BTHPS3                  '3SPB'
 #define BTH_DEVICE_INFO_MAX_COUNT       0x0A
 #define BTH_DEVICE_INFO_MAX_RETRIES     0x05
+#define BTHPS3_MAX_NUM_DEVICES			0xFF
 
 typedef struct _BTHPS3_DEVICE_CONTEXT_HEADER
 {

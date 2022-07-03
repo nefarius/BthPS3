@@ -1090,7 +1090,7 @@ BthPS3_PDO_Create(
 {
 	FuncEntry(TRACE_BUSLOGIC);
 
-	NTSTATUS status;
+	NTSTATUS status = STATUS_SUCCESS;
 	WDF_OBJECT_ATTRIBUTES attributes;
 	PDO_RECORD record;
 	WDFDEVICE device;
@@ -1107,12 +1107,43 @@ BthPS3_PDO_Create(
 	RtlZeroMemory(&record, sizeof(PDO_RECORD));
 
 	record.CustomClientContext = &attributes;
-	record.SerialNumber = 1; // TODO: implement
 	record.EnableDmf = TRUE;
 	record.EvtDmfDeviceModulesAdd = BthPS3_PDO_EvtDmfModulesAdd;
 
 	do
 	{
+		WdfSpinLockAcquire(Context->Header.SlotsSpinLock);
+
+		//
+		// Get next free serial number
+		// 
+		for (record.SerialNumber = 1; record.SerialNumber <= BTHPS3_MAX_NUM_DEVICES; record.SerialNumber++)
+		{
+			if (!TestBit(Context->Header.Slots, record.SerialNumber))
+			{
+				TraceVerbose(
+					TRACE_DEVICE,
+					"Assigned serial: %d",
+					record.SerialNumber
+				);
+
+				SetBit(Context->Header.Slots, record.SerialNumber);
+				break;
+			}
+		}
+
+		if (record.SerialNumber > BTHPS3_MAX_NUM_DEVICES)
+		{
+			status = STATUS_NO_MORE_ENTRIES;
+		}
+
+		WdfSpinLockRelease(Context->Header.SlotsSpinLock);
+
+		if (!NT_SUCCESS(status))
+		{
+			break;
+		}
+
 		//
 		// Prepare Hardware ID GUID segment and description based on device type
 		// 
@@ -1257,9 +1288,6 @@ BthPS3_PDO_Create(
 
 		const PBTHPS3_PDO_CONTEXT pPdoCtx = *PdoContext = GetPdoContext(device);
 
-		//
-		// This is our "primary key"
-		// 
 		pPdoCtx->RemoteAddress = RemoteAddress;
 		pPdoCtx->DevCtxHdr = &Context->Header;
 		pPdoCtx->DeviceType = DeviceType;

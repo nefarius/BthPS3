@@ -319,6 +319,6 @@ _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_GetHciVersion(
 	_In_ WDFIOTARGET IoTarget,
-	_Out_ PUCHAR HciVersion,
+	_Out_ PUCHAR HciMajorVersion,
 	_Out_opt_ PUSHORT HciRevision
 );

@@ -41,6 +41,13 @@
                 outType="win:HexInt64"
                 />
           </template>
+		  <template tid="tid_hci_version_template">
+            <data
+                inType="win:UInt32"
+                name="Version"
+                outType="xs:unsignedInt"
+                />
+          </template>
         </templates>
         <events>
           <event
@@ -55,19 +62,29 @@
           <event
               channel="SYSTEM"
               level="win:Informational"
-              message="$(string.SampleEventA.EventMessage)"
-              opcode="win:Info"
-              symbol="SampleEventA"
-              value="2"
-              />
-          <event
-              channel="SYSTEM"
-              level="win:Informational"
               message="$(string.UnloadEvent.EventMessage)"
               opcode="win:Stop"
               symbol="UnloadEvent"
               template="tid_unload_template"
+              value="2"
+              />
+		  <event
+              channel="SYSTEM"
+              level="win:Informational"
+              message="$(string.HciVersion.EventMessage)"
+              opcode="win:Info"
+              symbol="HciVersion"
+              template="tid_hci_version_template"
               value="3"
+              />
+		  <event
+              channel="SYSTEM"
+              level="win:Informational"
+              message="$(string.HciVersionTooLow.EventMessage)"
+              opcode="win:Info"
+              symbol="HciVersionTooLow"
+              template="tid_hci_version_template"
+              value="4"
               />
         </events>
       </provider>
@@ -81,12 +98,16 @@
             value="Driver loaded (obj: %1, status: %2)"
             />
         <string
-            id="SampleEventA.EventMessage"
-            value="IRP A Occurred"
-            />
-        <string
             id="UnloadEvent.EventMessage"
             value="Driver unloaded (obj: %1)"
+            />
+		<string
+            id="HciVersion.EventMessage"
+            value="Host radio HCI major version: %1"
+            />
+		<string
+            id="HciVersionTooLow.EventMessage"
+            value="Host radio HCI major version %1 too low, can't continue driver startup"
             />
       </stringTable>
     </resources>

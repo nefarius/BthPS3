@@ -39,6 +39,7 @@
 #include "Bluetooth.tmh"
 #include <bthguid.h>
 #include "BthPS3.h"
+#include "BthPS3ETW.h"
 
 
 #ifdef ALLOC_PRAGMA
@@ -128,6 +129,8 @@ BthPS3_RetrieveLocalInfo(
 				hciVersion
 			);
 
+			EventWriteHciVersion(NULL, hciVersion);
+
 			if (hciVersion < BTHPS3_MIN_SUPPORTED_HCI_MAJOR_VERSION)
 			{
 				TraceError(
@@ -135,6 +138,8 @@ BthPS3_RetrieveLocalInfo(
 					"Host radio HCI major version %d too low, can't continue",
 					hciVersion
 				);
+
+				EventWriteHciVersionTooLow(NULL, hciVersion);
 
 				//
 				// Fail initialization
@@ -596,7 +601,7 @@ _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_GetHciVersion(
 	_In_ WDFIOTARGET IoTarget,
-	_Out_ PUCHAR HciVersion,
+	_Out_ PUCHAR HciMajorVersion,
 	_Out_opt_ PUSHORT HciRevision
 )
 {
@@ -645,8 +650,8 @@ BthPS3_GetHciVersion(
 
 	pLocalInfo = WdfMemoryGetBuffer(MemoryHandle, NULL);
 
-	if (HciVersion)
-		*HciVersion = pLocalInfo->hciVersion;
+	if (HciMajorVersion)
+		*HciMajorVersion = pLocalInfo->hciVersion;
 		
 	if (HciRevision)
 		*HciRevision = pLocalInfo->hciRevision;

@@ -192,7 +192,7 @@ L2CAP_PS3_HandleRemoteConnect(
             {
                 status = BthPS3PSM_DisablePatchSync(
                     DevCtx->PsmFilter.IoTarget,
-                    0 // TODO: read from registry?
+                    0
                 );
                 if (!NT_SUCCESS(status))
                 {

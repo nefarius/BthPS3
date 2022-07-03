@@ -15,8 +15,7 @@ L2CAP_PS3_ConnectionIndicationCallback(
 {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     PBTHPS3_SERVER_CONTEXT deviceCtx = NULL;
-    PBTHPS3_CLIENT_CONNECTION connection = NULL;
-    PDO_IDENTIFICATION_DESCRIPTION pdoDesc;
+    PBTHPS3_PDO_CONTEXT pPdoCtx = NULL;
 
 	//
 	// TODO: queue work item to lower IRQL instead of this!
@@ -50,14 +49,14 @@ L2CAP_PS3_ConnectionIndicationCallback(
             "IndicationRemoteDisconnect [0x%p]",
             Parameters->ConnectionHandle);
 
-        connection = (PBTHPS3_CLIENT_CONNECTION)Context;
-        deviceCtx = GetServerDeviceContext(connection->DevCtxHdr->Device);
+        pPdoCtx = (PBTHPS3_PDO_CONTEXT)Context;
+        deviceCtx = GetServerDeviceContext(pPdoCtx->DevCtxHdr->Device);
 
         //
         // HID Control Channel disconnected
         // 
         if (Parameters->ConnectionHandle ==
-            connection->HidControlChannel.ChannelHandle)
+            pPdoCtx->HidControlChannel.ChannelHandle)
         {
             TraceVerbose(
                 TRACE_L2CAP,
@@ -65,9 +64,9 @@ L2CAP_PS3_ConnectionIndicationCallback(
                 Parameters->ConnectionHandle);
 
             L2CAP_PS3_RemoteDisconnect(
-                connection->DevCtxHdr,
-                connection->RemoteAddress,
-                &connection->HidControlChannel
+                pPdoCtx->DevCtxHdr,
+                pPdoCtx->RemoteAddress,
+                &pPdoCtx->HidControlChannel
             );
         }
 
@@ -75,7 +74,7 @@ L2CAP_PS3_ConnectionIndicationCallback(
         // HID Interrupt Channel disconnected
         // 
         if (Parameters->ConnectionHandle ==
-            connection->HidInterruptChannel.ChannelHandle)
+            pPdoCtx->HidInterruptChannel.ChannelHandle)
         {
             TraceVerbose(
                 TRACE_L2CAP,
@@ -83,17 +82,17 @@ L2CAP_PS3_ConnectionIndicationCallback(
                 Parameters->ConnectionHandle);
 
             L2CAP_PS3_RemoteDisconnect(
-                connection->DevCtxHdr,
-                connection->RemoteAddress,
-                &connection->HidInterruptChannel
+                pPdoCtx->DevCtxHdr,
+                pPdoCtx->RemoteAddress,
+                &pPdoCtx->HidInterruptChannel
             );
         }
 
         //
         // Both channels are gone, invoke clean-up
         // 
-        if (connection->HidControlChannel.ConnectionState == ConnectionStateDisconnected
-            && connection->HidInterruptChannel.ConnectionState == ConnectionStateDisconnected)
+        if (pPdoCtx->HidControlChannel.ConnectionState == ConnectionStateDisconnected
+            && pPdoCtx->HidInterruptChannel.ConnectionState == ConnectionStateDisconnected)
         {
             TraceVerbose(
                 TRACE_L2CAP,
@@ -101,7 +100,7 @@ L2CAP_PS3_ConnectionIndicationCallback(
             );
 
             status = KeWaitForSingleObject(
-                &connection->HidControlChannel.DisconnectEvent,
+                &pPdoCtx->HidControlChannel.DisconnectEvent,
                 Executive,
                 KernelMode,
                 FALSE,
@@ -121,7 +120,7 @@ L2CAP_PS3_ConnectionIndicationCallback(
         	}
 
             status = KeWaitForSingleObject(
-                &connection->HidInterruptChannel.DisconnectEvent,
+                &pPdoCtx->HidInterruptChannel.DisconnectEvent,
                 Executive,
                 KernelMode,
                 FALSE,
@@ -140,30 +139,11 @@ L2CAP_PS3_ConnectionIndicationCallback(
                 // 
             }
 
-            WDF_CHILD_IDENTIFICATION_DESCRIPTION_HEADER_INIT(
-                &pdoDesc.Header,
-                sizeof(PDO_IDENTIFICATION_DESCRIPTION)
-            );
-
-            pdoDesc.ClientConnection = connection;
-
             //
-            // Init PDO destruction
+            // TODO: old PDO destruction happened here
             // 
-            status = WdfChildListUpdateChildDescriptionAsMissing(
-                WdfFdoGetDefaultChildList(connection->DevCtxHdr->Device),
-                &pdoDesc.Header
-            );
 
-            if (!NT_SUCCESS(status))
-            {
-                TraceError(
-                    TRACE_CONNECTION,
-                    "WdfChildListUpdateChildDescriptionAsMissing failed with status %!STATUS!",
-                    status);
-            }
-
-            ClientConnections_RemoveAndDestroy(&deviceCtx->Header, connection);
+            BthPS3_PDO_Destroy(&deviceCtx->Header, pPdoCtx);
         }
 
         break;

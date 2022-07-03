@@ -53,6 +53,7 @@ IoctlHandler_IoctlRecord G_PDO_IoctlSpecification[] =
 	{IOCTL_BTHPS3_HID_CONTROL_WRITE, 1, 0, BthPS3_PDO_HandleHidControlWrite},
 	{IOCTL_BTHPS3_HID_INTERRUPT_READ, 0, 1, BthPS3_PDO_HandleHidInterruptRead},
 	{IOCTL_BTHPS3_HID_INTERRUPT_WRITE, 1, 0, BthPS3_PDO_HandleHidInterruptWrite},
+	{IOCTL_HID_GET_DEVICE_DESCRIPTOR, 0, 0, BthPS3_PDO_HandleOther},
 };
 
 
@@ -1062,7 +1063,7 @@ BthPS3_PDO_EvtDmfModulesAdd(
 	moduleConfigIoctlHandler.EvtIoctlHandlerAccessModeFilter = NULL;
 	moduleConfigIoctlHandler.IoctlRecordCount = ARRAYSIZE(G_PDO_IoctlSpecification);
 	moduleConfigIoctlHandler.IoctlRecords = G_PDO_IoctlSpecification;
-	moduleConfigIoctlHandler.ForwardUnhandledRequests = TRUE;
+	moduleConfigIoctlHandler.ForwardUnhandledRequests = FALSE;
 	moduleConfigIoctlHandler.ManualMode = TRUE;
 
 	DMF_DmfModuleAdd(
@@ -1100,9 +1101,7 @@ BthPS3_PDO_Create(
 
 	WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&attributes, BTHPS3_PDO_CONTEXT);
 
-	attributes.ParentObject = Context->Header.Device;
 	attributes.EvtCleanupCallback = CleanupCallback;
-	attributes.ExecutionLevel = WdfExecutionLevelPassive;
 
 	RtlZeroMemory(&record, sizeof(PDO_RECORD));
 
@@ -1509,6 +1508,23 @@ BthPS3_PDO_Destroy(
 				TRACE_BUSLOGIC,
 				"Found desired connection item in connection list"
 			);
+
+			const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(currentPdo);
+
+			NTSTATUS status = DMF_Pdo_DeviceUnPlugEx(
+				Context->DmfModulePdo,
+				(PWSTR)WdfMemoryGetBuffer(pPdoCtx->HardwareId, NULL),
+				pPdoCtx->SerialNumber
+			);
+
+			if (!NT_SUCCESS(status))
+			{
+				TraceError(
+					TRACE_BUSLOGIC,
+					"DMF_Pdo_DeviceUnPlugEx failed with status %!STATUS!",
+					status
+				);
+			}
 
 			WdfCollectionRemoveItem(Context->Clients, index);
 

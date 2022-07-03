@@ -96,6 +96,7 @@ typedef struct _BTHPS3_CLIENT_CONNECTION
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_CLIENT_CONNECTION, GetClientConnection)
 
 
+/*
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 ClientConnections_CreateAndInsert(
@@ -117,6 +118,7 @@ ClientConnections_RetrieveByBthAddr(
     _In_ BTH_ADDR RemoteAddress,
     _Out_ PBTHPS3_CLIENT_CONNECTION *ClientConnection
 );
+*/
 
 EVT_WDF_OBJECT_CONTEXT_CLEANUP EvtClientConnectionsDestroyConnection;
 

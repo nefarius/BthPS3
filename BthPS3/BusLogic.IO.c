@@ -234,3 +234,47 @@ BthPS3_PDO_HandleHidInterruptWrite(
 
 	return status;
 }
+
+//
+// Handles all other requests
+// 
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS
+BthPS3_PDO_HandleOther(
+	_In_ DMFMODULE DmfModule,
+	_In_ WDFQUEUE Queue,
+	_In_ WDFREQUEST Request,
+	_In_ ULONG IoctlCode,
+	_In_reads_(InputBufferSize) VOID* InputBuffer,
+	_In_ size_t InputBufferSize,
+	_Out_writes_(OutputBufferSize) VOID* OutputBuffer,
+	_In_ size_t OutputBufferSize,
+	_Out_ size_t* BytesReturned
+)
+{
+	UNREFERENCED_PARAMETER(Queue);
+	UNREFERENCED_PARAMETER(Request);
+	UNREFERENCED_PARAMETER(IoctlCode);
+	UNREFERENCED_PARAMETER(InputBuffer);
+	UNREFERENCED_PARAMETER(InputBufferSize);
+	UNREFERENCED_PARAMETER(OutputBuffer);
+	UNREFERENCED_PARAMETER(OutputBufferSize);
+	UNREFERENCED_PARAMETER(BytesReturned);
+
+	NTSTATUS status;
+	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
+	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
+
+	UNREFERENCED_PARAMETER(pPdoCtx);
+
+	TraceVerbose(
+		TRACE_BUSLOGIC,
+		"Received Request with code: 0x%X",
+		IoctlCode
+	);
+
+	status = STATUS_UNSUCCESSFUL;
+
+	return status;
+}
+

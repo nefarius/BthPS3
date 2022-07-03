@@ -39,6 +39,7 @@
 #include "Driver.tmh"
 #include "BthPS3ETW.h"
 
+
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (INIT, DriverEntry)
 #pragma alloc_text (PAGE, BthPS3EvtDeviceAdd)
@@ -127,8 +128,6 @@ BthPS3EvtDriverContextCleanup(
 	_In_ WDFOBJECT DriverObject
 )
 {
-	UNREFERENCED_PARAMETER(DriverObject);
-
 	PAGED_CODE();
 
 	FuncEntry(TRACE_DRIVER);

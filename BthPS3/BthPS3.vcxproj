@@ -309,6 +309,7 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="BthPS3.rc" />
+	<ResourceCompile Include="$(IntDir)BthPS3ETW.rc" />
   </ItemGroup>
   <ItemGroup>
     <MessageCompile Include="BthPS3.man">

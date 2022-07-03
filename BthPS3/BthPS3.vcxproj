@@ -46,6 +46,8 @@
     <ClCompile Include="Connection.c" />
     <ClCompile Include="Device.c" />
     <ClCompile Include="Driver.c" />
+    <ClCompile Include="L2CAP.Connect.c" />
+    <ClCompile Include="L2CAP.Disconnect.c" />
     <ClCompile Include="L2CAP.Transfer.c" />
     <ClCompile Include="PSM.c" />
     <ClCompile Include="L2CAP.c" />
@@ -309,7 +311,7 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="BthPS3.rc" />
-	<ResourceCompile Include="$(IntDir)BthPS3ETW.rc" />
+    <ResourceCompile Include="$(IntDir)BthPS3ETW.rc" />
   </ItemGroup>
   <ItemGroup>
     <MessageCompile Include="BthPS3.man">

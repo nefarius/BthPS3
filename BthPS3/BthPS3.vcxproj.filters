@@ -107,9 +107,18 @@
     <ClCompile Include="Bluetooth.Connection.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="L2CAP.Connect.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="L2CAP.Disconnect.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="BthPS3.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="$(IntDir)BthPS3ETW.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>

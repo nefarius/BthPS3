@@ -94,6 +94,16 @@ typedef struct _BTHPS3_DEVICE_CONTEXT_HEADER
 	// 
 	DMFMODULE DmfModulePdo;
 
+	//
+	// Free and occupied serial numbers
+	// 
+	UINT32 Slots[8]; // 256 usable bits
+
+	//
+	// Lock protecting Slots access
+	// 
+	WDFSPINLOCK SlotsSpinLock;
+
 } BTHPS3_DEVICE_CONTEXT_HEADER, * PBTHPS3_DEVICE_CONTEXT_HEADER;
 
 typedef struct _BTHPS3_SERVER_CONTEXT

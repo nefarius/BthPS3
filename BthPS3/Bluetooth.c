@@ -255,6 +255,14 @@ BthPS3_ServerContextInit(
 		WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
 		attributes.ParentObject = Device;
 
+		if (!NT_SUCCESS(status = WdfSpinLockCreate(
+			&attributes,
+			&Context->Header.SlotsSpinLock
+		)))
+		{
+			break;
+		}
+
 		if (!NT_SUCCESS(status = WdfCollectionCreate(
 			&attributes,
 			&Context->Settings.SIXAXISSupportedNames
@@ -286,7 +294,7 @@ BthPS3_ServerContextInit(
 		{
 			break;
 		}
-
+		
 		//
 		// Query registry for dynamic values
 		// 

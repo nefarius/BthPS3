@@ -78,7 +78,7 @@
       <stringTable>
         <string
             id="StartEvent.EventMessage"
-            value="Driver Loaded"
+            value="Driver loaded (obj: %1, status: %2)"
             />
         <string
             id="SampleEventA.EventMessage"
@@ -86,7 +86,7 @@
             />
         <string
             id="UnloadEvent.EventMessage"
-            value="Driver Unloaded"
+            value="Driver unloaded (obj: %1)"
             />
       </stringTable>
     </resources>

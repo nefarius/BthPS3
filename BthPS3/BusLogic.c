@@ -1085,6 +1085,7 @@ BthPS3_PDO_Create(
 	_In_ PBTHPS3_SERVER_CONTEXT Context,
 	_In_ BTH_ADDR RemoteAddress,
 	_In_ DS_DEVICE_TYPE DeviceType,
+	_In_ PSTR RemoteName,
 	_In_ PFN_WDF_OBJECT_CONTEXT_CLEANUP CleanupCallback,
 	_Out_ PBTHPS3_PDO_CONTEXT* PdoContext
 )
@@ -1096,12 +1097,18 @@ BthPS3_PDO_Create(
 	PDO_RECORD record;
 	WDFDEVICE device;
 	UNICODE_STRING guidString = { 0 };
+	WCHAR devAddr[13];
+	PWSTR manufacturer = L"Nefarius Software Solutions e.U.";
+	LARGE_INTEGER lastConnectionTime;
 
 	DECLARE_UNICODE_STRING_SIZE(hardwareId, MAX_DEVICE_ID_LEN);
+	DECLARE_UNICODE_STRING_SIZE(remotenameWide, BTH_MAX_NAME_SIZE);
 
 	WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&attributes, BTHPS3_PDO_CONTEXT);
 
 	attributes.EvtCleanupCallback = CleanupCallback;
+
+	KeQuerySystemTimePrecise(&lastConnectionTime);
 
 	RtlZeroMemory(&record, sizeof(PDO_RECORD));
 
@@ -1141,6 +1148,154 @@ BthPS3_PDO_Create(
 		if (!NT_SUCCESS(status))
 		{
 			break;
+		}
+
+		//
+		// Convert remote name from narrow to wide
+		// 
+		if (!NT_SUCCESS(status = RtlUnicodeStringPrintf(
+			&remotenameWide,
+			L"%hs",
+			RemoteName
+		)))
+		{
+			TraceError(
+				TRACE_L2CAP,
+				"RtlUnicodeStringPrintf failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
+
+		//
+		// Prepare properties
+		// 
+
+		if (!NT_SUCCESS(RtlStringCbPrintfW(
+			devAddr,
+			ARRAYSIZE(devAddr) * sizeof(WCHAR),
+			L"%012llX",
+			RemoteAddress
+		)))
+		{
+			TraceError(
+				TRACE_L2CAP,
+				"RtlStringCbPrintfW failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
+
+		Pdo_DevicePropertyEntry entries[] =
+		{
+			{
+				{sizeof(WDF_DEVICE_PROPERTY_DATA), &DEVPKEY_Bluetooth_DeviceAddress, LOCALE_NEUTRAL, PLUGPLAY_PROPERTY_PERSISTENT},
+				DEVPROP_TYPE_STRING,
+				devAddr,
+				ARRAYSIZE(devAddr) * sizeof(WCHAR),
+				FALSE,
+				NULL
+			},
+			{
+				{sizeof(WDF_DEVICE_PROPERTY_DATA), &DEVPKEY_BluetoothRadio_Address, LOCALE_NEUTRAL, PLUGPLAY_PROPERTY_PERSISTENT},
+				DEVPROP_TYPE_UINT64,
+				&Context->Header.LocalBthAddr,
+				sizeof(UINT64),
+				FALSE,
+				NULL
+			},
+			{
+				{sizeof(WDF_DEVICE_PROPERTY_DATA), &DEVPKEY_Device_FriendlyName, LOCALE_NEUTRAL, PLUGPLAY_PROPERTY_PERSISTENT},
+				DEVPROP_TYPE_STRING,
+				remotenameWide.Buffer,
+				remotenameWide.Length + sizeof(L'\0'),
+				FALSE,
+				NULL
+			},
+			{
+				{sizeof(WDF_DEVICE_PROPERTY_DATA), &DEVPKEY_Bluetooth_DeviceManufacturer, LOCALE_NEUTRAL, PLUGPLAY_PROPERTY_PERSISTENT},
+				DEVPROP_TYPE_STRING,
+				manufacturer,
+				sizeof(manufacturer),
+				FALSE,
+				NULL
+			},
+			{
+				{sizeof(WDF_DEVICE_PROPERTY_DATA), &DEVPKEY_Bluetooth_LastConnectedTime, LOCALE_NEUTRAL, PLUGPLAY_PROPERTY_PERSISTENT},
+				DEVPROP_TYPE_FILETIME,
+				&lastConnectionTime,
+				sizeof(LARGE_INTEGER),
+				FALSE,
+				NULL
+			},
+			{
+				{sizeof(WDF_DEVICE_PROPERTY_DATA), &DEVPKEY_Bluetooth_DeviceVID, LOCALE_NEUTRAL, PLUGPLAY_PROPERTY_PERSISTENT},
+				DEVPROP_TYPE_UINT16,
+				NULL,
+				sizeof(USHORT),
+				FALSE,
+				NULL
+			},
+			{
+				{sizeof(WDF_DEVICE_PROPERTY_DATA), &DEVPKEY_Bluetooth_DevicePID, LOCALE_NEUTRAL, PLUGPLAY_PROPERTY_PERSISTENT},
+				DEVPROP_TYPE_UINT16,
+				NULL,
+				sizeof(USHORT),
+				FALSE,
+				NULL
+			},
+		};
+
+		switch (DeviceType)
+		{
+		case DS_DEVICE_TYPE_SIXAXIS:
+			entries[5].ValueData = &BTHPS3_SIXAXIS_VID;
+			entries[6].ValueData = &BTHPS3_SIXAXIS_PID;
+			break;
+		case DS_DEVICE_TYPE_NAVIGATION:
+			entries[5].ValueData = &BTHPS3_NAVIGATION_VID;
+			entries[6].ValueData = &BTHPS3_NAVIGATION_PID;
+			break;
+		case DS_DEVICE_TYPE_MOTION:
+			entries[5].ValueData = &BTHPS3_MOTION_VID;
+			entries[6].ValueData = &BTHPS3_MOTION_PID;
+			break;
+		case DS_DEVICE_TYPE_WIRELESS:
+			entries[5].ValueData = &BTHPS3_WIRELESS_VID;
+			entries[6].ValueData = &BTHPS3_WIRELESS_PID;
+			break;
+		default:
+			status = STATUS_INVALID_PARAMETER;
+			break;
+		}
+
+		Pdo_DeviceProperty_Table properties;
+
+		properties.ItemCount = ARRAYSIZE(entries);
+		properties.TableEntries = entries;
+
+		record.DeviceProperties = &properties;
+
+		Pdo_DevicePropertyEntry* entry;
+		Pdo_DeviceProperty_Table* DevicePropertyTable = &properties;
+
+		for (ULONG propertyIndex = 0; propertyIndex < DevicePropertyTable->ItemCount; propertyIndex++)
+		{
+			entry = &DevicePropertyTable->TableEntries[propertyIndex];
+
+			TraceVerbose(
+				TRACE_BUSLOGIC,
+				"ValueSize: %d",
+				entry->ValueSize
+			);
+
+			if (entry->RegisterDeviceInterface)
+			{
+				TraceVerbose(
+					TRACE_BUSLOGIC,
+					"!! RegisterDeviceInterface"
+				);
+			}
 		}
 
 		//
@@ -1428,6 +1583,7 @@ BthPS3_PDO_Create(
 	//
 	// TODO: add error handling
 	// 
+
 
 	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
 

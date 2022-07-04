@@ -199,7 +199,8 @@ L2CAP_PS3_HandleRemoteConnect(
 			DevCtx,
 			ConnectParams->BtAddress,
 			deviceType,
-			EvtClientConnectionsDestroyConnection,
+			remoteName,
+			NULL,//EvtClientConnectionsDestroyConnection,
 			&pPdoCtx
 		);
 
@@ -207,23 +208,6 @@ L2CAP_PS3_HandleRemoteConnect(
 			TraceError(
 				TRACE_L2CAP,
 				"ClientConnections_CreateAndInsert failed with status %!STATUS!", status);
-			goto exit;
-		}
-
-		//
-		// Store device type (required to later spawn the right PDO)
-		// 
-		pPdoCtx->DeviceType = deviceType;
-
-		//
-		// Store remote name in connection context
-		// 
-		status = RtlUnicodeStringPrintf(&pPdoCtx->RemoteName, L"%hs", remoteName);
-
-		if (!NT_SUCCESS(status)) {
-			TraceError(
-				TRACE_L2CAP,
-				"RtlUnicodeStringPrintf failed with status %!STATUS!", status);
 			goto exit;
 		}
 	}

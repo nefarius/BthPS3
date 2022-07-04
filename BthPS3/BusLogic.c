@@ -1128,7 +1128,7 @@ BthPS3_PDO_Create(
 			if (!TestBit(Context->Header.Slots, record.SerialNumber))
 			{
 				TraceVerbose(
-					TRACE_DEVICE,
+					TRACE_BUSLOGIC,
 					"Assigned serial: %d",
 					record.SerialNumber
 				);
@@ -1160,7 +1160,7 @@ BthPS3_PDO_Create(
 		)))
 		{
 			TraceError(
-				TRACE_L2CAP,
+				TRACE_BUSLOGIC,
 				"RtlUnicodeStringPrintf failed with status %!STATUS!",
 				status
 			);
@@ -1179,13 +1179,16 @@ BthPS3_PDO_Create(
 		)))
 		{
 			TraceError(
-				TRACE_L2CAP,
+				TRACE_BUSLOGIC,
 				"RtlStringCbPrintfW failed with status %!STATUS!",
 				status
 			);
 			break;
 		}
 
+		//
+		// Set these device properties for the new PDO
+		// 
 		Pdo_DevicePropertyEntry entries[] =
 		{
 			{
@@ -1216,7 +1219,7 @@ BthPS3_PDO_Create(
 				{sizeof(WDF_DEVICE_PROPERTY_DATA), &DEVPKEY_Bluetooth_DeviceManufacturer, LOCALE_NEUTRAL, PLUGPLAY_PROPERTY_PERSISTENT},
 				DEVPROP_TYPE_STRING,
 				manufacturer,
-				sizeof(manufacturer),
+				(ULONG)(wcslen(manufacturer) * sizeof(WCHAR)) + sizeof(L'\0'),
 				FALSE,
 				NULL
 			},
@@ -1246,6 +1249,9 @@ BthPS3_PDO_Create(
 			},
 		};
 
+		//
+		// Set VID/PID according to device type
+		// 
 		switch (DeviceType)
 		{
 		case DS_DEVICE_TYPE_SIXAXIS:
@@ -1275,28 +1281,6 @@ BthPS3_PDO_Create(
 		properties.TableEntries = entries;
 
 		record.DeviceProperties = &properties;
-
-		Pdo_DevicePropertyEntry* entry;
-		Pdo_DeviceProperty_Table* DevicePropertyTable = &properties;
-
-		for (ULONG propertyIndex = 0; propertyIndex < DevicePropertyTable->ItemCount; propertyIndex++)
-		{
-			entry = &DevicePropertyTable->TableEntries[propertyIndex];
-
-			TraceVerbose(
-				TRACE_BUSLOGIC,
-				"ValueSize: %d",
-				entry->ValueSize
-			);
-
-			if (entry->RegisterDeviceInterface)
-			{
-				TraceVerbose(
-					TRACE_BUSLOGIC,
-					"!! RegisterDeviceInterface"
-				);
-			}
-		}
 
 		//
 		// Prepare Hardware ID GUID segment and description based on device type

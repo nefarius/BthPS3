@@ -1100,9 +1100,12 @@ BthPS3_PDO_Create(
 	WCHAR devAddr[13];
 	PWSTR manufacturer = L"Nefarius Software Solutions e.U.";
 	LARGE_INTEGER lastConnectionTime;
+	WDFKEY hKey = NULL;
+	ULONG rawPdo = 0;
 
 	DECLARE_UNICODE_STRING_SIZE(hardwareId, MAX_DEVICE_ID_LEN);
 	DECLARE_UNICODE_STRING_SIZE(remotenameWide, BTH_MAX_NAME_SIZE);
+	DECLARE_CONST_UNICODE_STRING(rawPdoValue, BTHPS3_REG_VALUE_RAW_PDO);
 
 	WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&attributes, BTHPS3_PDO_CONTEXT);
 
@@ -1115,6 +1118,34 @@ BthPS3_PDO_Create(
 	record.CustomClientContext = &attributes;
 	record.EnableDmf = TRUE;
 	record.EvtDmfDeviceModulesAdd = BthPS3_PDO_EvtDmfModulesAdd;
+
+
+	//
+	// Open
+	//   HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\BthPS3\Parameters
+	// key
+	// 
+	status = WdfDriverOpenParametersRegistryKey(
+		WdfGetDriver(),
+		STANDARD_RIGHTS_ALL,
+		WDF_NO_OBJECT_ATTRIBUTES,
+		&hKey
+	);
+
+	//
+	// On success, read configuration values
+	// 
+	if (NT_SUCCESS(status))
+	{
+		//
+		// Don't care, if it fails, keep default value
+		// 
+		(void)WdfRegistryQueryULong(
+			hKey,
+			&rawPdoValue,
+			&rawPdo
+		);
+	}
 
 	do
 	{
@@ -1392,6 +1423,33 @@ BthPS3_PDO_Create(
 		record.HardwareIdsCount = 1;
 
 		//
+		// Expose as RAW device if told
+		// 
+		if (rawPdo)
+		{
+			record.RawDevice = TRUE;
+
+			switch (DeviceType)
+			{
+			case DS_DEVICE_TYPE_SIXAXIS:
+				record.RawDeviceClassGuid = &GUID_DEVCLASS_BTHPS3_SIXAXIS;
+				break;
+			case DS_DEVICE_TYPE_NAVIGATION:
+				record.RawDeviceClassGuid = &GUID_DEVCLASS_BTHPS3_NAVIGATION;
+				break;
+			case DS_DEVICE_TYPE_MOTION:
+				record.RawDeviceClassGuid = &GUID_DEVCLASS_BTHPS3_MOTION;
+				break;
+			case DS_DEVICE_TYPE_WIRELESS:
+				record.RawDeviceClassGuid = &GUID_DEVCLASS_BTHPS3_WIRELESS;
+				break;
+			default:
+				status = STATUS_INVALID_PARAMETER;
+				break;
+			}
+		}
+
+		//
 		// Create PDO, DMF modules and allocate PDO context
 		// 
 		if (!NT_SUCCESS(status = DMF_Pdo_DevicePlugEx(
@@ -1568,6 +1626,10 @@ BthPS3_PDO_Create(
 	// TODO: add error handling
 	// 
 
+	if (hKey)
+	{
+		WdfRegistryClose(hKey);
+	}
 
 	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
 

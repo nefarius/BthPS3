@@ -1,7 +1,9 @@
 version: 3.0.{build}.0
 image: Visual Studio 2019
-#cache:
-#- C:\projects\DMF
+cache:
+- C:\projects\DMF
+environment:
+  DmfRootPath: C:\projects\DMF
 platform:
 - x86
 - x64

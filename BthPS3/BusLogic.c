@@ -1223,6 +1223,22 @@ BthPS3_PDO_Create(
 		Pdo_DevicePropertyEntry entries[] =
 		{
 			{
+				{sizeof(WDF_DEVICE_PROPERTY_DATA), &DEVPKEY_Bluetooth_DeviceVID, LOCALE_NEUTRAL, PLUGPLAY_PROPERTY_PERSISTENT},
+				DEVPROP_TYPE_UINT16,
+				NULL,
+				sizeof(USHORT),
+				FALSE,
+				NULL
+			},
+			{
+				{sizeof(WDF_DEVICE_PROPERTY_DATA), &DEVPKEY_Bluetooth_DevicePID, LOCALE_NEUTRAL, PLUGPLAY_PROPERTY_PERSISTENT},
+				DEVPROP_TYPE_UINT16,
+				NULL,
+				sizeof(USHORT),
+				FALSE,
+				NULL
+			},
+			{
 				{sizeof(WDF_DEVICE_PROPERTY_DATA), &DEVPKEY_Bluetooth_DeviceAddress, LOCALE_NEUTRAL, PLUGPLAY_PROPERTY_PERSISTENT},
 				DEVPROP_TYPE_STRING,
 				devAddr,
@@ -1261,23 +1277,7 @@ BthPS3_PDO_Create(
 				sizeof(LARGE_INTEGER),
 				FALSE,
 				NULL
-			},
-			{
-				{sizeof(WDF_DEVICE_PROPERTY_DATA), &DEVPKEY_Bluetooth_DeviceVID, LOCALE_NEUTRAL, PLUGPLAY_PROPERTY_PERSISTENT},
-				DEVPROP_TYPE_UINT16,
-				NULL,
-				sizeof(USHORT),
-				FALSE,
-				NULL
-			},
-			{
-				{sizeof(WDF_DEVICE_PROPERTY_DATA), &DEVPKEY_Bluetooth_DevicePID, LOCALE_NEUTRAL, PLUGPLAY_PROPERTY_PERSISTENT},
-				DEVPROP_TYPE_UINT16,
-				NULL,
-				sizeof(USHORT),
-				FALSE,
-				NULL
-			},
+			},			
 		};
 
 		//
@@ -1286,20 +1286,20 @@ BthPS3_PDO_Create(
 		switch (DeviceType)
 		{
 		case DS_DEVICE_TYPE_SIXAXIS:
-			entries[5].ValueData = &BTHPS3_SIXAXIS_VID;
-			entries[6].ValueData = &BTHPS3_SIXAXIS_PID;
+			entries[0].ValueData = &BTHPS3_SIXAXIS_VID;
+			entries[1].ValueData = &BTHPS3_SIXAXIS_PID;
 			break;
 		case DS_DEVICE_TYPE_NAVIGATION:
-			entries[5].ValueData = &BTHPS3_NAVIGATION_VID;
-			entries[6].ValueData = &BTHPS3_NAVIGATION_PID;
+			entries[0].ValueData = &BTHPS3_NAVIGATION_VID;
+			entries[1].ValueData = &BTHPS3_NAVIGATION_PID;
 			break;
 		case DS_DEVICE_TYPE_MOTION:
-			entries[5].ValueData = &BTHPS3_MOTION_VID;
-			entries[6].ValueData = &BTHPS3_MOTION_PID;
+			entries[0].ValueData = &BTHPS3_MOTION_VID;
+			entries[1].ValueData = &BTHPS3_MOTION_PID;
 			break;
 		case DS_DEVICE_TYPE_WIRELESS:
-			entries[5].ValueData = &BTHPS3_WIRELESS_VID;
-			entries[6].ValueData = &BTHPS3_WIRELESS_PID;
+			entries[0].ValueData = &BTHPS3_WIRELESS_VID;
+			entries[1].ValueData = &BTHPS3_WIRELESS_PID;
 			break;
 		default:
 			status = STATUS_INVALID_PARAMETER;

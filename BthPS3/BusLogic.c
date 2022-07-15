@@ -1219,6 +1219,7 @@ BthPS3_PDO_Create(
 
 		//
 		// Set these device properties for the new PDO
+		// TODO: convert from stack to heap allocated!
 		// 
 		Pdo_DevicePropertyEntry entries[] =
 		{

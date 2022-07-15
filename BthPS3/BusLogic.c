@@ -1302,6 +1302,7 @@ BthPS3_PDO_Create(
 			entries[0].ValueData = &BTHPS3_WIRELESS_VID;
 			entries[1].ValueData = &BTHPS3_WIRELESS_PID;
 			break;
+		case DS_DEVICE_TYPE_UNKNOWN:
 		default:
 			status = STATUS_INVALID_PARAMETER;
 			break;
@@ -1343,6 +1344,7 @@ BthPS3_PDO_Create(
 				&guidString
 			);
 			break;
+		case DS_DEVICE_TYPE_UNKNOWN:
 		default:
 			status = STATUS_INVALID_PARAMETER;
 			break;
@@ -1403,6 +1405,7 @@ BthPS3_PDO_Create(
 				BTHPS3_WIRELESS_PID
 			);
 			break;
+		case DS_DEVICE_TYPE_UNKNOWN:
 		default:
 			status = STATUS_INVALID_PARAMETER;
 			break;
@@ -1444,6 +1447,7 @@ BthPS3_PDO_Create(
 			case DS_DEVICE_TYPE_WIRELESS:
 				record.RawDeviceClassGuid = &GUID_DEVCLASS_BTHPS3_WIRELESS;
 				break;
+			case DS_DEVICE_TYPE_UNKNOWN:
 			default:
 				status = STATUS_INVALID_PARAMETER;
 				break;

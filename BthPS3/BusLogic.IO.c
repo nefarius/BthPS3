@@ -262,6 +262,9 @@ BthPS3_PDO_HandleOther(
 	return status;
 }
 
+//
+// Sends pending HID Control Read Requests through L2CAP channel to remote device
+// 
 _IRQL_requires_same_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
@@ -315,6 +318,9 @@ BthPS3_PDO_DispatchHidControlRead(
 	}
 }
 
+//
+// Sends pending HID Control Write Requests through L2CAP channel to remote device
+// 
 _IRQL_requires_same_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
@@ -368,6 +374,9 @@ BthPS3_PDO_DispatchHidControlWrite(
 	}
 }
 
+//
+// Sends pending HID Interrupt Read Requests through L2CAP channel to remote device
+// 
 _IRQL_requires_same_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
@@ -421,6 +430,9 @@ BthPS3_PDO_DispatchHidInterruptRead(
 	}
 }
 
+//
+// Sends pending HID Interrupt Write Requests through L2CAP channel to remote device
+// 
 _IRQL_requires_same_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID

@@ -81,27 +81,6 @@ BthPS3_PDO_HandleHidControlRead(
 	}
 	else status = STATUS_PENDING;
 
-	/*
-	if (!NT_SUCCESS(status = L2CAP_PS3_ReadControlTransferAsync(
-		pPdoCtx,
-		Request,
-		OutputBuffer,
-		OutputBufferSize,
-		L2CAP_PS3_AsyncReadControlTransferCompleted
-	)))
-	{
-		TraceError(
-			TRACE_BUSLOGIC,
-			"L2CAP_PS3_ReadControlTransferAsync failed with status %!STATUS!",
-			status
-		);
-	}
-	else
-	{
-		status = STATUS_PENDING;
-	}
-	*/
-
 	return status;
 }
 
@@ -146,26 +125,7 @@ BthPS3_PDO_HandleHidControlWrite(
 		);
 	}
 	else status = STATUS_PENDING;
-
-	/*if (!NT_SUCCESS(status = L2CAP_PS3_SendControlTransferAsync(
-		pPdoCtx,
-		Request,
-		InputBuffer,
-		InputBufferSize,
-		L2CAP_PS3_AsyncReadControlTransferCompleted
-	)))
-	{
-		TraceError(
-			TRACE_BUSLOGIC,
-			"L2CAP_PS3_SendControlTransferAsync failed with status %!STATUS!",
-			status
-		);
-	}
-	else
-	{
-		status = STATUS_PENDING;
-	}*/
-
+	
 	return status;
 }
 
@@ -211,25 +171,6 @@ BthPS3_PDO_HandleHidInterruptRead(
 	}
 	else status = STATUS_PENDING;
 
-	/*if (!NT_SUCCESS(status = L2CAP_PS3_ReadInterruptTransferAsync(
-		pPdoCtx,
-		Request,
-		OutputBuffer,
-		OutputBufferSize,
-		L2CAP_PS3_AsyncReadControlTransferCompleted
-	)))
-	{
-		TraceError(
-			TRACE_BUSLOGIC,
-			"L2CAP_PS3_ReadInterruptTransferAsync failed with status %!STATUS!",
-			status
-		);
-	}
-	else
-	{
-		status = STATUS_PENDING;
-	}*/
-
 	return status;
 }
 
@@ -274,26 +215,7 @@ BthPS3_PDO_HandleHidInterruptWrite(
 		);
 	}
 	else status = STATUS_PENDING;
-
-	/*if (!NT_SUCCESS(status = L2CAP_PS3_SendInterruptTransferAsync(
-		pPdoCtx,
-		Request,
-		InputBuffer,
-		InputBufferSize,
-		L2CAP_PS3_AsyncReadControlTransferCompleted
-	)))
-	{
-		TraceError(
-			TRACE_BUSLOGIC,
-			"L2CAP_PS3_SendInterruptTransferAsync failed with status %!STATUS!",
-			status
-		);
-	}
-	else
-	{
-		status = STATUS_PENDING;
-	}*/
-
+	
 	return status;
 }
 
@@ -340,3 +262,214 @@ BthPS3_PDO_HandleOther(
 	return status;
 }
 
+_IRQL_requires_same_
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+BthPS3_PDO_DispatchHidControlRead(
+	_In_ WDFQUEUE Queue,
+	_In_ WDFCONTEXT Context
+)
+{
+	const PBTHPS3_PDO_CONTEXT pPdoCtx = Context;
+	NTSTATUS status;
+	WDFREQUEST request = NULL;
+	PVOID buffer = NULL;
+	size_t length = 0;
+
+	while (NT_SUCCESS(WdfIoQueueRetrieveNextRequest(Queue, &request)))
+	{
+		if (!NT_SUCCESS(status = WdfRequestRetrieveOutputBuffer(
+			request,
+			0,
+			&buffer,
+			&length
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfRequestRetrieveOutputBuffer failed with status %!STATUS!",
+				status
+			);
+
+			WdfRequestComplete(request, status);
+			continue;
+		}
+
+		if (!NT_SUCCESS(status = L2CAP_PS3_ReadControlTransferAsync(
+			pPdoCtx,
+			request,
+			buffer,
+			length,
+			L2CAP_PS3_AsyncReadControlTransferCompleted
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"L2CAP_PS3_ReadControlTransferAsync failed with status %!STATUS!",
+				status
+			);
+
+			WdfRequestComplete(request, status);
+			continue;
+		}
+	}
+}
+
+_IRQL_requires_same_
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+BthPS3_PDO_DispatchHidControlWrite(
+	_In_ WDFQUEUE Queue,
+	_In_ WDFCONTEXT Context
+)
+{
+	const PBTHPS3_PDO_CONTEXT pPdoCtx = Context;
+	NTSTATUS status;
+	WDFREQUEST request = NULL;
+	PVOID buffer = NULL;
+	size_t length = 0;
+
+	while (NT_SUCCESS(WdfIoQueueRetrieveNextRequest(Queue, &request)))
+	{
+		if (!NT_SUCCESS(status = WdfRequestRetrieveInputBuffer(
+			request,
+			0,
+			&buffer,
+			&length
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfRequestRetrieveInputBuffer failed with status %!STATUS!",
+				status
+			);
+
+			WdfRequestComplete(request, status);
+			continue;
+		}
+
+		if (!NT_SUCCESS(status = L2CAP_PS3_SendControlTransferAsync(
+			pPdoCtx,
+			request,
+			buffer,
+			length,
+			L2CAP_PS3_AsyncSendControlTransferCompleted
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"L2CAP_PS3_SendControlTransferAsync failed with status %!STATUS!",
+				status
+			);
+
+			WdfRequestComplete(request, status);
+			continue;
+		}
+	}
+}
+
+_IRQL_requires_same_
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+BthPS3_PDO_DispatchHidInterruptRead(
+	_In_ WDFQUEUE Queue,
+	_In_ WDFCONTEXT Context
+)
+{
+	const PBTHPS3_PDO_CONTEXT pPdoCtx = Context;
+	NTSTATUS status;
+	WDFREQUEST request = NULL;
+	PVOID buffer = NULL;
+	size_t length = 0;
+
+	while (NT_SUCCESS(WdfIoQueueRetrieveNextRequest(Queue, &request)))
+	{
+		if (!NT_SUCCESS(status = WdfRequestRetrieveOutputBuffer(
+			request,
+			0,
+			&buffer,
+			&length
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfRequestRetrieveOutputBuffer failed with status %!STATUS!",
+				status
+			);
+
+			WdfRequestComplete(request, status);
+			continue;
+		}
+
+		if (!NT_SUCCESS(status = L2CAP_PS3_ReadInterruptTransferAsync(
+			pPdoCtx,
+			request,
+			buffer,
+			length,
+			L2CAP_PS3_AsyncReadInterruptTransferCompleted
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"L2CAP_PS3_ReadInterruptTransferAsync failed with status %!STATUS!",
+				status
+			);
+
+			WdfRequestComplete(request, status);
+			continue;
+		}
+	}
+}
+
+_IRQL_requires_same_
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+BthPS3_PDO_DispatchHidInterruptWrite(
+	_In_ WDFQUEUE Queue,
+	_In_ WDFCONTEXT Context
+)
+{
+	const PBTHPS3_PDO_CONTEXT pPdoCtx = Context;
+	NTSTATUS status;
+	WDFREQUEST request = NULL;
+	PVOID buffer = NULL;
+	size_t length = 0;
+
+	while (NT_SUCCESS(WdfIoQueueRetrieveNextRequest(Queue, &request)))
+	{
+		if (!NT_SUCCESS(status = WdfRequestRetrieveInputBuffer(
+			request,
+			0,
+			&buffer,
+			&length
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfRequestRetrieveInputBuffer failed with status %!STATUS!",
+				status
+			);
+
+			WdfRequestComplete(request, status);
+			continue;
+		}
+
+		if (!NT_SUCCESS(status = L2CAP_PS3_SendInterruptTransferAsync(
+			pPdoCtx,
+			request,
+			buffer,
+			length,
+			L2CAP_PS3_AsyncSendInterruptTransferCompleted
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"L2CAP_PS3_SendInterruptTransferAsync failed with status %!STATUS!",
+				status
+			);
+
+			WdfRequestComplete(request, status);
+			continue;
+		}
+	}
+}

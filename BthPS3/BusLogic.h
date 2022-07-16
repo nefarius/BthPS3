@@ -175,6 +175,10 @@ EVT_DMF_Pdo_PreCreate BthPS3_PDO_EvtPreCreate;
 
 EVT_DMF_Pdo_PostCreate BthPS3_PDO_EvtPostCreate;
 
+//
+// Handle requests from upper driver
+// 
+
 EVT_DMF_IoctlHandler_Callback BthPS3_PDO_HandleHidControlRead;
 
 EVT_DMF_IoctlHandler_Callback BthPS3_PDO_HandleHidControlWrite;
@@ -184,3 +188,15 @@ EVT_DMF_IoctlHandler_Callback BthPS3_PDO_HandleHidInterruptRead;
 EVT_DMF_IoctlHandler_Callback BthPS3_PDO_HandleHidInterruptWrite;
 
 EVT_DMF_IoctlHandler_Callback BthPS3_PDO_HandleOther;
+
+//
+// Process requests once queued
+// 
+
+EVT_WDF_IO_QUEUE_STATE BthPS3_PDO_DispatchHidControlRead;
+
+EVT_WDF_IO_QUEUE_STATE BthPS3_PDO_DispatchHidControlWrite;
+
+EVT_WDF_IO_QUEUE_STATE BthPS3_PDO_DispatchHidInterruptRead;
+
+EVT_WDF_IO_QUEUE_STATE BthPS3_PDO_DispatchHidInterruptWrite;

@@ -97,6 +97,10 @@ BthPS3_PDO_EvtPostCreate(
 
 	do
 	{
+		//
+		// Create queues to dispatch HID Control & Interrupt requests
+		// 
+
 		WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
 		WDF_IO_QUEUE_CONFIG_INIT(&queueCfg, WdfIoQueueDispatchManual);
 		queueCfg.PowerManaged = WdfFalse;

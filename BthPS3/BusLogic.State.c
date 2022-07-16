@@ -99,6 +99,7 @@ BthPS3_PDO_EvtPostCreate(
 	{
 		WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
 		WDF_IO_QUEUE_CONFIG_INIT(&queueCfg, WdfIoQueueDispatchManual);
+		queueCfg.PowerManaged = WdfFalse;
 
 		if (!NT_SUCCESS(status = WdfIoQueueCreate(
 			ChildDevice,

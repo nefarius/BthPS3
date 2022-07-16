@@ -39,9 +39,9 @@
 #include "BusLogic.IO.tmh"
 
 
-//
-// Handles IOCTL_BTHPS3_HID_CONTROL_READ
-// 
+ //
+ // Handles IOCTL_BTHPS3_HID_CONTROL_READ
+ // 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_PDO_HandleHidControlRead(
@@ -61,11 +61,27 @@ BthPS3_PDO_HandleHidControlRead(
 	UNREFERENCED_PARAMETER(InputBuffer);
 	UNREFERENCED_PARAMETER(InputBufferSize);
 	UNREFERENCED_PARAMETER(BytesReturned);
+	UNREFERENCED_PARAMETER(OutputBufferSize);
+	UNREFERENCED_PARAMETER(OutputBuffer);
 
 	NTSTATUS status;
 	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
 	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
 
+	if (!NT_SUCCESS(status = WdfRequestForwardToIoQueue(
+		Request,
+		pPdoCtx->Queues.HidControlReadRequests
+	)))
+	{
+		TraceError(
+			TRACE_BUSLOGIC,
+			"WdfRequestForwardToIoQueue failed with status %!STATUS!",
+			status
+		);
+	}
+	else status = STATUS_PENDING;
+
+	/*
 	if (!NT_SUCCESS(status = L2CAP_PS3_ReadControlTransferAsync(
 		pPdoCtx,
 		Request,
@@ -84,6 +100,7 @@ BthPS3_PDO_HandleHidControlRead(
 	{
 		status = STATUS_PENDING;
 	}
+	*/
 
 	return status;
 }
@@ -110,12 +127,27 @@ BthPS3_PDO_HandleHidControlWrite(
 	UNREFERENCED_PARAMETER(OutputBuffer);
 	UNREFERENCED_PARAMETER(OutputBufferSize);
 	UNREFERENCED_PARAMETER(BytesReturned);
+	UNREFERENCED_PARAMETER(InputBuffer);
+	UNREFERENCED_PARAMETER(InputBufferSize);
 
 	NTSTATUS status;
 	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
 	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
 
-	if (!NT_SUCCESS(status = L2CAP_PS3_SendControlTransferAsync(
+	if (!NT_SUCCESS(status = WdfRequestForwardToIoQueue(
+		Request,
+		pPdoCtx->Queues.HidControlWriteRequests
+	)))
+	{
+		TraceError(
+			TRACE_BUSLOGIC,
+			"WdfRequestForwardToIoQueue failed with status %!STATUS!",
+			status
+		);
+	}
+	else status = STATUS_PENDING;
+
+	/*if (!NT_SUCCESS(status = L2CAP_PS3_SendControlTransferAsync(
 		pPdoCtx,
 		Request,
 		InputBuffer,
@@ -132,7 +164,7 @@ BthPS3_PDO_HandleHidControlWrite(
 	else
 	{
 		status = STATUS_PENDING;
-	}
+	}*/
 
 	return status;
 }
@@ -159,12 +191,27 @@ BthPS3_PDO_HandleHidInterruptRead(
 	UNREFERENCED_PARAMETER(InputBuffer);
 	UNREFERENCED_PARAMETER(InputBufferSize);
 	UNREFERENCED_PARAMETER(BytesReturned);
+	UNREFERENCED_PARAMETER(OutputBuffer);
+	UNREFERENCED_PARAMETER(OutputBufferSize);
 
 	NTSTATUS status;
 	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
 	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
 
-	if (!NT_SUCCESS(status = L2CAP_PS3_ReadInterruptTransferAsync(
+	if (!NT_SUCCESS(status = WdfRequestForwardToIoQueue(
+		Request,
+		pPdoCtx->Queues.HidInterruptReadRequests
+	)))
+	{
+		TraceError(
+			TRACE_BUSLOGIC,
+			"WdfRequestForwardToIoQueue failed with status %!STATUS!",
+			status
+		);
+	}
+	else status = STATUS_PENDING;
+
+	/*if (!NT_SUCCESS(status = L2CAP_PS3_ReadInterruptTransferAsync(
 		pPdoCtx,
 		Request,
 		OutputBuffer,
@@ -181,7 +228,7 @@ BthPS3_PDO_HandleHidInterruptRead(
 	else
 	{
 		status = STATUS_PENDING;
-	}
+	}*/
 
 	return status;
 }
@@ -208,12 +255,27 @@ BthPS3_PDO_HandleHidInterruptWrite(
 	UNREFERENCED_PARAMETER(OutputBuffer);
 	UNREFERENCED_PARAMETER(OutputBufferSize);
 	UNREFERENCED_PARAMETER(BytesReturned);
+	UNREFERENCED_PARAMETER(InputBuffer);
+	UNREFERENCED_PARAMETER(InputBufferSize);
 
 	NTSTATUS status;
 	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
 	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
 
-	if (!NT_SUCCESS(status = L2CAP_PS3_SendInterruptTransferAsync(
+	if (!NT_SUCCESS(status = WdfRequestForwardToIoQueue(
+		Request,
+		pPdoCtx->Queues.HidInterruptWriteRequests
+	)))
+	{
+		TraceError(
+			TRACE_BUSLOGIC,
+			"WdfRequestForwardToIoQueue failed with status %!STATUS!",
+			status
+		);
+	}
+	else status = STATUS_PENDING;
+
+	/*if (!NT_SUCCESS(status = L2CAP_PS3_SendInterruptTransferAsync(
 		pPdoCtx,
 		Request,
 		InputBuffer,
@@ -230,7 +292,7 @@ BthPS3_PDO_HandleHidInterruptWrite(
 	else
 	{
 		status = STATUS_PENDING;
-	}
+	}*/
 
 	return status;
 }

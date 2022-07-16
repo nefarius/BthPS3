@@ -128,6 +128,18 @@ typedef struct _BTHPS3_PDO_CONTEXT
 
     WDFMEMORY HardwareId;
 
+    struct
+    {
+        WDFQUEUE HidControlReadRequests;
+
+        WDFQUEUE HidControlWriteRequests;
+
+        WDFQUEUE HidInterruptReadRequests;
+
+        WDFQUEUE HidInterruptWriteRequests;
+	    
+    } Queues;
+
 } BTHPS3_PDO_CONTEXT, *PBTHPS3_PDO_CONTEXT;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_PDO_CONTEXT, GetPdoContext)

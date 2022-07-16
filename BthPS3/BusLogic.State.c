@@ -39,9 +39,9 @@
 #include "BusLogic.State.tmh"
 
 
-//
-// Called before PDO creation
-// 
+ //
+ // Called before PDO creation
+ // 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 _IRQL_requires_same_
 NTSTATUS
@@ -88,11 +88,78 @@ BthPS3_PDO_EvtPostCreate(
 	WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS idleSettings;
 	WDFKEY hKey = NULL;
 	ULONG idleTimeout = 10000; // 10 secs idle timeout
+	WDF_OBJECT_ATTRIBUTES attributes;
+	WDF_IO_QUEUE_CONFIG queueCfg;
 
 	DECLARE_CONST_UNICODE_STRING(idleTimeoutValue, BTHPS3_REG_VALUE_CHILD_IDLE_TIMEOUT);
 
+	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(ChildDevice);
+
 	do
 	{
+		WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+		WDF_IO_QUEUE_CONFIG_INIT(&queueCfg, WdfIoQueueDispatchManual);
+
+		if (!NT_SUCCESS(status = WdfIoQueueCreate(
+			ChildDevice,
+			&queueCfg,
+			&attributes,
+			&pPdoCtx->Queues.HidControlReadRequests
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfIoQueueCreate (HidControlReadRequests) failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
+
+		if (!NT_SUCCESS(status = WdfIoQueueCreate(
+			ChildDevice,
+			&queueCfg,
+			&attributes,
+			&pPdoCtx->Queues.HidControlWriteRequests
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfIoQueueCreate (HidControlReadRequests) failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
+
+		if (!NT_SUCCESS(status = WdfIoQueueCreate(
+			ChildDevice,
+			&queueCfg,
+			&attributes,
+			&pPdoCtx->Queues.HidInterruptReadRequests
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfIoQueueCreate (HidControlReadRequests) failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
+
+		if (!NT_SUCCESS(status = WdfIoQueueCreate(
+			ChildDevice,
+			&queueCfg,
+			&attributes,
+			&pPdoCtx->Queues.HidInterruptWriteRequests
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfIoQueueCreate (HidControlReadRequests) failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
+
 		//
 		// Open
 		//   HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\BthPS3\Parameters

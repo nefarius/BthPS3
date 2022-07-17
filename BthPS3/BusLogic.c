@@ -772,10 +772,6 @@ BthPS3_PDO_Destroy(
 
 			ClearBit(Context->Slots, serial);
 
-			//
-			// TODO: implement me!
-			// 
-
 			break;
 		}
 	}

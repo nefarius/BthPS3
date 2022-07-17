@@ -43,7 +43,6 @@
     <ClCompile Include="BusLogic.c" />
     <ClCompile Include="BusLogic.IO.c" />
     <ClCompile Include="BusLogic.State.c" />
-    <ClCompile Include="Connection.c" />
     <ClCompile Include="Device.c" />
     <ClCompile Include="Driver.c" />
     <ClCompile Include="L2CAP.Connect.c" />
@@ -57,7 +56,6 @@
     <ClInclude Include="..\common\include\BthPS3.h" />
     <ClInclude Include="Bluetooth.h" />
     <ClInclude Include="BusLogic.h" />
-    <ClInclude Include="Connection.h" />
     <ClInclude Include="Device.h" />
     <ClInclude Include="Driver.h" />
     <ClInclude Include="PSM.h" />

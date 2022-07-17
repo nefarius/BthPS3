@@ -38,7 +38,8 @@
 #pragma once
 
 
-typedef struct _BTHPS3_PDO_CONTEXT *PBTHPS3_PDO_CONTEXT;
+typedef struct _BTHPS3_PDO_CONTEXT              *PBTHPS3_PDO_CONTEXT;
+typedef struct _BTHPS3_CLIENT_L2CAP_CHANNEL     *PBTHPS3_CLIENT_L2CAP_CHANNEL;
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS

@@ -42,9 +42,6 @@
     <ClInclude Include="Bluetooth.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Connection.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="L2CAP.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -69,9 +66,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Bluetooth.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Connection.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="L2CAP.c">

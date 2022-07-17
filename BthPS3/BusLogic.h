@@ -40,49 +40,42 @@
 #define MAX_DEVICE_ID_LEN   200
 #define BTH_ADDR_HEX_LEN    12
 
-#pragma region REMOVE
- //
- // Identification information for dynamically enumerated bus children (PDOs)
- // 
-typedef struct _PDO_IDENTIFICATION_DESCRIPTION
-{
-	//
-	// Mandatory header
-	// 
-	WDF_CHILD_IDENTIFICATION_DESCRIPTION_HEADER Header;
-
-	//
-	// Client connection context
-	// 
-	PBTHPS3_CLIENT_CONNECTION ClientConnection;
-
-} PDO_IDENTIFICATION_DESCRIPTION, * PPDO_IDENTIFICATION_DESCRIPTION;
 
 //
-// Context data of child device (PDO)
+// Connection state
+//
+typedef enum _BTHPS3_CONNECTION_STATE {
+    ConnectionStateUninitialized = 0,
+    ConnectionStateInitialized,
+    ConnectionStateConnecting,
+    ConnectionStateConnected,
+    ConnectionStateConnectFailed,
+    ConnectionStateDisconnecting,
+    ConnectionStateDisconnected
+
+} BTHPS3_CONNECTION_STATE, *PBTHPS3_CONNECTION_STATE;
+
+//
+// State information for a single L2CAP channel
 // 
-typedef struct _BTHPS3_PDO_DEVICE_CONTEXT
+typedef struct _BTHPS3_CLIENT_L2CAP_CHANNEL
 {
-	//
-	// Client connection context
-	// 
-	PBTHPS3_CLIENT_CONNECTION ClientConnection;
+    BTHPS3_CONNECTION_STATE ConnectionState;
 
-} BTHPS3_PDO_DEVICE_CONTEXT, * PBTHPS3_PDO_DEVICE_CONTEXT;
+    WDFSPINLOCK ConnectionStateLock;
 
-WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_PDO_DEVICE_CONTEXT, GetPdoDeviceContext)
-#pragma endregion
+    L2CAP_CHANNEL_HANDLE ChannelHandle;
 
+    struct _BRB ConnectDisconnectBrb;
 
-EVT_WDF_REQUEST_COMPLETION_ROUTINE BthPS3_PDO_DisconnectRequestCompleted;
+    WDFREQUEST ConnectDisconnectRequest;
 
+    KEVENT DisconnectEvent;
 
-//
-// The new fun
-// 
+} BTHPS3_CLIENT_L2CAP_CHANNEL, *PBTHPS3_CLIENT_L2CAP_CHANNEL;
 
 //
-// TODO: this deprecates struct _BTHPS3_CLIENT_CONNECTION
+// PDO context object holding all state information per child device
 // 
 typedef struct _BTHPS3_PDO_CONTEXT
 {
@@ -119,6 +112,22 @@ typedef struct _BTHPS3_PDO_CONTEXT
 } BTHPS3_PDO_CONTEXT, * PBTHPS3_PDO_CONTEXT;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_PDO_CONTEXT, GetPdoContext)
+
+
+VOID
+FORCEINLINE
+CLIENT_CONNECTION_REQUEST_REUSE(
+    _In_ WDFREQUEST Request
+)
+{
+    NTSTATUS statusReuse;
+    WDF_REQUEST_REUSE_PARAMS reuseParams;
+
+    WDF_REQUEST_REUSE_PARAMS_INIT(&reuseParams, WDF_REQUEST_REUSE_NO_FLAGS, STATUS_NOT_SUPPORTED);
+    statusReuse = WdfRequestReuse(Request, &reuseParams);
+    NT_ASSERT(NT_SUCCESS(statusReuse));
+    UNREFERENCED_PARAMETER(statusReuse);
+}
 
 
 _IRQL_requires_max_(PASSIVE_LEVEL)

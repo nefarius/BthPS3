@@ -50,7 +50,6 @@
 #include "trace.h"
 #include "Bluetooth.h"
 #include "PSM.h"
-#include "Connection.h"
 #include "L2CAP.h"
 #include "BusLogic.h"
 #include "Util.h"

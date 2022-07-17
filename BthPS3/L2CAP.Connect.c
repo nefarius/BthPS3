@@ -90,6 +90,8 @@ L2CAP_PS3_HandleRemoteConnect(
 				"Device %012llX identified as SIXAXIS compatible",
 				ConnectParams->BtAddress
 			);
+
+			goto deviceIdentified;
 		}
 
 		//
@@ -104,6 +106,8 @@ L2CAP_PS3_HandleRemoteConnect(
 				"Device %012llX identified as NAVIGATION compatible",
 				ConnectParams->BtAddress
 			);
+
+			goto deviceIdentified;
 		}
 
 		//
@@ -118,6 +122,8 @@ L2CAP_PS3_HandleRemoteConnect(
 				"Device %012llX identified as MOTION compatible",
 				ConnectParams->BtAddress
 			);
+
+			goto deviceIdentified;
 		}
 
 		//
@@ -132,7 +138,11 @@ L2CAP_PS3_HandleRemoteConnect(
 				"Device %012llX identified as WIRELESS compatible",
 				ConnectParams->BtAddress
 			);
+
+			goto deviceIdentified;
 		}
+
+	deviceIdentified:
 
 		//
 		// We were not able to identify, drop it

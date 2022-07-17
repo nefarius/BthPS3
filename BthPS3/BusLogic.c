@@ -461,7 +461,7 @@ BthPS3_PDO_Create(
 				sizeof(LARGE_INTEGER),
 				FALSE,
 				NULL
-			},			
+			},
 		};
 
 		//
@@ -871,21 +871,24 @@ BthPS3_PDO_RetrieveByBthAddr(
 	return status;
 }
 
+//
+// Unplugs the child device, frees context memory, frees allocated slot (serial number)
+// 
 VOID
 BthPS3_PDO_Destroy(
 	_In_ PBTHPS3_DEVICE_CONTEXT_HEADER Context,
-	_In_ PBTHPS3_PDO_CONTEXT ClientConnection
+	_In_ PBTHPS3_PDO_CONTEXT PdoContext
 )
 {
 	FuncEntryArguments(
 		TRACE_BUSLOGIC,
-		"ClientConnection=0x%p",
-		ClientConnection
+		"PdoContext=0x%p",
+		PdoContext
 	);
 
 	WdfSpinLockAcquire(Context->ClientsLock);
 
-	const WDFDEVICE device = WdfObjectContextGetObject(ClientConnection);
+	const WDFDEVICE device = WdfObjectContextGetObject(PdoContext);
 	const ULONG itemCount = WdfCollectionGetCount(Context->Clients);
 
 	for (ULONG index = 0; index < itemCount; index++)
@@ -894,12 +897,18 @@ BthPS3_PDO_Destroy(
 
 		if (currentPdo == device)
 		{
+			const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(currentPdo);
+			const ULONG serial = pPdoCtx->SerialNumber;
+
 			TraceVerbose(
 				TRACE_BUSLOGIC,
-				"Found desired connection item in connection list"
+				"Found desired connection item in connection list (serial: %d)",
+				serial
 			);
 
-			const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(currentPdo);
+			//
+			// Do NOT use PBTHPS3_PDO_CONTEXT after this call as it gets destroyed!
+			// 
 
 			NTSTATUS status = DMF_Pdo_DeviceUnPlugEx(
 				Context->DmfModulePdo,
@@ -917,6 +926,8 @@ BthPS3_PDO_Destroy(
 			}
 
 			WdfCollectionRemoveItem(Context->Clients, index);
+
+			ClearBit(Context->Slots, serial);
 
 			//
 			// TODO: implement me!

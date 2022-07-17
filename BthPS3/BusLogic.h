@@ -142,7 +142,7 @@ BthPS3_PDO_RetrieveByBthAddr(
 VOID
 BthPS3_PDO_Destroy(
     _In_ PBTHPS3_DEVICE_CONTEXT_HEADER Context,
-    _In_ PBTHPS3_PDO_CONTEXT ClientConnection
+    _In_ PBTHPS3_PDO_CONTEXT PdoContext
 );
 
 EVT_DMF_DEVICE_MODULES_ADD BthPS3_PDO_EvtDmfModulesAdd;

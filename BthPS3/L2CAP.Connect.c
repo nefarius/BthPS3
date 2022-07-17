@@ -166,6 +166,8 @@ L2CAP_PS3_HandleRemoteConnect(
 				ConnectParams->BtAddress
 			);
 
+			EventWriteRemoteDeviceNotIdentified(NULL, ConnectParams->BtAddress);
+
 			//
 			// Filter re-routed potentially unsupported device, disable
 			// 
@@ -179,7 +181,9 @@ L2CAP_PS3_HandleRemoteConnect(
 				{
 					TraceError(
 						TRACE_L2CAP,
-						"BthPS3PSM_DisablePatchSync failed with status %!STATUS!", status);
+						"BthPS3PSM_DisablePatchSync failed with status %!STATUS!",
+						status
+					);
 				}
 				else
 				{
@@ -187,6 +191,8 @@ L2CAP_PS3_HandleRemoteConnect(
 						TRACE_L2CAP,
 						"Filter disabled"
 					);
+
+					EventWriteAutoDisableFilter(NULL);
 
 					//
 					// Fire off re-enable timer
@@ -198,6 +204,8 @@ L2CAP_PS3_HandleRemoteConnect(
 							"Filter disabled, re-enabling in %d seconds",
 							DevCtx->Settings.AutoEnableFilterDelay
 						);
+
+						EventWriteAutoEnableFilter(NULL, DevCtx->Settings.AutoEnableFilterDelay);
 
 						(void)WdfTimerStart(
 							DevCtx->PsmFilter.AutoResetTimer,

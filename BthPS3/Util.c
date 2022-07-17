@@ -63,8 +63,8 @@ StringUtil_BthNameIsEqual(
     //
     // CHAR to UNICODE_STRING
     // 
-    status = RtlUnicodeStringPrintf(&usLhs, L"%hs", Lhs);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status = RtlUnicodeStringPrintf(&usLhs, L"%hs", Lhs))) 
+    {
         TraceError(
             TRACE_UTIL,
             "RtlUnicodeStringPrintf failed with status %!STATUS!",

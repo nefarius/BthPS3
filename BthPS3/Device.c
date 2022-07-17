@@ -357,8 +357,6 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
 )
 {
 	PBTHPS3_SERVER_CONTEXT devCtx = GetServerDeviceContext(Device);
-	WDFOBJECT currentItem;
-	PBTHPS3_CLIENT_CONNECTION connection = NULL;
 
 	PAGED_CODE();
 
@@ -378,62 +376,6 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
 	if (0 != devCtx->PsmHidControl)
 	{
 		BthPS3_UnregisterPSM(devCtx);
-	}
-
-	//
-	// Drop children
-	// 
-	// At this stage nobody is updating the connection list so no locking required
-	// 
-	while ((currentItem = WdfCollectionGetFirstItem(devCtx->Header.Clients)) != NULL)
-	{
-		WdfCollectionRemoveItem(devCtx->Header.Clients, 0);
-		connection = GetClientConnection(currentItem);
-
-		//
-		// Disconnect HID Interrupt Channel first
-		// 
-		L2CAP_PS3_RemoteDisconnect(
-			&devCtx->Header,
-			connection->RemoteAddress,
-			&connection->HidInterruptChannel
-		);
-
-		//
-		// Wait until BTHPORT.SYS has completely dropped the connection
-		// 
-		KeWaitForSingleObject(
-			&connection->HidInterruptChannel.DisconnectEvent,
-			Executive,
-			KernelMode,
-			FALSE,
-			NULL
-		);
-
-		//
-		// Disconnect HID Control Channel last
-		// 
-		L2CAP_PS3_RemoteDisconnect(
-			&devCtx->Header,
-			connection->RemoteAddress,
-			&connection->HidControlChannel
-		);
-
-		//
-		// Wait until BTHPORT.SYS has completely dropped the connection
-		// 
-		KeWaitForSingleObject(
-			&connection->HidControlChannel.DisconnectEvent,
-			Executive,
-			KernelMode,
-			FALSE,
-			NULL
-		);
-
-		//
-		// Invokes freeing memory
-		// 
-		WdfObjectDelete(currentItem);
 	}
 
 	FuncExitNoReturn(TRACE_DEVICE);

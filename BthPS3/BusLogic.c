@@ -36,8 +36,7 @@
 
 
 #include "Driver.h"
-#include <limits.h>
-#include "buslogic.tmh"
+#include "BusLogic.tmh"
 
 
  //
@@ -53,6 +52,9 @@ IoctlHandler_IoctlRecord G_PDO_IoctlSpecification[] =
 };
 
 
+//
+// TODO: legacy, remove/migrate!
+// 
 
 //
 // Triggered on entering I/O idle state

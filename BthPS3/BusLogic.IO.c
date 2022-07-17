@@ -266,9 +266,10 @@ BthPS3_PDO_HandleBthDisconnect(
 	WDF_REQUEST_FORWARD_OPTIONS forwardOptions;
 	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
 	const WDFDEVICE parent = WdfPdoGetParent(device);
-	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
 
-	UNREFERENCED_PARAMETER(pPdoCtx);
+	//
+	// TODO: investigate, currently fails DsHidMini with status STATUS_NOT_SUPPORTED (0xC00000BB)
+	// 
 
 	WDF_REQUEST_FORWARD_OPTIONS_INIT(&forwardOptions);
 	forwardOptions.Flags = WDF_REQUEST_FORWARD_OPTION_SEND_AND_FORGET;

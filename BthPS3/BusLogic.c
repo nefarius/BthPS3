@@ -49,7 +49,7 @@ IoctlHandler_IoctlRecord G_PDO_IoctlSpecification[] =
 	{IOCTL_BTHPS3_HID_CONTROL_WRITE, 1, 0, BthPS3_PDO_HandleHidControlWrite},
 	{IOCTL_BTHPS3_HID_INTERRUPT_READ, 0, 1, BthPS3_PDO_HandleHidInterruptRead},
 	{IOCTL_BTHPS3_HID_INTERRUPT_WRITE, 1, 0, BthPS3_PDO_HandleHidInterruptWrite},
-	{IOCTL_HID_GET_DEVICE_DESCRIPTOR, 0, 0, BthPS3_PDO_HandleOther},
+	{IOCTL_BTH_DISCONNECT_DEVICE, 0, 0, BthPS3_PDO_HandleBthDisconnect},
 };
 
 

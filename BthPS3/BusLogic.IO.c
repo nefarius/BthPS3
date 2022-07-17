@@ -64,6 +64,8 @@ BthPS3_PDO_HandleHidControlRead(
 	UNREFERENCED_PARAMETER(OutputBufferSize);
 	UNREFERENCED_PARAMETER(OutputBuffer);
 
+	FuncEntry(TRACE_BUSLOGIC);
+
 	NTSTATUS status;
 	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
 	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
@@ -80,6 +82,8 @@ BthPS3_PDO_HandleHidControlRead(
 		);
 	}
 	else status = STATUS_PENDING;
+
+	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
 
 	return status;
 }
@@ -109,6 +113,8 @@ BthPS3_PDO_HandleHidControlWrite(
 	UNREFERENCED_PARAMETER(InputBuffer);
 	UNREFERENCED_PARAMETER(InputBufferSize);
 
+	FuncEntry(TRACE_BUSLOGIC);
+
 	NTSTATUS status;
 	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
 	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
@@ -125,7 +131,9 @@ BthPS3_PDO_HandleHidControlWrite(
 		);
 	}
 	else status = STATUS_PENDING;
-	
+
+	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
+
 	return status;
 }
 
@@ -154,6 +162,8 @@ BthPS3_PDO_HandleHidInterruptRead(
 	UNREFERENCED_PARAMETER(OutputBuffer);
 	UNREFERENCED_PARAMETER(OutputBufferSize);
 
+	FuncEntry(TRACE_BUSLOGIC);
+
 	NTSTATUS status;
 	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
 	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
@@ -170,6 +180,8 @@ BthPS3_PDO_HandleHidInterruptRead(
 		);
 	}
 	else status = STATUS_PENDING;
+
+	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
 
 	return status;
 }
@@ -199,6 +211,8 @@ BthPS3_PDO_HandleHidInterruptWrite(
 	UNREFERENCED_PARAMETER(InputBuffer);
 	UNREFERENCED_PARAMETER(InputBufferSize);
 
+	FuncEntry(TRACE_BUSLOGIC);
+
 	NTSTATUS status;
 	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
 	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
@@ -215,16 +229,18 @@ BthPS3_PDO_HandleHidInterruptWrite(
 		);
 	}
 	else status = STATUS_PENDING;
-	
+
+	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
+
 	return status;
 }
 
 //
-// Handles all other requests
+// Handles IOCTL_BTH_DISCONNECT_DEVICE requests
 // 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-BthPS3_PDO_HandleOther(
+BthPS3_PDO_HandleBthDisconnect(
 	_In_ DMFMODULE DmfModule,
 	_In_ WDFQUEUE Queue,
 	_In_ WDFREQUEST Request,
@@ -237,7 +253,6 @@ BthPS3_PDO_HandleOther(
 )
 {
 	UNREFERENCED_PARAMETER(Queue);
-	UNREFERENCED_PARAMETER(Request);
 	UNREFERENCED_PARAMETER(IoctlCode);
 	UNREFERENCED_PARAMETER(InputBuffer);
 	UNREFERENCED_PARAMETER(InputBufferSize);
@@ -245,19 +260,34 @@ BthPS3_PDO_HandleOther(
 	UNREFERENCED_PARAMETER(OutputBufferSize);
 	UNREFERENCED_PARAMETER(BytesReturned);
 
+	FuncEntry(TRACE_BUSLOGIC);
+
 	NTSTATUS status;
+	WDF_REQUEST_FORWARD_OPTIONS forwardOptions;
 	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
+	const WDFDEVICE parent = WdfPdoGetParent(device);
 	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
 
 	UNREFERENCED_PARAMETER(pPdoCtx);
 
-	TraceVerbose(
-		TRACE_BUSLOGIC,
-		"Received Request with code: 0x%X",
-		IoctlCode
-	);
+	WDF_REQUEST_FORWARD_OPTIONS_INIT(&forwardOptions);
+	forwardOptions.Flags = WDF_REQUEST_FORWARD_OPTION_SEND_AND_FORGET;
 
-	status = STATUS_UNSUCCESSFUL;
+	if (!NT_SUCCESS(status = WdfRequestForwardToParentDeviceIoQueue(
+		Request,
+		WdfDeviceGetDefaultQueue(parent),
+		&forwardOptions
+	)))
+	{
+		TraceError(
+			TRACE_BUSLOGIC,
+			"WdfRequestForwardToParentDeviceIoQueue failed with status %!STATUS!",
+			status
+		);
+	}
+	else status = STATUS_PENDING;
+
+	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
 
 	return status;
 }
@@ -273,6 +303,8 @@ BthPS3_PDO_DispatchHidControlRead(
 	_In_ WDFCONTEXT Context
 )
 {
+	FuncEntry(TRACE_BUSLOGIC);
+
 	const PBTHPS3_PDO_CONTEXT pPdoCtx = Context;
 	NTSTATUS status;
 	WDFREQUEST request = NULL;
@@ -316,6 +348,8 @@ BthPS3_PDO_DispatchHidControlRead(
 			continue;
 		}
 	}
+
+	FuncExitNoReturn(TRACE_BUSLOGIC);
 }
 
 //
@@ -329,6 +363,8 @@ BthPS3_PDO_DispatchHidControlWrite(
 	_In_ WDFCONTEXT Context
 )
 {
+	FuncEntry(TRACE_BUSLOGIC);
+
 	const PBTHPS3_PDO_CONTEXT pPdoCtx = Context;
 	NTSTATUS status;
 	WDFREQUEST request = NULL;
@@ -372,6 +408,8 @@ BthPS3_PDO_DispatchHidControlWrite(
 			continue;
 		}
 	}
+
+	FuncExitNoReturn(TRACE_BUSLOGIC);
 }
 
 //
@@ -385,6 +423,8 @@ BthPS3_PDO_DispatchHidInterruptRead(
 	_In_ WDFCONTEXT Context
 )
 {
+	FuncEntry(TRACE_BUSLOGIC);
+
 	const PBTHPS3_PDO_CONTEXT pPdoCtx = Context;
 	NTSTATUS status;
 	WDFREQUEST request = NULL;
@@ -428,6 +468,8 @@ BthPS3_PDO_DispatchHidInterruptRead(
 			continue;
 		}
 	}
+
+	FuncExitNoReturn(TRACE_BUSLOGIC);
 }
 
 //
@@ -441,6 +483,8 @@ BthPS3_PDO_DispatchHidInterruptWrite(
 	_In_ WDFCONTEXT Context
 )
 {
+	FuncEntry(TRACE_BUSLOGIC);
+
 	const PBTHPS3_PDO_CONTEXT pPdoCtx = Context;
 	NTSTATUS status;
 	WDFREQUEST request = NULL;
@@ -484,4 +528,6 @@ BthPS3_PDO_DispatchHidInterruptWrite(
 			continue;
 		}
 	}
+
+	FuncExitNoReturn(TRACE_BUSLOGIC);
 }

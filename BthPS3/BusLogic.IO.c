@@ -268,7 +268,8 @@ BthPS3_PDO_HandleBthDisconnect(
 	const WDFDEVICE parent = WdfPdoGetParent(device);
 
 	//
-	// TODO: investigate, currently fails DsHidMini with status STATUS_NOT_SUPPORTED (0xC00000BB)
+	// TODO: currently fails DsHidMini with status STATUS_NOT_SUPPORTED (0xC00000BB)
+	// FDO has no default queue that allows forwarding requests, fixme!
 	// 
 
 	WDF_REQUEST_FORWARD_OPTIONS_INIT(&forwardOptions);

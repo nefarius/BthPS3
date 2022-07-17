@@ -96,31 +96,6 @@ typedef struct _BTHPS3_CLIENT_CONNECTION
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_CLIENT_CONNECTION, GetClientConnection)
 
 
-/*
-_IRQL_requires_max_(DISPATCH_LEVEL)
-NTSTATUS
-ClientConnections_CreateAndInsert(
-    _In_ PBTHPS3_SERVER_CONTEXT Context,
-    _In_ BTH_ADDR RemoteAddress,
-    _In_ PFN_WDF_OBJECT_CONTEXT_CLEANUP CleanupCallback,
-    _Out_ PBTHPS3_CLIENT_CONNECTION *ClientConnection
-);
-
-VOID
-ClientConnections_RemoveAndDestroy(
-    _In_ PBTHPS3_DEVICE_CONTEXT_HEADER Context,
-    _In_ PBTHPS3_CLIENT_CONNECTION ClientConnection
-);
-
-NTSTATUS
-ClientConnections_RetrieveByBthAddr(
-    _In_ PBTHPS3_SERVER_CONTEXT Context,
-    _In_ BTH_ADDR RemoteAddress,
-    _Out_ PBTHPS3_CLIENT_CONNECTION *ClientConnection
-);
-*/
-
-EVT_WDF_OBJECT_CONTEXT_CLEANUP EvtClientConnectionsDestroyConnection;
 
 VOID
 FORCEINLINE

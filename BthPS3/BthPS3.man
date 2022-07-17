@@ -48,6 +48,30 @@
                 outType="xs:unsignedInt"
                 />
           </template>
+		  <template tid="tid_remote_device_name">
+            <data
+                inType="win:UInt64"
+                name="Address"
+                outType="win:HexInt64"
+                />
+			<data
+                inType="win:AnsiString"
+                name="Name"
+                outType="win:Utf8"
+                />
+          </template>
+		  <template tid="tid_remote_device_identified">
+            <data
+                inType="win:UInt64"
+                name="Address"
+                outType="win:HexInt64"
+                />
+			<data
+                inType="win:UnicodeString"
+                name="Model"
+                outType="xs:string"
+                />
+          </template>
         </templates>
         <events>
           <event
@@ -86,6 +110,24 @@
               template="tid_hci_version_template"
               value="4"
               />
+		  <event
+              channel="SYSTEM"
+              level="win:Informational"
+              message="$(string.RemoteDeviceName.EventMessage)"
+              opcode="win:Info"
+              symbol="RemoteDeviceName"
+              template="tid_remote_device_name"
+              value="5"
+              />
+		  <event
+              channel="SYSTEM"
+              level="win:Informational"
+              message="$(string.RemoteDeviceIdentified.EventMessage)"
+              opcode="win:Info"
+              symbol="RemoteDeviceIdentified"
+              template="tid_remote_device_identified"
+              value="6"
+              />
         </events>
       </provider>
     </events>
@@ -108,6 +150,14 @@
 		<string
             id="HciVersionTooLow.EventMessage"
             value="Host radio HCI major version %1 too low, can't continue driver startup. You need a newer Bluetooth Host Radio to use this driver."
+            />
+		<string
+            id="RemoteDeviceName.EventMessage"
+            value="Device %1 reported name: %2"
+            />
+		<string
+            id="RemoteDeviceIdentified.EventMessage"
+            value="Device %1 identified as %2 compatible"
             />
       </stringTable>
     </resources>

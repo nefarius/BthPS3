@@ -1,5 +1,6 @@
 #include "Driver.h"
 #include "L2CAP.Connect.tmh"
+#include "BthPS3ETW.h"
 
 //
 // Incoming connection request, prepare and send response
@@ -59,6 +60,8 @@ L2CAP_PS3_HandleRemoteConnect(
 				ConnectParams->BtAddress,
 				remoteName
 			);
+
+			EventWriteRemoteDeviceName(NULL, ConnectParams->BtAddress, remoteName);
 		}
 		else
 		{
@@ -91,6 +94,8 @@ L2CAP_PS3_HandleRemoteConnect(
 				ConnectParams->BtAddress
 			);
 
+			EventWriteRemoteDeviceIdentified(NULL, ConnectParams->BtAddress, L"SIXAXIS");
+
 			goto deviceIdentified;
 		}
 
@@ -106,6 +111,8 @@ L2CAP_PS3_HandleRemoteConnect(
 				"Device %012llX identified as NAVIGATION compatible",
 				ConnectParams->BtAddress
 			);
+
+			EventWriteRemoteDeviceIdentified(NULL, ConnectParams->BtAddress, L"NAVIGATION");
 
 			goto deviceIdentified;
 		}
@@ -123,6 +130,8 @@ L2CAP_PS3_HandleRemoteConnect(
 				ConnectParams->BtAddress
 			);
 
+			EventWriteRemoteDeviceIdentified(NULL, ConnectParams->BtAddress, L"MOTION");
+
 			goto deviceIdentified;
 		}
 
@@ -138,6 +147,8 @@ L2CAP_PS3_HandleRemoteConnect(
 				"Device %012llX identified as WIRELESS compatible",
 				ConnectParams->BtAddress
 			);
+
+			EventWriteRemoteDeviceIdentified(NULL, ConnectParams->BtAddress, L"WIRELESS");
 
 			goto deviceIdentified;
 		}

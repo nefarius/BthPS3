@@ -67,6 +67,29 @@ BthPS3_PDO_EvtPreCreate(
 	// 
 	WdfPdoInitAllowForwardingRequestToParent(DeviceInit);
 
+	UCHAR minorFunctionsToFilter[] =
+	{
+		IRP_MN_SET_POWER
+	};
+
+	//
+	// Intercept IRP_MJ_POWER / IRP_MN_SET_POWER IRP
+	// 
+	if (!NT_SUCCESS(status = WdfDeviceInitAssignWdmIrpPreprocessCallback(
+		DeviceInit,
+		BthPS3_PDO_SetPowerIrpPreprocess,
+		IRP_MJ_POWER,
+		minorFunctionsToFilter,
+		ARRAYSIZE(minorFunctionsToFilter)
+	)))
+	{
+		TraceError(
+			TRACE_BUSLOGIC,
+			"WdfDeviceInitAssignWdmIrpPreprocessCallback failed with status %!STATUS!",
+			status
+		);
+	}
+
 	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
 
 	return status;
@@ -243,3 +266,24 @@ BthPS3_PDO_EvtPostCreate(
 	return status;
 }
 
+//
+// Intercepts IRP_MJ_POWER / IRP_MN_SET_POWER IRPs
+// 
+NTSTATUS
+BthPS3_PDO_SetPowerIrpPreprocess(
+	IN WDFDEVICE Device,
+	IN OUT PIRP Irp
+)
+{
+	const PIO_STACK_LOCATION pStack = IoGetCurrentIrpStackLocation(Irp);
+
+	if (pStack->Parameters.Power.Type == DevicePowerState
+		&& pStack->Parameters.Power.State.DeviceState == PowerDeviceD0)
+	{
+		IofCompleteRequest(Irp, IO_NO_INCREMENT);
+		return STATUS_CONTINUE_COMPLETION;
+	}
+
+	IoSkipCurrentIrpStackLocation(Irp);
+	return WdfDeviceWdmDispatchPreprocessedIrp(Device, Irp);
+}

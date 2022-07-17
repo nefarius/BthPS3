@@ -41,34 +41,34 @@
 #define BTH_ADDR_HEX_LEN    12
 
 #pragma region REMOVE
-//
-// Identification information for dynamically enumerated bus children (PDOs)
-// 
+ //
+ // Identification information for dynamically enumerated bus children (PDOs)
+ // 
 typedef struct _PDO_IDENTIFICATION_DESCRIPTION
 {
-    //
-    // Mandatory header
-    // 
-    WDF_CHILD_IDENTIFICATION_DESCRIPTION_HEADER Header;
+	//
+	// Mandatory header
+	// 
+	WDF_CHILD_IDENTIFICATION_DESCRIPTION_HEADER Header;
 
-    //
-    // Client connection context
-    // 
-    PBTHPS3_CLIENT_CONNECTION ClientConnection;
+	//
+	// Client connection context
+	// 
+	PBTHPS3_CLIENT_CONNECTION ClientConnection;
 
-} PDO_IDENTIFICATION_DESCRIPTION, *PPDO_IDENTIFICATION_DESCRIPTION;
+} PDO_IDENTIFICATION_DESCRIPTION, * PPDO_IDENTIFICATION_DESCRIPTION;
 
 //
 // Context data of child device (PDO)
 // 
 typedef struct _BTHPS3_PDO_DEVICE_CONTEXT
 {
-    //
-    // Client connection context
-    // 
-    PBTHPS3_CLIENT_CONNECTION ClientConnection;
+	//
+	// Client connection context
+	// 
+	PBTHPS3_CLIENT_CONNECTION ClientConnection;
 
-} BTHPS3_PDO_DEVICE_CONTEXT, *PBTHPS3_PDO_DEVICE_CONTEXT;
+} BTHPS3_PDO_DEVICE_CONTEXT, * PBTHPS3_PDO_DEVICE_CONTEXT;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_PDO_DEVICE_CONTEXT, GetPdoDeviceContext)
 #pragma endregion
@@ -86,37 +86,37 @@ EVT_WDF_REQUEST_COMPLETION_ROUTINE BthPS3_PDO_DisconnectRequestCompleted;
 // 
 typedef struct _BTHPS3_PDO_CONTEXT
 {
-    PBTHPS3_DEVICE_CONTEXT_HEADER DevCtxHdr;
+	PBTHPS3_DEVICE_CONTEXT_HEADER DevCtxHdr;
 
-    BTH_ADDR RemoteAddress;
+	BTH_ADDR RemoteAddress;
 
-    UNICODE_STRING RemoteName;
+	UNICODE_STRING RemoteName;
 
-    DS_DEVICE_TYPE DeviceType;
+	DS_DEVICE_TYPE DeviceType;
 
-    BTHPS3_CLIENT_L2CAP_CHANNEL HidControlChannel;
+	BTHPS3_CLIENT_L2CAP_CHANNEL HidControlChannel;
 
-    BTHPS3_CLIENT_L2CAP_CHANNEL HidInterruptChannel;
+	BTHPS3_CLIENT_L2CAP_CHANNEL HidInterruptChannel;
 
-    DMFMODULE DmfModuleIoctlHandler;
+	DMFMODULE DmfModuleIoctlHandler;
 
-    ULONG SerialNumber;
+	ULONG SerialNumber;
 
-    WDFMEMORY HardwareId;
+	WDFMEMORY HardwareId;
 
-    struct
-    {
-        WDFQUEUE HidControlReadRequests;
+	struct
+	{
+		WDFQUEUE HidControlReadRequests;
 
-        WDFQUEUE HidControlWriteRequests;
+		WDFQUEUE HidControlWriteRequests;
 
-        WDFQUEUE HidInterruptReadRequests;
+		WDFQUEUE HidInterruptReadRequests;
 
-        WDFQUEUE HidInterruptWriteRequests;
-	    
-    } Queues;
+		WDFQUEUE HidInterruptWriteRequests;
 
-} BTHPS3_PDO_CONTEXT, *PBTHPS3_PDO_CONTEXT;
+	} Queues;
+
+} BTHPS3_PDO_CONTEXT, * PBTHPS3_PDO_CONTEXT;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_PDO_CONTEXT, GetPdoContext)
 
@@ -124,28 +124,32 @@ WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_PDO_CONTEXT, GetPdoContext)
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_PDO_Create(
-    _In_ PBTHPS3_SERVER_CONTEXT Context,
-    _In_ BTH_ADDR RemoteAddress,
-    _In_ DS_DEVICE_TYPE DeviceType,
-    _In_ PSTR RemoteName,
-    _In_ PFN_WDF_OBJECT_CONTEXT_CLEANUP CleanupCallback,
-    _Out_ PBTHPS3_PDO_CONTEXT *PdoContext
+	_In_ PBTHPS3_SERVER_CONTEXT Context,
+	_In_ BTH_ADDR RemoteAddress,
+	_In_ DS_DEVICE_TYPE DeviceType,
+	_In_ PSTR RemoteName,
+	_In_ PFN_WDF_OBJECT_CONTEXT_CLEANUP CleanupCallback,
+	_Out_ PBTHPS3_PDO_CONTEXT* PdoContext
 );
 
 NTSTATUS
 BthPS3_PDO_RetrieveByBthAddr(
-    _In_ PBTHPS3_SERVER_CONTEXT Context,
-    _In_ BTH_ADDR RemoteAddress,
-    _Out_ PBTHPS3_PDO_CONTEXT *PdoContext
+	_In_ PBTHPS3_SERVER_CONTEXT Context,
+	_In_ BTH_ADDR RemoteAddress,
+	_Out_ PBTHPS3_PDO_CONTEXT* PdoContext
 );
 
 VOID
 BthPS3_PDO_Destroy(
-    _In_ PBTHPS3_DEVICE_CONTEXT_HEADER Context,
-    _In_ PBTHPS3_PDO_CONTEXT PdoContext
+	_In_ PBTHPS3_DEVICE_CONTEXT_HEADER Context,
+	_In_ PBTHPS3_PDO_CONTEXT PdoContext
 );
 
 EVT_DMF_DEVICE_MODULES_ADD BthPS3_PDO_EvtDmfModulesAdd;
+
+//
+// PDO pre-/post-create callbacks
+// 
 
 EVT_DMF_Pdo_PreCreate BthPS3_PDO_EvtPreCreate;
 
@@ -176,3 +180,13 @@ EVT_WDF_IO_QUEUE_STATE BthPS3_PDO_DispatchHidControlWrite;
 EVT_WDF_IO_QUEUE_STATE BthPS3_PDO_DispatchHidInterruptRead;
 
 EVT_WDF_IO_QUEUE_STATE BthPS3_PDO_DispatchHidInterruptWrite;
+
+//
+// IRP preprocess callback
+// 
+
+NTSTATUS
+BthPS3_PDO_SetPowerIrpPreprocess(
+	IN WDFDEVICE Device,
+	IN OUT PIRP Irp
+);

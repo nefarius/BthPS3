@@ -474,6 +474,7 @@ DmfDeviceModulesAdd(
 	moduleConfigPdo.PdoRecords = NULL;
 	moduleConfigPdo.EvtPdoPnpCapabilities = NULL;
 	moduleConfigPdo.EvtPdoPowerCapabilities = NULL;
+	moduleConfigPdo.EvtPdoPreCreate = BthPS3_PDO_EvtPreCreate;
 	moduleConfigPdo.EvtPdoPostCreate = BthPS3_PDO_EvtPostCreate;
 
 	DMF_DmfModuleAdd(

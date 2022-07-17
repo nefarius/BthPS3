@@ -62,6 +62,9 @@ BthPS3_PDO_EvtPreCreate(
 
 	WdfDeviceInitSetDeviceType(DeviceInit, FILE_DEVICE_BUS_EXTENDER);
 
+	//
+	// Increases stack size required to forward HID requests as BRBs
+	// 
 	WdfPdoInitAllowForwardingRequestToParent(DeviceInit);
 
 	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);

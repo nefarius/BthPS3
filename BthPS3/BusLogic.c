@@ -55,11 +55,6 @@ IoctlHandler_IoctlRecord G_PDO_IoctlSpecification[] =
 
 
 //
-// The new stuff
-// 
-
-
-//
 // Called when initializing DMF modules for the PDO
 // 
 _IRQL_requires_max_(PASSIVE_LEVEL)

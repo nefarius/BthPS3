@@ -770,7 +770,11 @@ BthPS3_PDO_Destroy(
 
 			WdfCollectionRemoveItem(Context->Clients, index);
 
+			WdfSpinLockAcquire(Context->SlotsSpinLock);
+
 			ClearBit(Context->Slots, serial);
+
+			WdfSpinLockRelease(Context->SlotsSpinLock);
 
 			break;
 		}

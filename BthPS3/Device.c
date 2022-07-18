@@ -37,6 +37,7 @@
 
 #include "Driver.h"
 #include "Device.tmh"
+#include "BthPS3ETW.h"
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (PAGE, BthPS3_CreateDevice)
@@ -295,6 +296,12 @@ void BthPS3_EnablePatchEvtWdfTimer(
 			"BthPS3PSM_EnablePatchAsync failed with status %!STATUS!",
 			status
 		);
+
+		EventWriteFilterAutoEnabledFailed(NULL, status);
+	}
+	else
+	{
+		EventWriteFilterAutoEnabledSuccessfully(NULL);
 	}
 }
 

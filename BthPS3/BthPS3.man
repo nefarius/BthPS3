@@ -52,6 +52,9 @@
 					<template tid="tid_power_policy">
 						<data inType="win:UInt32" name="Status" outType="xs:unsignedInt"/>
 					</template>
+					<template tid="tid_remote_device_online">
+						<data inType="win:UInt64" name="Address" outType="win:HexInt64"/>
+					</template>
 				</templates>
 				<events>
 					<event value="1"  channel="SYSTEM" level="win:Informational" message="$(string.StartEvent.EventMessage)" opcode="win:Start" symbol="StartEvent" template="tid_load_template" />
@@ -72,6 +75,9 @@
 					<event value="16" channel="SYSTEM" level="win:Error" message="$(string.L2CAPRemoteConnectFailed.EventMessage)" opcode="win:Info" symbol="L2CAPRemoteConnectFailed" template="tid_l2cap_remote_connect" />
 					<event value="17" channel="SYSTEM" level="win:Warning" message="$(string.PowerPolicyIdleSettingsFailed.EventMessage)" opcode="win:Info" symbol="PowerPolicyIdleSettingsFailed" />
 					<event value="18" channel="SYSTEM" level="win:Error" message="$(string.WdfDeviceAssignS0IdleSettingsFailed.EventMessage)" opcode="win:Info" symbol="WdfDeviceAssignS0IdleSettingsFailed" template="tid_power_policy" />
+					<event value="19" channel="SYSTEM" level="win:Informational" message="$(string.HidControlChannelConnected.EventMessage)" opcode="win:Info" symbol="HidControlChannelConnected" />
+					<event value="20" channel="SYSTEM" level="win:Informational" message="$(string.HidInterruptChannelConnected.EventMessage)" opcode="win:Info" symbol="HidInterruptChannelConnected" />
+					<event value="21" channel="SYSTEM" level="win:Informational" message="$(string.RemoteDeviceOnline.EventMessage)" opcode="win:Info" symbol="RemoteDeviceOnline" template="tid_remote_device_online" />
 				</events>
 			</provider>
 		</events>
@@ -97,6 +103,9 @@
 				<string id="L2CAPRemoteConnectFailed.EventMessage" value="Remote connect for L2CAP channel with PSM %1, status: %2"/>
 				<string id="PowerPolicyIdleSettingsFailed.EventMessage" value="Failed to set idle settings: the calling driver is not the device's power policy owner and device not in RAW mode."/>
 				<string id="WdfDeviceAssignS0IdleSettingsFailed.EventMessage" value="WdfDeviceAssignS0IdleSettings failed with status %1"/>
+				<string id="HidControlChannelConnected.EventMessage" value="HID Control Channel connection established"/>
+				<string id="HidInterruptChannelConnected.EventMessage" value="HID Interrupt Channel connection established"/>
+				<string id="RemoteDeviceOnline.EventMessage" value="Device %1 has both L2CAP channels connected and is ready to operate"/>
 			</stringTable>
 		</resources>
 	</localization>

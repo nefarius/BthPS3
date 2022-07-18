@@ -37,6 +37,7 @@
 
 #include "Driver.h"
 #include "L2CAP.tmh"
+#include "BthPS3ETW.h"
 
 
 #pragma region L2CAP remote connection handling
@@ -112,6 +113,8 @@ L2CAP_PS3_ControlConnectResponseCompleted(
 			TRACE_L2CAP,
 			"HID Control Channel connection established"
 		);
+
+		EventWriteHidControlChannelConnected(NULL);
 
 		//
 		// Channel connected, queues ready to start processing
@@ -213,6 +216,8 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
 			"HID Interrupt Channel connection established"
 		);
 
+		EventWriteHidInterruptChannelConnected(NULL);
+
 		//
 		// Control channel is expected to be established by now
 		// 
@@ -268,6 +273,8 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
 			// TODO: better error handling
 			// 
 		}
+
+		EventWriteRemoteDeviceOnline(NULL, pPdoCtx->RemoteAddress);
 	}
 	else
 	{

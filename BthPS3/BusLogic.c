@@ -764,6 +764,16 @@ BthPS3_PDO_Destroy(
 		{
 			const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(currentPdo);
 			const ULONG serial = pPdoCtx->SerialNumber;
+			WCHAR hardwareId[BTHPS3_MAX_DEVICE_ID_LEN];
+
+			//
+			// Make a copy since the context memory gets destroyed on unplug
+			// 
+			wcscpy_s(
+				hardwareId,
+				sizeof(hardwareId) / sizeof(WCHAR),
+				(PWSTR)WdfMemoryGetBuffer(pPdoCtx->HardwareId, NULL)
+			);
 
 			TraceVerbose(
 				TRACE_BUSLOGIC,
@@ -777,7 +787,7 @@ BthPS3_PDO_Destroy(
 
 			NTSTATUS status = DMF_Pdo_DeviceUnPlugEx(
 				Context->DmfModulePdo,
-				(PWSTR)WdfMemoryGetBuffer(pPdoCtx->HardwareId, NULL),
+				hardwareId,
 				pPdoCtx->SerialNumber
 			);
 
@@ -786,6 +796,22 @@ BthPS3_PDO_Destroy(
 				TraceError(
 					TRACE_BUSLOGIC,
 					"DMF_Pdo_DeviceUnPlugEx failed with status %!STATUS!",
+					status
+				);
+
+				EventWriteChildDeviceDestructionFailed(
+					NULL,
+					serial,
+					hardwareId,
+					status
+				);
+			}
+			else
+			{
+				EventWriteChildDeviceDestructionSuccessful(
+					NULL,
+					serial,
+					hardwareId,
 					status
 				);
 			}

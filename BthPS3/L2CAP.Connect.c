@@ -346,6 +346,11 @@ exit:
 		BthPS3_PDO_Destroy(&DevCtx->Header, pPdoCtx);
 	}
 
+	if (!NT_SUCCESS(status))
+	{
+		EventWriteL2CAPRemoteConnectFailed(NULL, psm, status);
+	}
+
 	FuncExit(TRACE_L2CAP, "status=%!STATUS!", status);
 
 	return status;

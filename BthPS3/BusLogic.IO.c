@@ -235,64 +235,6 @@ BthPS3_PDO_HandleHidInterruptWrite(
 	return status;
 }
 
-//
-// Handles IOCTL_BTH_DISCONNECT_DEVICE requests
-// 
-_IRQL_requires_max_(PASSIVE_LEVEL)
-NTSTATUS
-BthPS3_PDO_HandleBthDisconnect(
-	_In_ DMFMODULE DmfModule,
-	_In_ WDFQUEUE Queue,
-	_In_ WDFREQUEST Request,
-	_In_ ULONG IoctlCode,
-	_In_reads_(InputBufferSize) VOID* InputBuffer,
-	_In_ size_t InputBufferSize,
-	_Out_writes_(OutputBufferSize) VOID* OutputBuffer,
-	_In_ size_t OutputBufferSize,
-	_Out_ size_t* BytesReturned
-)
-{
-	UNREFERENCED_PARAMETER(Queue);
-	UNREFERENCED_PARAMETER(IoctlCode);
-	UNREFERENCED_PARAMETER(InputBuffer);
-	UNREFERENCED_PARAMETER(InputBufferSize);
-	UNREFERENCED_PARAMETER(OutputBuffer);
-	UNREFERENCED_PARAMETER(OutputBufferSize);
-	UNREFERENCED_PARAMETER(BytesReturned);
-
-	FuncEntry(TRACE_BUSLOGIC);
-
-	NTSTATUS status;
-	WDF_REQUEST_FORWARD_OPTIONS forwardOptions;
-	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
-	const WDFDEVICE parent = WdfPdoGetParent(device);
-
-	//
-	// TODO: currently fails DsHidMini with status STATUS_NOT_SUPPORTED (0xC00000BB)
-	// FDO has no default queue that allows forwarding requests, fixme!
-	// 
-
-	WDF_REQUEST_FORWARD_OPTIONS_INIT(&forwardOptions);
-	forwardOptions.Flags = WDF_REQUEST_FORWARD_OPTION_SEND_AND_FORGET;
-
-	if (!NT_SUCCESS(status = WdfRequestForwardToParentDeviceIoQueue(
-		Request,
-		WdfDeviceGetDefaultQueue(parent),
-		&forwardOptions
-	)))
-	{
-		TraceError(
-			TRACE_BUSLOGIC,
-			"WdfRequestForwardToParentDeviceIoQueue failed with status %!STATUS!",
-			status
-		);
-	}
-	else status = STATUS_PENDING;
-
-	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
-
-	return status;
-}
 
 //
 // Sends pending HID Control Read Requests through L2CAP channel to remote device

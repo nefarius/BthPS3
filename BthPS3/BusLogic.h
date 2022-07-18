@@ -176,8 +176,6 @@ EVT_DMF_IoctlHandler_Callback BthPS3_PDO_HandleHidInterruptRead;
 
 EVT_DMF_IoctlHandler_Callback BthPS3_PDO_HandleHidInterruptWrite;
 
-EVT_DMF_IoctlHandler_Callback BthPS3_PDO_HandleBthDisconnect;
-
 //
 // Process requests once queued
 // 

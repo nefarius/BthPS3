@@ -124,7 +124,7 @@ BthPS3_PDO_Create(
 	PDO_RECORD record;
 	WDFDEVICE device;
 	UNICODE_STRING guidString = { 0 };
-	WCHAR devAddr[13];
+	WCHAR devAddr[13]; // MAC address in hex format including NULL terminator
 	PWSTR manufacturer = L"Nefarius Software Solutions e.U.";
 	LARGE_INTEGER lastConnectionTime;
 	WDFKEY hKey = NULL;
@@ -143,6 +143,9 @@ BthPS3_PDO_Create(
 	RtlZeroMemory(&record, sizeof(PDO_RECORD));
 
 	record.CustomClientContext = &attributes;
+	//
+	// The PDO itself uses some DMF modules during operation
+	// 
 	record.EnableDmf = TRUE;
 	record.EvtDmfDeviceModulesAdd = BthPS3_PDO_EvtDmfModulesAdd;
 
@@ -767,7 +770,7 @@ BthPS3_PDO_Destroy(
 			WCHAR hardwareId[BTHPS3_MAX_DEVICE_ID_LEN];
 
 			//
-			// Make a copy since the context memory gets destroyed on unplug
+			// Make a copy for logging since the context memory gets destroyed on unplug
 			// 
 			wcscpy_s(
 				hardwareId,

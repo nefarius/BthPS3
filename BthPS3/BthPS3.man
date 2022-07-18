@@ -70,7 +70,7 @@
 				<string id="HciVersionTooLow.EventMessage" value="Host radio HCI major version %1 too low, can't continue driver startup. You need a newer Bluetooth Host Radio to use this driver."/>
 				<string id="RemoteDeviceName.EventMessage" value="Device %1 reported name: %2"/>
 				<string id="RemoteDeviceIdentified.EventMessage" value="Device %1 identified as %2 compatible"/>
-				<string id="RemoteDeviceNotIdentified.EventMessage" value="Device %1 not identified or denied, dropping connection"/>
+				<string id="RemoteDeviceNotIdentified.EventMessage" value="Device %1 not identified or denied, dropping connection. Consult the online documentation for potential solutions."/>
 				<string id="AutoDisableFilter.EventMessage" value="Auto-disabling filter driver option set, filter disabled"/>
 				<string id="AutoEnableFilter.EventMessage" value="Auto-enabling filter driver option set, re-enabling filter driver in %1 seconds"/>
 				<string id="ChildDeviceCreationSuccessful.EventMessage" value="Successfully created PDO for %1 (%2) and assigned slot index %3"/>

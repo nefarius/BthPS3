@@ -788,7 +788,7 @@ BthPS3_PDO_Destroy(
 			NTSTATUS status = DMF_Pdo_DeviceUnPlugEx(
 				Context->DmfModulePdo,
 				hardwareId,
-				pPdoCtx->SerialNumber
+				serial
 			);
 
 			if (!NT_SUCCESS(status))

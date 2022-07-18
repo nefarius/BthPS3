@@ -37,6 +37,7 @@
 
 #include "Driver.h"
 #include "BusLogic.tmh"
+#include "BthPS3ETW.h"
 
 
  //
@@ -660,6 +661,27 @@ BthPS3_PDO_Create(
 	if (hKey)
 	{
 		WdfRegistryClose(hKey);
+	}
+
+	if (NT_SUCCESS(status))
+	{
+		EventWriteChildDeviceCreationSuccessful(
+			NULL,
+			RemoteAddress,
+			RemoteName,
+			record.SerialNumber,
+			status
+		);
+	}
+	else
+	{
+		EventWriteChildDeviceCreationFailed(
+			NULL,
+			RemoteAddress,
+			RemoteName,
+			record.SerialNumber,
+			status
+		);
 	}
 
 	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);

@@ -199,3 +199,5 @@ BthPS3_PDO_SetPowerIrpPreprocess(
 	IN WDFDEVICE Device,
 	IN OUT PIRP Irp
 );
+
+EVT_WDF_DEVICE_SELF_MANAGED_IO_INIT BthPS3_PDO_SelfManagedIoInit;

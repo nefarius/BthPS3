@@ -37,6 +37,7 @@
 
 #include "Driver.h"
 #include "BusLogic.State.tmh"
+#include "BthPS3ETW.h"
 
 
  //
@@ -55,6 +56,7 @@ BthPS3_PDO_EvtPreCreate(
 	FuncEntry(TRACE_BUSLOGIC);
 
 	NTSTATUS status = STATUS_SUCCESS;
+	WDF_PNPPOWER_EVENT_CALLBACKS power;
 
 	UNREFERENCED_PARAMETER(DmfModule);
 	UNREFERENCED_PARAMETER(DmfDeviceInit);
@@ -66,6 +68,11 @@ BthPS3_PDO_EvtPreCreate(
 	// Increases stack size required to forward HID requests as BRBs
 	// 
 	WdfPdoInitAllowForwardingRequestToParent(DeviceInit);
+
+	WDF_PNPPOWER_EVENT_CALLBACKS_INIT(&power);
+	power.EvtDeviceSelfManagedIoInit = BthPS3_PDO_SelfManagedIoInit;
+
+	WdfDeviceInitSetPnpPowerEventCallbacks(DeviceInit, &power);
 
 	UCHAR minorFunctionsToFilter[] =
 	{
@@ -111,13 +118,8 @@ BthPS3_PDO_EvtPostCreate(
 	FuncEntry(TRACE_BUSLOGIC);
 
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS idleSettings;
-	WDFKEY hKey = NULL;
-	ULONG idleTimeout = 10000; // 10 secs idle timeout
 	WDF_OBJECT_ATTRIBUTES attributes;
 	WDF_IO_QUEUE_CONFIG queueCfg;
-
-	DECLARE_CONST_UNICODE_STRING(idleTimeoutValue, BTHPS3_REG_VALUE_CHILD_IDLE_TIMEOUT);
 
 	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(ChildDevice);
 
@@ -191,71 +193,7 @@ BthPS3_PDO_EvtPostCreate(
 			break;
 		}
 
-		//
-		// Open
-		//   HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\BthPS3\Parameters
-		// key
-		// 
-		if (!NT_SUCCESS(status = WdfDriverOpenParametersRegistryKey(
-			WdfGetDriver(),
-			STANDARD_RIGHTS_ALL,
-			WDF_NO_OBJECT_ATTRIBUTES,
-			&hKey
-		)))
-		{
-			TraceError(
-				TRACE_BUSLOGIC,
-				"WdfDriverOpenParametersRegistryKey failed with status %!STATUS!",
-				status
-			);
-			break;
-		}
-
-		//
-		// Don't care, if it fails, keep default value
-		// 
-		(void)WdfRegistryQueryULong(
-			hKey,
-			&idleTimeoutValue,
-			&idleTimeout
-		);
-
-		//
-		// Idle settings
-		// 
-
-		WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS_INIT(&idleSettings, IdleCannotWakeFromS0);
-		idleSettings.IdleTimeout = idleTimeout;
-		status = WdfDeviceAssignS0IdleSettings(ChildDevice, &idleSettings);
-
-		//
-		// Catch special case more precisely 
-		// 
-		if (status == STATUS_INVALID_DEVICE_REQUEST)
-		{
-			TraceError(
-				TRACE_BUSLOGIC,
-				"No function driver attached and not in RAW mode, can't continue"
-			);
-			break;
-		}
-
-		if (!NT_SUCCESS(status))
-		{
-			TraceError(
-				TRACE_BUSLOGIC,
-				"WdfDeviceAssignS0IdleSettings failed with status %!STATUS!",
-				status
-			);
-			break;
-		}
-
 	} while (FALSE);
-
-	if (hKey)
-	{
-		WdfRegistryClose(hKey);
-	}
 
 	UNREFERENCED_PARAMETER(DmfModule);
 	UNREFERENCED_PARAMETER(DmfDeviceInit);
@@ -286,4 +224,98 @@ BthPS3_PDO_SetPowerIrpPreprocess(
 
 	IoSkipCurrentIrpStackLocation(Irp);
 	return WdfDeviceWdmDispatchPreprocessedIrp(Device, Irp);
+}
+
+//
+// Additional PDO initializations
+// 
+NTSTATUS
+BthPS3_PDO_SelfManagedIoInit(
+	_In_ WDFDEVICE Device
+)
+{
+	FuncEntry(TRACE_BUSLOGIC);
+
+	NTSTATUS status;
+	WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS idleSettings;
+	WDFKEY hKey = NULL;
+	ULONG idleTimeout = 10000; // 10 secs idle timeout
+
+	DECLARE_CONST_UNICODE_STRING(idleTimeoutValue, BTHPS3_REG_VALUE_CHILD_IDLE_TIMEOUT);
+
+	do
+	{
+		//
+		// Open
+		//   HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\BthPS3\Parameters
+		// key
+		// 
+		if (!NT_SUCCESS(status = WdfDriverOpenParametersRegistryKey(
+			WdfGetDriver(),
+			STANDARD_RIGHTS_READ,
+			WDF_NO_OBJECT_ATTRIBUTES,
+			&hKey
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfDriverOpenParametersRegistryKey failed with status %!STATUS!",
+				status
+			);
+
+			status = STATUS_SUCCESS;
+			break;
+		}
+
+		//
+		// Don't care, if it fails, keep default value
+		// 
+		(void)WdfRegistryQueryULong(
+			hKey,
+			&idleTimeoutValue,
+			&idleTimeout
+		);
+
+		//
+		// Idle settings
+		// 
+
+		WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS_INIT(&idleSettings, IdleCannotWakeFromS0);
+		idleSettings.IdleTimeout = idleTimeout;
+		status = WdfDeviceAssignS0IdleSettings(Device, &idleSettings);
+
+		//
+		// Catch special case more precisely 
+		// 
+		if (status == STATUS_INVALID_DEVICE_REQUEST)
+		{
+			EventWritePowerPolicyIdleSettingsFailed(NULL);
+
+			status = STATUS_SUCCESS;
+			break;
+		}
+
+		if (!NT_SUCCESS(status))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfDeviceAssignS0IdleSettings failed with status %!STATUS!",
+				status
+			);
+
+			EventWriteWdfDeviceAssignS0IdleSettingsFailed(NULL, status);
+
+			break;
+		}
+
+	} while (FALSE);
+
+	if (hKey)
+	{
+		WdfRegistryClose(hKey);
+	}
+
+	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
+
+	return status;
 }

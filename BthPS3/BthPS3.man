@@ -101,7 +101,7 @@
 				<string id="FilterAutoEnabledSuccessfully.EventMessage" value="Filter enabled successfully"/>
 				<string id="FilterAutoEnabledFailed.EventMessage" value="Failed to enable filter, status: %1"/>
 				<string id="L2CAPRemoteConnectFailed.EventMessage" value="Remote connect for L2CAP channel with PSM %1, status: %2"/>
-				<string id="PowerPolicyIdleSettingsFailed.EventMessage" value="Failed to set idle settings: the calling driver is not the device's power policy owner and device not in RAW mode."/>
+				<string id="PowerPolicyIdleSettingsFailed.EventMessage" value="Could not assign idle settings: the calling driver is not the device's power policy owner and device not in RAW mode. If DsHidMini is installed and operative this warning can be ignored."/>
 				<string id="WdfDeviceAssignS0IdleSettingsFailed.EventMessage" value="WdfDeviceAssignS0IdleSettings failed with status %1"/>
 				<string id="HidControlChannelConnected.EventMessage" value="HID Control Channel connection established"/>
 				<string id="HidInterruptChannelConnected.EventMessage" value="HID Interrupt Channel connection established"/>

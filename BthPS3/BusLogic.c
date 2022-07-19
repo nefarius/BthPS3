@@ -735,6 +735,7 @@ BthPS3_PDO_RetrieveByBthAddr(
 //
 // Unplugs the child device, frees context memory, frees allocated slot (serial number)
 // 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 VOID
 BthPS3_PDO_Destroy(
 	_In_ PBTHPS3_DEVICE_CONTEXT_HEADER Context,

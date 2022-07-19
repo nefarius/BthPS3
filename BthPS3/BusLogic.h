@@ -148,6 +148,7 @@ BthPS3_PDO_RetrieveByBthAddr(
 	_Out_ PBTHPS3_PDO_CONTEXT* PdoContext
 );
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
 VOID
 BthPS3_PDO_Destroy(
 	_In_ PBTHPS3_DEVICE_CONTEXT_HEADER Context,
@@ -189,13 +190,7 @@ EVT_WDF_IO_QUEUE_STATE BthPS3_PDO_DispatchHidInterruptRead;
 EVT_WDF_IO_QUEUE_STATE BthPS3_PDO_DispatchHidInterruptWrite;
 
 //
-// IRP preprocess callback
+// PNP/Power
 // 
-
-NTSTATUS
-BthPS3_PDO_SetPowerIrpPreprocess(
-	IN WDFDEVICE Device,
-	IN OUT PIRP Irp
-);
 
 EVT_WDF_DEVICE_SELF_MANAGED_IO_INIT BthPS3_PDO_SelfManagedIoInit;

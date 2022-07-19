@@ -74,31 +74,6 @@ BthPS3_PDO_EvtPreCreate(
 
 	WdfDeviceInitSetPnpPowerEventCallbacks(DeviceInit, &power);
 
-	/*
-	UCHAR minorFunctionsToFilter[] =
-	{
-		IRP_MN_SET_POWER
-	};
-
-	//
-	// Intercept IRP_MJ_POWER / IRP_MN_SET_POWER IRP
-	// 
-	if (!NT_SUCCESS(status = WdfDeviceInitAssignWdmIrpPreprocessCallback(
-		DeviceInit,
-		BthPS3_PDO_SetPowerIrpPreprocess,
-		IRP_MJ_POWER,
-		minorFunctionsToFilter,
-		ARRAYSIZE(minorFunctionsToFilter)
-	)))
-	{
-		TraceError(
-			TRACE_BUSLOGIC,
-			"WdfDeviceInitAssignWdmIrpPreprocessCallback failed with status %!STATUS!",
-			status
-		);
-	}
-	*/
-
 	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
 
 	return status;

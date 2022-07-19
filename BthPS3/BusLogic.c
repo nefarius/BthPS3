@@ -634,16 +634,6 @@ BthPS3_PDO_Create(
 		pPdoCtx->HidInterruptChannel.ConnectionState = ConnectionStateInitialized;
 
 		//
-		// Store reported remote name to assign to property later
-		// 
-		pPdoCtx->RemoteName.MaximumLength = BTH_MAX_NAME_SIZE * sizeof(WCHAR);
-		pPdoCtx->RemoteName.Buffer = ExAllocatePoolWithTag(
-			NonPagedPoolNx,
-			BTH_MAX_NAME_SIZE * sizeof(WCHAR),
-			BTHPS_POOL_TAG
-		);
-
-		//
 		// We're ready, expose interface
 		// 
 		DMF_IoctlHandler_IoctlStateSet(pPdoCtx->DmfModuleIoctlHandler, TRUE);
@@ -777,11 +767,6 @@ BthPS3_PDO_Destroy(
 				"Found desired connection item in connection list (serial: %d)",
 				serial
 			);
-
-			if (pPdoCtx->RemoteName.Buffer)
-			{
-				ExFreePoolWithTag(pPdoCtx->RemoteName.Buffer, BTHPS_POOL_TAG);
-			}
 
 			//
 			// Do NOT use PBTHPS3_PDO_CONTEXT after this call as it gets destroyed!

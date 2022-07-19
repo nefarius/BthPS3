@@ -778,6 +778,11 @@ BthPS3_PDO_Destroy(
 				serial
 			);
 
+			if (pPdoCtx->RemoteName.Buffer)
+			{
+				ExFreePoolWithTag(pPdoCtx->RemoteName.Buffer, BTHPS_POOL_TAG);
+			}
+
 			//
 			// Do NOT use PBTHPS3_PDO_CONTEXT after this call as it gets destroyed!
 			// 

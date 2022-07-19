@@ -41,11 +41,18 @@
 typedef struct _BTHPS3_PDO_CONTEXT              *PBTHPS3_PDO_CONTEXT;
 typedef struct _BTHPS3_CLIENT_L2CAP_CHANNEL     *PBTHPS3_CLIENT_L2CAP_CHANNEL;
 
-_IRQL_requires_max_(DISPATCH_LEVEL)
+_IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 L2CAP_PS3_HandleRemoteConnect(
     _In_ PBTHPS3_SERVER_CONTEXT DevCtx,
     _In_ PINDICATION_PARAMETERS ConnectParams
+);
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS
+L2CAP_PS3_HandleRemoteDisconnect(
+    _In_ PBTHPS3_PDO_CONTEXT Context,
+    _In_ PINDICATION_PARAMETERS DisconnectParams
 );
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
@@ -63,7 +70,14 @@ L2CAP_PS3_ConnectionIndicationCallback(
     _In_ PINDICATION_PARAMETERS Parameters
 );
 
+//
+// DPC to PASSIVE_LEVEL work item callbacks
+// 
+
 EVT_WDF_WORKITEM L2CAP_PS3_HandleRemoteConnectAsync;
+
+EVT_WDF_WORKITEM L2CAP_PS3_HandleRemoteDisconnectAsync;
+
 
 EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_DenyRemoteConnectCompleted;
 

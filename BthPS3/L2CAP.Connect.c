@@ -5,7 +5,7 @@
 //
 // Incoming connection request, prepare and send response
 // 
-_IRQL_requires_max_(DISPATCH_LEVEL)
+_IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 L2CAP_PS3_HandleRemoteConnect(
 	_In_ PBTHPS3_SERVER_CONTEXT DevCtx,
@@ -354,4 +354,29 @@ exit:
 	FuncExit(TRACE_L2CAP, "status=%!STATUS!", status);
 
 	return status;
+}
+
+ //
+ // Calls L2CAP_PS3_HandleRemoteConnect at PASSIVE_LEVEL
+ // 
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+L2CAP_PS3_HandleRemoteConnectAsync(
+	_In_ WDFWORKITEM WorkItem
+)
+{
+	PBTHPS3_REMOTE_CONNECT_CONTEXT connectCtx = NULL;
+
+	FuncEntry(TRACE_L2CAP);
+
+	connectCtx = GetRemoteConnectContext(WorkItem);
+
+	(void)L2CAP_PS3_HandleRemoteConnect(
+		connectCtx->ServerContext,
+		&connectCtx->IndicationParameters
+	);
+
+	WdfObjectDelete(WorkItem);
+
+	FuncExitNoReturn(TRACE_L2CAP);
 }

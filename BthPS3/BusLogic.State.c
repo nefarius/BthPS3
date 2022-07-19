@@ -74,6 +74,7 @@ BthPS3_PDO_EvtPreCreate(
 
 	WdfDeviceInitSetPnpPowerEventCallbacks(DeviceInit, &power);
 
+	/*
 	UCHAR minorFunctionsToFilter[] =
 	{
 		IRP_MN_SET_POWER
@@ -96,6 +97,7 @@ BthPS3_PDO_EvtPreCreate(
 			status
 		);
 	}
+	*/
 
 	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
 

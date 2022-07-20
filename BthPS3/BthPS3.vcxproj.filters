@@ -36,16 +36,10 @@
     <ClInclude Include="Driver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Queue.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Trace.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Bluetooth.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Connection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="L2CAP.h">
@@ -71,13 +65,7 @@
     <ClCompile Include="Driver.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Queue.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Bluetooth.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Connection.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="L2CAP.c">
@@ -92,10 +80,45 @@
     <ClCompile Include="Util.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BusLogic.IO.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BusLogic.State.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="L2CAP.Transfer.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Bluetooth.Request.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Bluetooth.PSM.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Bluetooth.L2CAP.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Bluetooth.Connection.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="L2CAP.Connect.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="L2CAP.Disconnect.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="BthPS3.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+    <ResourceCompile Include="$(IntDir)BthPS3ETW.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <MessageCompile Include="BthPS3.man">
+      <Filter>Resource Files</Filter>
+    </MessageCompile>
   </ItemGroup>
 </Project>

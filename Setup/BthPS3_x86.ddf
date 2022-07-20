@@ -24,4 +24,3 @@ LICENSE
 bin\x86\BthPS3PSM.pdb
 bin\x86\BthPS3PSM\BthPS3PSM.inf
 bin\x86\BthPS3PSM\BthPS3PSM.sys
-bin\x86\BthPS3PSM\WdfCoinstaller01011.dll

@@ -36,25 +36,30 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Bluetooth.c" />
+    <ClCompile Include="Bluetooth.Connection.c" />
+    <ClCompile Include="Bluetooth.L2CAP.c" />
+    <ClCompile Include="Bluetooth.PSM.c" />
+    <ClCompile Include="Bluetooth.Request.c" />
     <ClCompile Include="BusLogic.c" />
-    <ClCompile Include="Connection.c" />
+    <ClCompile Include="BusLogic.IO.c" />
+    <ClCompile Include="BusLogic.State.c" />
     <ClCompile Include="Device.c" />
     <ClCompile Include="Driver.c" />
+    <ClCompile Include="L2CAP.Connect.c" />
+    <ClCompile Include="L2CAP.Disconnect.c" />
+    <ClCompile Include="L2CAP.Transfer.c" />
     <ClCompile Include="PSM.c" />
     <ClCompile Include="L2CAP.c" />
-    <ClCompile Include="Queue.c" />
     <ClCompile Include="Util.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\include\BthPS3.h" />
     <ClInclude Include="Bluetooth.h" />
     <ClInclude Include="BusLogic.h" />
-    <ClInclude Include="Connection.h" />
     <ClInclude Include="Device.h" />
     <ClInclude Include="Driver.h" />
     <ClInclude Include="PSM.h" />
     <ClInclude Include="L2CAP.h" />
-    <ClInclude Include="Queue.h" />
     <ClInclude Include="Trace.h" />
     <ClInclude Include="Util.h" />
   </ItemGroup>
@@ -71,48 +76,45 @@
     <Platform Condition="'$(Platform)' == ''">Win32</Platform>
     <RootNamespace>BthPS3</RootNamespace>
     <WindowsTargetPlatformVersion>$(LatestTargetPlatformVersion)</WindowsTargetPlatformVersion>
+    <ProjectName>BthPS3</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <TargetVersion>WindowsV6.3</TargetVersion>
+    <TargetVersion>
+    </TargetVersion>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
     <ConfigurationType>Driver</ConfigurationType>
     <DriverType>KMDF</DriverType>
-    <DriverTargetPlatform>Desktop</DriverTargetPlatform>
-    <KMDF_VERSION_MAJOR>1</KMDF_VERSION_MAJOR>
-    <KMDF_VERSION_MINOR>13</KMDF_VERSION_MINOR>
+    <DriverTargetPlatform>Universal</DriverTargetPlatform>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <TargetVersion>WindowsV6.3</TargetVersion>
+    <TargetVersion>
+    </TargetVersion>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
     <ConfigurationType>Driver</ConfigurationType>
     <DriverType>KMDF</DriverType>
-    <DriverTargetPlatform>Desktop</DriverTargetPlatform>
-    <KMDF_VERSION_MAJOR>1</KMDF_VERSION_MAJOR>
-    <KMDF_VERSION_MINOR>13</KMDF_VERSION_MINOR>
+    <DriverTargetPlatform>Universal</DriverTargetPlatform>
     <SignMode>Off</SignMode>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <TargetVersion>WindowsV6.3</TargetVersion>
+    <TargetVersion>
+    </TargetVersion>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
     <ConfigurationType>Driver</ConfigurationType>
     <DriverType>KMDF</DriverType>
-    <DriverTargetPlatform>Desktop</DriverTargetPlatform>
-    <KMDF_VERSION_MAJOR>1</KMDF_VERSION_MAJOR>
-    <KMDF_VERSION_MINOR>13</KMDF_VERSION_MINOR>
+    <DriverTargetPlatform>Universal</DriverTargetPlatform>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <TargetVersion>WindowsV6.3</TargetVersion>
+    <TargetVersion>
+    </TargetVersion>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
     <ConfigurationType>Driver</ConfigurationType>
     <DriverType>KMDF</DriverType>
-    <DriverTargetPlatform>Desktop</DriverTargetPlatform>
-    <KMDF_VERSION_MAJOR>1</KMDF_VERSION_MAJOR>
-    <KMDF_VERSION_MINOR>13</KMDF_VERSION_MINOR>
+    <DriverTargetPlatform>Universal</DriverTargetPlatform>
     <SignMode>Off</SignMode>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="Configuration">
@@ -136,30 +138,29 @@
     <KMDF_VERSION_MINOR>11</KMDF_VERSION_MINOR>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'" Label="Configuration">
-    <TargetVersion>Windows7</TargetVersion>
+    <TargetVersion>
+    </TargetVersion>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
     <ConfigurationType>Driver</ConfigurationType>
     <DriverType>KMDF</DriverType>
-    <DriverTargetPlatform>Desktop</DriverTargetPlatform>
-    <KMDF_VERSION_MAJOR>1</KMDF_VERSION_MAJOR>
-    <KMDF_VERSION_MINOR>11</KMDF_VERSION_MINOR>
+    <DriverTargetPlatform>Universal</DriverTargetPlatform>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'" Label="Configuration">
-    <TargetVersion>Windows7</TargetVersion>
+    <TargetVersion>
+    </TargetVersion>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
     <ConfigurationType>Driver</ConfigurationType>
     <DriverType>KMDF</DriverType>
-    <DriverTargetPlatform>Desktop</DriverTargetPlatform>
-    <KMDF_VERSION_MAJOR>1</KMDF_VERSION_MAJOR>
-    <KMDF_VERSION_MINOR>11</KMDF_VERSION_MINOR>
+    <DriverTargetPlatform>Universal</DriverTargetPlatform>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="DMF.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup />
@@ -308,6 +309,35 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="BthPS3.rc" />
+    <ResourceCompile Include="$(IntDir)BthPS3ETW.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <MessageCompile Include="BthPS3.man">
+      <GenerateKernelModeLoggingMacros Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</GenerateKernelModeLoggingMacros>
+      <UseBaseNameOfInput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</UseBaseNameOfInput>
+      <GenerateKernelModeLoggingMacros Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</GenerateKernelModeLoggingMacros>
+      <UseBaseNameOfInput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</UseBaseNameOfInput>
+      <GenerateKernelModeLoggingMacros Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">true</GenerateKernelModeLoggingMacros>
+      <UseBaseNameOfInput Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">true</UseBaseNameOfInput>
+      <GenerateKernelModeLoggingMacros Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">true</GenerateKernelModeLoggingMacros>
+      <UseBaseNameOfInput Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">true</UseBaseNameOfInput>
+      <GenerateKernelModeLoggingMacros Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">true</GenerateKernelModeLoggingMacros>
+      <UseBaseNameOfInput Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">true</UseBaseNameOfInput>
+      <GenerateKernelModeLoggingMacros Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">true</GenerateKernelModeLoggingMacros>
+      <UseBaseNameOfInput Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">true</UseBaseNameOfInput>
+      <GenerateKernelModeLoggingMacros Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateKernelModeLoggingMacros>
+      <UseBaseNameOfInput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</UseBaseNameOfInput>
+      <GenerateKernelModeLoggingMacros Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateKernelModeLoggingMacros>
+      <UseBaseNameOfInput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</UseBaseNameOfInput>
+      <GeneratedFilesBaseName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename)ETW</GeneratedFilesBaseName>
+      <GeneratedFilesBaseName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename)ETW</GeneratedFilesBaseName>
+      <GeneratedFilesBaseName Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">%(Filename)ETW</GeneratedFilesBaseName>
+      <GeneratedFilesBaseName Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">%(Filename)ETW</GeneratedFilesBaseName>
+      <GeneratedFilesBaseName Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">%(Filename)ETW</GeneratedFilesBaseName>
+      <GeneratedFilesBaseName Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">%(Filename)ETW</GeneratedFilesBaseName>
+      <GeneratedFilesBaseName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename)ETW</GeneratedFilesBaseName>
+      <GeneratedFilesBaseName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename)ETW</GeneratedFilesBaseName>
+    </MessageCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

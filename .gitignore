@@ -270,3 +270,4 @@ __pycache__/
 /Setup/drivers
 /Setup/*.7z
 /artifacts
+RC*

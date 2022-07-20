@@ -4,7 +4,7 @@
  *                                                                                *
  * BSD 3-Clause License                                                           *
  *                                                                                *
- * Copyright (c) 2018-2021, Nefarius Software Solutions e.U.                      *
+ * Copyright (c) 2018-2022, Nefarius Software Solutions e.U.                      *
  * All rights reserved.                                                           *
  *                                                                                *
  * Redistribution and use in source and binary forms, with or without             *
@@ -63,8 +63,8 @@ StringUtil_BthNameIsEqual(
     //
     // CHAR to UNICODE_STRING
     // 
-    status = RtlUnicodeStringPrintf(&usLhs, L"%hs", Lhs);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status = RtlUnicodeStringPrintf(&usLhs, L"%hs", Lhs))) 
+    {
         TraceError(
             TRACE_UTIL,
             "RtlUnicodeStringPrintf failed with status %!STATUS!",

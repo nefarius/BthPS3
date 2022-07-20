@@ -4,7 +4,7 @@
  *                                                                                *
  * BSD 3-Clause License                                                           *
  *                                                                                *
- * Copyright (c) 2018-2021, Nefarius Software Solutions e.U.                      *
+ * Copyright (c) 2018-2022, Nefarius Software Solutions e.U.                      *
  * All rights reserved.                                                           *
  *                                                                                *
  * Redistribution and use in source and binary forms, with or without             *
@@ -40,62 +40,155 @@
 #define MAX_DEVICE_ID_LEN   200
 #define BTH_ADDR_HEX_LEN    12
 
-//
-// Identification information for dynamically enumerated bus children (PDOs)
-// 
-typedef struct _PDO_IDENTIFICATION_DESCRIPTION
-{
-    //
-    // Mandatory header
-    // 
-    WDF_CHILD_IDENTIFICATION_DESCRIPTION_HEADER Header;
-
-    //
-    // Client connection context
-    // 
-    PBTHPS3_CLIENT_CONNECTION ClientConnection;
-
-} PDO_IDENTIFICATION_DESCRIPTION, *PPDO_IDENTIFICATION_DESCRIPTION;
 
 //
-// Context data of child device (PDO)
+// Connection state
+//
+typedef enum _BTHPS3_CONNECTION_STATE {
+    ConnectionStateUninitialized = 0,
+    ConnectionStateInitialized,
+    ConnectionStateConnecting,
+    ConnectionStateConnected,
+    ConnectionStateConnectFailed,
+    ConnectionStateDisconnecting,
+    ConnectionStateDisconnected
+
+} BTHPS3_CONNECTION_STATE, *PBTHPS3_CONNECTION_STATE;
+
+//
+// State information for a single L2CAP channel
 // 
-typedef struct _BTHPS3_PDO_DEVICE_CONTEXT
+typedef struct _BTHPS3_CLIENT_L2CAP_CHANNEL
 {
-    //
-    // Client connection context
-    // 
-    PBTHPS3_CLIENT_CONNECTION ClientConnection;
+    BTHPS3_CONNECTION_STATE ConnectionState;
 
-} BTHPS3_PDO_DEVICE_CONTEXT, *PBTHPS3_PDO_DEVICE_CONTEXT;
+    WDFSPINLOCK ConnectionStateLock;
 
-WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_PDO_DEVICE_CONTEXT, GetPdoDeviceContext)
+    L2CAP_CHANNEL_HANDLE ChannelHandle;
 
-EVT_WDF_CHILD_LIST_CREATE_DEVICE BthPS3_EvtWdfChildListCreateDevice;
-EVT_WDF_CHILD_LIST_IDENTIFICATION_DESCRIPTION_COMPARE BthPS3_PDO_EvtChildListIdentificationDescriptionCompare;
+    struct _BRB ConnectDisconnectBrb;
 
-EVT_WDF_DEVICE_CONTEXT_CLEANUP BthPS3_PDO_EvtDeviceContextCleanup;
+    WDFREQUEST ConnectDisconnectRequest;
 
-EVT_WDF_IO_QUEUE_IO_DEVICE_CONTROL BthPS3_PDO_EvtWdfIoQueueIoDeviceControl;
+    KEVENT DisconnectEvent;
 
-EVT_WDF_DEVICE_D0_EXIT BthPS3_PDO_EvtWdfDeviceD0Exit;
+} BTHPS3_CLIENT_L2CAP_CHANNEL, *PBTHPS3_CLIENT_L2CAP_CHANNEL;
 
-EVT_WDF_DEVICE_SELF_MANAGED_IO_INIT BthPS3_PDO_EvtWdfDeviceSelfManagedIoInit;
+//
+// PDO context object holding all state information per child device
+// 
+typedef struct _BTHPS3_PDO_CONTEXT
+{
+	PBTHPS3_DEVICE_CONTEXT_HEADER DevCtxHdr;
 
-EVT_WDF_REQUEST_COMPLETION_ROUTINE BthPS3_PDO_DisconnectRequestCompleted;
+	BTH_ADDR RemoteAddress;
 
-#if KMDF_VERSION_MAJOR == 1 && KMDF_VERSION_MINOR >= 13
-#if (NTDDI_VERSION < NTDDI_WIN10)
-DEFINE_DEVPROPKEY(DEVPKEY_Bluetooth_LastConnectedTime, 
-    0x2bd67d8b, 0x8beb, 0x48d5, 0x87, 0xe0, 0x6c, 0xda, 0x34, 0x28, 0x04, 0x0a, 11);    // DEVPROP_TYPE_FILETIME
-#endif
-#endif
+	DS_DEVICE_TYPE DeviceType;
+
+	BTHPS3_CLIENT_L2CAP_CHANNEL HidControlChannel;
+
+	BTHPS3_CLIENT_L2CAP_CHANNEL HidInterruptChannel;
+
+	DMFMODULE DmfModuleIoctlHandler;
+
+	ULONG SerialNumber;
+
+	WDFMEMORY HardwareId;
+
+	struct
+	{
+		WDFQUEUE HidControlReadRequests;
+
+		WDFQUEUE HidControlWriteRequests;
+
+		WDFQUEUE HidInterruptReadRequests;
+
+		WDFQUEUE HidInterruptWriteRequests;
+
+	} Queues;
+
+} BTHPS3_PDO_CONTEXT, * PBTHPS3_PDO_CONTEXT;
+
+WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_PDO_CONTEXT, GetPdoContext)
+
+
+VOID
+FORCEINLINE
+CLIENT_CONNECTION_REQUEST_REUSE(
+    _In_ WDFREQUEST Request
+)
+{
+    NTSTATUS statusReuse;
+    WDF_REQUEST_REUSE_PARAMS reuseParams;
+
+    WDF_REQUEST_REUSE_PARAMS_INIT(&reuseParams, WDF_REQUEST_REUSE_NO_FLAGS, STATUS_NOT_SUPPORTED);
+    statusReuse = WdfRequestReuse(Request, &reuseParams);
+    NT_ASSERT(NT_SUCCESS(statusReuse));
+    UNREFERENCED_PARAMETER(statusReuse);
+}
+
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS
+BthPS3_PDO_Create(
+	_In_ PBTHPS3_SERVER_CONTEXT Context,
+	_In_ BTH_ADDR RemoteAddress,
+	_In_ DS_DEVICE_TYPE DeviceType,
+	_In_ PSTR RemoteName,
+	_In_ PFN_WDF_OBJECT_CONTEXT_CLEANUP CleanupCallback,
+	_Out_ PBTHPS3_PDO_CONTEXT* PdoContext
+);
 
 NTSTATUS
-BthPS3_AssignDeviceProperty(
-    WDFDEVICE Device,
-    const DEVPROPKEY* PropertyKey,
-    DEVPROPTYPE Type,
-    ULONG Size,
-    PVOID Data
+BthPS3_PDO_RetrieveByBthAddr(
+	_In_ PBTHPS3_SERVER_CONTEXT Context,
+	_In_ BTH_ADDR RemoteAddress,
+	_Out_ PBTHPS3_PDO_CONTEXT* PdoContext
 );
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+VOID
+BthPS3_PDO_Destroy(
+	_In_ PBTHPS3_DEVICE_CONTEXT_HEADER Context,
+	_In_ PBTHPS3_PDO_CONTEXT PdoContext
+);
+
+EVT_DMF_DEVICE_MODULES_ADD BthPS3_PDO_EvtDmfModulesAdd;
+
+//
+// PDO pre-/post-create callbacks
+// 
+
+EVT_DMF_Pdo_PreCreate BthPS3_PDO_EvtPreCreate;
+
+EVT_DMF_Pdo_PostCreate BthPS3_PDO_EvtPostCreate;
+
+//
+// Handle requests from upper driver
+// 
+
+EVT_DMF_IoctlHandler_Callback BthPS3_PDO_HandleHidControlRead;
+
+EVT_DMF_IoctlHandler_Callback BthPS3_PDO_HandleHidControlWrite;
+
+EVT_DMF_IoctlHandler_Callback BthPS3_PDO_HandleHidInterruptRead;
+
+EVT_DMF_IoctlHandler_Callback BthPS3_PDO_HandleHidInterruptWrite;
+
+//
+// Process requests once queued
+// 
+
+EVT_WDF_IO_QUEUE_STATE BthPS3_PDO_DispatchHidControlRead;
+
+EVT_WDF_IO_QUEUE_STATE BthPS3_PDO_DispatchHidControlWrite;
+
+EVT_WDF_IO_QUEUE_STATE BthPS3_PDO_DispatchHidInterruptRead;
+
+EVT_WDF_IO_QUEUE_STATE BthPS3_PDO_DispatchHidInterruptWrite;
+
+//
+// PNP/Power
+// 
+
+EVT_WDF_DEVICE_SELF_MANAGED_IO_INIT BthPS3_PDO_SelfManagedIoInit;

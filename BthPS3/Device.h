@@ -4,7 +4,7 @@
  *                                                                                *
  * BSD 3-Clause License                                                           *
  *                                                                                *
- * Copyright (c) 2018-2021, Nefarius Software Solutions e.U.                      *
+ * Copyright (c) 2018-2022, Nefarius Software Solutions e.U.                      *
  * All rights reserved.                                                           *
  *                                                                                *
  * Redistribution and use in source and binary forms, with or without             *
@@ -59,5 +59,12 @@ NTSTATUS
 BthPS3_OpenFilterIoTarget(
     _In_ WDFDEVICE Device
 );
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+VOID
+DmfDeviceModulesAdd(
+    _In_ WDFDEVICE Device,
+    _In_ PDMFMODULE_INIT DmfModuleInit
+    );
 
 EXTERN_C_END

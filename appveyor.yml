@@ -1,5 +1,9 @@
-version: 2.1.{build}.0
+version: 2.2.{build}.0
 image: Visual Studio 2019
+cache:
+- C:\projects\DMF
+environment:
+  DmfRootPath: C:\projects\DMF
 platform:
 - x86
 - x64
@@ -7,7 +11,11 @@ configuration:
 - Release
 install:
 - cmd: git submodule -q update --init
-- cmd: git clone -q https://github.com/microsoft/DMF.git C:\projects\DMF
+- cmd: git clone -q https://github.com/microsoft/DMF.git C:\projects\DMF 2> nul || set ERRORLEVEL=0
+- cmd: |
+    cd "C:\projects\DMF"
+    git pull > NUL
+    cd %appveyor_build_folder%
 before_build:
 - cmd: nuget restore
 - ps: Invoke-WebRequest "https://github.com/nefarius/vpatch/releases/latest/download/vpatch.exe" -OutFile vpatch.exe
@@ -18,8 +26,8 @@ before_build:
 - cmd: vpatch.exe --stamp-version "%APPVEYOR_BUILD_VERSION%" --target-file ".\BthPS3Util\BthPS3Util.rc" --resource.file-version --resource.product-version
 - cmd: vpatch.exe --stamp-version "%APPVEYOR_BUILD_VERSION%" --target-file ".\Setup\BthPS3CA\BthPS3CA.rc" --resource.file-version --resource.product-version
 - cmd: vpatch.exe --stamp-version "%APPVEYOR_BUILD_VERSION%" --target-file ".\BthPS3CfgUI\Properties\AssemblyInfo.cs" --assembly.version --assembly.file-version
-build:
-  project: $(APPVEYOR_BUILD_FOLDER)\$(APPVEYOR_PROJECT_NAME).sln
+build_script:
+- cmd: .\build.cmd
 after_build:
 - cmd: makecab.exe /f .\setup\BthPS3_%PLATFORM%.ddf
 artifacts:

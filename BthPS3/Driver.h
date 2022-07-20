@@ -4,7 +4,7 @@
  *                                                                                *
  * BSD 3-Clause License                                                           *
  *                                                                                *
- * Copyright (c) 2018-2021, Nefarius Software Solutions e.U.                      *
+ * Copyright (c) 2018-2022, Nefarius Software Solutions e.U.                      *
  * All rights reserved.                                                           *
  *                                                                                *
  * Redistribution and use in source and binary forms, with or without             *
@@ -37,17 +37,19 @@
 
 #pragma once
 
+#pragma warning(disable:5040)
+#include <DmfModules.Library.h>
+#pragma warning(default:5040)
+
 #include <ntddk.h>
 #include <wdf.h>
 #include <initguid.h>
 #include <devpkey.h>
 
 #include "device.h"
-#include "queue.h"
 #include "trace.h"
 #include "Bluetooth.h"
 #include "PSM.h"
-#include "Connection.h"
 #include "L2CAP.h"
 #include "BusLogic.h"
 #include "Util.h"
@@ -55,6 +57,10 @@
 EXTERN_C_START
 
 #define BTHPS_POOL_TAG	'dP3B'
+
+#define SetBit(A,k)     ( A[(k/32)] |= (1 << (k%32)) )
+#define ClearBit(A,k)   ( A[(k/32)] &= ~(1 << (k%32)) )
+#define TestBit(A,k)    ( A[(k/32)] & (1 << (k%32)) )
 
 //
 // WDFDRIVER Events

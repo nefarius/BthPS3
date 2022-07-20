@@ -4,7 +4,7 @@
  *                                                                                *
  * BSD 3-Clause License                                                           *
  *                                                                                *
- * Copyright (c) 2018-2021, Nefarius Software Solutions e.U.                      *
+ * Copyright (c) 2018-2022, Nefarius Software Solutions e.U.                      *
  * All rights reserved.                                                           *
  *                                                                                *
  * Redistribution and use in source and binary forms, with or without             *
@@ -49,6 +49,7 @@
 #define POOLTAG_BTHPS3                  '3SPB'
 #define BTH_DEVICE_INFO_MAX_COUNT       0x0A
 #define BTH_DEVICE_INFO_MAX_RETRIES     0x05
+#define BTHPS3_MAX_NUM_DEVICES			0xFF
 
 typedef struct _BTHPS3_DEVICE_CONTEXT_HEADER
 {
@@ -82,12 +83,27 @@ typedef struct _BTHPS3_DEVICE_CONTEXT_HEADER
 	// Collection of state information about 
 	// currently established connections
 	// 
-	WDFCOLLECTION ClientConnections;
+	WDFCOLLECTION Clients;
 
 	//
 	// Lock for ClientConnections collection
 	// 
-	WDFSPINLOCK ClientConnectionsLock;
+	WDFSPINLOCK ClientsLock;
+
+	//
+	// DMF module to handle PDO creation
+	// 
+	DMFMODULE DmfModulePdo;
+
+	//
+	// Free and occupied serial numbers
+	// 
+	UINT32 Slots[8]; // 256 usable bits
+
+	//
+	// Lock protecting Slots access
+	// 
+	WDFSPINLOCK SlotsSpinLock;
 
 } BTHPS3_DEVICE_CONTEXT_HEADER, * PBTHPS3_DEVICE_CONTEXT_HEADER;
 
@@ -171,6 +187,11 @@ typedef struct _BTHPS3_SERVER_CONTEXT
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_SERVER_CONTEXT, GetServerDeviceContext)
 
+typedef struct _BTHPS3_PDO_CONTEXT * PBTHPS3_PDO_CONTEXT;
+
+//
+// Context data for work item (dropping from DISPATCH to PASSIVE level)
+// 
 typedef struct _BTHPS3_REMOTE_CONNECT_CONTEXT
 {
 	PBTHPS3_SERVER_CONTEXT ServerContext;
@@ -180,6 +201,21 @@ typedef struct _BTHPS3_REMOTE_CONNECT_CONTEXT
 } BTHPS3_REMOTE_CONNECT_CONTEXT, * PBTHPS3_REMOTE_CONNECT_CONTEXT;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_REMOTE_CONNECT_CONTEXT, GetRemoteConnectContext)
+
+
+//
+// Context data for work item (dropping from DISPATCH to PASSIVE level)
+// 
+typedef struct _BTHPS3_REMOTE_DISCONNECT_CONTEXT
+{
+	PBTHPS3_PDO_CONTEXT PdoContext;
+
+	INDICATION_PARAMETERS IndicationParameters;
+
+} BTHPS3_REMOTE_DISCONNECT_CONTEXT, * PBTHPS3_REMOTE_DISCONNECT_CONTEXT;
+
+WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_REMOTE_DISCONNECT_CONTEXT, GetRemoteDisconnectContext)
+
 
 EVT_WDF_TIMER BthPS3_EnablePatchEvtWdfTimer;
 
@@ -291,157 +327,19 @@ BthPS3_SendBrbAsync(
 // 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-FORCEINLINE
-BTHPS3_GET_DEVICE_NAME(
+BthPS3_GetDeviceName(
 	WDFIOTARGET IoTarget,
 	BTH_ADDR RemoteAddress,
 	PCHAR Name
-)
-{
-	NTSTATUS status = STATUS_INVALID_BUFFER_SIZE;
-	ULONG index = 0;
-	WDF_MEMORY_DESCRIPTOR MemoryDescriptor;
-	WDFMEMORY MemoryHandle = NULL;
-	PBTH_DEVICE_INFO_LIST pDeviceInfoList = NULL;
-	ULONG maxDevices = BTH_DEVICE_INFO_MAX_COUNT;
-	ULONG retryCount = 0;
-
-	//
-	// Retry increasing the buffer a few times if _a lot_ of devices
-	// are cached and the allocated memory can't store them all.
-	// 
-	for (retryCount = 0; (retryCount <= BTH_DEVICE_INFO_MAX_RETRIES
-		&& status == STATUS_INVALID_BUFFER_SIZE); retryCount++)
-	{
-		if (MemoryHandle != NULL) {
-			WdfObjectDelete(MemoryHandle);
-		}
-
-		status = WdfMemoryCreate(NULL,
-			NonPagedPoolNx,
-			POOLTAG_BTHPS3,
-			sizeof(BTH_DEVICE_INFO_LIST) + (sizeof(BTH_DEVICE_INFO) * maxDevices),
-			&MemoryHandle,
-			NULL);
-
-		if (!NT_SUCCESS(status)) {
-			return status;
-		}
-
-		WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(
-			&MemoryDescriptor,
-			MemoryHandle,
-			NULL
-		);
-
-		status = WdfIoTargetSendIoctlSynchronously(
-			IoTarget,
-			NULL,
-			IOCTL_BTH_GET_DEVICE_INFO,
-			&MemoryDescriptor,
-			&MemoryDescriptor,
-			NULL,
-			NULL
-		);
-
-		//
-		// Increase memory to allocate
-		// 
-		maxDevices += BTH_DEVICE_INFO_MAX_COUNT;
-	}
-
-	if (!NT_SUCCESS(status)) {
-		WdfObjectDelete(MemoryHandle);
-		return status;
-	}
-
-	pDeviceInfoList = WdfMemoryGetBuffer(MemoryHandle, NULL);
-	status = STATUS_NOT_FOUND;
-
-	for (index = 0; index < pDeviceInfoList->numOfDevices; index++)
-	{
-		PBTH_DEVICE_INFO pDeviceInfo = &pDeviceInfoList->deviceList[index];
-
-		if (pDeviceInfo->address == RemoteAddress)
-		{
-			if (strlen(pDeviceInfo->name) == 0)
-			{
-				status = STATUS_INVALID_PARAMETER;
-				break;
-			}
-
-			strcpy_s(Name, BTH_MAX_NAME_SIZE, pDeviceInfo->name);
-			status = STATUS_SUCCESS;
-			break;
-		}
-	}
-
-	WdfObjectDelete(MemoryHandle);
-	return status;
-}
+);
 
 //
-// Request remote device friendly name from radio
+// Request HCI version from radio
 // 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-FORCEINLINE
-BTHPS3_GET_HCI_VERSION(
+BthPS3_GetHciVersion(
 	_In_ WDFIOTARGET IoTarget,
-	_Out_ PUCHAR HciVersion,
+	_Out_ PUCHAR HciMajorVersion,
 	_Out_opt_ PUSHORT HciRevision
-)
-{
-	NTSTATUS status;
-	WDF_MEMORY_DESCRIPTOR MemoryDescriptor;
-	WDFMEMORY MemoryHandle = NULL;
-	PBTH_LOCAL_RADIO_INFO pLocalInfo = NULL;
-#ifdef _M_IX86
-	ULONG bytesReturned;
-#else
-	ULONGLONG bytesReturned;
-#endif
-	
-	status = WdfMemoryCreate(NULL,
-		NonPagedPoolNx,
-		POOLTAG_BTHPS3,
-		sizeof(BTH_LOCAL_RADIO_INFO),
-		&MemoryHandle,
-		NULL);
-
-	if (!NT_SUCCESS(status)) {
-		return status;
-	}
-
-	WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(
-		&MemoryDescriptor,
-		MemoryHandle,
-		NULL
-	);
-
-	status = WdfIoTargetSendIoctlSynchronously(
-		IoTarget,
-		NULL,
-		IOCTL_BTH_GET_LOCAL_INFO,
-		&MemoryDescriptor,
-		&MemoryDescriptor,
-		NULL,
-		&bytesReturned
-	);
-
-	if (!NT_SUCCESS(status) || bytesReturned < sizeof(BTH_LOCAL_RADIO_INFO)) {
-		WdfObjectDelete(MemoryHandle);
-		return status;
-	}
-
-	pLocalInfo = WdfMemoryGetBuffer(MemoryHandle, NULL);
-
-	if (HciVersion)
-		*HciVersion = pLocalInfo->hciVersion;
-		
-	if (HciRevision)
-		*HciRevision = pLocalInfo->hciRevision;
-
-	WdfObjectDelete(MemoryHandle);
-	return status;
-}
+);

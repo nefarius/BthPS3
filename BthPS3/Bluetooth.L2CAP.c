@@ -35,27 +35,120 @@
  **********************************************************************************/
 
 
-#pragma once
+#include "Driver.h"
+#include "Bluetooth.L2CAP.tmh"
+
+
+#ifdef ALLOC_PRAGMA
+#pragma alloc_text (PAGE, BthPS3_UnregisterL2CAPServer)
+#endif
+
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-BthPS3PSM_DisablePatchSync(
-	WDFIOTARGET IoTarget,
-	ULONG DeviceIndex
-);
+BthPS3_RegisterL2CAPServer(
+	_In_ PBTHPS3_SERVER_CONTEXT DevCtx
+)
+{
+	NTSTATUS status;
+	struct _BRB_L2CA_REGISTER_SERVER* brb;
+
+	FuncEntry(TRACE_BTH);
+
+	DevCtx->Header.ProfileDrvInterface.BthReuseBrb(
+		&(DevCtx->RegisterUnregisterBrb),
+		BRB_L2CA_REGISTER_SERVER
+	);
+
+	brb = (struct _BRB_L2CA_REGISTER_SERVER*)
+		&(DevCtx->RegisterUnregisterBrb);
+
+	//
+	// Format brb
+	//
+	brb->BtAddress = BTH_ADDR_NULL;
+	brb->PSM = 0; //we have already registered the PSMs
+	brb->IndicationCallback = &BthPS3_IndicationCallback;
+	brb->IndicationCallbackContext = DevCtx;
+	brb->IndicationFlags = 0;
+	brb->ReferenceObject = WdfDeviceWdmGetDeviceObject(DevCtx->Header.Device);
+
+	if (!NT_SUCCESS(status = BthPS3_SendBrbSynchronously(
+		DevCtx->Header.IoTarget,
+		DevCtx->Header.HostInitRequest,
+		(PBRB)brb,
+		sizeof(*brb)
+	)))
+	{
+		TraceError(
+			TRACE_BTH,
+			"BRB_REGISTER_PSM failed with status %!STATUS!",
+			status
+		);
+	}
+	else
+	{
+		//
+		// Store server handle
+		//
+		DevCtx->L2CAPServerHandle = brb->ServerHandle;
+	}
+
+	FuncExit(TRACE_BTH, "status=%!STATUS!", status);
+
+	return status;
+}
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
-NTSTATUS
-BthPS3PSM_EnablePatchSync(
-	WDFIOTARGET IoTarget,
-	ULONG DeviceIndex
-);
+VOID
+BthPS3_UnregisterL2CAPServer(
+	_In_ PBTHPS3_SERVER_CONTEXT DevCtx
+)
+{
+	NTSTATUS status;
+	struct _BRB_L2CA_UNREGISTER_SERVER* brb;
 
-_IRQL_requires_max_(DISPATCH_LEVEL)
-NTSTATUS
-BthPS3PSM_EnablePatchAsync(
-    WDFIOTARGET IoTarget,
-    ULONG DeviceIndex
-);
+	FuncEntry(TRACE_BTH);
 
-EVT_WDF_REQUEST_COMPLETION_ROUTINE BthPS3PSM_FilterRequestCompletionRoutine;
+	PAGED_CODE();
+
+	if (NULL == DevCtx->L2CAPServerHandle)
+	{
+		return;
+	}
+
+	DevCtx->Header.ProfileDrvInterface.BthReuseBrb(
+		&(DevCtx->RegisterUnregisterBrb),
+		BRB_L2CA_UNREGISTER_SERVER
+	);
+
+	brb = (struct _BRB_L2CA_UNREGISTER_SERVER*)
+		&(DevCtx->RegisterUnregisterBrb);
+
+	//
+	// Format Brb
+	//
+	brb->BtAddress = BTH_ADDR_NULL;//DevCtx->LocalAddress;
+	brb->Psm = 0; //since we will use unregister PSM to unregister.
+	brb->ServerHandle = DevCtx->L2CAPServerHandle;
+
+	if (!NT_SUCCESS(status = BthPS3_SendBrbSynchronously(
+		DevCtx->Header.IoTarget,
+		DevCtx->Header.HostInitRequest,
+		(PBRB)brb,
+		sizeof(*(brb))
+	)))
+	{
+		TraceError(
+			TRACE_BTH,
+			"BRB_L2CA_UNREGISTER_SERVER failed with status %!STATUS!",
+			status
+		);
+	}
+	else
+	{
+		DevCtx->L2CAPServerHandle = NULL;
+	}
+
+	FuncExitNoReturn(TRACE_BTH);
+}

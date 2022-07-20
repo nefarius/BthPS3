@@ -4,7 +4,7 @@
  *                                                                                *
  * BSD 3-Clause License                                                           *
  *                                                                                *
- * Copyright (c) 2018-2021, Nefarius Software Solutions e.U.                      *
+ * Copyright (c) 2018-2022, Nefarius Software Solutions e.U.                      *
  * All rights reserved.                                                           *
  *                                                                                *
  * Redistribution and use in source and binary forms, with or without             *
@@ -59,6 +59,10 @@ static USHORT BTHPS3_WIRELESS_PID = 0x05C4;
 DEFINE_GUID(BTHPS3_SERVICE_GUID,
     0x1cb831ea, 0x79cd, 0x4508, 0xb0, 0xfc, 0x85, 0xf7, 0xc8, 0x5a, 0xe8, 0xe0);
 // {1cb831ea-79cd-4508-b0fc-85f7c85ae8e0}
+
+// {968E1849-73B1-4876-B80A-ED6DD171489B}
+DEFINE_GUID(GUID_DEVINTERFACE_BTHPS3, 
+	0x968e1849, 0x73b1, 0x4876, 0xb8, 0xa, 0xed, 0x6d, 0xd1, 0x71, 0x48, 0x9b);
 
 //
 // Filter device enumeration interface GUID

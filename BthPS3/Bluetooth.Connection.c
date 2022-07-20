@@ -4,7 +4,7 @@
  *                                                                                *
  * BSD 3-Clause License                                                           *
  *                                                                                *
- * Copyright (c) 2018-2021, Nefarius Software Solutions e.U.                      *
+ * Copyright (c) 2018-2022, Nefarius Software Solutions e.U.                      *
  * All rights reserved.                                                           *
  *                                                                                *
  * Redistribution and use in source and binary forms, with or without             *
@@ -35,102 +35,115 @@
  **********************************************************************************/
 
 
-#pragma once
-
-#include <ntstrsafe.h>
-
-
-//
-// Connection state
-//
-typedef enum _BTHPS3_CONNECTION_STATE {
-    ConnectionStateUninitialized = 0,
-    ConnectionStateInitialized,
-    ConnectionStateConnecting,
-    ConnectionStateConnected,
-    ConnectionStateConnectFailed,
-    ConnectionStateDisconnecting,
-    ConnectionStateDisconnected
-
-} BTHPS3_CONNECTION_STATE, *PBTHPS3_CONNECTION_STATE;
+#include "Driver.h"
+#include "Bluetooth.Connection.tmh"
+#include "BthPS3ETW.h"
 
 
 //
-// State information for a single L2CAP channel
+// Gets invoked by parent bus if there's work for our driver
 // 
-typedef struct _BTHPS3_CLIENT_L2CAP_CHANNEL
-{
-    BTHPS3_CONNECTION_STATE     ConnectionState;
-
-    WDFSPINLOCK                 ConnectionStateLock;
-
-    L2CAP_CHANNEL_HANDLE        ChannelHandle;
-
-    struct _BRB                 ConnectDisconnectBrb;
-
-    WDFREQUEST                  ConnectDisconnectRequest;
-
-    KEVENT                      DisconnectEvent;
-
-} BTHPS3_CLIENT_L2CAP_CHANNEL, *PBTHPS3_CLIENT_L2CAP_CHANNEL;
-
-//
-// State information for a remote device
-// 
-typedef struct _BTHPS3_CLIENT_CONNECTION
-{
-    PBTHPS3_DEVICE_CONTEXT_HEADER       DevCtxHdr;
-
-    BTH_ADDR                            RemoteAddress;
-
-    UNICODE_STRING						RemoteName;
-
-    DS_DEVICE_TYPE                      DeviceType;
-
-    BTHPS3_CLIENT_L2CAP_CHANNEL         HidControlChannel;
-
-    BTHPS3_CLIENT_L2CAP_CHANNEL         HidInterruptChannel;
-
-} BTHPS3_CLIENT_CONNECTION, *PBTHPS3_CLIENT_CONNECTION;
-
-WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_CLIENT_CONNECTION, GetClientConnection)
-
-
 _IRQL_requires_max_(DISPATCH_LEVEL)
-NTSTATUS
-ClientConnections_CreateAndInsert(
-    _In_ PBTHPS3_SERVER_CONTEXT Context,
-    _In_ BTH_ADDR RemoteAddress,
-    _In_ PFN_WDF_OBJECT_CONTEXT_CLEANUP CleanupCallback,
-    _Out_ PBTHPS3_CLIENT_CONNECTION *ClientConnection
-);
-
-VOID
-ClientConnections_RemoveAndDestroy(
-    _In_ PBTHPS3_DEVICE_CONTEXT_HEADER Context,
-    _In_ PBTHPS3_CLIENT_CONNECTION ClientConnection
-);
-
-NTSTATUS
-ClientConnections_RetrieveByBthAddr(
-    _In_ PBTHPS3_SERVER_CONTEXT Context,
-    _In_ BTH_ADDR RemoteAddress,
-    _Out_ PBTHPS3_CLIENT_CONNECTION *ClientConnection
-);
-
-EVT_WDF_OBJECT_CONTEXT_CLEANUP EvtClientConnectionsDestroyConnection;
-
-VOID
-FORCEINLINE
-CLIENT_CONNECTION_REQUEST_REUSE(
-    _In_ WDFREQUEST Request
+void
+BthPS3_IndicationCallback(
+	_In_ PVOID Context,
+	_In_ INDICATION_CODE Indication,
+	_In_ PINDICATION_PARAMETERS Parameters
 )
 {
-    NTSTATUS statusReuse;
-    WDF_REQUEST_REUSE_PARAMS reuseParams;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	WDFWORKITEM asyncRemoteConnect;
+	WDF_WORKITEM_CONFIG asyncConfig;
+	WDF_OBJECT_ATTRIBUTES asyncAttribs;
+	PBTHPS3_REMOTE_CONNECT_CONTEXT connectCtx = NULL;
 
-    WDF_REQUEST_REUSE_PARAMS_INIT(&reuseParams, WDF_REQUEST_REUSE_NO_FLAGS, STATUS_NOT_SUPPORTED);
-    statusReuse = WdfRequestReuse(Request, &reuseParams);
-    NT_ASSERT(NT_SUCCESS(statusReuse));
-    UNREFERENCED_PARAMETER(statusReuse);
+	FuncEntry(TRACE_BTH);
+
+	switch (Indication)
+	{
+	case IndicationAddReference:
+	case IndicationReleaseReference:
+		break;
+	case IndicationRemoteConnect:
+	{
+		PBTHPS3_SERVER_CONTEXT devCtx = (PBTHPS3_SERVER_CONTEXT)Context;
+
+		TraceInformation(
+			TRACE_BTH,
+			"New connection for PSM 0x%04X from %012llX arrived",
+			Parameters->Parameters.Connect.Request.PSM,
+			Parameters->BtAddress
+		);
+
+		if (KeGetCurrentIrql() <= PASSIVE_LEVEL)
+		{
+			//
+			// Main entry point for a new connection, decides if valid etc.
+			// 
+			L2CAP_PS3_HandleRemoteConnect(devCtx, Parameters);
+
+			break;
+		}
+
+		//
+		// Can be DPC level, enqueue work item
+		// 
+
+		TraceVerbose(
+			TRACE_BTH,
+			"IRQL %!irql! too high, preparing async call",
+			KeGetCurrentIrql()
+		);
+
+		WDF_WORKITEM_CONFIG_INIT(
+			&asyncConfig,
+			L2CAP_PS3_HandleRemoteConnectAsync
+		);
+		WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&asyncAttribs, BTHPS3_REMOTE_CONNECT_CONTEXT);
+		asyncAttribs.ParentObject = devCtx->Header.Device;
+
+		if (!NT_SUCCESS(status = WdfWorkItemCreate(
+			&asyncConfig,
+			&asyncAttribs,
+			&asyncRemoteConnect
+		)))
+		{
+			TraceError(
+				TRACE_BTH,
+				"WdfWorkItemCreate failed with status %!STATUS!",
+				status
+			);
+
+			break;
+		}
+
+		//
+		// Pass on parameters as work item context
+		// 
+		connectCtx = GetRemoteConnectContext(asyncRemoteConnect);
+		connectCtx->ServerContext = devCtx;
+		connectCtx->IndicationParameters = *Parameters;
+
+		//
+		// Kick off async call
+		// 
+		WdfWorkItemEnqueue(asyncRemoteConnect);
+
+		break;
+	}
+	case IndicationRemoteDisconnect:
+	{
+		//
+		// We register L2CAP_PS3_ConnectionIndicationCallback for disconnect
+		//
+		NT_ASSERT(FALSE);
+		break;
+	}
+	case IndicationRemoteConfigRequest:
+	case IndicationRemoteConfigResponse:
+	case IndicationFreeExtraOptions:
+		break;
+	}
+
+	FuncExitNoReturn(TRACE_BTH);
 }

@@ -4,7 +4,7 @@
  *                                                                                *
  * BSD 3-Clause License                                                           *
  *                                                                                *
- * Copyright (c) 2018-2021, Nefarius Software Solutions e.U.                      *
+ * Copyright (c) 2018-2022, Nefarius Software Solutions e.U.                      *
  * All rights reserved.                                                           *
  *                                                                                *
  * Redistribution and use in source and binary forms, with or without             *
@@ -38,11 +38,21 @@
 #pragma once
 
 
-_IRQL_requires_max_(DISPATCH_LEVEL)
+typedef struct _BTHPS3_PDO_CONTEXT              *PBTHPS3_PDO_CONTEXT;
+typedef struct _BTHPS3_CLIENT_L2CAP_CHANNEL     *PBTHPS3_CLIENT_L2CAP_CHANNEL;
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 L2CAP_PS3_HandleRemoteConnect(
     _In_ PBTHPS3_SERVER_CONTEXT DevCtx,
     _In_ PINDICATION_PARAMETERS ConnectParams
+);
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS
+L2CAP_PS3_HandleRemoteDisconnect(
+    _In_ PBTHPS3_PDO_CONTEXT Context,
+    _In_ PINDICATION_PARAMETERS DisconnectParams
 );
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
@@ -60,23 +70,25 @@ L2CAP_PS3_ConnectionIndicationCallback(
     _In_ PINDICATION_PARAMETERS Parameters
 );
 
+//
+// DPC to PASSIVE_LEVEL work item callbacks
+// 
+
 EVT_WDF_WORKITEM L2CAP_PS3_HandleRemoteConnectAsync;
+
+EVT_WDF_WORKITEM L2CAP_PS3_HandleRemoteDisconnectAsync;
+
 
 EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_DenyRemoteConnectCompleted;
 
 EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_ControlConnectResponseCompleted;
 EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_InterruptConnectResponseCompleted;
 
-_IRQL_requires_max_(DISPATCH_LEVEL)
-NTSTATUS
-L2CAP_PS3_ConnectionStateConnected(
-    PBTHPS3_CLIENT_CONNECTION ClientConnection
-);
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_SendControlTransferAsync(
-    PBTHPS3_CLIENT_CONNECTION ClientConnection,
+    PBTHPS3_PDO_CONTEXT ClientConnection,
     WDFREQUEST Request,
     PVOID Buffer,
     size_t BufferLength,
@@ -86,7 +98,7 @@ L2CAP_PS3_SendControlTransferAsync(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_ReadControlTransferAsync(
-    PBTHPS3_CLIENT_CONNECTION ClientConnection,
+    PBTHPS3_PDO_CONTEXT ClientConnection,
     WDFREQUEST Request,
     PVOID Buffer,
     size_t BufferLength,
@@ -96,7 +108,7 @@ L2CAP_PS3_ReadControlTransferAsync(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_ReadInterruptTransferAsync(
-    _In_ PBTHPS3_CLIENT_CONNECTION ClientConnection,
+    _In_ PBTHPS3_PDO_CONTEXT ClientConnection,
     _In_ WDFREQUEST Request,
     _In_ PVOID Buffer,
     _In_ size_t BufferLength,
@@ -106,7 +118,7 @@ L2CAP_PS3_ReadInterruptTransferAsync(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_SendInterruptTransferAsync(
-    _In_ PBTHPS3_CLIENT_CONNECTION ClientConnection,
+    _In_ PBTHPS3_PDO_CONTEXT ClientConnection,
     _In_ WDFREQUEST Request,
     _In_ PVOID Buffer,
     _In_ size_t BufferLength,

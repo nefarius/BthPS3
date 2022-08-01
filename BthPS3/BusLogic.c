@@ -640,10 +640,6 @@ BthPS3_PDO_Create(
 
 	} while (FALSE);
 
-	//
-	// TODO: add error handling
-	// 
-
 	if (hKey)
 	{
 		WdfRegistryClose(hKey);

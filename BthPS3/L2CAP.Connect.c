@@ -229,7 +229,7 @@ L2CAP_PS3_HandleRemoteConnect(
 			ConnectParams->BtAddress,
 			deviceType,
 			remoteName,
-			NULL,//EvtClientConnectionsDestroyConnection,
+			NULL,
 			&pPdoCtx
 		);
 
@@ -338,9 +338,6 @@ L2CAP_PS3_HandleRemoteConnect(
 
 exit:
 
-	//
-	// TODO: handle intermediate disconnects
-	// 
 	if (!NT_SUCCESS(status) && pPdoCtx)
 	{
 		BthPS3_PDO_Destroy(&DevCtx->Header, pPdoCtx);
@@ -359,7 +356,7 @@ exit:
  //
  // Calls L2CAP_PS3_HandleRemoteConnect at PASSIVE_LEVEL
  // 
-_IRQL_requires_max_(DISPATCH_LEVEL)
+_IRQL_requires_max_(PASSIVE_LEVEL)
 VOID
 L2CAP_PS3_HandleRemoteConnectAsync(
 	_In_ WDFWORKITEM WorkItem

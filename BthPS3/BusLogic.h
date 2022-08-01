@@ -135,10 +135,11 @@ BthPS3_PDO_Create(
 	_In_ BTH_ADDR RemoteAddress,
 	_In_ DS_DEVICE_TYPE DeviceType,
 	_In_ PSTR RemoteName,
-	_In_ PFN_WDF_OBJECT_CONTEXT_CLEANUP CleanupCallback,
+	_In_opt_ PFN_WDF_OBJECT_CONTEXT_CLEANUP CleanupCallback,
 	_Out_ PBTHPS3_PDO_CONTEXT* PdoContext
 );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 BthPS3_PDO_RetrieveByBthAddr(
 	_In_ PBTHPS3_SERVER_CONTEXT Context,

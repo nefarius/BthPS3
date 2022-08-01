@@ -15,6 +15,10 @@ Windows kernel-mode Bluetooth Profile & Filter Drivers for PS3 peripherals.
 
 ---
 
+## 🚨 NEW RELEASE READY PROGRESS 🚨
+
+![](https://us-central1-progress-markdown.cloudfunctions.net/progress/90)
+
 ## About
 
 **TL;DR:** these drivers allow popular PlayStation(R) 3 gaming peripherals (SIXAXIS/DualShock 3, PS Move Navigation & Motion Controllers) to connect to Windows via Bluetooth without losing any standard functionality. 😊

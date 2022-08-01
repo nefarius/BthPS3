@@ -55,6 +55,11 @@
 					<template tid="tid_remote_device_online">
 						<data inType="win:UInt64" name="Address" outType="win:HexInt64"/>
 					</template>
+          <template tid="tid_failed_with_ntstatus">
+            <data inType="win:AnsiString" name="ScopeName" outType="win:Utf8"/>
+            <data inType="win:UnicodeString" name="FunctionName" outType="xs:string"/>
+            <data inType="win:UInt32" name="HResult" outType="win:NTSTATUS"/>
+          </template>
 				</templates>
 				<events>
 					<event value="1"  channel="SYSTEM" level="win:Informational" message="$(string.StartEvent.EventMessage)" opcode="win:Start" symbol="StartEvent" template="tid_load_template" />
@@ -78,6 +83,7 @@
 					<event value="19" channel="SYSTEM" level="win:Informational" message="$(string.HidControlChannelConnected.EventMessage)" opcode="win:Info" symbol="HidControlChannelConnected" />
 					<event value="20" channel="SYSTEM" level="win:Informational" message="$(string.HidInterruptChannelConnected.EventMessage)" opcode="win:Info" symbol="HidInterruptChannelConnected" />
 					<event value="21" channel="SYSTEM" level="win:Informational" message="$(string.RemoteDeviceOnline.EventMessage)" opcode="win:Info" symbol="RemoteDeviceOnline" template="tid_remote_device_online" />
+					<event value="22" channel="SYSTEM" level="win:Error" message="$(string.FailedWithNTStatus.EventMessage)" opcode="win:Info" symbol="FailedWithNTStatus" template="tid_failed_with_ntstatus" />
 				</events>
 			</provider>
 		</events>
@@ -106,6 +112,7 @@
 				<string id="HidControlChannelConnected.EventMessage" value="HID Control Channel connection established"/>
 				<string id="HidInterruptChannelConnected.EventMessage" value="HID Interrupt Channel connection established"/>
 				<string id="RemoteDeviceOnline.EventMessage" value="Device %1 has both L2CAP channels connected and is ready to operate"/>
+        <string id="FailedWithNTStatus.EventMessage" value="[%1] %2 failed with NTSTATUS %3"/>
 			</stringTable>
 		</resources>
 	</localization>

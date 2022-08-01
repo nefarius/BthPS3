@@ -107,9 +107,7 @@ L2CAP_PS3_ControlConnectResponseCompleted(
 				status
 			);
 
-			//
-			// TODO: better error handling
-			// 
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfIoQueueReadyNotify (HidControlReadRequests)", status);
 		}
 
 		if (!NT_SUCCESS(status = WdfIoQueueReadyNotify(
@@ -124,9 +122,7 @@ L2CAP_PS3_ControlConnectResponseCompleted(
 				status
 			);
 
-			//
-			// TODO: better error handling
-			// 
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfIoQueueReadyNotify (HidControlWriteRequests)", status);
 		}
 	}
 	else

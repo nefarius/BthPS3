@@ -47,10 +47,10 @@
 // 
 void
 L2CAP_PS3_ControlConnectResponseCompleted(
-	_In_ WDFREQUEST  Request,
-	_In_ WDFIOTARGET  Target,
-	_In_ PWDF_REQUEST_COMPLETION_PARAMS  Params,
-	_In_ WDFCONTEXT  Context
+	_In_ WDFREQUEST Request,
+	_In_ WDFIOTARGET Target,
+	_In_ PWDF_REQUEST_COMPLETION_PARAMS Params,
+	_In_ WDFCONTEXT Context
 )
 {
 	NTSTATUS status;
@@ -132,6 +132,8 @@ L2CAP_PS3_ControlConnectResponseCompleted(
 			"HID Control Channel connection failed with status %!STATUS!",
 			status
 		);
+
+		EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"", Params->IoStatus.Status);
 
 		BthPS3_PDO_Destroy(pPdoCtx->DevCtxHdr, pPdoCtx);
 	}
@@ -223,9 +225,7 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
 				status
 			);
 
-			//
-			// TODO: better error handling
-			// 
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfIoQueueReadyNotify (HidInterruptReadRequests)", status);
 		}
 
 		if (!NT_SUCCESS(status = WdfIoQueueReadyNotify(
@@ -240,9 +240,7 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
 				status
 			);
 
-			//
-			// TODO: better error handling
-			// 
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfIoQueueReadyNotify (HidInterruptWriteRequests)", status);
 		}
 
 		EventWriteRemoteDeviceOnline(NULL, pPdoCtx->RemoteAddress);
@@ -263,6 +261,8 @@ failedDrop:
 		"Connection failed with status %!STATUS!",
 		status
 	);
+
+	EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"", Params->IoStatus.Status);
 
 	BthPS3_PDO_Destroy(pPdoCtx->DevCtxHdr, pPdoCtx);
 

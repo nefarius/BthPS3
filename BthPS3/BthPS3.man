@@ -58,7 +58,7 @@
           <template tid="tid_failed_with_ntstatus">
             <data inType="win:AnsiString" name="ScopeName" outType="win:Utf8"/>
             <data inType="win:UnicodeString" name="FunctionName" outType="xs:string"/>
-            <data inType="win:UInt32" name="HResult" outType="win:NTSTATUS"/>
+            <data inType="win:UInt32" name="Status" outType="win:NTSTATUS"/>
           </template>
 				</templates>
 				<events>

@@ -35,12 +35,12 @@
     <PackageReference Include="Costura.Fody" Version="5.7.0">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Fody" Version="6.6.0">
+    <PackageReference Include="Fody" Version="6.6.3">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="PInvoke.Kernel32" Version="0.7.104" />
-    <PackageReference Include="PInvoke.Windows.Core" Version="0.7.104" />
-    <PackageReference Include="PropertyChanged.Fody" Version="3.4.0">
+    <PackageReference Include="PInvoke.Kernel32" Version="0.7.124" />
+    <PackageReference Include="PInvoke.Windows.Core" Version="0.7.124" />
+    <PackageReference Include="PropertyChanged.Fody" Version="3.4.1">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="WpfBindingErrors" Version="1.1.0" />

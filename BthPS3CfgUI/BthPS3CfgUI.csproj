@@ -12,7 +12,7 @@
     <Product>BthPS3CfgUI</Product>
     <NeutralLanguage>en</NeutralLanguage>
     <Description>BthPS3 Driver Configuration Tool</Description>
-    <Copyright>Copyright © Nefarius Software Solutions e.U. 2020-2021</Copyright>
+    <Copyright>Copyright © Nefarius Software Solutions e.U. 2020-2022</Copyright>
     <OutputPath>$(SolutionDir)bin\</OutputPath>
     <UseWPF>true</UseWPF>
     <Version>2.2.0.0</Version>

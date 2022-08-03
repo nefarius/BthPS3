@@ -57,10 +57,18 @@ BthPS3_PDO_EvtPreCreate(
 
 	NTSTATUS status = STATUS_SUCCESS;
 	WDF_PNPPOWER_EVENT_CALLBACKS power;
+	WDFKEY hKey = NULL;
+	ULONG rawPdo = 0;
+	ULONG adminOnlyPdo = 0;
+	ULONG exclusivePdo = 1;
 
 	UNREFERENCED_PARAMETER(DmfModule);
 	UNREFERENCED_PARAMETER(DmfDeviceInit);
 	UNREFERENCED_PARAMETER(PdoRecord);
+
+	DECLARE_CONST_UNICODE_STRING(rawPdoValue, BTHPS3_REG_VALUE_RAW_PDO);
+	DECLARE_CONST_UNICODE_STRING(adminOnlyPdoValue, BTHPS3_REG_VALUE_ADMIN_ONLY_PDO);
+	DECLARE_CONST_UNICODE_STRING(exclusivePdoValue, BTHPS3_REG_VALUE_EXCLUSIVE_PDO);
 
 	WdfDeviceInitSetDeviceType(DeviceInit, FILE_DEVICE_BUS_EXTENDER);
 
@@ -73,6 +81,91 @@ BthPS3_PDO_EvtPreCreate(
 	power.EvtDeviceSelfManagedIoInit = BthPS3_PDO_SelfManagedIoInit;
 
 	WdfDeviceInitSetPnpPowerEventCallbacks(DeviceInit, &power);
+
+	do
+	{
+		//
+		// Open
+		//   HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\BthPS3\Parameters
+		// key
+		// 
+		if (!NT_SUCCESS(status = WdfDriverOpenParametersRegistryKey(
+			WdfGetDriver(),
+			STANDARD_RIGHTS_READ,
+			WDF_NO_OBJECT_ATTRIBUTES,
+			&hKey
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfDriverOpenParametersRegistryKey failed with status %!STATUS!",
+				status
+			);
+
+			status = STATUS_SUCCESS;
+			break;
+		}
+
+		//
+		// Don't care, if it fails, keep default value
+		// 
+		(void)WdfRegistryQueryULong(
+			hKey,
+			&rawPdoValue,
+			&rawPdo
+		);
+
+		//
+		// Don't care, if it fails, keep default value
+		// 
+		(void)WdfRegistryQueryULong(
+			hKey,
+			&adminOnlyPdoValue,
+			&adminOnlyPdo
+		);
+
+		//
+		// Don't care, if it fails, keep default value
+		// 
+		(void)WdfRegistryQueryULong(
+			hKey,
+			&exclusivePdoValue,
+			&exclusivePdo
+		);
+
+		if (rawPdo)
+		{
+			//
+			// Only one instance (either function driver or user-land application)
+			// may talk to this PDO at the same time to avoid splitting traffic.
+			// 
+			WdfDeviceInitSetExclusive(DeviceInit, (BOOLEAN)exclusivePdo);
+
+			//
+			// Let the world talk to us
+			// 
+			status = WdfDeviceInitAssignSDDLString(DeviceInit,
+				(adminOnlyPdo) ? &SDDL_DEVOBJ_SYS_ALL_ADM_ALL : // only elevated allowed
+				&SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_RWX_RES_RWX  // everyone is allowed
+			);
+
+			if (!NT_SUCCESS(status))
+			{
+				TraceError(
+					TRACE_BUSLOGIC,
+					"WdfDeviceInitAssignSDDLString failed with status %!STATUS!",
+					status
+				);
+				break;
+			}
+		}
+
+	} while (FALSE);
+
+	if (hKey)
+	{
+		WdfRegistryClose(hKey);
+	}
 
 	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
 
@@ -97,6 +190,15 @@ BthPS3_PDO_EvtPostCreate(
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	WDF_OBJECT_ATTRIBUTES attributes;
 	WDF_IO_QUEUE_CONFIG queueCfg;
+	WDF_DEVICE_PNP_CAPABILITIES pnp;
+	WDFKEY hKey = NULL;
+	ULONG hidePdo = 0;
+
+	DECLARE_CONST_UNICODE_STRING(hidePdoValue, BTHPS3_REG_VALUE_HIDE_PDO);
+
+	UNREFERENCED_PARAMETER(DmfModule);
+	UNREFERENCED_PARAMETER(DmfDeviceInit);
+	UNREFERENCED_PARAMETER(PdoRecord);
 
 	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(ChildDevice);
 
@@ -170,11 +272,53 @@ BthPS3_PDO_EvtPostCreate(
 			break;
 		}
 
+		//
+		// Open
+		//   HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\BthPS3\Parameters
+		// key
+		// 
+		if (!NT_SUCCESS(status = WdfDriverOpenParametersRegistryKey(
+			WdfGetDriver(),
+			STANDARD_RIGHTS_READ,
+			WDF_NO_OBJECT_ATTRIBUTES,
+			&hKey
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfDriverOpenParametersRegistryKey failed with status %!STATUS!",
+				status
+			);
+
+			status = STATUS_SUCCESS;
+			break;
+		}
+
+		//
+		// Don't care, if it fails, keep default value
+		// 
+		(void)WdfRegistryQueryULong(
+			hKey,
+			&hidePdoValue,
+			&hidePdo
+		);
+
+		if (hidePdo) 
+		{
+			WDF_DEVICE_PNP_CAPABILITIES_INIT(&pnp);
+			pnp.Removable = WdfTrue;
+			pnp.SurpriseRemovalOK = WdfTrue;
+			pnp.NoDisplayInUI = (hidePdo) ? WdfTrue : WdfFalse;
+
+			WdfDeviceSetPnpCapabilities(ChildDevice, &pnp);
+		}
+
 	} while (FALSE);
 
-	UNREFERENCED_PARAMETER(DmfModule);
-	UNREFERENCED_PARAMETER(DmfDeviceInit);
-	UNREFERENCED_PARAMETER(PdoRecord);
+	if (hKey)
+	{
+		WdfRegistryClose(hKey);
+	}
 
 	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
 

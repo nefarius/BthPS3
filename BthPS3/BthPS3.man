@@ -55,35 +55,35 @@
 					<template tid="tid_remote_device_online">
 						<data inType="win:UInt64" name="Address" outType="win:HexInt64"/>
 					</template>
-          <template tid="tid_failed_with_ntstatus">
-            <data inType="win:AnsiString" name="ScopeName" outType="win:Utf8"/>
-            <data inType="win:UnicodeString" name="FunctionName" outType="xs:string"/>
-            <data inType="win:UInt32" name="Status" outType="win:NTSTATUS"/>
-          </template>
+					<template tid="tid_failed_with_ntstatus">
+						<data inType="win:AnsiString" name="ScopeName" outType="win:Utf8"/>
+						<data inType="win:UnicodeString" name="FunctionName" outType="xs:string"/>
+						<data inType="win:UInt32" name="Status" outType="win:NTSTATUS"/>
+					</template>
 				</templates>
 				<events>
-					<event value="1"  channel="SYSTEM" level="win:Informational" message="$(string.StartEvent.EventMessage)" opcode="win:Start" symbol="StartEvent" template="tid_load_template" />
-					<event value="2"  channel="SYSTEM" level="win:Informational" message="$(string.UnloadEvent.EventMessage)" opcode="win:Stop" symbol="UnloadEvent" template="tid_unload_template" />
-					<event value="3"  channel="SYSTEM" level="win:Informational" message="$(string.HciVersion.EventMessage)" opcode="win:Info" symbol="HciVersion" template="tid_hci_version_template"/>
-					<event value="4"  channel="SYSTEM" level="win:Error" message="$(string.HciVersionTooLow.EventMessage)" opcode="win:Info" symbol="HciVersionTooLow" template="tid_hci_version_template" />
-					<event value="5"  channel="SYSTEM" level="win:Informational" message="$(string.RemoteDeviceName.EventMessage)" opcode="win:Info" symbol="RemoteDeviceName" template="tid_remote_device_name" />
-					<event value="6"  channel="SYSTEM" level="win:Informational" message="$(string.RemoteDeviceIdentified.EventMessage)" opcode="win:Info" symbol="RemoteDeviceIdentified" template="tid_remote_device_identified" />
-					<event value="7"  channel="SYSTEM" level="win:Error" message="$(string.RemoteDeviceNotIdentified.EventMessage)" opcode="win:Info" symbol="RemoteDeviceNotIdentified" template="tid_remote_device_not_identified" />
-					<event value="8"  channel="SYSTEM" level="win:Informational" message="$(string.AutoDisableFilter.EventMessage)" opcode="win:Info" symbol="AutoDisableFilter" />
-					<event value="9"  channel="SYSTEM" level="win:Informational" message="$(string.AutoEnableFilter.EventMessage)" opcode="win:Info" symbol="AutoEnableFilter" template="tid_filter_auto_enable" />
-					<event value="10" channel="SYSTEM" level="win:Informational" message="$(string.ChildDeviceCreationSuccessful.EventMessage)" opcode="win:Info" symbol="ChildDeviceCreationSuccessful" template="tid_child_device_created" />
-					<event value="11" channel="SYSTEM" level="win:Error" message="$(string.ChildDeviceCreationFailed.EventMessage)" opcode="win:Info" symbol="ChildDeviceCreationFailed" template="tid_child_device_created" />
-					<event value="12" channel="SYSTEM" level="win:Informational" message="$(string.ChildDeviceDestructionSuccessful.EventMessage)" opcode="win:Info" symbol="ChildDeviceDestructionSuccessful" template="tid_child_device_destroyed" />
-					<event value="13" channel="SYSTEM" level="win:Error" message="$(string.ChildDeviceDestructionFailed.EventMessage)" opcode="win:Info" symbol="ChildDeviceDestructionFailed" template="tid_child_device_destroyed" />
-					<event value="14" channel="SYSTEM" level="win:Informational" message="$(string.FilterAutoEnabledSuccessfully.EventMessage)" opcode="win:Info" symbol="FilterAutoEnabledSuccessfully" />
-					<event value="15" channel="SYSTEM" level="win:Error" message="$(string.FilterAutoEnabledFailed.EventMessage)" opcode="win:Info" symbol="FilterAutoEnabledFailed" template="tid_filter_enabled" />
-					<event value="16" channel="SYSTEM" level="win:Error" message="$(string.L2CAPRemoteConnectFailed.EventMessage)" opcode="win:Info" symbol="L2CAPRemoteConnectFailed" template="tid_l2cap_remote_connect" />
-					<event value="17" channel="SYSTEM" level="win:Warning" message="$(string.PowerPolicyIdleSettingsFailed.EventMessage)" opcode="win:Info" symbol="PowerPolicyIdleSettingsFailed" />
-					<event value="18" channel="SYSTEM" level="win:Error" message="$(string.WdfDeviceAssignS0IdleSettingsFailed.EventMessage)" opcode="win:Info" symbol="WdfDeviceAssignS0IdleSettingsFailed" template="tid_power_policy" />
-					<event value="19" channel="SYSTEM" level="win:Informational" message="$(string.HidControlChannelConnected.EventMessage)" opcode="win:Info" symbol="HidControlChannelConnected" />
-					<event value="20" channel="SYSTEM" level="win:Informational" message="$(string.HidInterruptChannelConnected.EventMessage)" opcode="win:Info" symbol="HidInterruptChannelConnected" />
-					<event value="21" channel="SYSTEM" level="win:Informational" message="$(string.RemoteDeviceOnline.EventMessage)" opcode="win:Info" symbol="RemoteDeviceOnline" template="tid_remote_device_online" />
-					<event value="22" channel="SYSTEM" level="win:Error" message="$(string.FailedWithNTStatus.EventMessage)" opcode="win:Info" symbol="FailedWithNTStatus" template="tid_failed_with_ntstatus" />
+					<event value="1" channel="SYSTEM" level="win:Informational" message="$(string.StartEvent.EventMessage)" opcode="win:Start" symbol="StartEvent" template="tid_load_template"/>
+					<event value="2" channel="SYSTEM" level="win:Informational" message="$(string.UnloadEvent.EventMessage)" opcode="win:Stop" symbol="UnloadEvent" template="tid_unload_template"/>
+					<event value="3" channel="SYSTEM" level="win:Informational" message="$(string.HciVersion.EventMessage)" opcode="win:Info" symbol="HciVersion" template="tid_hci_version_template"/>
+					<event value="4" channel="SYSTEM" level="win:Error" message="$(string.HciVersionTooLow.EventMessage)" opcode="win:Info" symbol="HciVersionTooLow" template="tid_hci_version_template"/>
+					<event value="5" channel="SYSTEM" level="win:Informational" message="$(string.RemoteDeviceName.EventMessage)" opcode="win:Info" symbol="RemoteDeviceName" template="tid_remote_device_name"/>
+					<event value="6" channel="SYSTEM" level="win:Informational" message="$(string.RemoteDeviceIdentified.EventMessage)" opcode="win:Info" symbol="RemoteDeviceIdentified" template="tid_remote_device_identified"/>
+					<event value="7" channel="SYSTEM" level="win:Error" message="$(string.RemoteDeviceNotIdentified.EventMessage)" opcode="win:Info" symbol="RemoteDeviceNotIdentified" template="tid_remote_device_not_identified"/>
+					<event value="8" channel="SYSTEM" level="win:Informational" message="$(string.AutoDisableFilter.EventMessage)" opcode="win:Info" symbol="AutoDisableFilter"/>
+					<event value="9" channel="SYSTEM" level="win:Informational" message="$(string.AutoEnableFilter.EventMessage)" opcode="win:Info" symbol="AutoEnableFilter" template="tid_filter_auto_enable"/>
+					<event value="10" channel="SYSTEM" level="win:Informational" message="$(string.ChildDeviceCreationSuccessful.EventMessage)" opcode="win:Info" symbol="ChildDeviceCreationSuccessful" template="tid_child_device_created"/>
+					<event value="11" channel="SYSTEM" level="win:Error" message="$(string.ChildDeviceCreationFailed.EventMessage)" opcode="win:Info" symbol="ChildDeviceCreationFailed" template="tid_child_device_created"/>
+					<event value="12" channel="SYSTEM" level="win:Informational" message="$(string.ChildDeviceDestructionSuccessful.EventMessage)" opcode="win:Info" symbol="ChildDeviceDestructionSuccessful" template="tid_child_device_destroyed"/>
+					<event value="13" channel="SYSTEM" level="win:Error" message="$(string.ChildDeviceDestructionFailed.EventMessage)" opcode="win:Info" symbol="ChildDeviceDestructionFailed" template="tid_child_device_destroyed"/>
+					<event value="14" channel="SYSTEM" level="win:Informational" message="$(string.FilterAutoEnabledSuccessfully.EventMessage)" opcode="win:Info" symbol="FilterAutoEnabledSuccessfully"/>
+					<event value="15" channel="SYSTEM" level="win:Error" message="$(string.FilterAutoEnabledFailed.EventMessage)" opcode="win:Info" symbol="FilterAutoEnabledFailed" template="tid_filter_enabled"/>
+					<event value="16" channel="SYSTEM" level="win:Error" message="$(string.L2CAPRemoteConnectFailed.EventMessage)" opcode="win:Info" symbol="L2CAPRemoteConnectFailed" template="tid_l2cap_remote_connect"/>
+					<event value="17" channel="SYSTEM" level="win:Warning" message="$(string.PowerPolicyIdleSettingsFailed.EventMessage)" opcode="win:Info" symbol="PowerPolicyIdleSettingsFailed"/>
+					<event value="18" channel="SYSTEM" level="win:Error" message="$(string.WdfDeviceAssignS0IdleSettingsFailed.EventMessage)" opcode="win:Info" symbol="WdfDeviceAssignS0IdleSettingsFailed" template="tid_power_policy"/>
+					<event value="19" channel="SYSTEM" level="win:Informational" message="$(string.HidControlChannelConnected.EventMessage)" opcode="win:Info" symbol="HidControlChannelConnected"/>
+					<event value="20" channel="SYSTEM" level="win:Informational" message="$(string.HidInterruptChannelConnected.EventMessage)" opcode="win:Info" symbol="HidInterruptChannelConnected"/>
+					<event value="21" channel="SYSTEM" level="win:Informational" message="$(string.RemoteDeviceOnline.EventMessage)" opcode="win:Info" symbol="RemoteDeviceOnline" template="tid_remote_device_online"/>
+					<event value="22" channel="SYSTEM" level="win:Error" message="$(string.FailedWithNTStatus.EventMessage)" opcode="win:Info" symbol="FailedWithNTStatus" template="tid_failed_with_ntstatus"/>
 				</events>
 			</provider>
 		</events>
@@ -112,7 +112,7 @@
 				<string id="HidControlChannelConnected.EventMessage" value="HID Control Channel connection established"/>
 				<string id="HidInterruptChannelConnected.EventMessage" value="HID Interrupt Channel connection established"/>
 				<string id="RemoteDeviceOnline.EventMessage" value="Device %1 has both L2CAP channels connected and is ready to operate"/>
-        <string id="FailedWithNTStatus.EventMessage" value="[%1] %2 failed with NTSTATUS %3"/>
+				<string id="FailedWithNTStatus.EventMessage" value="[%1] %2 failed with NTSTATUS %3"/>
 			</stringTable>
 		</resources>
 	</localization>

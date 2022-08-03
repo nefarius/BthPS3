@@ -74,6 +74,7 @@ BthPS3_PDO_EvtPreCreate(
 
 	//
 	// Increases stack size required to forward HID requests as BRBs
+	// _technically_ we are not using the parent forward mechanism but we need the side effect it causes ;)
 	// 
 	WdfPdoInitAllowForwardingRequestToParent(DeviceInit);
 

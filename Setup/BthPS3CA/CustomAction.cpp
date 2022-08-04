@@ -9,6 +9,7 @@
 const std::wstring g_nullInf = L"BthPS3_PDO_NULL_Device.inf";
 const std::wstring g_profileInf = L"BthPS3.inf";
 const std::wstring g_filterInf = L"BthPS3PSM.inf";
+const std::wstring g_manifest = L"BthPS3.man";
 
 
 //
@@ -16,18 +17,18 @@ const std::wstring g_filterInf = L"BthPS3PSM.inf";
 // 
 UINT __stdcall CheckHostRadioPresence(
 	MSIHANDLE hInstall
-	)
+)
 {
 	HRESULT hr = S_OK;
 	UINT er = ERROR_SUCCESS;
 	Bthprops bth;
-	
+
 	hr = WcaInitialize(hInstall, "CheckHostRadioPresence");
 	ExitOnFailure(hr, "Failed to initialize");
 
 	WcaLog(LOGMSG_STANDARD, "Initialized.");
 
-	
+
 	HANDLE hRadio = INVALID_HANDLE_VALUE;
 	BLUETOOTH_FIND_RADIO_PARAMS radioParams;
 	ZeroMemory(&radioParams, sizeof(BLUETOOTH_FIND_RADIO_PARAMS));
@@ -35,7 +36,7 @@ UINT __stdcall CheckHostRadioPresence(
 
 	ExitOnNull(bth.pBluetoothFindFirstRadio, hr, E_INVALIDARG, "BluetoothFindFirstRadio not found");
 	ExitOnNull(bth.pBluetoothFindRadioClose, hr, E_INVALIDARG, "BluetoothFindRadioClose not found");
-	
+
 	auto* const ret = bth.pBluetoothFindFirstRadio(&radioParams, &hRadio);
 
 	if (ret)
@@ -48,7 +49,7 @@ UINT __stdcall CheckHostRadioPresence(
 	{
 		WcaLog(LOGMSG_STANDARD, "Host radio not found.");
 	}
-		
+
 LExit:
 	er = SUCCEEDED(hr) ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;
 	return WcaFinalize(er);
@@ -59,7 +60,7 @@ LExit:
 // 
 UINT __stdcall InstallDrivers(
 	MSIHANDLE hInstall
-	)
+)
 {
 	HRESULT hr = S_OK;
 	UINT er = ERROR_SUCCESS;
@@ -67,7 +68,8 @@ UINT __stdcall InstallDrivers(
 	std::wstring nullInfPath;
 	std::wstring profileInfPath;
 	std::wstring filterInfPath;
-	
+	std::wstring manifestPath;
+
 	hr = WcaInitialize(hInstall, "InstallDrivers");
 	ExitOnFailure(hr, "Failed to initialize");
 
@@ -78,17 +80,18 @@ UINT __stdcall InstallDrivers(
 	DWORD length = ARRAYSIZE(targetPath);
 
 	(void)MsiGetProperty(hInstall, L"CustomActionData", targetPath, &length);
-	
-	nullInfPath =  std::wstring(targetPath) + L"\\"  + g_nullInf;
+
+	nullInfPath = std::wstring(targetPath) + L"\\" + g_nullInf;
 	profileInfPath = std::wstring(targetPath) + L"\\" + g_profileInf;
 	filterInfPath = std::wstring(targetPath) + L"\\" + g_filterInf;
+	manifestPath = std::wstring(targetPath) + L"\\" + g_manifest;
 
-	
+
 	WcaLog(LOGMSG_STANDARD, "Installing BthPS3PSM filter driver in driver store.");
 	if (!devcon::install_driver(filterInfPath, &rr1))
 	{
 		ExitOnLastError(hr, "Failed to install BthPS3PSM filter driver in driver store, error: %s",
-		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
+			winapi::GetLastErrorStdStr(Dutil_er).c_str());
 	}
 	WcaLog(LOGMSG_STANDARD, "BthPS3PSM filter driver installed in driver store.");
 
@@ -96,7 +99,7 @@ UINT __stdcall InstallDrivers(
 	if (!devcon::install_driver(filterInfPath, &rr2))
 	{
 		ExitOnLastError(hr, "Failed to install BthPS3 filter driver on virtual hardware node, error: %s",
-		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
+			winapi::GetLastErrorStdStr(Dutil_er).c_str());
 	}
 	WcaLog(LOGMSG_STANDARD, "BthPS3 filter driver installed on virtual hardware node.");
 
@@ -104,15 +107,15 @@ UINT __stdcall InstallDrivers(
 	if (!devcon::add_device_class_lower_filter(&GUID_DEVCLASS_BLUETOOTH, BthPS3FilterName))
 	{
 		ExitOnLastError(hr, "Failed to add BthPS3PSM to class filters, error: %s",
-		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
+			winapi::GetLastErrorStdStr(Dutil_er).c_str());
 	}
 	WcaLog(LOGMSG_STANDARD, "BthPS3PSM added to Bluetooth class filters.");
-	
+
 	WcaLog(LOGMSG_STANDARD, "Installing BthPS3 driver in driver store.");
 	if (!devcon::install_driver(profileInfPath, &rr3))
 	{
 		ExitOnLastError(hr, "Failed to install BthPS3 driver in driver store, error: %s",
-		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
+			winapi::GetLastErrorStdStr(Dutil_er).c_str());
 	}
 	WcaLog(LOGMSG_STANDARD, "BthPS3 driver installed in driver store.");
 
@@ -120,18 +123,58 @@ UINT __stdcall InstallDrivers(
 	if (!devcon::install_driver(nullInfPath, nullptr))
 	{
 		ExitOnLastError(hr, "Failed to install PDO NULL driver, error: %s",
-		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
+			winapi::GetLastErrorStdStr(Dutil_er).c_str());
 	}
 	WcaLog(LOGMSG_STANDARD, "PDO NULL driver installed.");
-	
-		
+
+
 	WcaLog(LOGMSG_STANDARD, "Enabling profile service for BTHENUM.");
 	if (!bthps3::bluetooth::enable_service())
 	{
 		ExitOnLastError(hr, "Failed to enable profile service for BTHENUM, error: %s",
-		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
+			winapi::GetLastErrorStdStr(Dutil_er).c_str());
 	}
 	WcaLog(LOGMSG_STANDARD, "Profile service for BTHENUM enabled.");
+
+
+	WcaLog(LOGMSG_STANDARD, "Importing instrumentation manifest.");
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
+	ZeroMemory(&pi, sizeof(pi));
+
+	std::wstring importCmd = 
+		std::wstring(L"C:\\Windows\\System32\\wevtutil.exe im \"") +
+		manifestPath +
+		std::wstring(L"\"");
+
+	if (!CreateProcessW(NULL,
+		const_cast<LPWSTR>(importCmd.c_str()),
+		NULL,
+		NULL,
+		FALSE,
+		CREATE_NO_WINDOW,
+		NULL,
+		NULL,
+		&si,
+		&pi)
+		)
+	{
+		ExitOnLastError(hr, "Failed to import instrumentation manifest, error: %s",
+			winapi::GetLastErrorStdStr(Dutil_er).c_str());
+	}
+	else
+	{
+		// Wait until child process exits.
+		WaitForSingleObject(pi.hProcess, INFINITE);
+
+		// Close process and thread handles. 
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+	}
+	WcaLog(LOGMSG_STANDARD, "Instrumentation manifest imported.");
 
 
 	if (!bthps3::filter::enable_psm_patch()
@@ -142,9 +185,9 @@ UINT __stdcall InstallDrivers(
 		// This will fail as deferred custom actions have no access to MSI properties.
 		// Always schedule reboot in installer instead.
 		// 
-		(void)MsiSetMode(hInstall, MSIRUNMODE_REBOOTATEND, TRUE);		
+		(void)MsiSetMode(hInstall, MSIRUNMODE_REBOOTATEND, TRUE);
 	}
-	
+
 LExit:
 
 	if (FAILED(hr))
@@ -152,7 +195,7 @@ LExit:
 		(void)bthps3::bluetooth::disable_service();
 		(void)devcon::remove_device_class_lower_filter(&GUID_DEVCLASS_BLUETOOTH, BthPS3FilterName);
 	}
-	
+
 	er = SUCCEEDED(hr) ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;
 	return WcaFinalize(er);
 }
@@ -162,7 +205,7 @@ LExit:
 // 
 UINT __stdcall UninstallDrivers(
 	MSIHANDLE hInstall
-	)
+)
 {
 	HRESULT hr = S_OK;
 	UINT er = ERROR_SUCCESS;
@@ -179,10 +222,52 @@ UINT __stdcall UninstallDrivers(
 	(void)MsiGetProperty(hInstall, L"CustomActionData", targetPath, &length);
 
 
+	WcaLog(LOGMSG_STANDARD, "Removing instrumentation manifest.");
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
+	ZeroMemory(&pi, sizeof(pi));
+
+	const std::wstring manifestPath = std::wstring(targetPath) + L"\\" + g_manifest;
+
+	const std::wstring importCmd = 
+		std::wstring(L"C:\\Windows\\System32\\wevtutil.exe um \"") +
+		manifestPath +
+		std::wstring(L"\"");
+
+	if (!CreateProcessW(NULL,
+		const_cast<LPWSTR>(importCmd.c_str()),
+		NULL,
+		NULL,
+		FALSE,
+		CREATE_NO_WINDOW,
+		NULL,
+		NULL,
+		&si,
+		&pi)
+		)
+	{
+		ExitOnLastError(hr, "Failed to remove instrumentation manifest, error: %s",
+			winapi::GetLastErrorStdStr(Dutil_er).c_str());
+	}
+	else
+	{
+		// Wait until child process exits.
+		WaitForSingleObject(pi.hProcess, INFINITE);
+
+		// Close process and thread handles. 
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+	}
+	WcaLog(LOGMSG_STANDARD, "Instrumentation manifest removed.");
+
+
 	WcaLog(LOGMSG_STANDARD, "Removing BthPS3PSM from Bluetooth class filters.");
 	(void)devcon::remove_device_class_lower_filter(&GUID_DEVCLASS_BLUETOOTH, BthPS3FilterName);
 	WcaLog(LOGMSG_STANDARD, "BthPS3PSM removed from Bluetooth class filters.");
-	
+
 
 	WcaLog(LOGMSG_STANDARD, "Uninstalling BthPS3 driver.");
 	(void)devcon::uninstall_device_and_driver(
@@ -191,8 +276,8 @@ UINT __stdcall UninstallDrivers(
 		&rr2
 	);
 	WcaLog(LOGMSG_STANDARD, "BthPS3 driver removed.");
-	
-	
+
+
 	WcaLog(LOGMSG_STANDARD, "Disabling profile service for BTHENUM.");
 	(void)bthps3::bluetooth::disable_service();
 	WcaLog(LOGMSG_STANDARD, "Profile service for BTHENUM disabled.");
@@ -203,7 +288,7 @@ UINT __stdcall UninstallDrivers(
 		WcaLog(LOGMSG_STANDARD, "A system reboot is required.");
 		MsiSetProperty(hInstall, L"REBOOTREQUIRED", L"1");
 	}
-	
+
 LExit:
 	er = SUCCEEDED(hr) ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;
 	return WcaFinalize(er);
@@ -211,7 +296,7 @@ LExit:
 
 UINT __stdcall CheckOldDriverPresence(
 	MSIHANDLE hInstall
-	)
+)
 {
 	HRESULT hr = S_OK;
 	UINT er = ERROR_SUCCESS;
@@ -220,7 +305,7 @@ UINT __stdcall CheckOldDriverPresence(
 	ExitOnFailure(hr, "Failed to initialize");
 
 	WcaLog(LOGMSG_STANDARD, "Initialized.");
-	
+
 	if (bthps3::filter::is_present())
 	{
 		WcaLog(LOGMSG_STANDARD, "Existing driver found.");
@@ -230,7 +315,7 @@ UINT __stdcall CheckOldDriverPresence(
 		WcaLog(LOGMSG_STANDARD, "No existing driver found.");
 		MsiSetProperty(hInstall, L"FILTERNOTFOUND", L"1");
 	}
-		
+
 LExit:
 	er = SUCCEEDED(hr) ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;
 	return WcaFinalize(er);
@@ -242,9 +327,9 @@ extern "C" BOOL WINAPI DllMain(
 	__in HINSTANCE hInst,
 	__in ULONG ulReason,
 	__in LPVOID
-	)
+)
 {
-	switch(ulReason)
+	switch (ulReason)
 	{
 	case DLL_PROCESS_ATTACH:
 		WcaGlobalInitialize(hInst);

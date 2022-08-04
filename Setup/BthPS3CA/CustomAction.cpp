@@ -91,14 +91,6 @@ UINT __stdcall InstallDrivers(
 		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
 	}
 	WcaLog(LOGMSG_STANDARD, "BthPS3PSM filter driver installed in driver store.");
-	
-	WcaLog(LOGMSG_STANDARD, "Creating virtual hardware node for BthPS3PSM filter driver.");
-	if (!devcon::create(L"System", &GUID_DEVCLASS_SYSTEM, BTHPS3PSM_FILTER_HARDWARE_ID))
-	{
-		ExitOnLastError(hr, "Failed to create virtual hardware node for BthPS3PSM filter driver, error: %s",
-		                winapi::GetLastErrorStdStr(Dutil_er).c_str());
-	}
-	WcaLog(LOGMSG_STANDARD, "Virtual hardware node for BthPS3PSM filter driver created.");
 
 	WcaLog(LOGMSG_STANDARD, "Installing BthPS3PSM filter driver on virtual hardware node.");
 	if (!devcon::install_driver(filterInfPath, &rr2))
@@ -190,15 +182,7 @@ UINT __stdcall UninstallDrivers(
 	WcaLog(LOGMSG_STANDARD, "Removing BthPS3PSM from Bluetooth class filters.");
 	(void)devcon::remove_device_class_lower_filter(&GUID_DEVCLASS_BLUETOOTH, BthPS3FilterName);
 	WcaLog(LOGMSG_STANDARD, "BthPS3PSM removed from Bluetooth class filters.");
-
-
-	WcaLog(LOGMSG_STANDARD, "Uninstalling BthPS3PSM filter driver.");
-	(void)devcon::uninstall_device_and_driver(
-		&GUID_DEVCLASS_SYSTEM,
-		BTHPS3PSM_FILTER_HARDWARE_ID,
-		&rr1
-	);
-	WcaLog(LOGMSG_STANDARD, "BthPS3PSM filter driver removed.");
+	
 
 	WcaLog(LOGMSG_STANDARD, "Uninstalling BthPS3 driver.");
 	(void)devcon::uninstall_device_and_driver(

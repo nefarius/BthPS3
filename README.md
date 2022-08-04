@@ -17,7 +17,7 @@ Windows kernel-mode Bluetooth Profile & Filter Drivers for PS3 peripherals.
 
 ## 🚨 NEW RELEASE READY PROGRESS 🚨
 
-![](https://us-central1-progress-markdown.cloudfunctions.net/progress/90)
+![](https://us-central1-progress-markdown.cloudfunctions.net/progress/99)
 
 ## About
 

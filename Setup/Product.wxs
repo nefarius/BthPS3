@@ -23,7 +23,7 @@
   <?endif ?>
 
   <!-- file version for installer -->
-  <?define VERSION = "2.2.72.0" ?>
+  <?define VERSION = "2.2.97.0" ?>
 
   <!-- basic product properties -->
   <Product Id="*" Name="Nefarius BthPS3 Bluetooth Drivers" Language="1033" Version="$(var.VERSION)"
@@ -206,10 +206,13 @@
         <File Name="BthPS3PSM.pdb" Source="$(var.SolutionDir)Setup\artifacts\bin\$(var.ArchDir)\BthPS3PSM.pdb" />
         <File Name="bthps3_pdo_null_device.cat" Source="$(var.ProjectDir)drivers\BthPS3_$(var.ArchDir)\bthps3_pdo_null_device.cat" />
         <File Name="BthPS3_PDO_NULL_Device.inf" Source="$(var.ProjectDir)drivers\BthPS3_$(var.ArchDir)\BthPS3_PDO_NULL_Device.inf" />
+        <!--
         <File Name="WdfCoinstaller01011.dll" Source="$(var.ProjectDir)drivers\BthPS3PSM_$(var.ArchDir)\WdfCoinstaller01011.dll" />
+        -->
         <File Name="BthPS3Util.exe" Source="$(var.SolutionDir)Setup\artifacts\bin\$(var.ArchDir)\BthPS3Util.exe" />
         <File Name="BthPS3CfgUI.exe" Source="$(var.SolutionDir)Setup\artifacts\bin\BthPS3CfgUI.exe" />
         <File Name="LICENSE" Source="$(var.SolutionDir)\LICENSE" />
+        <File Name="BthPS3.man" Source="$(var.SolutionDir)\BthPS3\BthPS3.man" />
         <?else ?>
         <!-- CI build -->
         <File Name="BthPS3.sys" Source="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3\BthPS3.sys" />
@@ -222,10 +225,13 @@
         <File Name="BthPS3PSM.pdb" Source="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3PSM.pdb" />
         <File Name="bthps3_pdo_null_device.cat" Source="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3\bthps3_pdo_null_device.cat" />
         <File Name="BthPS3_PDO_NULL_Device.inf" Source="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3\BthPS3_PDO_NULL_Device.inf" />
+        <!--
         <File Name="WdfCoinstaller01011.dll" Source="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3PSM\WdfCoinstaller01011.dll" />
+        -->
         <File Name="BthPS3Util.exe" Source="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3Util.exe" />
         <File Name="BthPS3CfgUI.exe" Source="$(var.SolutionDir)bin\BthPS3CfgUI.exe" />
-        <File Name="LICENSE" Source="$(var.SolutionDir)LICENSE" />
+        <File Name="LICENSE" Source="$(var.SolutionDir)\LICENSE" />
+        <File Name="BthPS3.man" Source="$(var.SolutionDir)\BthPS3\BthPS3.man" />
         <?endif ?>
       </Component>
     </ComponentGroup>

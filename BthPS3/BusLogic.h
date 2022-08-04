@@ -176,6 +176,8 @@ EVT_DMF_IoctlHandler_Callback BthPS3_PDO_HandleHidInterruptRead;
 
 EVT_DMF_IoctlHandler_Callback BthPS3_PDO_HandleHidInterruptWrite;
 
+EVT_DMF_IoctlHandler_Callback BthPS3_PDO_HandleBthDisconnect;
+
 //
 // Process requests once queued
 // 
@@ -193,3 +195,9 @@ EVT_WDF_IO_QUEUE_STATE BthPS3_PDO_DispatchHidInterruptWrite;
 // 
 
 EVT_WDF_DEVICE_SELF_MANAGED_IO_INIT BthPS3_PDO_SelfManagedIoInit;
+
+//
+// I/O completion
+// 
+
+EVT_WDF_REQUEST_COMPLETION_ROUTINE BthPS3_PDO_DisconnectRequestCompleted;

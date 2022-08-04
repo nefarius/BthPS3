@@ -441,3 +441,30 @@ BthPS3_PDO_SelfManagedIoInit(
 
 	return status;
 }
+
+//
+// Disconnect request completed
+// 
+void BthPS3_PDO_DisconnectRequestCompleted(
+	_In_ WDFREQUEST Request,
+	_In_ WDFIOTARGET Target,
+	_In_ PWDF_REQUEST_COMPLETION_PARAMS Params,
+	_In_ WDFCONTEXT Context
+)
+{
+	UNREFERENCED_PARAMETER(Target);
+	
+	const PBTHPS3_PDO_CONTEXT pPdoCtx = Context;
+
+	FuncEntryArguments(
+		TRACE_BUSLOGIC, 
+		"status=%!STATUS!",
+		Params->IoStatus.Status
+	);
+
+	EventWriteRemoteDisconnectCompleted(NULL, pPdoCtx->RemoteAddress, Params->IoStatus.Status);
+	
+	WdfObjectDelete(Request);
+
+	FuncExitNoReturn(TRACE_BUSLOGIC);
+}

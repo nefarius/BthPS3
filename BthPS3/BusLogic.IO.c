@@ -235,6 +235,148 @@ BthPS3_PDO_HandleHidInterruptWrite(
 	return status;
 }
 
+//
+// Handles IOCTL_BTH_DISCONNECT_DEVICE requests
+// 
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS
+BthPS3_PDO_HandleBthDisconnect(
+	_In_ DMFMODULE DmfModule,
+	_In_ WDFQUEUE Queue,
+	_In_ WDFREQUEST Request,
+	_In_ ULONG IoctlCode,
+	_In_reads_(InputBufferSize) VOID* InputBuffer,
+	_In_ size_t InputBufferSize,
+	_Out_writes_(OutputBufferSize) VOID* OutputBuffer,
+	_In_ size_t OutputBufferSize,
+	_Out_ size_t* BytesReturned
+)
+{
+	FuncEntry(TRACE_BUSLOGIC);
+
+	UNREFERENCED_PARAMETER(Queue);
+	UNREFERENCED_PARAMETER(Request);
+	UNREFERENCED_PARAMETER(IoctlCode);
+	UNREFERENCED_PARAMETER(InputBufferSize);
+	UNREFERENCED_PARAMETER(InputBuffer);
+	UNREFERENCED_PARAMETER(OutputBufferSize);
+	UNREFERENCED_PARAMETER(OutputBuffer);
+	UNREFERENCED_PARAMETER(BytesReturned);
+
+	NTSTATUS status;
+	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
+	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
+	const WDFIOTARGET parentTarget = pPdoCtx->DevCtxHdr->IoTarget;
+	WDF_OBJECT_ATTRIBUTES attributes;
+	WDFMEMORY payload;
+	WDFREQUEST dcRequest = NULL;
+
+	do
+	{
+		WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+		attributes.ParentObject = device;
+
+		if (!NT_SUCCESS(status = WdfRequestCreate(
+			&attributes,
+			parentTarget,
+			&dcRequest
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfRequestCreate failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
+
+		WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+		attributes.ParentObject = dcRequest;
+
+		if (!NT_SUCCESS(status = WdfMemoryCreatePreallocated(
+			&attributes,
+			/*
+			 * ignore the address the upper driver may provide, we only
+			 * allow disconnecting the child that received the request.
+			 */
+			&pPdoCtx->RemoteAddress,
+			sizeof(BTH_ADDR),
+			&payload
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfMemoryCreatePreallocated failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
+
+		if (!NT_SUCCESS(status = WdfIoTargetFormatRequestForIoctl(
+			parentTarget,
+			dcRequest,
+			IOCTL_BTH_DISCONNECT_DEVICE,
+			payload,
+			NULL,
+			NULL,
+			NULL
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfIoTargetFormatRequestForIoctl failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
+
+		WdfRequestSetCompletionRoutine(
+			dcRequest,
+			BthPS3_PDO_DisconnectRequestCompleted,
+			pPdoCtx
+		);
+
+		//
+		// Request parent to abandon us :'(
+		// 
+		if (WdfRequestSend(
+			dcRequest,
+			parentTarget,
+			WDF_NO_SEND_OPTIONS
+		) == FALSE)
+		{
+			status = WdfRequestGetStatus(dcRequest);
+
+			if (status != STATUS_DEVICE_NOT_CONNECTED && !NT_SUCCESS(status))
+			{
+				TraceError(
+					TRACE_BUSLOGIC,
+					"WdfRequestSend failed with status %!STATUS!",
+					status
+				);
+			}
+			else
+			{
+				//
+				// Override
+				// 
+				status = STATUS_SUCCESS;
+			}
+		}
+
+
+	} while (FALSE);
+
+	if (dcRequest && !NT_SUCCESS(status))
+	{
+		WdfObjectDelete(dcRequest);
+	}
+
+	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
+
+	return status;
+}
+
 
 //
 // Sends pending HID Control Read Requests through L2CAP channel to remote device

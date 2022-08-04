@@ -45,10 +45,13 @@
  // 
 IoctlHandler_IoctlRecord G_PDO_IoctlSpecification[] =
 {
+	/* HID channels traffic */
 	{IOCTL_BTHPS3_HID_CONTROL_READ, 0, 1, BthPS3_PDO_HandleHidControlRead},
 	{IOCTL_BTHPS3_HID_CONTROL_WRITE, 1, 0, BthPS3_PDO_HandleHidControlWrite},
 	{IOCTL_BTHPS3_HID_INTERRUPT_READ, 0, 1, BthPS3_PDO_HandleHidInterruptRead},
 	{IOCTL_BTHPS3_HID_INTERRUPT_WRITE, 1, 0, BthPS3_PDO_HandleHidInterruptWrite},
+	/* Disconnect instruction (e.g. from DsHidMini) */
+	{IOCTL_BTH_DISCONNECT_DEVICE, sizeof(BTH_ADDR), 0, BthPS3_PDO_HandleBthDisconnect},
 };
 
 

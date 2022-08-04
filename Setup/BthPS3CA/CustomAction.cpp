@@ -69,6 +69,7 @@ UINT __stdcall InstallDrivers(
 	std::wstring profileInfPath;
 	std::wstring filterInfPath;
 	std::wstring manifestPath;
+	std::wstring importCmd;
 
 	hr = WcaInitialize(hInstall, "InstallDrivers");
 	ExitOnFailure(hr, "Failed to initialize");
@@ -145,7 +146,7 @@ UINT __stdcall InstallDrivers(
 	si.cb = sizeof(si);
 	ZeroMemory(&pi, sizeof(pi));
 
-	std::wstring importCmd = 
+	importCmd = 
 		std::wstring(L"C:\\Windows\\System32\\wevtutil.exe im \"") +
 		manifestPath +
 		std::wstring(L"\"");
@@ -209,6 +210,8 @@ UINT __stdcall UninstallDrivers(
 {
 	HRESULT hr = S_OK;
 	UINT er = ERROR_SUCCESS;
+	std::wstring manifestPath;
+	std::wstring importCmd;
 
 	hr = WcaInitialize(hInstall, "UninstallDrivers");
 	ExitOnFailure(hr, "Failed to initialize");
@@ -230,9 +233,9 @@ UINT __stdcall UninstallDrivers(
 	si.cb = sizeof(si);
 	ZeroMemory(&pi, sizeof(pi));
 
-	const std::wstring manifestPath = std::wstring(targetPath) + L"\\" + g_manifest;
+	manifestPath = std::wstring(targetPath) + L"\\" + g_manifest;
 
-	const std::wstring importCmd = 
+	importCmd = 
 		std::wstring(L"C:\\Windows\\System32\\wevtutil.exe um \"") +
 		manifestPath +
 		std::wstring(L"\"");

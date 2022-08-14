@@ -18,6 +18,8 @@ BthPS3_PDO_Registry_QuerySlot(
 	WDFKEY hKey = NULL;
 	WDFKEY hDeviceKey = NULL;
 
+	FuncEntry(TRACE_BUSLOGIC);
+
 	PAGED_CODE();
 
 	DECLARE_UNICODE_STRING_SIZE(deviceKeyName, 13 /* 12 characters + NULL terminator */);
@@ -88,6 +90,8 @@ BthPS3_PDO_Registry_QuerySlot(
 		WdfRegistryClose(hDeviceKey);
 	}
 
+	FuncExit(TRACE_BUSLOGIC, "ret=%d", ret);
+
 	return ret;
 }
 #pragma code_seg()
@@ -103,6 +107,8 @@ BthPS3_PDO_Registry_AssignSlot(
 	NTSTATUS status;
 	WDFKEY hKey = NULL;
 	WDFKEY hDeviceKey = NULL;
+
+	FuncEntry(TRACE_BUSLOGIC);
 
 	PAGED_CODE();
 
@@ -173,5 +179,7 @@ BthPS3_PDO_Registry_AssignSlot(
 	{
 		WdfRegistryClose(hDeviceKey);
 	}
+
+	FuncExitNoReturn(TRACE_BUSLOGIC);
 }
 #pragma code_seg()

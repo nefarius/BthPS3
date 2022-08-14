@@ -125,7 +125,6 @@ BthPS3_PDO_Create(
 	LARGE_INTEGER lastConnectionTime;
 	WDFKEY hKey = NULL;
 	ULONG rawPdo = 0;
-	BOOLEAN fetchedCached = FALSE;
 
 	DECLARE_UNICODE_STRING_SIZE(hardwareId, MAX_DEVICE_ID_LEN);
 	DECLARE_UNICODE_STRING_SIZE(remotenameWide, BTH_MAX_NAME_SIZE);
@@ -176,38 +175,42 @@ BthPS3_PDO_Create(
 
 	do
 	{
-		fetchedCached = BthPS3_PDO_Registry_QuerySlot(RemoteAddress, &record.SerialNumber);
-
-		WdfSpinLockAcquire(Context->Header.SlotsSpinLock);
-
 		//
-		// Get next free serial number
+		// Try to fetch a stored serial from cache first...
 		// 
-		for (record.SerialNumber = 1; record.SerialNumber <= BTHPS3_MAX_NUM_DEVICES; record.SerialNumber++)
+		if (!BthPS3_PDO_Registry_QuerySlot(RemoteAddress, &record.SerialNumber))
 		{
-			if (!TestBit(Context->Header.Slots, record.SerialNumber))
-			{
-				TraceVerbose(
-					TRACE_BUSLOGIC,
-					"Assigned serial: %d",
-					record.SerialNumber
-				);
+			WdfSpinLockAcquire(Context->Header.SlotsSpinLock);
 
-				SetBit(Context->Header.Slots, record.SerialNumber);
+			//
+			// ...otherwise get next free serial number
+			// 
+			for (record.SerialNumber = 1; record.SerialNumber <= BTHPS3_MAX_NUM_DEVICES; record.SerialNumber++)
+			{
+				if (!TestBit(Context->Header.Slots, record.SerialNumber))
+				{
+					TraceVerbose(
+						TRACE_BUSLOGIC,
+						"Assigned serial: %d",
+						record.SerialNumber
+					);
+
+					SetBit(Context->Header.Slots, record.SerialNumber);
+					break;
+				}
+			}
+
+			if (record.SerialNumber > BTHPS3_MAX_NUM_DEVICES)
+			{
+				status = STATUS_NO_MORE_ENTRIES;
+			}
+
+			WdfSpinLockRelease(Context->Header.SlotsSpinLock);
+
+			if (!NT_SUCCESS(status))
+			{
 				break;
 			}
-		}
-
-		if (record.SerialNumber > BTHPS3_MAX_NUM_DEVICES)
-		{
-			status = STATUS_NO_MORE_ENTRIES;
-		}
-
-		WdfSpinLockRelease(Context->Header.SlotsSpinLock);
-
-		if (!NT_SUCCESS(status))
-		{
-			break;
 		}
 
 		//
@@ -515,6 +518,8 @@ BthPS3_PDO_Create(
 			);
 			break;
 		}
+
+		BthPS3_PDO_Registry_AssignSlot(RemoteAddress, record.SerialNumber);
 
 		const PBTHPS3_PDO_CONTEXT pPdoCtx = *PdoContext = GetPdoContext(device);
 

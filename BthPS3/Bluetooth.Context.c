@@ -39,6 +39,9 @@
 #include "Bluetooth.Context.tmh"
 
 
+//
+// Initializes struct _BTHPS3_DEVICE_CONTEXT_HEADER members
+// 
 #pragma code_seg("PAGE")
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
@@ -114,7 +117,7 @@ BthPS3_DeviceContextHeaderInit(
 #pragma code_seg()
 
 //
-// Initialize all members of the server device context
+// Initializes struct _BTHPS3_SERVER_CONTEXT members
 // 
 #pragma code_seg("PAGE")
 _IRQL_requires_max_(PASSIVE_LEVEL)

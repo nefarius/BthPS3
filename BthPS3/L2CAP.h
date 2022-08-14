@@ -70,14 +70,6 @@ L2CAP_PS3_ConnectionIndicationCallback(
     _In_ PINDICATION_PARAMETERS Parameters
 );
 
-//
-// DPC to PASSIVE_LEVEL work item callbacks
-// 
-
-EVT_WDF_WORKITEM L2CAP_PS3_HandleRemoteConnectAsync;
-
-EVT_WDF_WORKITEM L2CAP_PS3_HandleRemoteDisconnectAsync;
-
 
 EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_DenyRemoteConnectCompleted;
 

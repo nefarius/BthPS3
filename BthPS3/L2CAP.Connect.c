@@ -352,28 +352,3 @@ exit:
 
 	return status;
 }
-
- //
- // Calls L2CAP_PS3_HandleRemoteConnect at PASSIVE_LEVEL
- // 
-_IRQL_requires_max_(PASSIVE_LEVEL)
-VOID
-L2CAP_PS3_HandleRemoteConnectAsync(
-	_In_ WDFWORKITEM WorkItem
-)
-{
-	PBTHPS3_REMOTE_CONNECT_CONTEXT connectCtx = NULL;
-
-	FuncEntry(TRACE_L2CAP);
-
-	connectCtx = GetRemoteConnectContext(WorkItem);
-
-	(void)L2CAP_PS3_HandleRemoteConnect(
-		connectCtx->ServerContext,
-		&connectCtx->IndicationParameters
-	);
-
-	WdfObjectDelete(WorkItem);
-
-	FuncExitNoReturn(TRACE_L2CAP);
-}

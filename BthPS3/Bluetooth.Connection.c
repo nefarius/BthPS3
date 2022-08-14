@@ -40,9 +40,9 @@
 #include "BthPS3ETW.h"
 
 
-//
-// Gets invoked by parent bus if there's work for our driver
-// 
+ //
+ // Gets invoked by parent bus if there's work for our driver
+ // 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 void
 BthPS3_IndicationCallback(
@@ -52,10 +52,6 @@ BthPS3_IndicationCallback(
 )
 {
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	WDFWORKITEM asyncRemoteConnect;
-	WDF_WORKITEM_CONFIG asyncConfig;
-	WDF_OBJECT_ATTRIBUTES asyncAttribs;
-	PBTHPS3_REMOTE_CONNECT_CONTEXT connectCtx = NULL;
 
 	FuncEntry(TRACE_BTH);
 
@@ -98,39 +94,25 @@ BthPS3_IndicationCallback(
 			KeGetCurrentIrql()
 		);
 
-		WDF_WORKITEM_CONFIG_INIT(
-			&asyncConfig,
-			L2CAP_PS3_HandleRemoteConnectAsync
-		);
-		WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&asyncAttribs, BTHPS3_REMOTE_CONNECT_CONTEXT);
-		asyncAttribs.ParentObject = devCtx->Header.Device;
+		BTHPS3_QWI_CONTEXT qwi;
+		qwi.IndicationCode = Indication;
+		qwi.IndicationParameters = *Parameters;
+		qwi.Context.Server = devCtx;
 
-		if (!NT_SUCCESS(status = WdfWorkItemCreate(
-			&asyncConfig,
-			&asyncAttribs,
-			&asyncRemoteConnect
+		if (!NT_SUCCESS(status = DMF_QueuedWorkItem_Enqueue(
+			devCtx->Header.QueuedWorkItemModule,
+			&qwi,
+			sizeof(BTHPS3_QWI_CONTEXT)
 		)))
 		{
 			TraceError(
 				TRACE_BTH,
-				"WdfWorkItemCreate failed with status %!STATUS!",
+				"DMF_QueuedWorkItem_Enqueue failed with status %!STATUS!",
 				status
 			);
 
 			break;
 		}
-
-		//
-		// Pass on parameters as work item context
-		// 
-		connectCtx = GetRemoteConnectContext(asyncRemoteConnect);
-		connectCtx->ServerContext = devCtx;
-		connectCtx->IndicationParameters = *Parameters;
-
-		//
-		// Kick off async call
-		// 
-		WdfWorkItemEnqueue(asyncRemoteConnect);
 
 		break;
 	}

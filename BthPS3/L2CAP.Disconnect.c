@@ -130,12 +130,7 @@ L2CAP_PS3_ConnectionIndicationCallback(
 )
 {
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	PBTHPS3_SERVER_CONTEXT pDevCtx = NULL;
 	PBTHPS3_PDO_CONTEXT pPdoCtx = Context;
-	WDFWORKITEM asyncRemoteDisconnect;
-	WDF_WORKITEM_CONFIG asyncConfig;
-	WDF_OBJECT_ATTRIBUTES asyncAttribs;
-	PBTHPS3_REMOTE_DISCONNECT_CONTEXT disconnectContext = NULL;
 
 	FuncEntryArguments(TRACE_L2CAP, "Indication=0x%X, Context=0x%p",
 		Indication, Context);
@@ -163,8 +158,6 @@ L2CAP_PS3_ConnectionIndicationCallback(
 			"IndicationRemoteDisconnect [0x%p]",
 			Parameters->ConnectionHandle);
 
-		pDevCtx = GetServerDeviceContext(pPdoCtx->DevCtxHdr->Device);
-
 		if (KeGetCurrentIrql() <= PASSIVE_LEVEL)
 		{
 			L2CAP_PS3_HandleRemoteDisconnect(pPdoCtx, Parameters);
@@ -182,39 +175,25 @@ L2CAP_PS3_ConnectionIndicationCallback(
 			KeGetCurrentIrql()
 		);
 
-		WDF_WORKITEM_CONFIG_INIT(
-			&asyncConfig,
-			L2CAP_PS3_HandleRemoteDisconnectAsync
-		);
-		WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&asyncAttribs, BTHPS3_REMOTE_DISCONNECT_CONTEXT);
-		asyncAttribs.ParentObject = pDevCtx->Header.Device;
+		BTHPS3_QWI_CONTEXT qwi;
+		qwi.IndicationCode = Indication;
+		qwi.IndicationParameters = *Parameters;
+		qwi.Context.Pdo = pPdoCtx;
 
-		if (!NT_SUCCESS(status = WdfWorkItemCreate(
-			&asyncConfig,
-			&asyncAttribs,
-			&asyncRemoteDisconnect
+		if (!NT_SUCCESS(status = DMF_QueuedWorkItem_Enqueue(
+			pPdoCtx->DevCtxHdr->QueuedWorkItemModule,
+			&qwi,
+			sizeof(BTHPS3_QWI_CONTEXT)
 		)))
 		{
 			TraceError(
 				TRACE_BTH,
-				"WdfWorkItemCreate failed with status %!STATUS!",
+				"DMF_QueuedWorkItem_Enqueue failed with status %!STATUS!",
 				status
 			);
 
 			break;
 		}
-
-		//
-		// Pass on parameters as work item context
-		// 
-		disconnectContext = GetRemoteDisconnectContext(asyncRemoteDisconnect);
-		disconnectContext->PdoContext = pPdoCtx;
-		disconnectContext->IndicationParameters = *Parameters;
-
-		//
-		// Kick off async call
-		// 
-		WdfWorkItemEnqueue(asyncRemoteDisconnect);
 
 		break;
 
@@ -242,28 +221,6 @@ L2CAP_PS3_ConnectionIndicationCallback(
 		//
 		NT_ASSERT(FALSE);
 	}
-
-	FuncExitNoReturn(TRACE_L2CAP);
-}
-
-_IRQL_requires_max_(PASSIVE_LEVEL)
-VOID
-L2CAP_PS3_HandleRemoteDisconnectAsync(
-	_In_ WDFWORKITEM WorkItem
-)
-{
-	PBTHPS3_REMOTE_DISCONNECT_CONTEXT pCtx = NULL;
-
-	FuncEntry(TRACE_L2CAP);
-
-	pCtx = GetRemoteDisconnectContext(WorkItem);
-
-	(void)L2CAP_PS3_HandleRemoteDisconnect(
-		pCtx->PdoContext,
-		&pCtx->IndicationParameters
-	);
-
-	WdfObjectDelete(WorkItem);
 
 	FuncExitNoReturn(TRACE_L2CAP);
 }

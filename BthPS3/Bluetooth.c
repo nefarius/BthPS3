@@ -314,13 +314,13 @@ BthPS3_GetHciVersion(
 #else
 	ULONGLONG bytesReturned;
 #endif
-	
+
 	if (!NT_SUCCESS(status = WdfMemoryCreate(NULL,
 		NonPagedPoolNx,
 		POOLTAG_BTHPS3,
 		sizeof(BTH_LOCAL_RADIO_INFO),
 		&MemoryHandle,
-		NULL))) 
+		NULL)))
 	{
 		return status;
 	}
@@ -350,7 +350,7 @@ BthPS3_GetHciVersion(
 
 	if (HciMajorVersion)
 		*HciMajorVersion = pLocalInfo->hciVersion;
-		
+
 	if (HciRevision)
 		*HciRevision = pLocalInfo->hciRevision;
 
@@ -359,4 +359,45 @@ BthPS3_GetHciVersion(
 	FuncExit(TRACE_BTH, "status=%!STATUS!", status);
 
 	return status;
+}
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+_IRQL_requires_same_
+ScheduledTask_Result_Type
+BthPS3_EvtQueuedWorkItemHandler(
+	_In_ DMFMODULE DmfModule,
+	_In_ VOID* ClientBuffer,
+	_In_ VOID* ClientBufferContext
+)
+{
+	UNREFERENCED_PARAMETER(DmfModule);
+	UNREFERENCED_PARAMETER(ClientBufferContext);
+
+	FuncEntry(TRACE_BTH);
+
+	const PBTHPS3_QWI_CONTEXT pCtx = ClientBuffer;
+
+	switch (pCtx->IndicationCode)
+	{
+	case IndicationRemoteConnect:
+
+		(void)L2CAP_PS3_HandleRemoteConnect(
+			pCtx->Context.Server,
+			&pCtx->IndicationParameters
+		);
+
+		break;
+	case IndicationRemoteDisconnect:
+
+		(void)L2CAP_PS3_HandleRemoteDisconnect(
+			pCtx->Context.Pdo,
+			&pCtx->IndicationParameters
+		);
+
+		break;
+	}
+
+	FuncExitNoReturn(TRACE_BTH);
+
+	return ScheduledTask_WorkResult_Success;
 }

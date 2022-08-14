@@ -432,6 +432,7 @@ DmfDeviceModulesAdd(
 
 	DMF_MODULE_ATTRIBUTES moduleAttributes;
 	DMF_CONFIG_Pdo moduleConfigPdo;
+	DMF_CONFIG_QueuedWorkItem moduleConfigQwi;
 
 	const PBTHPS3_SERVER_CONTEXT pSrvCtx = GetServerDeviceContext(Device);
 
@@ -461,6 +462,27 @@ DmfDeviceModulesAdd(
 		&moduleAttributes,
 		WDF_NO_OBJECT_ATTRIBUTES,
 		&pSrvCtx->Header.PdoModule
+	);
+
+	//
+	// Queued Work Item Module
+	// 
+
+	DMF_CONFIG_QueuedWorkItem_AND_ATTRIBUTES_INIT(
+		&moduleConfigQwi,
+		&moduleAttributes
+	);
+		
+	moduleConfigQwi.BufferQueueConfig.SourceSettings.BufferCount = 4;
+	moduleConfigQwi.BufferQueueConfig.SourceSettings.BufferSize = sizeof(BTHPS3_QWI_CONTEXT);
+	moduleConfigQwi.BufferQueueConfig.SourceSettings.PoolType = NonPagedPoolNx;
+	moduleConfigQwi.EvtQueuedWorkitemFunction = BthPS3_EvtQueuedWorkItemHandler;
+
+	DMF_DmfModuleAdd(
+		DmfModuleInit,
+		&moduleAttributes,
+		WDF_NO_OBJECT_ATTRIBUTES,
+		&pSrvCtx->Header.QueuedWorkItemModule
 	);
 
 	FuncExitNoReturn(TRACE_DEVICE);

@@ -107,6 +107,11 @@ typedef struct _BTHPS3_DEVICE_CONTEXT_HEADER
 	// 
 	WDFSPINLOCK SlotsSpinLock;
 
+	//
+	// DMF module to enqueue work items
+	// 
+	DMFMODULE QueuedWorkItemModule;
+
 } BTHPS3_DEVICE_CONTEXT_HEADER, * PBTHPS3_DEVICE_CONTEXT_HEADER;
 
 typedef struct _BTHPS3_SERVER_CONTEXT
@@ -189,38 +194,33 @@ typedef struct _BTHPS3_SERVER_CONTEXT
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_SERVER_CONTEXT, GetServerDeviceContext)
 
-typedef struct _BTHPS3_PDO_CONTEXT * PBTHPS3_PDO_CONTEXT;
+typedef struct _BTHPS3_PDO_CONTEXT* PBTHPS3_PDO_CONTEXT;
 
 //
-// Context data for work item (dropping from DISPATCH to PASSIVE level)
+// Context data for passing to queued work item handler
+//   Used to call PASSIVE_LEVEL code from DISPATCH_LEVEL
 // 
-typedef struct _BTHPS3_REMOTE_CONNECT_CONTEXT
+typedef struct _BTHPS3_QWI_CONTEXT
 {
-	PBTHPS3_SERVER_CONTEXT ServerContext;
+	INDICATION_CODE IndicationCode;
 
 	INDICATION_PARAMETERS IndicationParameters;
 
-} BTHPS3_REMOTE_CONNECT_CONTEXT, * PBTHPS3_REMOTE_CONNECT_CONTEXT;
+	union
+	{
+		PBTHPS3_SERVER_CONTEXT Server;
 
-WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_REMOTE_CONNECT_CONTEXT, GetRemoteConnectContext)
+		PBTHPS3_PDO_CONTEXT Pdo;
 
+	} Context;
 
-//
-// Context data for work item (dropping from DISPATCH to PASSIVE level)
-// 
-typedef struct _BTHPS3_REMOTE_DISCONNECT_CONTEXT
-{
-	PBTHPS3_PDO_CONTEXT PdoContext;
+} BTHPS3_QWI_CONTEXT, * PBTHPS3_QWI_CONTEXT;
 
-	INDICATION_PARAMETERS IndicationParameters;
+WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_QWI_CONTEXT, GetQWIContext)
 
-} BTHPS3_REMOTE_DISCONNECT_CONTEXT, * PBTHPS3_REMOTE_DISCONNECT_CONTEXT;
-
-WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_REMOTE_DISCONNECT_CONTEXT, GetRemoteDisconnectContext)
-
+EVT_DMF_QueuedWorkItem_Callback BthPS3_EvtQueuedWorkItemHandler;
 
 EVT_WDF_TIMER BthPS3_EnablePatchEvtWdfTimer;
-
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS

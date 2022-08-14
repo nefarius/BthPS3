@@ -302,6 +302,12 @@ DEFINE_GUID(GUID_DEVINTERFACE_BTHPS3_WIRELESS,
 // 
 #define BTHPS3_REG_VALUE_WIRELESS_SUPPORTED_NAMES       L"WIRELESSSupportedNames"
 
+
+//
+// Occupied slots information
+// 
+#define BTHPS3_REG_VALUE_SLOTS      L"Slots"
+
 #pragma endregion
 
 //

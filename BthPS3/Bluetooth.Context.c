@@ -39,9 +39,9 @@
 #include "Bluetooth.Context.tmh"
 
 
-//
-// Initializes struct _BTHPS3_DEVICE_CONTEXT_HEADER members
-// 
+ //
+ // Initializes struct _BTHPS3_DEVICE_CONTEXT_HEADER members
+ // 
 #pragma code_seg("PAGE")
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
@@ -52,10 +52,14 @@ BthPS3_DeviceContextHeaderInit(
 {
 	NTSTATUS status;
 	WDF_OBJECT_ATTRIBUTES attributes;
+	WDFKEY hKey = NULL;
+	ULONG length, type;
 
 	FuncEntry(TRACE_BTH);
 
-	PAGED_CODE()
+	PAGED_CODE();
+
+	DECLARE_CONST_UNICODE_STRING(slots, BTHPS3_REG_VALUE_SLOTS);
 
 	Header->Device = Device;
 
@@ -108,7 +112,39 @@ BthPS3_DeviceContextHeaderInit(
 			break;
 		}
 
+		//
+		// Open
+		//   HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\BthPS3\Parameters
+		// key
+		// 
+		if (!NT_SUCCESS(status = WdfDriverOpenParametersRegistryKey(
+			WdfGetDriver(),
+			STANDARD_RIGHTS_ALL,
+			WDF_NO_OBJECT_ATTRIBUTES,
+			&hKey
+		)))
+		{
+			break;
+		}
+
+		//
+		// Restore persisted slots, if any
+		// 
+		(void)WdfRegistryQueryValue(
+			hKey,
+			&slots,
+			sizeof(Header->Slots),
+			&Header->Slots,
+			&length,
+			&type
+		);
+
 	} while (FALSE);
+
+	if (hKey)
+	{
+		WdfRegistryClose(hKey);
+	}
 
 	FuncExit(TRACE_BTH, "status=%!STATUS!", status);
 
@@ -133,7 +169,7 @@ BthPS3_ServerContextInit(
 
 	FuncEntry(TRACE_BTH);
 
-	PAGED_CODE()
+	PAGED_CODE();
 
 	do
 	{
@@ -221,7 +257,7 @@ BthPS3_SettingsContextInit(
 	WDFKEY hKey = NULL;
 	WDF_OBJECT_ATTRIBUTES attributes;
 
-	PAGED_CODE()
+	PAGED_CODE();
 
 	DECLARE_CONST_UNICODE_STRING(autoEnableFilter, BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER);
 	DECLARE_CONST_UNICODE_STRING(autoDisableFilter, BTHPS3_REG_VALUE_AUTO_DISABLE_FILTER);

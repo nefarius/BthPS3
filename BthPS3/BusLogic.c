@@ -212,6 +212,14 @@ BthPS3_PDO_Create(
 				break;
 			}
 		}
+		else
+		{
+			WdfSpinLockAcquire(Context->Header.SlotsSpinLock);
+
+			SetBit(Context->Header.Slots, record.SerialNumber);
+
+			WdfSpinLockRelease(Context->Header.SlotsSpinLock);
+		}
 
 		//
 		// Convert remote name from narrow to wide

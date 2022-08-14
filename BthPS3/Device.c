@@ -39,16 +39,11 @@
 #include "Device.tmh"
 #include "BthPS3ETW.h"
 
-#ifdef ALLOC_PRAGMA
-#pragma alloc_text (PAGE, BthPS3_CreateDevice)
-#pragma alloc_text (PAGE, BthPS3_EvtWdfDeviceSelfManagedIoCleanup)
-#pragma alloc_text (PAGE, BthPS3_OpenFilterIoTarget)
-#endif
-
 
  //
  // Framework device creation entry point
  // 
+#pragma code_seg("PAGE")
 NTSTATUS
 BthPS3_CreateDevice(
 	_Inout_ PWDFDEVICE_INIT DeviceInit
@@ -207,11 +202,14 @@ exitFailure:
 
 	return status;
 }
+#pragma code_seg()
 
 //
 // Locate and attempt to open instance of BTHPS3PSM filter device
 // 
-NTSTATUS BthPS3_OpenFilterIoTarget(
+#pragma code_seg("PAGE")
+NTSTATUS
+BthPS3_OpenFilterIoTarget(
 	_In_ WDFDEVICE Device
 )
 {
@@ -272,6 +270,7 @@ NTSTATUS BthPS3_OpenFilterIoTarget(
 
 	return status;
 }
+#pragma code_seg()
 
 //
 // Timed auto-reset of filter driver
@@ -357,15 +356,19 @@ BthPS3_EvtWdfDeviceSelfManagedIoInit(
 //
 // Gets invoked on device shutdown
 // 
+#pragma code_seg("PAGE")
 _Use_decl_annotations_
 VOID
 BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
 	WDFDEVICE Device
 )
 {
-	PBTHPS3_SERVER_CONTEXT devCtx = GetServerDeviceContext(Device);
+	const PBTHPS3_SERVER_CONTEXT devCtx = GetServerDeviceContext(Device);
+	WDFKEY hKey = NULL;
 
 	PAGED_CODE();
+
+	DECLARE_CONST_UNICODE_STRING(slots, BTHPS3_REG_VALUE_SLOTS);
 
 	FuncEntry(TRACE_DEVICE);
 
@@ -385,8 +388,35 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
 		BthPS3_UnregisterPSM(devCtx);
 	}
 
+	//
+	// Open
+	//   HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\BthPS3\Parameters
+	// key
+	// 
+	if (NT_SUCCESS(WdfDriverOpenParametersRegistryKey(
+		WdfGetDriver(),
+		STANDARD_RIGHTS_ALL,
+		WDF_NO_OBJECT_ATTRIBUTES,
+		&hKey
+	)))
+	{
+		//
+		// Store occupied slots in registry
+		// 
+		(void)WdfRegistryAssignValue(
+			hKey,
+			&slots,
+			REG_BINARY,
+			sizeof(devCtx->Header.Slots),
+			&devCtx->Header.Slots
+		);
+
+		WdfRegistryClose(hKey);
+	}
+
 	FuncExitNoReturn(TRACE_DEVICE);
 }
+#pragma code_seg()
 
 //
 // Initializes DMF modules

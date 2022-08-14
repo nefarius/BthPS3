@@ -127,6 +127,9 @@ CLIENT_CONNECTION_REQUEST_REUSE(
     UNREFERENCED_PARAMETER(statusReuse);
 }
 
+//
+// PDO lifecycle
+// 
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
@@ -153,6 +156,10 @@ BthPS3_PDO_Destroy(
 	_In_ PBTHPS3_DEVICE_CONTEXT_HEADER Context,
 	_In_ PBTHPS3_PDO_CONTEXT PdoContext
 );
+
+//
+// DMF
+// 
 
 EVT_DMF_DEVICE_MODULES_ADD BthPS3_PDO_EvtDmfModulesAdd;
 
@@ -201,3 +208,21 @@ EVT_WDF_DEVICE_SELF_MANAGED_IO_INIT BthPS3_PDO_SelfManagedIoInit;
 // 
 
 EVT_WDF_REQUEST_COMPLETION_ROUTINE BthPS3_PDO_DisconnectRequestCompleted;
+
+//
+// Registry operations
+// 
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+BOOLEAN
+BthPS3_PDO_Registry_QuerySlot(
+	BTH_ADDR RemoteAddress,
+	PULONG Slot
+);
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+void
+BthPS3_PDO_Registry_AssignSlot(
+	BTH_ADDR RemoteAddress,
+	ULONG Slot
+);

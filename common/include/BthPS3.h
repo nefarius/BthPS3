@@ -308,6 +308,11 @@ DEFINE_GUID(GUID_DEVINTERFACE_BTHPS3_WIRELESS,
 // 
 #define BTHPS3_REG_VALUE_SLOTS      L"Slots"
 
+//
+// Remote devices' pre-assigned serial/slot/index
+// 
+#define BTHPS3_REG_VALUE_SLOT_NO    L"SlotNo"
+
 #pragma endregion
 
 //

@@ -125,6 +125,7 @@ BthPS3_PDO_Create(
 	LARGE_INTEGER lastConnectionTime;
 	WDFKEY hKey = NULL;
 	ULONG rawPdo = 0;
+	BOOLEAN fetchedCached = FALSE;
 
 	DECLARE_UNICODE_STRING_SIZE(hardwareId, MAX_DEVICE_ID_LEN);
 	DECLARE_UNICODE_STRING_SIZE(remotenameWide, BTH_MAX_NAME_SIZE);
@@ -175,6 +176,8 @@ BthPS3_PDO_Create(
 
 	do
 	{
+		fetchedCached = BthPS3_PDO_Registry_QuerySlot(RemoteAddress, &record.SerialNumber);
+
 		WdfSpinLockAcquire(Context->Header.SlotsSpinLock);
 
 		//

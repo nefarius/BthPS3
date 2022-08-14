@@ -119,6 +119,9 @@
     <ClCompile Include="L2CAP.Disconnect.c">
       <Filter>Source Files\L2CAP</Filter>
     </ClCompile>
+    <ClCompile Include="BusLogic.Registry.c">
+      <Filter>Source Files\BusLogic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="BthPS3.rc">

@@ -37,6 +37,7 @@
   <ItemGroup>
     <ClCompile Include="Bluetooth.c" />
     <ClCompile Include="Bluetooth.Connection.c" />
+    <ClCompile Include="Bluetooth.Context.c" />
     <ClCompile Include="Bluetooth.L2CAP.c" />
     <ClCompile Include="Bluetooth.PSM.c" />
     <ClCompile Include="Bluetooth.Request.c" />

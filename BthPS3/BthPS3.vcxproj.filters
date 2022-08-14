@@ -20,6 +20,15 @@
     <Filter Include="Header Files\Common">
       <UniqueIdentifier>{8e998a83-0a36-486f-8a2d-f965df70ec44}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Bluetooth">
+      <UniqueIdentifier>{f9a2f717-dcbe-4ab4-ad99-30b8728f756f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\BusLogic">
+      <UniqueIdentifier>{ee0d09f4-914b-4780-8784-06dc4a0aad5c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\L2CAP">
+      <UniqueIdentifier>{4566b62f-ccc1-4356-982c-f17e3eea2d05}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Inf Include="BthPS3.inf">
@@ -65,50 +74,50 @@
     <ClCompile Include="Driver.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Bluetooth.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="L2CAP.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="BusLogic.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="PSM.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Util.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BusLogic.IO.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="BusLogic.State.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="L2CAP.Transfer.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Bluetooth.Request.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Bluetooth.PSM.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Bluetooth.L2CAP.c">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Bluetooth.c">
+      <Filter>Source Files\Bluetooth</Filter>
     </ClCompile>
     <ClCompile Include="Bluetooth.Connection.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="L2CAP.Connect.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="L2CAP.Disconnect.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Bluetooth</Filter>
     </ClCompile>
     <ClCompile Include="Bluetooth.Context.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Bluetooth</Filter>
+    </ClCompile>
+    <ClCompile Include="Bluetooth.L2CAP.c">
+      <Filter>Source Files\Bluetooth</Filter>
+    </ClCompile>
+    <ClCompile Include="Bluetooth.PSM.c">
+      <Filter>Source Files\Bluetooth</Filter>
+    </ClCompile>
+    <ClCompile Include="Bluetooth.Request.c">
+      <Filter>Source Files\Bluetooth</Filter>
+    </ClCompile>
+    <ClCompile Include="BusLogic.c">
+      <Filter>Source Files\BusLogic</Filter>
+    </ClCompile>
+    <ClCompile Include="BusLogic.IO.c">
+      <Filter>Source Files\BusLogic</Filter>
+    </ClCompile>
+    <ClCompile Include="BusLogic.State.c">
+      <Filter>Source Files\BusLogic</Filter>
+    </ClCompile>
+    <ClCompile Include="L2CAP.Transfer.c">
+      <Filter>Source Files\L2CAP</Filter>
+    </ClCompile>
+    <ClCompile Include="L2CAP.c">
+      <Filter>Source Files\L2CAP</Filter>
+    </ClCompile>
+    <ClCompile Include="L2CAP.Connect.c">
+      <Filter>Source Files\L2CAP</Filter>
+    </ClCompile>
+    <ClCompile Include="L2CAP.Disconnect.c">
+      <Filter>Source Files\L2CAP</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

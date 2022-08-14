@@ -95,7 +95,7 @@ typedef struct _BTHPS3_DEVICE_CONTEXT_HEADER
 	//
 	// DMF module to handle PDO creation
 	// 
-	DMFMODULE DmfModulePdo;
+	DMFMODULE PdoModule;
 
 	//
 	// Free and occupied serial numbers

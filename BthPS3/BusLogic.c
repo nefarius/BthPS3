@@ -498,7 +498,7 @@ BthPS3_PDO_Create(
 		// Create PDO, DMF modules and allocate PDO context
 		// 
 		if (!NT_SUCCESS(status = DMF_Pdo_DevicePlugEx(
-			Context->Header.DmfModulePdo,
+			Context->Header.PdoModule,
 			&record,
 			&device
 		)))
@@ -789,7 +789,7 @@ BthPS3_PDO_Destroy(
 			// 
 
 			NTSTATUS status = DMF_Pdo_DeviceUnPlugEx(
-				Context->DmfModulePdo,
+				Context->PdoModule,
 				hardwareId,
 				serial
 			);

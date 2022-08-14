@@ -460,7 +460,7 @@ DmfDeviceModulesAdd(
 		DmfModuleInit,
 		&moduleAttributes,
 		WDF_NO_OBJECT_ATTRIBUTES,
-		&pSrvCtx->Header.DmfModulePdo
+		&pSrvCtx->Header.PdoModule
 	);
 
 	FuncExitNoReturn(TRACE_DEVICE);

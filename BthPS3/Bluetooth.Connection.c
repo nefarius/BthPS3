@@ -62,11 +62,14 @@ BthPS3_IndicationCallback(
 	switch (Indication)
 	{
 	case IndicationAddReference:
+		TraceVerbose(TRACE_BTH, "IndicationAddReference");
+		break;
 	case IndicationReleaseReference:
+		TraceVerbose(TRACE_BTH, "IndicationReleaseReference");
 		break;
 	case IndicationRemoteConnect:
 	{
-		PBTHPS3_SERVER_CONTEXT devCtx = (PBTHPS3_SERVER_CONTEXT)Context;
+		const PBTHPS3_SERVER_CONTEXT devCtx = (PBTHPS3_SERVER_CONTEXT)Context;
 
 		TraceInformation(
 			TRACE_BTH,

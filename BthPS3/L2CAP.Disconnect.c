@@ -136,15 +136,17 @@ L2CAP_PS3_ConnectionIndicationCallback(
 	WDF_WORKITEM_CONFIG asyncConfig;
 	WDF_OBJECT_ATTRIBUTES asyncAttribs;
 	PBTHPS3_REMOTE_DISCONNECT_CONTEXT disconnectContext = NULL;
-	
+
 	FuncEntryArguments(TRACE_L2CAP, "Indication=0x%X, Context=0x%p",
 		Indication, Context);
 
 	switch (Indication)
 	{
 	case IndicationAddReference:
+		TraceVerbose(TRACE_L2CAP, "IndicationAddReference");
 		break;
 	case IndicationReleaseReference:
+		TraceVerbose(TRACE_L2CAP, "IndicationReleaseReference");
 		break;
 	case IndicationRemoteConnect:
 	{
@@ -218,9 +220,7 @@ L2CAP_PS3_ConnectionIndicationCallback(
 
 	case IndicationRemoteConfigRequest:
 
-		TraceInformation(
-			TRACE_L2CAP,
-			"%!FUNC! ++ IndicationRemoteConfigRequest");
+		TraceVerbose(TRACE_L2CAP, "IndicationRemoteConfigRequest");
 
 		//
 		// This catches QOS configuration request and inherently succeeds it
@@ -230,9 +230,7 @@ L2CAP_PS3_ConnectionIndicationCallback(
 
 	case IndicationRemoteConfigResponse:
 
-		TraceInformation(
-			TRACE_L2CAP,
-			"%!FUNC! ++ IndicationRemoteConfigResponse");
+		TraceVerbose(TRACE_L2CAP, "IndicationRemoteConfigResponse");
 
 		break;
 

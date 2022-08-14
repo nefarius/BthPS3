@@ -136,11 +136,7 @@ L2CAP_PS3_ConnectionIndicationCallback(
 	WDF_WORKITEM_CONFIG asyncConfig;
 	WDF_OBJECT_ATTRIBUTES asyncAttribs;
 	PBTHPS3_REMOTE_DISCONNECT_CONTEXT disconnectContext = NULL;
-
-	//
-	// TODO: queue work item to lower IRQL instead of this!
-	// 
-
+	
 	FuncEntryArguments(TRACE_L2CAP, "Indication=0x%X, Context=0x%p",
 		Indication, Context);
 

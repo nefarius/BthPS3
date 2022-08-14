@@ -50,6 +50,8 @@
 #define BTH_DEVICE_INFO_MAX_COUNT       0x0A
 #define BTH_DEVICE_INFO_MAX_RETRIES     0x05
 #define BTHPS3_MAX_NUM_DEVICES			0xFF
+#define BTHPS3_BTH_ADDR_MAX_CHARS		13 /* 12 characters + NULL terminator */
+
 
 typedef struct _BTHPS3_DEVICE_CONTEXT_HEADER
 {

@@ -120,7 +120,7 @@ BthPS3_PDO_Create(
 	PDO_RECORD record;
 	WDFDEVICE device;
 	UNICODE_STRING guidString = { 0 };
-	WCHAR devAddr[13]; // MAC address in hex format including NULL terminator
+	WCHAR devAddr[BTHPS3_BTH_ADDR_MAX_CHARS]; // MAC address in hex format including NULL terminator
 	PWSTR manufacturer = L"Nefarius Software Solutions e.U.";
 	LARGE_INTEGER lastConnectionTime;
 	WDFKEY hKey = NULL;
@@ -153,7 +153,7 @@ BthPS3_PDO_Create(
 	// 
 	status = WdfDriverOpenParametersRegistryKey(
 		WdfGetDriver(),
-		STANDARD_RIGHTS_ALL,
+		STANDARD_RIGHTS_READ,
 		WDF_NO_OBJECT_ATTRIBUTES,
 		&hKey
 	);

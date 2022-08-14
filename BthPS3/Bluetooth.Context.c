@@ -119,7 +119,7 @@ BthPS3_DeviceContextHeaderInit(
 		// 
 		if (!NT_SUCCESS(status = WdfDriverOpenParametersRegistryKey(
 			WdfGetDriver(),
-			STANDARD_RIGHTS_ALL,
+			STANDARD_RIGHTS_READ,
 			WDF_NO_OBJECT_ATTRIBUTES,
 			&hKey
 		)))
@@ -292,7 +292,7 @@ BthPS3_SettingsContextInit(
 	// 
 	status = WdfDriverOpenParametersRegistryKey(
 		WdfGetDriver(),
-		STANDARD_RIGHTS_ALL,
+		STANDARD_RIGHTS_READ,
 		WDF_NO_OBJECT_ATTRIBUTES,
 		&hKey
 	);

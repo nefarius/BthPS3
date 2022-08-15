@@ -119,7 +119,7 @@
     <ClCompile Include="L2CAP.Disconnect.c">
       <Filter>Source Files\L2CAP</Filter>
     </ClCompile>
-    <ClCompile Include="BusLogic.Registry.c">
+    <ClCompile Include="BusLogic.Slots.c">
       <Filter>Source Files\BusLogic</Filter>
     </ClCompile>
   </ItemGroup>

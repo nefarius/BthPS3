@@ -1,20 +1,19 @@
 #include "Driver.h"
-#include "BusLogic.Registry.tmh"
+#include "BusLogic.Slots.tmh"
 
 
 //
-// Tries to get a stored slot/serial/index number for a given remote address, if available
+// Gets a stored slot/serial/index number for a given remote address or selects a free one
 // 
 #pragma code_seg("PAGE")
 _IRQL_requires_max_(PASSIVE_LEVEL)
-BOOLEAN
-BthPS3_PDO_Registry_QuerySlot(
+NTSTATUS
+BthPS3_PDO_QuerySlot(
 	PBTHPS3_DEVICE_CONTEXT_HEADER Header,
 	BTH_ADDR RemoteAddress,
 	PULONG Slot
 )
 {
-	BOOLEAN ret = FALSE;
 	NTSTATUS status;
 	WDFKEY hKey = NULL;
 	WDFKEY hDeviceKey = NULL;
@@ -23,7 +22,7 @@ BthPS3_PDO_Registry_QuerySlot(
 
 	PAGED_CODE();
 
-	DECLARE_UNICODE_STRING_SIZE(deviceKeyName, BTHPS3_BTH_ADDR_MAX_CHARS);
+	DECLARE_UNICODE_STRING_SIZE(deviceKeyName, REG_CACHED_DEVICE_KEY_FMT_LEN);
 	DECLARE_CONST_UNICODE_STRING(slotNo, BTHPS3_REG_VALUE_SLOT_NO);
 
 	do
@@ -40,50 +39,105 @@ BthPS3_PDO_Registry_QuerySlot(
 			&hKey
 		)))
 		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"WdfDriverOpenParametersRegistryKey failed with status %!STATUS!",
+				status
+			);
 			break;
 		}
 
 		if (!NT_SUCCESS(status = RtlUnicodeStringPrintf(
 			&deviceKeyName,
-			L"%012llX",
+			REG_CACHED_DEVICE_KEY_FMT,
 			RemoteAddress
 		)))
 		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"RtlUnicodeStringPrintf failed with status %!STATUS!",
+				status
+			);
 			break;
 		}
 
-		if (!NT_SUCCESS(status = WdfRegistryOpenKey(
+		//
+		// Try to get cached value
+		// 
+		if (NT_SUCCESS(WdfRegistryOpenKey(
 			hKey,
 			&deviceKeyName,
 			GENERIC_READ,
 			WDF_NO_OBJECT_ATTRIBUTES,
 			&hDeviceKey
-		)))
+		))
+			&& NT_SUCCESS(status = WdfRegistryQueryULong(
+				hDeviceKey,
+				&slotNo,
+				Slot
+			)))
 		{
-			break;
-		}
+			TraceVerbose(
+				TRACE_BUSLOGIC,
+				"Found cached serial"
+			);
 
-		if (!NT_SUCCESS(status = WdfRegistryQueryULong(
-			hDeviceKey,
-			&slotNo,
-			Slot
-		)))
+			//
+			// Validate
+			// 
+			if (*Slot == 0 /* invalid value */ || *Slot > BTHPS3_MAX_NUM_DEVICES)
+			{
+				status = STATUS_INVALID_PARAMETER;
+				break;
+			}
+
+			WdfSpinLockAcquire(Header->SlotsSpinLock);
+
+			SetBit(Header->Slots, *Slot);
+
+			WdfSpinLockRelease(Header->SlotsSpinLock);
+
+			status = STATUS_SUCCESS;
+		}
+		//
+		// Get next free one
+		// 
+		else
 		{
-			break;
+			TraceVerbose(
+				TRACE_BUSLOGIC,
+				"Looking for free serial"
+			);
+
+			WdfSpinLockAcquire(Header->SlotsSpinLock);
+
+			//
+			// ...otherwise get next free serial number
+			// 
+			for (*Slot = 1; *Slot <= BTHPS3_MAX_NUM_DEVICES; (*Slot)++)
+			{
+				if (!TestBit(Header->Slots, *Slot))
+				{
+					TraceVerbose(
+						TRACE_BUSLOGIC,
+						"Assigned serial: %d",
+						*Slot
+					);
+
+					SetBit(Header->Slots, *Slot);
+
+					status = STATUS_SUCCESS;
+					break;
+				}
+			}
+
+			if (*Slot > BTHPS3_MAX_NUM_DEVICES)
+			{
+				status = STATUS_NO_MORE_ENTRIES;
+			}
+
+			WdfSpinLockRelease(Header->SlotsSpinLock);
 		}
-
-		if (*Slot == 0 /* invalid value */ || *Slot > BTHPS3_MAX_NUM_DEVICES)
-		{
-			break;
-		}
-
-		WdfSpinLockAcquire(Header->SlotsSpinLock);
-
-		SetBit(Header->Slots, *Slot);
-
-		WdfSpinLockRelease(Header->SlotsSpinLock);
-
-		ret = TRUE;
 
 	} while (FALSE);
 
@@ -97,16 +151,19 @@ BthPS3_PDO_Registry_QuerySlot(
 		WdfRegistryClose(hDeviceKey);
 	}
 
-	FuncExit(TRACE_BUSLOGIC, "ret=%d", ret);
+	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
 
-	return ret;
+	return status;
 }
 #pragma code_seg()
 
+//
+// Caches an occupied slot in the registry
+// 
 #pragma code_seg("PAGE")
 _IRQL_requires_max_(PASSIVE_LEVEL)
-void
-BthPS3_PDO_Registry_AssignSlot(
+NTSTATUS
+BthPS3_PDO_AssignSlot(
 	PBTHPS3_DEVICE_CONTEXT_HEADER Header,
 	BTH_ADDR RemoteAddress,
 	ULONG Slot
@@ -120,7 +177,7 @@ BthPS3_PDO_Registry_AssignSlot(
 
 	PAGED_CODE();
 
-	DECLARE_UNICODE_STRING_SIZE(deviceKeyName, BTHPS3_BTH_ADDR_MAX_CHARS);
+	DECLARE_UNICODE_STRING_SIZE(deviceKeyName, REG_CACHED_DEVICE_KEY_FMT_LEN);
 	DECLARE_CONST_UNICODE_STRING(slotNo, BTHPS3_REG_VALUE_SLOT_NO);
 	DECLARE_CONST_UNICODE_STRING(slots, BTHPS3_REG_VALUE_SLOTS);
 
@@ -128,6 +185,7 @@ BthPS3_PDO_Registry_AssignSlot(
 	{
 		if (Slot == 0 /* invalid value */ || Slot > BTHPS3_MAX_NUM_DEVICES)
 		{
+			status = STATUS_INVALID_PARAMETER;
 			break;
 		}
 
@@ -153,7 +211,7 @@ BthPS3_PDO_Registry_AssignSlot(
 
 		if (!NT_SUCCESS(status = RtlUnicodeStringPrintf(
 			&deviceKeyName,
-			L"%012llX",
+			REG_CACHED_DEVICE_KEY_FMT,
 			RemoteAddress
 		)))
 		{
@@ -165,6 +223,9 @@ BthPS3_PDO_Registry_AssignSlot(
 			break;
 		}
 
+		//
+		// Create key for device
+		// 
 		if (!NT_SUCCESS(status = WdfRegistryCreateKey(
 			hKey,
 			&deviceKeyName,
@@ -183,6 +244,9 @@ BthPS3_PDO_Registry_AssignSlot(
 			break;
 		}
 
+		//
+		// Store serial value
+		// 
 		if (!NT_SUCCESS(status = WdfRegistryAssignULong(
 			hDeviceKey,
 			&slotNo,
@@ -220,7 +284,7 @@ BthPS3_PDO_Registry_AssignSlot(
 				status
 			);
 			break;
-		}		
+		}
 
 	} while (FALSE);
 
@@ -234,6 +298,8 @@ BthPS3_PDO_Registry_AssignSlot(
 		WdfRegistryClose(hDeviceKey);
 	}
 
-	FuncExitNoReturn(TRACE_BUSLOGIC);
+	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
+
+	return status;
 }
 #pragma code_seg()

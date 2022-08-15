@@ -175,41 +175,20 @@ BthPS3_PDO_Create(
 	do
 	{
 		//
-		// Try to fetch a stored serial from cache first...
+		// Get unique serial
 		// 
-		if (!BthPS3_PDO_Registry_QuerySlot(&Context->Header, RemoteAddress, &record.SerialNumber))
+		if (!NT_SUCCESS(status = BthPS3_PDO_QuerySlot(
+			&Context->Header,
+			RemoteAddress,
+			&record.SerialNumber
+		)))
 		{
-			WdfSpinLockAcquire(Context->Header.SlotsSpinLock);
-
-			//
-			// ...otherwise get next free serial number
-			// 
-			for (record.SerialNumber = 1; record.SerialNumber <= BTHPS3_MAX_NUM_DEVICES; record.SerialNumber++)
-			{
-				if (!TestBit(Context->Header.Slots, record.SerialNumber))
-				{
-					TraceVerbose(
-						TRACE_BUSLOGIC,
-						"Assigned serial: %d",
-						record.SerialNumber
-					);
-
-					SetBit(Context->Header.Slots, record.SerialNumber);
-					break;
-				}
-			}
-
-			if (record.SerialNumber > BTHPS3_MAX_NUM_DEVICES)
-			{
-				status = STATUS_NO_MORE_ENTRIES;
-			}
-
-			WdfSpinLockRelease(Context->Header.SlotsSpinLock);
-
-			if (!NT_SUCCESS(status))
-			{
-				break;
-			}
+			TraceError(
+				TRACE_BUSLOGIC,
+				"BthPS3_PDO_QuerySlot failed with status %!STATUS!",
+				status
+			);
+			break;
 		}
 
 		//
@@ -518,7 +497,22 @@ BthPS3_PDO_Create(
 			break;
 		}
 
-		BthPS3_PDO_Registry_AssignSlot(&Context->Header, RemoteAddress, record.SerialNumber);
+		//
+		// Persist slot information to avoid duplicates
+		// 
+		if (!NT_SUCCESS(status = BthPS3_PDO_AssignSlot(
+			&Context->Header,
+			RemoteAddress,
+			record.SerialNumber
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"BthPS3_PDO_AssignSlot failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
 
 		const PBTHPS3_PDO_CONTEXT pPdoCtx = *PdoContext = GetPdoContext(device);
 
@@ -811,12 +805,6 @@ BthPS3_PDO_Destroy(
 			}
 
 			WdfCollectionRemoveItem(Context->Clients, index);
-
-			WdfSpinLockAcquire(Context->SlotsSpinLock);
-
-			ClearBit(Context->Slots, serial);
-
-			WdfSpinLockRelease(Context->SlotsSpinLock);
 
 			break;
 		}

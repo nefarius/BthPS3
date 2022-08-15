@@ -37,8 +37,10 @@
 
 #pragma once
 
-#define MAX_DEVICE_ID_LEN   200
-#define BTH_ADDR_HEX_LEN    12
+#define MAX_DEVICE_ID_LEN				200
+#define BTH_ADDR_HEX_LEN				12
+#define REG_CACHED_DEVICE_KEY_FMT		L"Devices\\%012llX"
+#define REG_CACHED_DEVICE_KEY_FMT_LEN	(8 + BTHPS3_BTH_ADDR_MAX_CHARS)
 
 
 //
@@ -219,16 +221,16 @@ EVT_WDF_REQUEST_COMPLETION_ROUTINE BthPS3_PDO_DisconnectRequestCompleted;
 // 
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
-BOOLEAN
-BthPS3_PDO_Registry_QuerySlot(
+NTSTATUS
+BthPS3_PDO_QuerySlot(
 	PBTHPS3_DEVICE_CONTEXT_HEADER Header,
 	BTH_ADDR RemoteAddress,
 	PULONG Slot
 );
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
-void
-BthPS3_PDO_Registry_AssignSlot(
+NTSTATUS
+BthPS3_PDO_AssignSlot(
 	PBTHPS3_DEVICE_CONTEXT_HEADER Header,
 	BTH_ADDR RemoteAddress,
 	ULONG Slot

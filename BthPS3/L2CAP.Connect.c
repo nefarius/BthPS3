@@ -229,7 +229,6 @@ L2CAP_PS3_HandleRemoteConnect(
 			ConnectParams->BtAddress,
 			deviceType,
 			remoteName,
-			NULL,
 			&pPdoCtx
 		);
 

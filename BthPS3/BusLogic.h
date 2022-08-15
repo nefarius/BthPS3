@@ -138,7 +138,6 @@ BthPS3_PDO_Create(
 	_In_ BTH_ADDR RemoteAddress,
 	_In_ DS_DEVICE_TYPE DeviceType,
 	_In_ PSTR RemoteName,
-	_In_opt_ PFN_WDF_OBJECT_CONTEXT_CLEANUP CleanupCallback,
 	_Out_ PBTHPS3_PDO_CONTEXT* PdoContext
 );
 
@@ -156,6 +155,12 @@ BthPS3_PDO_Destroy(
 	_In_ PBTHPS3_DEVICE_CONTEXT_HEADER Context,
 	_In_ PBTHPS3_PDO_CONTEXT PdoContext
 );
+
+//
+// Clean-up
+// 
+
+EVT_WDF_OBJECT_CONTEXT_CLEANUP BthPS3_PDO_EvtContextCleanup;
 
 //
 // DMF

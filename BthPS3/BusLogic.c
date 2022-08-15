@@ -109,7 +109,6 @@ BthPS3_PDO_Create(
 	_In_ BTH_ADDR RemoteAddress,
 	_In_ DS_DEVICE_TYPE DeviceType,
 	_In_ PSTR RemoteName,
-	_In_opt_ PFN_WDF_OBJECT_CONTEXT_CLEANUP CleanupCallback,
 	_Out_ PBTHPS3_PDO_CONTEXT* PdoContext
 )
 {
@@ -132,7 +131,7 @@ BthPS3_PDO_Create(
 
 	WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&attributes, BTHPS3_PDO_CONTEXT);
 
-	attributes.EvtCleanupCallback = CleanupCallback;
+	attributes.EvtCleanupCallback = BthPS3_PDO_EvtContextCleanup;
 
 	KeQuerySystemTimePrecise(&lastConnectionTime);
 
@@ -832,6 +831,54 @@ BthPS3_PDO_Destroy(
 	}
 
 	WdfSpinLockRelease(Context->ClientsLock);
+
+	FuncExitNoReturn(TRACE_BUSLOGIC);
+}
+
+_IRQL_requires_same_
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+BthPS3_PDO_EvtContextCleanup(
+	_In_
+	WDFOBJECT Object
+)
+{
+	FuncEntry(TRACE_BUSLOGIC);
+
+	NTSTATUS status;
+	PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(Object);
+	LARGE_INTEGER timeout;
+	timeout.QuadPart = WDF_REL_TIMEOUT_IN_SEC(5);
+
+	if (!NT_SUCCESS(status = KeWaitForSingleObject(
+		&pPdoCtx->HidControlChannel.DisconnectEvent,
+		Executive,
+		KernelMode,
+		FALSE,
+		&timeout
+	)))
+	{
+		TraceError(
+			TRACE_BUSLOGIC,
+			"HID Control - KeWaitForSingleObject failed with status %!STATUS!",
+			status
+		);
+	}
+
+	if (!NT_SUCCESS(status = KeWaitForSingleObject(
+		&pPdoCtx->HidInterruptChannel.DisconnectEvent,
+		Executive,
+		KernelMode,
+		FALSE,
+		&timeout
+	)))
+	{
+		TraceError(
+			TRACE_BUSLOGIC,
+			"HID Interrupt - KeWaitForSingleObject failed with status %!STATUS!",
+			status
+		);
+	}
 
 	FuncExitNoReturn(TRACE_BUSLOGIC);
 }

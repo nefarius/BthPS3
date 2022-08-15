@@ -177,7 +177,7 @@ BthPS3_PDO_Create(
 		//
 		// Try to fetch a stored serial from cache first...
 		// 
-		if (!BthPS3_PDO_Registry_QuerySlot(RemoteAddress, &record.SerialNumber))
+		if (!BthPS3_PDO_Registry_QuerySlot(&Context->Header, RemoteAddress, &record.SerialNumber))
 		{
 			WdfSpinLockAcquire(Context->Header.SlotsSpinLock);
 
@@ -210,14 +210,6 @@ BthPS3_PDO_Create(
 			{
 				break;
 			}
-		}
-		else
-		{
-			WdfSpinLockAcquire(Context->Header.SlotsSpinLock);
-
-			SetBit(Context->Header.Slots, record.SerialNumber);
-
-			WdfSpinLockRelease(Context->Header.SlotsSpinLock);
 		}
 
 		//
@@ -526,7 +518,7 @@ BthPS3_PDO_Create(
 			break;
 		}
 
-		BthPS3_PDO_Registry_AssignSlot(RemoteAddress, record.SerialNumber);
+		BthPS3_PDO_Registry_AssignSlot(&Context->Header, RemoteAddress, record.SerialNumber);
 
 		const PBTHPS3_PDO_CONTEXT pPdoCtx = *PdoContext = GetPdoContext(device);
 

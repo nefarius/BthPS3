@@ -221,6 +221,7 @@ EVT_WDF_REQUEST_COMPLETION_ROUTINE BthPS3_PDO_DisconnectRequestCompleted;
 _IRQL_requires_max_(PASSIVE_LEVEL)
 BOOLEAN
 BthPS3_PDO_Registry_QuerySlot(
+	PBTHPS3_DEVICE_CONTEXT_HEADER Header,
 	BTH_ADDR RemoteAddress,
 	PULONG Slot
 );
@@ -228,6 +229,7 @@ BthPS3_PDO_Registry_QuerySlot(
 _IRQL_requires_max_(PASSIVE_LEVEL)
 void
 BthPS3_PDO_Registry_AssignSlot(
+	PBTHPS3_DEVICE_CONTEXT_HEADER Header,
 	BTH_ADDR RemoteAddress,
 	ULONG Slot
 );

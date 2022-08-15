@@ -364,11 +364,8 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
 )
 {
 	const PBTHPS3_SERVER_CONTEXT devCtx = GetServerDeviceContext(Device);
-	WDFKEY hKey = NULL;
 
 	PAGED_CODE();
-
-	DECLARE_CONST_UNICODE_STRING(slots, BTHPS3_REG_VALUE_SLOTS);
 
 	FuncEntry(TRACE_DEVICE);
 
@@ -386,32 +383,6 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
 	if (0 != devCtx->PsmHidControl)
 	{
 		BthPS3_UnregisterPSM(devCtx);
-	}
-
-	//
-	// Open
-	//   HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\BthPS3\Parameters
-	// key
-	// 
-	if (NT_SUCCESS(WdfDriverOpenParametersRegistryKey(
-		WdfGetDriver(),
-		STANDARD_RIGHTS_ALL,
-		WDF_NO_OBJECT_ATTRIBUTES,
-		&hKey
-	)))
-	{
-		//
-		// Store occupied slots in registry
-		// 
-		(void)WdfRegistryAssignValue(
-			hKey,
-			&slots,
-			REG_BINARY,
-			sizeof(devCtx->Header.Slots),
-			&devCtx->Header.Slots
-		);
-
-		WdfRegistryClose(hKey);
 	}
 
 	FuncExitNoReturn(TRACE_DEVICE);

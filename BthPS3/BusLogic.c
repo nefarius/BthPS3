@@ -835,6 +835,9 @@ BthPS3_PDO_Destroy(
 	FuncExitNoReturn(TRACE_BUSLOGIC);
 }
 
+//
+// Will be called before the PDO device object gets destroyed
+// 
 _IRQL_requires_same_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
@@ -864,6 +867,13 @@ BthPS3_PDO_EvtContextCleanup(
 			status
 		);
 	}
+	else
+	{
+		TraceVerbose(
+			TRACE_BUSLOGIC,
+			"HID Control channel event signalled"
+		);
+	}
 
 	if (!NT_SUCCESS(status = KeWaitForSingleObject(
 		&pPdoCtx->HidInterruptChannel.DisconnectEvent,
@@ -879,6 +889,19 @@ BthPS3_PDO_EvtContextCleanup(
 			status
 		);
 	}
+	else
+	{
+		TraceVerbose(
+			TRACE_BUSLOGIC,
+			"HID Interrupt channel event signalled"
+		);
+	}
+
+	TraceInformation(
+		TRACE_BUSLOGIC,
+		"Cleaning up context 0x%p of device object 0x%p",
+		pPdoCtx, Object
+	);
 
 	FuncExitNoReturn(TRACE_BUSLOGIC);
 }

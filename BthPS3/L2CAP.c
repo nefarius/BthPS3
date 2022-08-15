@@ -80,7 +80,7 @@ L2CAP_PS3_ControlConnectResponseCompleted(
 		//
 		// This will be set again once disconnect has occurred
 		// 
-		//KeClearEvent(&clientConnection->HidControlChannel.DisconnectEvent);
+		KeClearEvent(&pPdoCtx->HidControlChannel.DisconnectEvent);
 
 		WdfSpinLockRelease(pPdoCtx->HidControlChannel.ConnectionStateLock);
 
@@ -180,7 +180,7 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
 		//
 		// This will be set again once disconnect has occurred
 		// 
-		//KeClearEvent(&clientConnection->HidInterruptChannel.DisconnectEvent);
+		KeClearEvent(&pPdoCtx->HidInterruptChannel.DisconnectEvent);
 
 		WdfSpinLockRelease(pPdoCtx->HidInterruptChannel.ConnectionStateLock);
 

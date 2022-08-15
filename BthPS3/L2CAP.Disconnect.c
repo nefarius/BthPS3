@@ -224,3 +224,124 @@ L2CAP_PS3_ConnectionIndicationCallback(
 
 	FuncExitNoReturn(TRACE_L2CAP);
 }
+
+//
+// Instructs a channel to disconnect
+// 
+_IRQL_requires_max_(DISPATCH_LEVEL)
+BOOLEAN
+L2CAP_PS3_RemoteDisconnect(
+	_In_ PBTHPS3_DEVICE_CONTEXT_HEADER CtxHdr,
+	_In_ BTH_ADDR RemoteAddress,
+	_In_ PBTHPS3_CLIENT_L2CAP_CHANNEL Channel
+)
+{
+	struct _BRB_L2CA_CLOSE_CHANNEL* disconnectBrb = NULL;
+
+	FuncEntry(TRACE_L2CAP);
+
+	WdfSpinLockAcquire(Channel->ConnectionStateLock);
+
+	if (Channel->ConnectionState == ConnectionStateConnecting)
+	{
+		//
+		// If the connection is not completed yet set the state 
+		// to disconnecting.
+		// In such case we should send CLOSE_CHANNEL Brb down after 
+		// we receive connect completion.
+		//
+
+		Channel->ConnectionState = ConnectionStateDisconnecting;
+
+		//
+		// Clear event to indicate that we are in disconnecting
+		// state. It will be set when disconnect is completed
+		//
+		KeClearEvent(&Channel->DisconnectEvent);
+
+		WdfSpinLockRelease(Channel->ConnectionStateLock);
+		return TRUE;
+	}
+
+	if (Channel->ConnectionState != ConnectionStateConnected)
+	{
+		//
+		// Do nothing if we are not connected
+		//
+
+		WdfSpinLockRelease(Channel->ConnectionStateLock);
+		FuncExit(TRACE_L2CAP, "returns=FALSE");
+		return FALSE;
+	}
+
+	Channel->ConnectionState = ConnectionStateDisconnecting;
+	WdfSpinLockRelease(Channel->ConnectionStateLock);
+
+	//
+	// We are now sending the disconnect, so clear the event.
+	//
+
+	KeClearEvent(&Channel->DisconnectEvent);
+
+	CLIENT_CONNECTION_REQUEST_REUSE(Channel->ConnectDisconnectRequest);
+	CtxHdr->ProfileDrvInterface.BthReuseBrb(
+		&Channel->ConnectDisconnectBrb,
+		BRB_L2CA_CLOSE_CHANNEL
+	);
+
+	disconnectBrb = (struct _BRB_L2CA_CLOSE_CHANNEL*)&(Channel->ConnectDisconnectBrb);
+
+	disconnectBrb->BtAddress = RemoteAddress;
+	disconnectBrb->ChannelHandle = Channel->ChannelHandle;
+
+	//
+	// The BRB can fail with STATUS_DEVICE_DISCONNECT if the device is already
+	// disconnected, hence we don't assert for success
+	//
+	(void)BthPS3_SendBrbAsync(
+		CtxHdr->IoTarget,
+		Channel->ConnectDisconnectRequest,
+		(PBRB)disconnectBrb,
+		sizeof(*disconnectBrb),
+		L2CAP_PS3_ChannelDisconnectCompleted,
+		Channel
+	);
+
+	FuncExit(TRACE_L2CAP, "returns=TRUE");
+
+	return TRUE;
+}
+
+//
+// Gets called once a channel disconnect request has been completed
+// 
+void
+L2CAP_PS3_ChannelDisconnectCompleted(
+	_In_ WDFREQUEST Request,
+	_In_ WDFIOTARGET Target,
+	_In_ PWDF_REQUEST_COMPLETION_PARAMS Params,
+	_In_ WDFCONTEXT Context
+)
+{
+	PBTHPS3_CLIENT_L2CAP_CHANNEL channel = (PBTHPS3_CLIENT_L2CAP_CHANNEL)Context;
+
+	UNREFERENCED_PARAMETER(Request);
+	UNREFERENCED_PARAMETER(Target);
+
+	FuncEntryArguments(TRACE_L2CAP, "status=%!STATUS!", Params->IoStatus.Status);
+
+	WdfSpinLockAcquire(channel->ConnectionStateLock);
+	channel->ConnectionState = ConnectionStateDisconnected;
+	WdfSpinLockRelease(channel->ConnectionStateLock);
+
+	//
+	// Disconnect complete, set the event
+	//
+	KeSetEvent(
+		&channel->DisconnectEvent,
+		0,
+		FALSE
+	);
+
+	FuncExitNoReturn(TRACE_L2CAP);
+}

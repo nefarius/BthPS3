@@ -86,7 +86,7 @@ For a list of tested devices [consult the extended documentation](https://vigem.
 - [Step 1: Install Visual Studio 2019](<https://docs.microsoft.com/en-us/windows-hardware/drivers/other-wdk-downloads#step-1-install-visual-studio>)
   - From the Visual Studio Installer, add the Individual component `MSVC v142 - VS 2019 C++ x64/x86 Spectre-mitigated libs`
 - [Step 2: Install WDK for Windows 10, version 2004](<https://docs.microsoft.com/en-us/windows-hardware/drivers/other-wdk-downloads#step-2-install-the-wdk>)
-- [Step 3: Install the WiX Toolset **version 3**](https://wixtoolset.org/releases/)
+- [Step 3: Install the WiX Toolset **v3.14.0.6526**](https://wixtoolset.org/releases/v3-14-0-6526/)
 
 You can build individual projects of the solution within Visual Studio.
 

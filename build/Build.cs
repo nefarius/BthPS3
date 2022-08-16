@@ -61,6 +61,9 @@ class Build : NukeBuild
             if (AppVeyor.Instance.Platform is "x86")
                 platform = MSBuildTargetPlatform.Win32;
 
+            if (AppVeyor.Instance.Platform is "ARM64")
+                platform = (MSBuildTargetPlatform) "ARM64";
+
             MSBuild(s => s
                 .SetTargetPath(DmfSolution)
                 .SetTargets("Build")

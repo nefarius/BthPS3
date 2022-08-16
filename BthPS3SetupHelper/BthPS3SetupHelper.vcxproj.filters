@@ -27,7 +27,7 @@
     <ClInclude Include="UniUtil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Setup\BthPS3CA\LibraryHelper.hpp">
+    <ClInclude Include="LibraryHelper.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

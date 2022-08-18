@@ -11,6 +11,8 @@ platform:
 configuration:
 - Release
 install:
+- ps: Invoke-WebRequest https://wixtoolset.org/downloads/v3.14.0.6526/wix314.exe -OutFile wix314.exe
+- cmd: wix314.exe /q
 - cmd: git submodule -q update --init
 - cmd: git clone -q https://github.com/microsoft/DMF.git C:\projects\DMF 2> nul || set ERRORLEVEL=0
 - cmd: |

@@ -3,7 +3,8 @@ $timestampUrl = "http://timestamp.digicert.com"
 $certName = "Nefarius Software Solutions e.U."
 
 # List of files to sign
-$files =    "`"..\bin\x64\*.msi`" " + 
+$files =    "`"..\bin\ARM64\*.msi`" " + 
+            "`"..\bin\x64\*.msi`" " + 
             "`"..\bin\x86\*.msi`" "
 
 # sign with only one certificate

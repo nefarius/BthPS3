@@ -106,6 +106,9 @@ function Get-AppVeyorArtifacts
     }
 }
 
+# Download ARM64 binaries
+Get-AppVeyorArtifacts -Account "nefarius" -Project "BthPS3" -Path $Path -Token $Token -Branch $BuildVersion -JobName "Platform: ARM64"
+
 # Download x64 binaries
 Get-AppVeyorArtifacts -Account "nefarius" -Project "BthPS3" -Path $Path -Token $Token -Branch $BuildVersion -JobName "Platform: x64"
 
@@ -115,6 +118,8 @@ Get-AppVeyorArtifacts -Account "nefarius" -Project "BthPS3" -Path $Path -Token $
 # List of files to sign
 $files =    "`".\artifacts\bin\*.exe`" " + 
             "`".\artifacts\disk1\*.cab`" " + 
+			"`".\artifacts\bin\ARM64\*.exe`" " + 
+            "`".\artifacts\bin\ARM64\*.dll`" " + 
             "`".\artifacts\bin\x64\*.exe`" " + 
             "`".\artifacts\bin\x64\*.dll`" " + 
             "`".\artifacts\bin\x86\*.exe`" " +

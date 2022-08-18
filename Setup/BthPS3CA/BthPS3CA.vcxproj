@@ -28,6 +28,8 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <WixPlatformToolset>VS2017</WixPlatformToolset>
+	<!-- use local copy when running on CI -->
+	<WIX Condition="'$(CI)' == 'True'">$(SolutionDir)wix314</WIX>
     <ProjectGuid>{81c9766c-7fd8-473d-882d-85fd89ee3c4c}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>BthPS3CA</RootNamespace>

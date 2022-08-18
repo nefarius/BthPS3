@@ -120,6 +120,7 @@
     <LinkIncremental>false</LinkIncremental>
     <TargetName>BthPS3CustomActions</TargetName>
     <IncludePath>$(SolutionDir)BthPS3SetupHelper;$(SolutionDir)\common\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <OutDir>$(SolutionDir)bin\$(PlatformShortName)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

@@ -38,7 +38,6 @@ artifacts:
 - path: 'bin**\BthPS3PSM\*.sys'
 - path: 'bin**\*.pdb'
 - path: 'disk1\*.cab'
-- path: 'bin**\*.msi'
 - path: 'bin**\*.exe'
 - path: 'bin**\*.dll'
 deploy:

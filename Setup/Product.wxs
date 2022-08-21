@@ -50,7 +50,7 @@
 
     <!-- always perform major upgrade and remove previous versions -->
     <Property Id="PREVIOUSVERSIONSINSTALLED" Secure="yes" />
-    <Upgrade Id="0A4A02DE-0BE3-4BF4-91F0-1EA47AD26881">
+    <Upgrade Id="CC32A6ED-BDFE-4D51-9FFF-2AB51D9ECE18">
       <UpgradeVersion
         Minimum="1.0.0.0" Maximum="$(var.VERSION)"
         Property="PREVIOUSVERSIONSINSTALLED"

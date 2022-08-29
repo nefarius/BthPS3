@@ -271,5 +271,4 @@ __pycache__/
 /Setup/*.7z
 /artifacts
 RC*
-/BthPS3SetupHelper/vcpkg_installed
-/Setup/BthPS3CA/vcpkg_installed/x64-windows-static
+**/vcpkg_installed/

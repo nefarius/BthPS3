@@ -91,8 +91,14 @@ UINT __stdcall InstallDrivers(
 	WcaLog(LOGMSG_STANDARD, "Installing BthPS3PSM filter driver.");
 	if (!devcon::inf_default_install(filterInfPath, &rr2))
 	{
-		ExitOnLastError(hr, "Failed to install BthPS3 filter driver, error: %s",
-			winapi::GetLastErrorStdStr(Dutil_er).c_str());
+		//
+		// TODO: did it mean success though? More testing
+		// 
+		if (GetLastError() != ERROR_PNP_REBOOT_REQUIRED)
+		{
+			ExitOnLastError(hr, "Failed to install BthPS3 filter driver, error: %s",
+				winapi::GetLastErrorStdStr(Dutil_er).c_str());
+		}
 	}
 	WcaLog(LOGMSG_STANDARD, "BthPS3 filter driver installed.");
 
@@ -138,7 +144,7 @@ UINT __stdcall InstallDrivers(
 	si.cb = sizeof(si);
 	ZeroMemory(&pi, sizeof(pi));
 
-	importCmd = 
+	importCmd =
 		std::wstring(L"C:\\Windows\\System32\\wevtutil.exe im \"") +
 		manifestPath +
 		std::wstring(L"\"");
@@ -227,7 +233,7 @@ UINT __stdcall UninstallDrivers(
 
 	manifestPath = std::wstring(targetPath) + L"\\" + g_manifest;
 
-	importCmd = 
+	importCmd =
 		std::wstring(L"C:\\Windows\\System32\\wevtutil.exe um \"") +
 		manifestPath +
 		std::wstring(L"\"");

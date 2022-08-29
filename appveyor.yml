@@ -1,7 +1,7 @@
 version: 2.6.{build}.0
 image: Visual Studio 2019
 cache:
-- C:\projects\DMF -> appveyor.yml
+- C:\projects\DMF
 environment:
   DmfRootPath: C:\projects\DMF
 platform:
@@ -18,7 +18,7 @@ install:
 - cmd: |
     cd "C:\projects\DMF"
     git pull > NUL
-    git apply "%APPVEYOR_BUILD_FOLDER%\patches\dmf.diff
+    git apply --reject "%APPVEYOR_BUILD_FOLDER%\patches\dmf.diff
     cd %appveyor_build_folder%
 before_build:
 - cmd: nuget restore

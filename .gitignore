@@ -271,3 +271,4 @@ __pycache__/
 /Setup/*.7z
 /artifacts
 RC*
+/BthPS3SetupHelper/vcpkg_installed

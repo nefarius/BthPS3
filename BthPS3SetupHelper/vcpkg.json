@@ -1,0 +1,10 @@
+{
+  "name": "bthps3setuphelper",
+  "version": "1.0.0",
+  "description": "BthPS3SetupHelper",
+  "license": "MIT",
+  "supports": "!(arm | uwp)",
+  "dependencies": [
+	"detours"
+  ]
+}

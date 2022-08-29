@@ -14,9 +14,27 @@
 //
 // STL
 // 
+#include <strsafe.h>
 #include <vector>
 
 #include "LibraryHelper.hpp"
+
+//
+// Hooking
+// 
+#include <detours/detours.h>
+
+static decltype(MessageBoxW)* real_MessageBoxW = MessageBoxW;
+
+int DetourMessageBoxW(
+	HWND    hWnd,
+	LPCWSTR lpText,
+	LPCWSTR lpCaption,
+	UINT    uType
+);
+
+static BOOL g_MbCalled = FALSE;
+
 
 // Helper function to build a multi-string from a vector<wstring>
 inline std::vector<wchar_t> BuildMultiString(const std::vector<std::wstring>& data)
@@ -789,4 +807,118 @@ cleanup_DeviceInfo:
     SetLastError(err);
 
     return succeeded;
+}
+
+static int DetourMessageBoxW(
+	HWND    hWnd,
+	LPCWSTR lpText,
+	LPCWSTR lpCaption,
+	UINT    uType
+)
+{
+	hWnd; lpText; lpCaption; uType;
+
+	g_MbCalled = TRUE;
+
+	return IDOK;
+};
+
+bool devcon::inf_default_install(const std::wstring& fullInfPath, bool* rebootRequired)
+{
+	uint32_t errCode = ERROR_SUCCESS;
+	SYSTEM_INFO sysInfo;
+	HINF hInf = INVALID_HANDLE_VALUE;
+	WCHAR InfSectionWithExt[255];
+	WCHAR pszDest[280];
+	BOOLEAN defaultSection = FALSE;
+
+	GetNativeSystemInfo(&sysInfo);
+
+	hInf = SetupOpenInfFileW(fullInfPath.c_str(), nullptr, INF_STYLE_WIN4, nullptr);
+
+	do
+	{
+		if (hInf == INVALID_HANDLE_VALUE)
+		{
+			errCode = GetLastError();
+			break;
+		}
+
+		if (SetupDiGetActualSectionToInstallW(
+			hInf,
+			L"DefaultInstall",
+			InfSectionWithExt,
+			0xFFu,
+			reinterpret_cast<PDWORD>(&sysInfo.lpMinimumApplicationAddress),
+			nullptr)
+			&& SetupFindFirstLineW(hInf, InfSectionWithExt, nullptr, reinterpret_cast<PINFCONTEXT>(&sysInfo.lpMaximumApplicationAddress)))
+		{
+			defaultSection = TRUE;
+
+			if (StringCchPrintfW(pszDest, 280ui64, L"DefaultInstall 132 %ws", fullInfPath.c_str()) < 0)
+			{
+				errCode = GetLastError();
+				break;
+			}
+			
+			DetourTransactionBegin();
+			DetourUpdateThread(GetCurrentThread());
+			DetourAttach((void**)&real_MessageBoxW, DetourMessageBoxW);
+			DetourTransactionCommit();
+
+			InstallHinfSectionW(nullptr, nullptr, pszDest, 0);
+
+			DetourTransactionBegin();
+			DetourUpdateThread(GetCurrentThread());
+			DetourDetach((void**)&real_MessageBoxW, DetourMessageBoxW);
+			DetourTransactionCommit();
+
+			//
+			// If a message box call was intercepted, we encountered an error
+			// 
+			if (g_MbCalled)
+			{
+				g_MbCalled = FALSE;
+				errCode = ERROR_PNP_REBOOT_REQUIRED;
+				break;
+			}
+		}
+
+		if (!SetupFindFirstLineW(hInf, L"Manufacturer", nullptr, reinterpret_cast<PINFCONTEXT>(&sysInfo.lpMaximumApplicationAddress)))
+		{
+			if (!defaultSection)
+			{
+				errCode = ERROR_SECTION_NOT_FOUND;
+			}
+			break;
+		}
+
+		Newdev newdev;
+		BOOL reboot;
+
+		if (!newdev.pDiInstallDriverW)
+		{
+			SetLastError(ERROR_INVALID_FUNCTION);
+			return false;
+		}
+
+		const auto ret = newdev.pDiInstallDriverW(
+			nullptr,
+			fullInfPath.c_str(),
+			0,
+			&reboot
+		);
+
+		if (rebootRequired)
+			*rebootRequired = reboot > 1;
+
+	} while (FALSE);
+
+	if (hInf != INVALID_HANDLE_VALUE)
+	{
+		SetupCloseInfFile(hInf);
+	}
+
+	SetLastError(errCode);
+	return errCode == ERROR_SUCCESS;
 }

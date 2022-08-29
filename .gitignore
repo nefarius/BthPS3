@@ -272,3 +272,4 @@ __pycache__/
 /artifacts
 RC*
 /BthPS3SetupHelper/vcpkg_installed
+/Setup/BthPS3CA/vcpkg_installed/x64-windows-static

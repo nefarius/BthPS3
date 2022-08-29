@@ -88,21 +88,13 @@ UINT __stdcall InstallDrivers(
 	manifestPath = std::wstring(targetPath) + L"\\" + g_manifest;
 
 
-	WcaLog(LOGMSG_STANDARD, "Installing BthPS3PSM filter driver in driver store.");
-	if (!devcon::install_driver(filterInfPath, &rr1))
+	WcaLog(LOGMSG_STANDARD, "Installing BthPS3PSM filter driver.");
+	if (!devcon::inf_default_install(filterInfPath, &rr2))
 	{
-		ExitOnLastError(hr, "Failed to install BthPS3PSM filter driver in driver store, error: %s",
+		ExitOnLastError(hr, "Failed to install BthPS3 filter driver, error: %s",
 			winapi::GetLastErrorStdStr(Dutil_er).c_str());
 	}
-	WcaLog(LOGMSG_STANDARD, "BthPS3PSM filter driver installed in driver store.");
-
-	WcaLog(LOGMSG_STANDARD, "Installing BthPS3PSM filter driver on virtual hardware node.");
-	if (!devcon::install_driver(filterInfPath, &rr2))
-	{
-		ExitOnLastError(hr, "Failed to install BthPS3 filter driver on virtual hardware node, error: %s",
-			winapi::GetLastErrorStdStr(Dutil_er).c_str());
-	}
-	WcaLog(LOGMSG_STANDARD, "BthPS3 filter driver installed on virtual hardware node.");
+	WcaLog(LOGMSG_STANDARD, "BthPS3 filter driver installed.");
 
 	WcaLog(LOGMSG_STANDARD, "Adding BthPS3PSM as Bluetooth class filters.");
 	if (!devcon::add_device_class_lower_filter(&GUID_DEVCLASS_BLUETOOTH, BthPS3FilterName))

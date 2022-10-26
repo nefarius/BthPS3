@@ -1,0 +1,2 @@
+(function(e){"use strict";if(typeof define==="function"&&define.amd){define(["jquery","./version"],e)}else{e(jQuery)}})(function(e){"use strict";return e.fn.scrollParent=function(t){var s=this.css("position"),n=s==="absolute",o=t?/(auto|scroll|hidden)/:/(auto|scroll)/,i=this.parents().filter(function(){var t=e(this);if(n&&t.css("position")==="static"){return false}return o.test(t.css("overflow")+t.css("overflow-y")+t.css("overflow-x"))}).eq(0);return s==="fixed"||!i.length?e(this[0].ownerDocument||document):i}});
+//# sourceMappingURL=scroll-parent.js.map

@@ -35,7 +35,7 @@ For details, please consult the individual `LICENSE` files.
 
 ## Environment
 
-BthPS3 components (drivers, utilities) are developed, designed and tested for Windows 7 SP1 or newer (x86, x64).
+BthPS3 components (drivers, utilities) are developed, designed and tested for **Windows 10 or newer** (x86, x64, ARM64).
 
 ## Supported Bluetooth host devices
 

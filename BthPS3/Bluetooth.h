@@ -48,9 +48,9 @@
 #include <bthguid.h>
 
 #define POOLTAG_BTHPS3                  '3SPB'
-#define BTH_DEVICE_INFO_MAX_COUNT       0x0A
-#define BTH_DEVICE_INFO_MAX_RETRIES     0x05
-#define BTHPS3_MAX_NUM_DEVICES			0xFF
+#define BTH_DEVICE_INFO_MAX_COUNT       UCHAR_MAX
+#define BTH_DEVICE_INFO_MAX_RETRIES     UCHAR_MAX
+#define BTHPS3_MAX_NUM_DEVICES			UCHAR_MAX
 #define BTHPS3_BTH_ADDR_MAX_CHARS		13 /* 12 characters + NULL terminator */
 
 

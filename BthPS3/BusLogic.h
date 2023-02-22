@@ -35,6 +35,7 @@
  **********************************************************************************/
 
 
+// ReSharper disable CppClangTidyModernizeMacroToEnum
 #pragma once
 
 #define MAX_DEVICE_ID_LEN				200

@@ -104,7 +104,7 @@ L2CAP_PS3_HandleRemoteConnect(
 		{
 			TraceError(
 				TRACE_L2CAP,
-				"BTHPS3_GET_DEVICE_NAME failed with status %!STATUS!, dropping connection",
+				"BthPS3_GetDeviceName failed with status %!STATUS!, dropping connection",
 				status
 			);
 

@@ -229,6 +229,7 @@ BthPS3PSMEvtIoInternalDeviceControl(
             "WdfRequestSend failed with status %!STATUS!", 
             status
         );
+        EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfRequestGetStatus", status);
         WdfRequestComplete(Request, status);
     }
 

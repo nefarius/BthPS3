@@ -73,8 +73,7 @@ BthPS3PSM_CreateDevice(
 	WDF_PNPPOWER_EVENT_CALLBACKS pnpPowerCallbacks;
 	WDFKEY key;
 	WDF_OBJECT_ATTRIBUTES stringAttributes;
-	BOOLEAN isUsb = FALSE, isSystem = FALSE;
-	WDF_DEVICE_STATE deviceState;
+	BOOLEAN isUsb = FALSE;
 	BOOLEAN ret;
 
 	DECLARE_CONST_UNICODE_STRING(patchPSMRegValue, G_PatchPSMRegValue);
@@ -83,16 +82,7 @@ BthPS3PSM_CreateDevice(
 
 	PAGED_CODE();
 
-	// TODO: this is obsolete and can be removed
-	if (NT_SUCCESS(BthPS3PSM_IsVirtualRootDevice(DeviceInit, &ret)) && ret)
-	{
-		TraceVerbose(
-			TRACE_DEVICE,
-			"Device is virtual root device"
-		);
-		isSystem = TRUE;
-	}
-	else if (NT_SUCCESS(BthPS3PSM_IsBthUsbDevice(DeviceInit, &ret)) && ret)
+	if (NT_SUCCESS(BthPS3PSM_IsBthUsbDevice(DeviceInit, &ret)) && ret)
 	{
 		TraceVerbose(
 			TRACE_DEVICE,
@@ -111,25 +101,18 @@ BthPS3PSM_CreateDevice(
 	//
 	// Don't create a device object and return
 	// 
-	if (!isUsb && !isSystem)
+	if (!isUsb)
 	{
 		return STATUS_SUCCESS;
 	}
 
-	if (!isSystem)
-	{
-		WdfFdoInitSetFilter(DeviceInit);
-	}
+	WdfFdoInitSetFilter(DeviceInit);
 
 	//
 	// PNP/Power callbacks
 	// 
 	WDF_PNPPOWER_EVENT_CALLBACKS_INIT(&pnpPowerCallbacks);
-
-	if (!isSystem)
-	{
-		pnpPowerCallbacks.EvtDevicePrepareHardware = BthPS3PSM_EvtDevicePrepareHardware;
-	}
+	pnpPowerCallbacks.EvtDevicePrepareHardware = BthPS3PSM_EvtDevicePrepareHardware;
 
 	WdfDeviceInitSetPnpPowerEventCallbacks(DeviceInit, &pnpPowerCallbacks);
 
@@ -137,11 +120,8 @@ BthPS3PSM_CreateDevice(
 	// Device object attributes
 	// 
 	WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&deviceAttributes, DEVICE_CONTEXT);
-	if (!isSystem)
-	{
-		deviceAttributes.EvtCleanupCallback = BthPS3PSM_EvtDeviceContextCleanup;
-	}
-
+	deviceAttributes.EvtCleanupCallback = BthPS3PSM_EvtDeviceContextCleanup;
+	
 	if (NT_SUCCESS(status = WdfDeviceCreate(
 		&DeviceInit,
 		&deviceAttributes,
@@ -149,21 +129,6 @@ BthPS3PSM_CreateDevice(
 	)))
 	{
 		PDEVICE_CONTEXT deviceContext = DeviceGetContext(device);
-
-		if (isSystem)
-		{
-			//
-			// Hide from UI
-			// 
-			WDF_DEVICE_STATE_INIT(&deviceState);
-			deviceState.DontDisplayInUI = WdfTrue;
-			WdfDeviceSetDeviceState(device, &deviceState);
-
-			//
-			// Done, no need for further initialization
-			// 
-			return status;
-		}
 
 #pragma region Add this device to global collection
 
@@ -182,7 +147,7 @@ BthPS3PSM_CreateDevice(
 				"WdfWaitLockAcquire failed with status %!STATUS!",
 				status
 			);
-			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfWaitLockAcquire", status);			
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfWaitLockAcquire", status);
 		}
 
 		//
@@ -199,7 +164,7 @@ BthPS3PSM_CreateDevice(
 				"WdfCollectionAdd failed with status %!STATUS!",
 				status
 			);
-			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfCollectionAdd", status);			
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfCollectionAdd", status);
 		}
 		WdfWaitLockRelease(FilterDeviceCollectionLock);
 
@@ -332,69 +297,6 @@ BthPS3PSM_CreateDevice(
 		//
 		status = BthPS3PSM_QueueInitialize(device);
 	}
-
-	return status;
-}
-
-NTSTATUS
-BthPS3PSM_IsVirtualRootDevice(
-	PWDFDEVICE_INIT DeviceInit,
-	PBOOLEAN Result
-)
-{
-	NTSTATUS status;
-	WCHAR enumeratorName[MAX_DEVICE_ID_LEN];
-	WCHAR hardwareID[MAX_DEVICE_ID_LEN];
-	WCHAR className[MAX_DEVICE_ID_LEN];
-	ULONG returnSize;
-	UNICODE_STRING lhsEnumeratorName, lhsHardwareID, lhsClassName;
-	UNICODE_STRING rhsEnumeratorName, rhsHardwareID, rhsClassName;
-
-	RtlInitUnicodeString(&rhsEnumeratorName, L"ROOT");
-	RtlInitUnicodeString(&rhsHardwareID, BTHPS3PSM_FILTER_HARDWARE_ID);
-	RtlInitUnicodeString(&rhsClassName, L"System");
-
-	if (!NT_SUCCESS(status = WdfFdoInitQueryProperty(
-		DeviceInit,
-		DevicePropertyEnumeratorName,
-		sizeof(enumeratorName),
-		enumeratorName,
-		&returnSize
-	)))
-	{
-		return status;
-	}
-
-	if (!NT_SUCCESS(status = WdfFdoInitQueryProperty(
-		DeviceInit,
-		DevicePropertyHardwareID,
-		sizeof(hardwareID),
-		hardwareID,
-		&returnSize
-	)))
-	{
-		return status;
-	}
-
-	if (!NT_SUCCESS(status = WdfFdoInitQueryProperty(
-		DeviceInit,
-		DevicePropertyClassName,
-		sizeof(className),
-		className,
-		&returnSize
-	)))
-	{
-		return status;
-	}
-
-	RtlInitUnicodeString(&lhsEnumeratorName, enumeratorName);
-	RtlInitUnicodeString(&lhsHardwareID, hardwareID);
-	RtlInitUnicodeString(&lhsClassName, className);
-
-	if (Result)
-		*Result = ((RtlCompareUnicodeString(&lhsEnumeratorName, &rhsEnumeratorName, TRUE) == 0)
-			&& (RtlCompareUnicodeString(&lhsHardwareID, &rhsHardwareID, TRUE) == 0)
-			&& (RtlCompareUnicodeString(&lhsClassName, &rhsClassName, TRUE) == 0));
 
 	return status;
 }

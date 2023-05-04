@@ -37,6 +37,7 @@
 
 #include "driver.h"
 #include "driver.tmh"
+#include "BthPS3PSMETW.h"
 
 #ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
 extern WDFCOLLECTION   FilterDeviceCollection;
@@ -51,179 +52,131 @@ extern WDFWAITLOCK     FilterDeviceCollectionLock;
 
 NTSTATUS
 DriverEntry(
-    _In_ PDRIVER_OBJECT  DriverObject,
-    _In_ PUNICODE_STRING RegistryPath
-    )
-/*++
-
-Routine Description:
-    DriverEntry initializes the driver and is the first routine called by the
-    system after the driver is loaded. DriverEntry specifies the other entry
-    points in the function driver, such as EvtDevice and DriverUnload.
-
-Parameters Description:
-
-    DriverObject - represents the instance of the function driver that is loaded
-    into memory. DriverEntry must initialize members of DriverObject before it
-    returns to the caller. DriverObject is allocated by the system before the
-    driver is loaded, and it is released by the system after the system unloads
-    the function driver from memory.
-
-    RegistryPath - represents the driver specific path in the Registry.
-    The function driver can use the path to store driver related data between
-    reboots. The path does not store hardware instance specific data.
-
-Return Value:
-
-    STATUS_SUCCESS if successful,
-    STATUS_UNSUCCESSFUL otherwise.
-
---*/
+	_In_ PDRIVER_OBJECT  DriverObject,
+	_In_ PUNICODE_STRING RegistryPath
+)
 {
-    WDF_DRIVER_CONFIG config;
-    NTSTATUS status;
-    WDF_OBJECT_ATTRIBUTES attributes;
+	WDF_DRIVER_CONFIG config;
+	NTSTATUS status;
+	WDF_OBJECT_ATTRIBUTES attributes;
 
-    //
-    // Initialize WPP Tracing
-    //
-    WPP_INIT_TRACING(DriverObject, RegistryPath);
+	//
+	// Initialize WPP Tracing
+	//
+	WPP_INIT_TRACING(DriverObject, RegistryPath);
 
-    FuncEntry(TRACE_DRIVER);
+	EventRegisterNefarius_Bluetooth_PS_Filter_Service();
 
-    //
-    // Register a cleanup callback so that we can call WPP_CLEANUP when
-    // the framework driver object is deleted during driver unload.
-    //
-    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
-    attributes.EvtCleanupCallback = BthPS3PSM_EvtDriverContextCleanup;
+	FuncEntry(TRACE_DRIVER);
 
-    WDF_DRIVER_CONFIG_INIT(&config,
-                           BthPS3PSM_EvtDeviceAdd
-                           );
+	//
+	// Register a cleanup callback so that we can call WPP_CLEANUP when
+	// the framework driver object is deleted during driver unload.
+	//
+	WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+	attributes.EvtCleanupCallback = BthPS3PSM_EvtDriverContextCleanup;
 
-    status = WdfDriverCreate(DriverObject,
-                             RegistryPath,
-                             &attributes,
-                             &config,
-                             WDF_NO_HANDLE
-                             );
+	WDF_DRIVER_CONFIG_INIT(&config,
+		BthPS3PSM_EvtDeviceAdd
+	);
 
-    if (!NT_SUCCESS(status)) {
-        TraceError( 
-            TRACE_DRIVER, 
-            "WdfDriverCreate failed with status %!STATUS!", 
-            status
-        );
-        WPP_CLEANUP(DriverObject);
-        return status;
-    }
+	if (!NT_SUCCESS(status = WdfDriverCreate(DriverObject,
+		RegistryPath,
+		&attributes,
+		&config,
+		WDF_NO_HANDLE
+	)))
+	{
+		TraceError(
+			TRACE_DRIVER,
+			"WdfDriverCreate failed with status %!STATUS!",
+			status
+		);
+		WPP_CLEANUP(DriverObject);
+		return status;
+	}
 
 #ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
 
-    status = WdfCollectionCreate(WDF_NO_OBJECT_ATTRIBUTES,
-        &FilterDeviceCollection);
-    if (!NT_SUCCESS(status))
-    {
-        TraceError( 
-            TRACE_DRIVER, 
-            "WdfCollectionCreate failed with %!STATUS!", 
-            status
-        );
-        WPP_CLEANUP(DriverObject);
-        return status;
-    }
+	if (!NT_SUCCESS(status = WdfCollectionCreate(
+		WDF_NO_OBJECT_ATTRIBUTES,
+		&FilterDeviceCollection
+	)))
+	{
+		TraceError(
+			TRACE_DRIVER,
+			"WdfCollectionCreate failed with %!STATUS!",
+			status
+		);
+		WPP_CLEANUP(DriverObject);
+		return status;
+	}
 
-    //
-    // The wait-lock object has the driver object as a default parent.
-    //
+	//
+	// The wait-lock object has the driver object as a default parent.
+	//
 
-    status = WdfWaitLockCreate(WDF_NO_OBJECT_ATTRIBUTES,
-        &FilterDeviceCollectionLock);
-    if (!NT_SUCCESS(status))
-    {
-        TraceError(
-            TRACE_DRIVER,
-            "WdfWaitLockCreate failed with %!STATUS!",
-            status
-        );
-        WPP_CLEANUP(DriverObject);
-        return status;
-    }
+	if (!NT_SUCCESS(status = WdfWaitLockCreate(
+		WDF_NO_OBJECT_ATTRIBUTES,
+		&FilterDeviceCollectionLock
+	)))
+	{
+		TraceError(
+			TRACE_DRIVER,
+			"WdfWaitLockCreate failed with %!STATUS!",
+			status
+		);
+		WPP_CLEANUP(DriverObject);
+		return status;
+	}
 
 #endif
 
-    FuncExit(TRACE_DRIVER, "status=%!STATUS!", status);
+	EventWriteStartEvent(NULL, DriverObject, status);
 
-    return status;
+	FuncExit(TRACE_DRIVER, "status=%!STATUS!", status);
+
+	return status;
 }
 
 NTSTATUS
 BthPS3PSM_EvtDeviceAdd(
-    _In_    WDFDRIVER       Driver,
-    _Inout_ PWDFDEVICE_INIT DeviceInit
-    )
-/*++
-Routine Description:
-
-    EvtDeviceAdd is called by the framework in response to AddDevice
-    call from the PnP manager. We create and initialize a device object to
-    represent a new instance of the device.
-
-Arguments:
-
-    Driver - Handle to a framework driver object created in DriverEntry
-
-    DeviceInit - Pointer to a framework-allocated WDFDEVICE_INIT structure.
-
-Return Value:
-
-    NTSTATUS
-
---*/
+	_In_    WDFDRIVER       Driver,
+	_Inout_ PWDFDEVICE_INIT DeviceInit
+)
 {
-    NTSTATUS status;
+	NTSTATUS status;
 
-    UNREFERENCED_PARAMETER(Driver);
+	UNREFERENCED_PARAMETER(Driver);
 
-    PAGED_CODE();
+	PAGED_CODE();
 
-    FuncEntry(TRACE_DRIVER);
+	FuncEntry(TRACE_DRIVER);
 
-    status = BthPS3PSM_CreateDevice(DeviceInit);
+	status = BthPS3PSM_CreateDevice(DeviceInit);
 
-    FuncExit(TRACE_DRIVER, "status=%!STATUS!", status);
+	FuncExit(TRACE_DRIVER, "status=%!STATUS!", status);
 
-    return status;
+	return status;
 }
 
 VOID
 BthPS3PSM_EvtDriverContextCleanup(
-    _In_ WDFOBJECT DriverObject
-    )
-/*++
-Routine Description:
-
-    Free all the resources allocated in DriverEntry.
-
-Arguments:
-
-    DriverObject - handle to a WDF Driver object.
-
-Return Value:
-
-    VOID.
-
---*/
+	_In_ WDFOBJECT DriverObject
+)
 {
-    UNREFERENCED_PARAMETER(DriverObject);
+	UNREFERENCED_PARAMETER(DriverObject);
 
-    PAGED_CODE();
+	PAGED_CODE();
 
-    FuncEntry(TRACE_DRIVER);
+	FuncEntry(TRACE_DRIVER);
 
-    //
-    // Stop WPP Tracing
-    //
-    WPP_CLEANUP(WdfDriverWdmGetDriverObject((WDFDRIVER)DriverObject));
+	EventWriteUnloadEvent(NULL, DriverObject);
+
+	EventUnregisterNefarius_Bluetooth_PS_Filter_Service();
+
+	//
+	// Stop WPP Tracing
+	//
+	WPP_CLEANUP(WdfDriverWdmGetDriverObject((WDFDRIVER)DriverObject));
 }

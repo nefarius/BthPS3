@@ -147,7 +147,7 @@ Check out the companion solution [DsHidMini](https://github.com/ViGEm/DsHidMini)
 
 ### Support
 
-If facing issues please [search on the forums](https://forums.vigem.org/) first for similar cases and possible solutions.
+If facing issues please [check out our official support resources](https://vigem.org/Community-Support/) first for similar cases and possible solutions.
 
 ## Contributing
 

@@ -19,6 +19,10 @@ install:
     cd "C:\projects\DMF"
     git pull > NUL
     cd %appveyor_build_folder%
+- cmd: copy /q .\build\__Directory.Build.props C:\projects\DMF\Directory.Build.props
+- cmd: vcpkg integrate install
+- cmd: vcpkg update
+- cmd: vcpkg install detours:x86-windows-static detours:x64-windows-static
 before_build:
 - cmd: nuget restore
 - ps: Invoke-WebRequest "https://github.com/nefarius/vpatch/releases/latest/download/vpatch.exe" -OutFile vpatch.exe

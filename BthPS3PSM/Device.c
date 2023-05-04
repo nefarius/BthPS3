@@ -321,10 +321,13 @@ BthPS3PSM_CreateDevice(
 	return status;
 }
 
+_Success_(return == STATUS_SUCCESS)
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3PSM_IsBthUsbDevice(
-	PWDFDEVICE_INIT DeviceInit,
-	PBOOLEAN Result
+	_In_ PWDFDEVICE_INIT DeviceInit,
+	_Inout_opt_ PBOOLEAN Result
 )
 {
 	NTSTATUS status;

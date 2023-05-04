@@ -63,39 +63,39 @@ typedef struct _DEVICE_CONTEXT
 	//
 	// Framework USB object
 	// 
-    WDFUSBDEVICE UsbDevice;
+	WDFUSBDEVICE UsbDevice;
 
 	//
 	// USB interface object
 	// 
-    WDFUSBINTERFACE UsbInterface;
+	WDFUSBINTERFACE UsbInterface;
 
 	//
 	// USB Interrupt (in) pipe handle
 	// 
-    WDFUSBPIPE InterruptPipe;
+	WDFUSBPIPE InterruptPipe;
 
 	//
 	// USB Bulk Read (in) handle
 	// 
-    WDFUSBPIPE BulkReadPipe;
+	WDFUSBPIPE BulkReadPipe;
 
 	//
 	// USB Bulk Write (out) handle
 	// 
-    WDFUSBPIPE BulkWritePipe;
+	WDFUSBPIPE BulkWritePipe;
 
 	//
 	// Patches PSM values if TRUE
 	// 
-    ULONG IsPsmPatchingEnabled;
+	ULONG IsPsmPatchingEnabled;
 
 	//
 	// Symbolic link name of host radio we're loaded onto
 	// 
-    WDFSTRING SymbolicLinkName;
-	
-} DEVICE_CONTEXT, *PDEVICE_CONTEXT;
+	WDFSTRING SymbolicLinkName;
+
+} DEVICE_CONTEXT, * PDEVICE_CONTEXT;
 
 //
 // This macro will generate an inline function called DeviceGetContext
@@ -109,16 +109,19 @@ WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(DEVICE_CONTEXT, DeviceGetContext)
 //
 NTSTATUS
 BthPS3PSM_CreateDevice(
-    _Inout_ PWDFDEVICE_INIT DeviceInit
-    );
+	_Inout_ PWDFDEVICE_INIT DeviceInit
+);
 
 EVT_WDF_DEVICE_CONTEXT_CLEANUP BthPS3PSM_EvtDeviceContextCleanup;
 EVT_WDF_DEVICE_PREPARE_HARDWARE BthPS3PSM_EvtDevicePrepareHardware;
 
+_Success_(return == STATUS_SUCCESS)
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3PSM_IsBthUsbDevice(
-	PWDFDEVICE_INIT DeviceInit, 
-	PBOOLEAN Result
+	_In_ PWDFDEVICE_INIT DeviceInit,
+	_Inout_opt_ PBOOLEAN Result
 );
 
 _Success_(return == STATUS_SUCCESS)
@@ -127,7 +130,7 @@ _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3PSM_GetPropertyInstanceId(
 	_In_ PWDFDEVICE_INIT DeviceInit,
-	_Inout_ WDFMEMORY* Memory
+	_Inout_ WDFMEMORY * Memory
 );
 
 EXTERN_C_END

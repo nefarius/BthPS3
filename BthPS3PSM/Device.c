@@ -71,7 +71,7 @@ BthPS3PSM_CreateDevice(
 	WDFDEVICE device;
 	NTSTATUS status;
 	WDF_PNPPOWER_EVENT_CALLBACKS pnpPowerCallbacks;
-	WDFKEY key;
+	WDFKEY key = NULL;
 	WDF_OBJECT_ATTRIBUTES stringAttributes;
 	BOOLEAN isUsb = FALSE;
 	BOOLEAN ret;
@@ -79,6 +79,8 @@ BthPS3PSM_CreateDevice(
 	DECLARE_CONST_UNICODE_STRING(patchPSMRegValue, G_PatchPSMRegValue);
 	DECLARE_CONST_UNICODE_STRING(linkNameRegValue, G_SymbolicLinkName);
 
+
+	FuncEntry(TRACE_DEVICE);
 
 	PAGED_CODE();
 
@@ -103,31 +105,43 @@ BthPS3PSM_CreateDevice(
 	// 
 	if (!isUsb)
 	{
+		FuncExitNoReturn(TRACE_DEVICE);
 		return STATUS_SUCCESS;
 	}
 
-	WdfFdoInitSetFilter(DeviceInit);
-
-	//
-	// PNP/Power callbacks
-	// 
-	WDF_PNPPOWER_EVENT_CALLBACKS_INIT(&pnpPowerCallbacks);
-	pnpPowerCallbacks.EvtDevicePrepareHardware = BthPS3PSM_EvtDevicePrepareHardware;
-
-	WdfDeviceInitSetPnpPowerEventCallbacks(DeviceInit, &pnpPowerCallbacks);
-
-	//
-	// Device object attributes
-	// 
-	WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&deviceAttributes, DEVICE_CONTEXT);
-	deviceAttributes.EvtCleanupCallback = BthPS3PSM_EvtDeviceContextCleanup;
-	
-	if (NT_SUCCESS(status = WdfDeviceCreate(
-		&DeviceInit,
-		&deviceAttributes,
-		&device
-	)))
+	do
 	{
+		WdfFdoInitSetFilter(DeviceInit);
+
+		//
+		// PNP/Power callbacks
+		// 
+		WDF_PNPPOWER_EVENT_CALLBACKS_INIT(&pnpPowerCallbacks);
+		pnpPowerCallbacks.EvtDevicePrepareHardware = BthPS3PSM_EvtDevicePrepareHardware;
+
+		WdfDeviceInitSetPnpPowerEventCallbacks(DeviceInit, &pnpPowerCallbacks);
+
+		//
+		// Device object attributes
+		// 
+		WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&deviceAttributes, DEVICE_CONTEXT);
+		deviceAttributes.EvtCleanupCallback = BthPS3PSM_EvtDeviceContextCleanup;
+
+		if (!NT_SUCCESS(status = WdfDeviceCreate(
+			&DeviceInit,
+			&deviceAttributes,
+			&device
+		)))
+		{
+			TraceError(
+				TRACE_DEVICE,
+				"WdfDeviceCreate failed with status %!STATUS!",
+				status
+			);
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfDeviceCreate", status);
+			break;
+		}
+
 		PDEVICE_CONTEXT deviceContext = DeviceGetContext(device);
 
 #pragma region Add this device to global collection
@@ -148,6 +162,7 @@ BthPS3PSM_CreateDevice(
 				status
 			);
 			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfWaitLockAcquire", status);
+			break;
 		}
 
 		//
@@ -170,91 +185,25 @@ BthPS3PSM_CreateDevice(
 
 		if (!NT_SUCCESS(status))
 		{
-			return status;
+			break;
 		}
 
 #endif
 
 #pragma endregion
 
-		if (NT_SUCCESS(status = WdfDeviceOpenRegistryKey(
+		/*
+		 * Expands to e.g.:
+		 *
+		 * "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\USB\VID_XXXX&PID_XXXX\XXXXXXXXXXXXX\Device Parameters"
+		 */
+		if (!NT_SUCCESS(status = WdfDeviceOpenRegistryKey(
 			device,
-			/*
-			 * Expands to e.g.:
-			 *
-			 * "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\USB\VID_XXXX&PID_XXXX\a&c9c4e92&0&4\Device Parameters"
-			 *
-			 */
 			PLUGPLAY_REGKEY_DEVICE,
 			KEY_READ,
 			WDF_NO_OBJECT_ATTRIBUTES,
 			&key
 		)))
-		{
-			if (!NT_SUCCESS(status = WdfRegistryQueryULong(
-				key,
-				&patchPSMRegValue,
-				&deviceContext->IsPsmPatchingEnabled
-			)))
-			{
-				TraceError(
-					TRACE_DEVICE,
-					"WdfRegistryQueryULong failed with status %!STATUS!",
-					status
-				);
-				EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfRegistryQueryULong", status);
-			}
-			else
-			{
-				TraceVerbose(
-					TRACE_DEVICE,
-					"BthPS3PSMPatchEnabled value retrieved"
-				);
-			}
-
-			WDF_OBJECT_ATTRIBUTES_INIT(&stringAttributes);
-			stringAttributes.ParentObject = device;
-
-			if (!NT_SUCCESS(status = WdfStringCreate(
-				NULL,
-				&stringAttributes,
-				&deviceContext->SymbolicLinkName
-			)))
-			{
-				TraceError(
-					TRACE_DEVICE,
-					"WdfStringCreate failed with status %!STATUS!",
-					status
-				);
-				EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfStringCreate", status);
-			}
-			else
-			{
-				if (!NT_SUCCESS(status = WdfRegistryQueryString(
-					key,
-					&linkNameRegValue,
-					deviceContext->SymbolicLinkName
-				)))
-				{
-					TraceError(
-						TRACE_DEVICE,
-						"WdfRegistryQueryString failed with status %!STATUS!",
-						status
-					);
-					EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfRegistryQueryString", status);
-				}
-				else
-				{
-					TraceVerbose(
-						TRACE_DEVICE,
-						"SymbolicLinkName value retrieved"
-					);
-				}
-			}
-
-			WdfRegistryClose(key);
-		}
-		else
 		{
 			TraceError(
 				TRACE_DEVICE,
@@ -262,8 +211,71 @@ BthPS3PSM_CreateDevice(
 				status
 			);
 			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfDeviceOpenRegistryKey", status);
+			break;
 		}
 
+		// 
+		// Query for BthPS3PSMPatchEnabled value
+		// 
+		if (!NT_SUCCESS(status = WdfRegistryQueryULong(
+			key,
+			&patchPSMRegValue,
+			&deviceContext->IsPsmPatchingEnabled
+		)))
+		{
+			TraceError(
+				TRACE_DEVICE,
+				"WdfRegistryQueryULong failed with status %!STATUS!",
+				status
+			);
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfRegistryQueryULong", status);
+		}
+		else
+		{
+			TraceVerbose(
+				TRACE_DEVICE,
+				"BthPS3PSMPatchEnabled value retrieved"
+			);
+		}
+
+		WDF_OBJECT_ATTRIBUTES_INIT(&stringAttributes);
+		stringAttributes.ParentObject = device;
+
+		// 
+		// Create string to hold symbolic link
+		// 
+		if (!NT_SUCCESS(status = WdfStringCreate(
+			NULL,
+			&stringAttributes,
+			&deviceContext->SymbolicLinkName
+		)))
+		{
+			TraceError(
+				TRACE_DEVICE,
+				"WdfStringCreate failed with status %!STATUS!",
+				status
+			);
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfStringCreate", status);
+			break;
+		}
+
+		// 
+		// Grab symbolic link so device can be associated with radio in user-mode
+		// 
+		if (!NT_SUCCESS(status = WdfRegistryQueryString(
+			key,
+			&linkNameRegValue,
+			deviceContext->SymbolicLinkName
+		)))
+		{
+			TraceError(
+				TRACE_DEVICE,
+				"WdfRegistryQueryString failed with status %!STATUS!",
+				status
+			);
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfRegistryQueryString", status);
+			break;
+		}
 
 #ifndef BTHPS3PSM_WITH_CONTROL_DEVICE
 		deviceContext->IsPsmPatchingEnabled = TRUE;
@@ -284,8 +296,7 @@ BthPS3PSM_CreateDevice(
 				status
 			);
 			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3PSM_CreateControlDevice", status);
-
-			return status;
+			break;
 		}
 
 #pragma endregion
@@ -296,7 +307,15 @@ BthPS3PSM_CreateDevice(
 		// Initialize the I/O Package and any Queues
 		//
 		status = BthPS3PSM_QueueInitialize(device);
+
+	} while (FALSE);
+
+	if (key)
+	{
+		WdfRegistryClose(key);
 	}
+
+	FuncExit(TRACE_DEVICE, "status=%!STATUS!", status);
 
 	return status;
 }

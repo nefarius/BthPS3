@@ -18,7 +18,6 @@ install:
 - cmd: |
     cd "C:\projects\DMF"
     git pull > NUL
-    git apply --reject "%APPVEYOR_BUILD_FOLDER%\patches\dmf.diff
     cd %appveyor_build_folder%
 before_build:
 - cmd: nuget restore

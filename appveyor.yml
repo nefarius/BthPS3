@@ -19,7 +19,7 @@ install:
     cd "C:\projects\DMF"
     git pull > NUL
     cd %appveyor_build_folder%
-- cmd: copy /q .\build\__Directory.Build.props C:\projects\DMF\Directory.Build.props
+- cmd: copy "%appveyor_build_folder%\build\__Directory.Build.props" "C:\projects\DMF\Directory.Build.props"
 - cmd: vcpkg integrate install
 - cmd: vcpkg update
 - cmd: vcpkg install detours:x86-windows-static detours:x64-windows-static

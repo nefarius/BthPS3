@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='utf-8' standalone='yes'?>
+<instrumentationManifest xmlns="http://schemas.microsoft.com/win/2004/08/events" xmlns:win="http://manifests.microsoft.com/win/2004/08/windows/events" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schemas.microsoft.com/win/2004/08/events eventman.xsd">
+  <instrumentation>
+    <events>
+      <provider
+        guid="{586aa8b1-53a6-404f-9b3e-14483e514a2c}"
+        messageFileName="%WinDir%\System32\drivers\BthPS3PSM.sys"
+        name="Nefarius Bluetooth PS Filter Service"
+        resourceFileName="%WinDir%\System32\drivers\BthPS3PSM.sys"
+        symbol="DriverControlGuid">
+        <channels>
+          <importChannel chid="SYSTEM" name="System"/>
+        </channels>
+        <templates>
+          <template tid="tid_load_template">
+            <data inType="win:Pointer" name="DriverObjPtr" outType="win:HexInt64"/>
+            <data inType="win:UInt32" name="Status" outType="win:NTSTATUS"/>
+          </template>
+          <template tid="tid_unload_template">
+            <data inType="win:Pointer" name="DriverObjPtr" outType="win:HexInt64"/>
+          </template>
+          <template tid="tid_failed_with_ntstatus">
+            <data inType="win:AnsiString" name="ScopeName" outType="win:Utf8"/>
+            <data inType="win:UnicodeString" name="FunctionName" outType="xs:string"/>
+            <data inType="win:UInt32" name="Status" outType="win:NTSTATUS"/>
+          </template>
+        </templates>
+        <events>
+          <event value="1" channel="SYSTEM" level="win:Informational" message="$(string.StartEvent.EventMessage)" opcode="win:Start" symbol="StartEvent" template="tid_load_template"/>
+          <event value="2" channel="SYSTEM" level="win:Informational" message="$(string.UnloadEvent.EventMessage)" opcode="win:Stop" symbol="UnloadEvent" template="tid_unload_template"/>
+          <event value="3" channel="SYSTEM" level="win:Error" message="$(string.FailedWithNTStatus.EventMessage)" opcode="win:Info" symbol="FailedWithNTStatus" template="tid_failed_with_ntstatus"/>
+        </events>
+      </provider>
+    </events>
+  </instrumentation>
+  <localization xmlns="http://schemas.microsoft.com/win/2004/08/events">
+    <resources culture="en-US">
+      <stringTable>
+        <string id="StartEvent.EventMessage" value="Driver loaded (obj: %1, status: %2)"/>
+        <string id="UnloadEvent.EventMessage" value="Driver unloaded (obj: %1)"/>
+        <string id="FailedWithNTStatus.EventMessage" value="[%1] %2 failed with NTSTATUS %3"/>
+      </stringTable>
+    </resources>
+  </localization>
+</instrumentationManifest>

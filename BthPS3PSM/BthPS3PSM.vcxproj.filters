@@ -77,4 +77,9 @@
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
+  <ItemGroup>
+    <MessageCompile Include="BthPS3PSM.man">
+      <Filter>Resource Files</Filter>
+    </MessageCompile>
+  </ItemGroup>
 </Project>

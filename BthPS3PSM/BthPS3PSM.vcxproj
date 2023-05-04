@@ -295,6 +295,35 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="BthPS3PSM.rc" />
+	<ResourceCompile Include="$(IntDir)BthPS3PSMETW.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <MessageCompile Include="BthPS3PSM.man">
+	  <GenerateKernelModeLoggingMacros Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</GenerateKernelModeLoggingMacros>
+      <UseBaseNameOfInput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</UseBaseNameOfInput>
+      <GenerateKernelModeLoggingMacros Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</GenerateKernelModeLoggingMacros>
+      <UseBaseNameOfInput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</UseBaseNameOfInput>
+      <GenerateKernelModeLoggingMacros Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">true</GenerateKernelModeLoggingMacros>
+      <UseBaseNameOfInput Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">true</UseBaseNameOfInput>
+      <GenerateKernelModeLoggingMacros Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">true</GenerateKernelModeLoggingMacros>
+      <UseBaseNameOfInput Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">true</UseBaseNameOfInput>
+      <GenerateKernelModeLoggingMacros Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">true</GenerateKernelModeLoggingMacros>
+      <UseBaseNameOfInput Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">true</UseBaseNameOfInput>
+      <GenerateKernelModeLoggingMacros Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">true</GenerateKernelModeLoggingMacros>
+      <UseBaseNameOfInput Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">true</UseBaseNameOfInput>
+      <GenerateKernelModeLoggingMacros Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateKernelModeLoggingMacros>
+      <UseBaseNameOfInput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</UseBaseNameOfInput>
+      <GenerateKernelModeLoggingMacros Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateKernelModeLoggingMacros>
+      <UseBaseNameOfInput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</UseBaseNameOfInput>
+      <GeneratedFilesBaseName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename)ETW</GeneratedFilesBaseName>
+      <GeneratedFilesBaseName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename)ETW</GeneratedFilesBaseName>
+      <GeneratedFilesBaseName Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">%(Filename)ETW</GeneratedFilesBaseName>
+      <GeneratedFilesBaseName Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">%(Filename)ETW</GeneratedFilesBaseName>
+      <GeneratedFilesBaseName Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">%(Filename)ETW</GeneratedFilesBaseName>
+      <GeneratedFilesBaseName Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">%(Filename)ETW</GeneratedFilesBaseName>
+      <GeneratedFilesBaseName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename)ETW</GeneratedFilesBaseName>
+      <GeneratedFilesBaseName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename)ETW</GeneratedFilesBaseName>
+	</MessageCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

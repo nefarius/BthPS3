@@ -92,6 +92,8 @@ DriverEntry(
 			"WdfDriverCreate failed with status %!STATUS!",
 			status
 		);
+		EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfDriverCreate", status);
+		EventUnregisterNefarius_Bluetooth_PS_Filter_Service();
 		WPP_CLEANUP(DriverObject);
 		return status;
 	}
@@ -108,6 +110,8 @@ DriverEntry(
 			"WdfCollectionCreate failed with %!STATUS!",
 			status
 		);
+		EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfCollectionCreate", status);
+		EventUnregisterNefarius_Bluetooth_PS_Filter_Service();
 		WPP_CLEANUP(DriverObject);
 		return status;
 	}
@@ -126,6 +130,8 @@ DriverEntry(
 			"WdfWaitLockCreate failed with %!STATUS!",
 			status
 		);
+		EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfWaitLockCreate", status);
+		EventUnregisterNefarius_Bluetooth_PS_Filter_Service();
 		WPP_CLEANUP(DriverObject);
 		return status;
 	}

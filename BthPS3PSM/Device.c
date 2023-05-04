@@ -41,6 +41,7 @@
 #include <usbdi.h>
 #include <usbdlib.h>
 #include <wdfusb.h>
+#include <BthPS3PSMETW.h>
 
 #ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
 extern WDFCOLLECTION   FilterDeviceCollection;
@@ -181,6 +182,7 @@ BthPS3PSM_CreateDevice(
 				"WdfWaitLockAcquire failed with status %!STATUS!",
 				status
 			);
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfWaitLockAcquire", status);			
 		}
 
 		//
@@ -197,6 +199,7 @@ BthPS3PSM_CreateDevice(
 				"WdfCollectionAdd failed with status %!STATUS!",
 				status
 			);
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfCollectionAdd", status);			
 		}
 		WdfWaitLockRelease(FilterDeviceCollectionLock);
 
@@ -234,6 +237,7 @@ BthPS3PSM_CreateDevice(
 					"WdfRegistryQueryULong failed with status %!STATUS!",
 					status
 				);
+				EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfRegistryQueryULong", status);
 			}
 			else
 			{
@@ -257,6 +261,7 @@ BthPS3PSM_CreateDevice(
 					"WdfStringCreate failed with status %!STATUS!",
 					status
 				);
+				EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfStringCreate", status);
 			}
 			else
 			{
@@ -271,6 +276,7 @@ BthPS3PSM_CreateDevice(
 						"WdfRegistryQueryString failed with status %!STATUS!",
 						status
 					);
+					EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfRegistryQueryString", status);
 				}
 				else
 				{
@@ -290,6 +296,7 @@ BthPS3PSM_CreateDevice(
 				"WdfDeviceOpenRegistryKey failed with status %!STATUS!",
 				status
 			);
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfDeviceOpenRegistryKey", status);
 		}
 
 
@@ -311,6 +318,7 @@ BthPS3PSM_CreateDevice(
 				"BthPS3PSM_CreateControlDevice failed with status %!STATUS!",
 				status
 			);
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3PSM_CreateControlDevice", status);
 
 			return status;
 		}
@@ -486,7 +494,9 @@ BthPS3PSM_EvtDevicePrepareHardware(
 		TraceError(
 			TRACE_QUEUE,
 			"WdfUsbTargetDeviceCreateWithParameters failed with status %!STATUS!",
-			status);
+			status
+		);
+		EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfUsbTargetDeviceCreateWithParameters", status);
 	}
 
 	FuncExit(TRACE_DEVICE, "status=%!STATUS!", status);
@@ -529,6 +539,7 @@ BthPS3PSM_EvtDeviceContextCleanup(
 			"WdfWaitLockAcquire failed with status %!STATUS!",
 			status
 		);
+		EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfWaitLockAcquire", status);
 	}
 
 	const ULONG count = WdfCollectionGetCount(FilterDeviceCollection);
@@ -593,6 +604,7 @@ BthPS3PSM_EvtDeviceContextCleanup(
 				"WdfRegistryAssignULong failed with status %!STATUS!",
 				status
 			);
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfRegistryAssignULong", status);
 		}
 		else
 		{
@@ -611,6 +623,7 @@ BthPS3PSM_EvtDeviceContextCleanup(
 			"WdfDeviceOpenRegistryKey failed with status %!STATUS!",
 			status
 		);
+		EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfDeviceOpenRegistryKey", status);
 	}
 
 #pragma endregion

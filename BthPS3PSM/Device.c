@@ -193,6 +193,11 @@ BthPS3PSM_CreateDevice(
 
         status = WdfDeviceOpenRegistryKey(
             device,
+            /* Expands to e.g.:
+             *
+             * "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\USB\VID_XXXX&PID_XXXX\a&c9c4e92&0&4\Device Parameters"
+             *
+             */
             PLUGPLAY_REGKEY_DEVICE,
             KEY_READ,
             WDF_NO_OBJECT_ATTRIBUTES,
@@ -550,6 +555,11 @@ BthPS3PSM_EvtDeviceContextCleanup(
 
     status = WdfDeviceOpenRegistryKey(
         Device,
+        /* Expands to e.g.:
+         *
+         * "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\USB\VID_XXXX&PID_XXXX\a&c9c4e92&0&4\Device Parameters"
+         *
+         */
         PLUGPLAY_REGKEY_DEVICE,
         KEY_WRITE,
         WDF_NO_OBJECT_ATTRIBUTES,

@@ -190,28 +190,19 @@ UrbFunctionBulkInTransferCompleted(
 	IN WDFCONTEXT Context
 )
 {
-	PIRP pIrp;
-	PURB pUrb;
 	PUCHAR buffer;
-	ULONG bufferLength;
-	L2CAP_SIGNALLING_COMMAND_CODE code;
-	PL2CAP_SIGNALLING_CONNECTION_REQUEST pConReq;
-	WDFDEVICE device;
-	PDEVICE_CONTEXT pDevCtx;
-
-
 	UNREFERENCED_PARAMETER(Target);
 
 	FuncEntry(TRACE_FILTER);
 
-	device = (WDFDEVICE)Context;
-	pDevCtx = DeviceGetContext(device);
-	pIrp = WdfRequestWdmGetIrp(Request);
-	pUrb = (PURB)URB_FROM_IRP(pIrp);
+	const WDFDEVICE device = (WDFDEVICE)Context;
+	const PDEVICE_CONTEXT pDevCtx = DeviceGetContext(device);
+	const PIRP pIrp = WdfRequestWdmGetIrp(Request);
+	const PURB pUrb = (PURB)URB_FROM_IRP(pIrp);
 
-	struct _URB_BULK_OR_INTERRUPT_TRANSFER* pTransfer = &pUrb->UrbBulkOrInterruptTransfer;
+	const struct _URB_BULK_OR_INTERRUPT_TRANSFER* pTransfer = &pUrb->UrbBulkOrInterruptTransfer;
 
-	bufferLength = pTransfer->TransferBufferLength;
+	const ULONG bufferLength = pTransfer->TransferBufferLength;
 	buffer = (PUCHAR)USBPcapURBGetBufferPointer(
 		pTransfer->TransferBufferLength,
 		pTransfer->TransferBuffer,
@@ -224,11 +215,11 @@ UrbFunctionBulkInTransferCompleted(
 		&& L2CAP_IS_SIGNALLING_COMMAND_CODE(buffer)
 		)
 	{
-		code = L2CAP_GET_SIGNALLING_COMMAND_CODE(buffer);
+		const L2CAP_SIGNALLING_COMMAND_CODE code = L2CAP_GET_SIGNALLING_COMMAND_CODE(buffer);
 
 		if (code == L2CAP_Connection_Request)
 		{
-			pConReq = (PL2CAP_SIGNALLING_CONNECTION_REQUEST)&buffer[8];
+			const PL2CAP_SIGNALLING_CONNECTION_REQUEST pConReq = (PL2CAP_SIGNALLING_CONNECTION_REQUEST)&buffer[8];
 
 			if (pConReq->PSM == PSM_HID_CONTROL)
 			{

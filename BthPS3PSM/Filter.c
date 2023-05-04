@@ -42,140 +42,141 @@
 #include <ntintsafe.h>
 
 
-//
-// Gets called when URB_FUNCTION_SELECT_CONFIGURATION is coming our way
-// 
+ //
+ // Gets called when URB_FUNCTION_SELECT_CONFIGURATION is coming our way
+ // 
 NTSTATUS
 ProxyUrbSelectConfiguration(
-    PURB Urb,
-    PDEVICE_CONTEXT Context
+	PURB Urb,
+	PDEVICE_CONTEXT Context
 )
 {
-    NTSTATUS                                status;
-    WDF_USB_DEVICE_SELECT_CONFIG_PARAMS     selectCfgParams;
-    PUSBD_INTERFACE_INFORMATION             pIface;
-    UCHAR                                   numberConfiguredPipes;
-    UCHAR                                   index;
-    WDFUSBPIPE                              pipe;
-    WDF_USB_PIPE_INFORMATION                pipeInfo;
+	NTSTATUS status = STATUS_SUCCESS;
+	WDF_USB_DEVICE_SELECT_CONFIG_PARAMS selectCfgParams;
+	PUSBD_INTERFACE_INFORMATION pIface;
+	WDF_USB_PIPE_INFORMATION pipeInfo;
 
-    pIface = &Urb->UrbSelectConfiguration.Interface;
+	FuncEntry(TRACE_FILTER);
 
-    //
-    // "Hijack" this URB from the upper function driver and
-    // use the framework functions to enumerate the endpoints
-    // so we can later conveniently distinguish the pipes for
-    // interrupt (HCI) and bulk (L2CAP) traffic coming through.
-    // 
-    WDF_USB_DEVICE_SELECT_CONFIG_PARAMS_INIT_URB(
-        &selectCfgParams,
-        Urb
-    );
+	pIface = &Urb->UrbSelectConfiguration.Interface;
 
-    // 
-    // This call sends our own request down the stack
-    // but with the desired configuration mirrored from
-    // the upper request we're currently keeping on hold.
-    // 
-    status = WdfUsbTargetDeviceSelectConfig(
-        Context->UsbDevice,
-        WDF_NO_OBJECT_ATTRIBUTES,
-        &selectCfgParams
-    );
+	//
+	// "Hijack" this URB from the upper function driver and
+	// use the framework functions to enumerate the endpoints
+	// so we can later conveniently distinguish the pipes for
+	// interrupt (HCI) and bulk (L2CAP) traffic coming through.
+	// 
+	WDF_USB_DEVICE_SELECT_CONFIG_PARAMS_INIT_URB(
+		&selectCfgParams,
+		Urb
+	);
 
-    if (!NT_SUCCESS(status)) {
-        TraceError(
-            TRACE_FILTER,
-            "WdfUsbTargetDeviceSelectConfig failed with status %!STATUS!",
-            status
-        );
+	// 
+	// This call sends our own request down the stack
+	// but with the desired configuration mirrored from
+	// the upper request we're currently keeping on hold.
+	// 
+	if (!NT_SUCCESS(status = WdfUsbTargetDeviceSelectConfig(
+		Context->UsbDevice,
+		WDF_NO_OBJECT_ATTRIBUTES,
+		&selectCfgParams
+	)))
+	{
+		TraceError(
+			TRACE_FILTER,
+			"WdfUsbTargetDeviceSelectConfig failed with status %!STATUS!",
+			status
+		);
 
-        return status;
-    }
+		goto exit;
+	}
 
-    //
-    // There could be multiple interfaces although every 
-    // tested and compatible host device uses the first
-    // interface so we can get away with a bit of laziness ;)
-    // 
-    Context->UsbInterface = WdfUsbTargetDeviceGetInterface(
-        Context->UsbDevice,
-        pIface->InterfaceNumber);
+	//
+	// There could be multiple interfaces although every 
+	// tested and compatible host device uses the first
+	// interface so we can get away with a bit of laziness ;)
+	// 
+	Context->UsbInterface = WdfUsbTargetDeviceGetInterface(
+		Context->UsbDevice,
+		pIface->InterfaceNumber);
 
-    if (NULL == Context->UsbInterface) {
-        status = STATUS_UNSUCCESSFUL;
-        TraceError(
-            TRACE_FILTER,
-            "WdfUsbTargetDeviceGetInterface for interface %d failed with status %!STATUS!",
-            pIface->InterfaceNumber,
-            status
-        );
+	if (NULL == Context->UsbInterface) {
+		status = STATUS_UNSUCCESSFUL;
+		TraceError(
+			TRACE_FILTER,
+			"WdfUsbTargetDeviceGetInterface for interface %d failed with status %!STATUS!",
+			pIface->InterfaceNumber,
+			status
+		);
 
-        return status;
-    }
+		goto exit;
+	}
 
-    numberConfiguredPipes = WdfUsbInterfaceGetNumConfiguredPipes(Context->UsbInterface);
+	const UCHAR numberConfiguredPipes = WdfUsbInterfaceGetNumConfiguredPipes(Context->UsbInterface);
 
-    for (index = 0; index < numberConfiguredPipes; index++) {
+	for (UCHAR index = 0; index < numberConfiguredPipes; index++) {
 
-        WDF_USB_PIPE_INFORMATION_INIT(&pipeInfo);
+		WDF_USB_PIPE_INFORMATION_INIT(&pipeInfo);
 
-        pipe = WdfUsbInterfaceGetConfiguredPipe(
-            Context->UsbInterface,
-            index, //PipeIndex,
-            &pipeInfo
-        );
+		const WDFUSBPIPE pipe = WdfUsbInterfaceGetConfiguredPipe(
+			Context->UsbInterface,
+			index, //PipeIndex,
+			&pipeInfo
+		);
 
-        if (WdfUsbPipeTypeInterrupt == pipeInfo.PipeType) {
-            TraceInformation(
-                TRACE_FILTER,
-                "Interrupt Pipe is 0x%p",
-                WdfUsbTargetPipeWdmGetPipeHandle(pipe)
-            );
+		if (WdfUsbPipeTypeInterrupt == pipeInfo.PipeType) {
+			TraceInformation(
+				TRACE_FILTER,
+				"Interrupt Pipe is 0x%p",
+				WdfUsbTargetPipeWdmGetPipeHandle(pipe)
+			);
 
-            Context->InterruptPipe = pipe;
-        }
+			Context->InterruptPipe = pipe;
+		}
 
-        if (WdfUsbPipeTypeBulk == pipeInfo.PipeType &&
-            WdfUsbTargetPipeIsInEndpoint(pipe)) {
-            TraceInformation(
-                TRACE_FILTER,
-                "BulkInput Pipe is 0x%p",
-                WdfUsbTargetPipeWdmGetPipeHandle(pipe)
-            );
+		if (WdfUsbPipeTypeBulk == pipeInfo.PipeType &&
+			WdfUsbTargetPipeIsInEndpoint(pipe)) {
+			TraceInformation(
+				TRACE_FILTER,
+				"BulkInput Pipe is 0x%p",
+				WdfUsbTargetPipeWdmGetPipeHandle(pipe)
+			);
 
-            Context->BulkReadPipe = pipe;
-        }
+			Context->BulkReadPipe = pipe;
+		}
 
-        if (WdfUsbPipeTypeBulk == pipeInfo.PipeType &&
-            WdfUsbTargetPipeIsOutEndpoint(pipe)) {
-            TraceInformation(
-                TRACE_FILTER,
-                "BulkOutput Pipe is 0x%p",
-                WdfUsbTargetPipeWdmGetPipeHandle(pipe)
-            );
+		if (WdfUsbPipeTypeBulk == pipeInfo.PipeType &&
+			WdfUsbTargetPipeIsOutEndpoint(pipe)) {
+			TraceInformation(
+				TRACE_FILTER,
+				"BulkOutput Pipe is 0x%p",
+				WdfUsbTargetPipeWdmGetPipeHandle(pipe)
+			);
 
-            Context->BulkWritePipe = pipe;
-        }
-    }
+			Context->BulkWritePipe = pipe;
+		}
+	}
 
-    //
-    // If we didn't find all 3 pipes, fail the request
-    //
-    if (!(Context->BulkWritePipe
-        && Context->BulkReadPipe && Context->InterruptPipe)) {
-        status = STATUS_INVALID_DEVICE_STATE;
+	//
+	// If we didn't find all 3 pipes, fail the request
+	//
+	if (!(Context->BulkWritePipe
+		&& Context->BulkReadPipe && Context->InterruptPipe)) {
+		status = STATUS_INVALID_DEVICE_STATE;
 
-        TraceError(
-            TRACE_FILTER,
-            "Device is not configured properly %!STATUS!",
-            status
-        );
+		TraceError(
+			TRACE_FILTER,
+			"Device is not configured properly %!STATUS!",
+			status
+		);
 
-        return status;
-    }
+		goto exit;
+	}
 
-    return STATUS_SUCCESS;
+exit:
+	FuncExit(TRACE_FILTER, "status=%!STATUS!", status);
+
+	return status;
 }
 
 //
@@ -183,105 +184,105 @@ ProxyUrbSelectConfiguration(
 // 
 VOID
 UrbFunctionBulkInTransferCompleted(
-    IN WDFREQUEST Request,
-    IN WDFIOTARGET Target,
-    IN PWDF_REQUEST_COMPLETION_PARAMS Params,
-    IN WDFCONTEXT Context
+	IN WDFREQUEST Request,
+	IN WDFIOTARGET Target,
+	IN PWDF_REQUEST_COMPLETION_PARAMS Params,
+	IN WDFCONTEXT Context
 )
 {
-    PIRP                                    pIrp;
-    PURB                                    pUrb;
-    PUCHAR                                  buffer;
-    ULONG                                   bufferLength;
-    L2CAP_SIGNALLING_COMMAND_CODE           code;
-    PL2CAP_SIGNALLING_CONNECTION_REQUEST    pConReq;
-    WDFDEVICE                               device;
-    PDEVICE_CONTEXT                         pDevCtx;
+	PIRP pIrp;
+	PURB pUrb;
+	PUCHAR buffer;
+	ULONG bufferLength;
+	L2CAP_SIGNALLING_COMMAND_CODE code;
+	PL2CAP_SIGNALLING_CONNECTION_REQUEST pConReq;
+	WDFDEVICE device;
+	PDEVICE_CONTEXT pDevCtx;
 
 
-    UNREFERENCED_PARAMETER(Target);
+	UNREFERENCED_PARAMETER(Target);
 
-    FuncEntry(TRACE_FILTER);
+	FuncEntry(TRACE_FILTER);
 
-    device = (WDFDEVICE)Context;
-    pDevCtx = DeviceGetContext(device);
-    pIrp = WdfRequestWdmGetIrp(Request);
-    pUrb = (PURB)URB_FROM_IRP(pIrp);
+	device = (WDFDEVICE)Context;
+	pDevCtx = DeviceGetContext(device);
+	pIrp = WdfRequestWdmGetIrp(Request);
+	pUrb = (PURB)URB_FROM_IRP(pIrp);
 
-    struct _URB_BULK_OR_INTERRUPT_TRANSFER *pTransfer = &pUrb->UrbBulkOrInterruptTransfer;
+	struct _URB_BULK_OR_INTERRUPT_TRANSFER* pTransfer = &pUrb->UrbBulkOrInterruptTransfer;
 
-    bufferLength = pTransfer->TransferBufferLength;
-    buffer = (PUCHAR)USBPcapURBGetBufferPointer(
-        pTransfer->TransferBufferLength,
-        pTransfer->TransferBuffer,
-        pTransfer->TransferBufferMDL
-    );
+	bufferLength = pTransfer->TransferBufferLength;
+	buffer = (PUCHAR)USBPcapURBGetBufferPointer(
+		pTransfer->TransferBufferLength,
+		pTransfer->TransferBuffer,
+		pTransfer->TransferBufferMDL
+	);
 
-    if (
-        bufferLength >= L2CAP_MIN_BUFFER_LEN
-        && L2CAP_IS_CONTROL_CHANNEL(buffer)
-        && L2CAP_IS_SIGNALLING_COMMAND_CODE(buffer)
-        )
-    {
-        code = L2CAP_GET_SIGNALLING_COMMAND_CODE(buffer);
+	if (
+		bufferLength >= L2CAP_MIN_BUFFER_LEN
+		&& L2CAP_IS_CONTROL_CHANNEL(buffer)
+		&& L2CAP_IS_SIGNALLING_COMMAND_CODE(buffer)
+		)
+	{
+		code = L2CAP_GET_SIGNALLING_COMMAND_CODE(buffer);
 
-        if (code == L2CAP_Connection_Request)
-        {
-            pConReq = (PL2CAP_SIGNALLING_CONNECTION_REQUEST)&buffer[8];
+		if (code == L2CAP_Connection_Request)
+		{
+			pConReq = (PL2CAP_SIGNALLING_CONNECTION_REQUEST)&buffer[8];
 
-            if (pConReq->PSM == PSM_HID_CONTROL)
-            {
-                TraceVerbose(
-                    TRACE_FILTER,
-                    ">> Connection request for HID Control PSM 0x%04X arrived",
-                    pConReq->PSM);
+			if (pConReq->PSM == PSM_HID_CONTROL)
+			{
+				TraceVerbose(
+					TRACE_FILTER,
+					">> Connection request for HID Control PSM 0x%04X arrived",
+					pConReq->PSM);
 
-                if (pDevCtx->IsPsmPatchingEnabled)
-                {
-                    pConReq->PSM = PSM_DS3_HID_CONTROL;
+				if (pDevCtx->IsPsmPatchingEnabled)
+				{
+					pConReq->PSM = PSM_DS3_HID_CONTROL;
 
-                    TraceInformation(
-                        TRACE_FILTER,
-                        "++ Patching HID Control PSM to 0x%04X",
-                        pConReq->PSM);
-                }
-                else
-                {
-                    TraceVerbose(
-                        TRACE_FILTER,
-                        "-- NOT Patching HID Control PSM"
-                    );
-                }
-            }
+					TraceInformation(
+						TRACE_FILTER,
+						"++ Patching HID Control PSM to 0x%04X",
+						pConReq->PSM);
+				}
+				else
+				{
+					TraceVerbose(
+						TRACE_FILTER,
+						"-- NOT Patching HID Control PSM"
+					);
+				}
+			}
 
-            if (pConReq->PSM == PSM_HID_INTERRUPT)
-            {
-                TraceVerbose(
-                    TRACE_FILTER,
-                    ">> Connection request for HID Interrupt PSM 0x%04X arrived",
-                    pConReq->PSM);
+			if (pConReq->PSM == PSM_HID_INTERRUPT)
+			{
+				TraceVerbose(
+					TRACE_FILTER,
+					">> Connection request for HID Interrupt PSM 0x%04X arrived",
+					pConReq->PSM);
 
-                if (pDevCtx->IsPsmPatchingEnabled)
-                {
-                    pConReq->PSM = PSM_DS3_HID_INTERRUPT;
+				if (pDevCtx->IsPsmPatchingEnabled)
+				{
+					pConReq->PSM = PSM_DS3_HID_INTERRUPT;
 
-                    TraceInformation(
-                        TRACE_FILTER,
-                        "++ Patching HID Interrupt PSM to 0x%04X",
-                        pConReq->PSM);
-                }
-                else
-                {
-                    TraceVerbose(
-                        TRACE_FILTER,
-                        "-- NOT Patching HID Interrupt PSM"
-                    );
-                }
-            }
-        }
-    }
+					TraceInformation(
+						TRACE_FILTER,
+						"++ Patching HID Interrupt PSM to 0x%04X",
+						pConReq->PSM);
+				}
+				else
+				{
+					TraceVerbose(
+						TRACE_FILTER,
+						"-- NOT Patching HID Interrupt PSM"
+					);
+				}
+			}
+		}
+	}
 
-    WdfRequestComplete(Request, Params->IoStatus.Status);
+	WdfRequestComplete(Request, Params->IoStatus.Status);
 
-    FuncExitNoReturn(TRACE_FILTER);
+	FuncExitNoReturn(TRACE_FILTER);
 }

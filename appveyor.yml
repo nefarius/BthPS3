@@ -1,7 +1,7 @@
 version: 2.6.{build}.0
 image: Visual Studio 2019
 cache:
-- C:\projects\DMF
+- C:\projects\DMF -> appveyor.yml
 environment:
   DmfRootPath: C:\projects\DMF
 platform:

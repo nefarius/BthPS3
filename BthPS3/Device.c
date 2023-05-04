@@ -73,8 +73,10 @@ BthPS3_CreateDevice(
 			TRACE_DEVICE,
 			"DMF_DmfDeviceInitAllocate failed"
 		);
-
+		
 		status = STATUS_INSUFFICIENT_RESOURCES;
+
+		EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"DMF_DmfDeviceInitAllocate", status);
 
 		goto exitFailure;
 	}
@@ -107,6 +109,7 @@ BthPS3_CreateDevice(
 				"WdfDeviceCreate failed with status %!STATUS!",
 				status
 			);
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfDeviceCreate", status);
 			break;
 		}
 
@@ -119,6 +122,7 @@ BthPS3_CreateDevice(
 				"Initialization of context failed with status %!STATUS!",
 				status
 			);
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_ServerContextInit", status);
 			break;
 		}
 
@@ -128,6 +132,7 @@ BthPS3_CreateDevice(
 
 		if (!NT_SUCCESS(status = BthPS3_Initialize(GetServerDeviceContext(device))))
 		{
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_Initialize", status);
 			break;
 		}
 
@@ -137,6 +142,7 @@ BthPS3_CreateDevice(
 
 		if (!NT_SUCCESS(status = BthPS3_OpenFilterIoTarget(device)))
 		{
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_OpenFilterIoTarget", status);
 			break;
 		}
 
@@ -158,6 +164,7 @@ BthPS3_CreateDevice(
 				"WdfRequestCreate failed with status %!STATUS!",
 				status
 			);
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfRequestCreate", status);
 			break;
 		}
 
@@ -181,6 +188,7 @@ BthPS3_CreateDevice(
 				"DMF_ModulesCreate failed with status %!STATUS!",
 				status
 			);
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"DMF_ModulesCreate", status);
 			break;
 		}
 
@@ -213,10 +221,9 @@ BthPS3_OpenFilterIoTarget(
 	_In_ WDFDEVICE Device
 )
 {
-	NTSTATUS                    status = STATUS_UNSUCCESSFUL;
-	WDF_OBJECT_ATTRIBUTES       ioTargetAttrib;
-	PBTHPS3_SERVER_CONTEXT      pCtx;
-	WDF_IO_TARGET_OPEN_PARAMS   openParams;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	WDF_OBJECT_ATTRIBUTES ioTargetAttrib;
+	WDF_IO_TARGET_OPEN_PARAMS openParams;
 
 	DECLARE_CONST_UNICODE_STRING(symbolicLink, BTHPS3PSM_SYMBOLIC_NAME_STRING);
 
@@ -224,7 +231,7 @@ BthPS3_OpenFilterIoTarget(
 
 	FuncEntry(TRACE_DEVICE);
 
-	pCtx = GetServerDeviceContext(Device);
+	const PBTHPS3_SERVER_CONTEXT pCtx = GetServerDeviceContext(Device);
 
 	WDF_OBJECT_ATTRIBUTES_INIT(&ioTargetAttrib);
 
@@ -241,6 +248,7 @@ BthPS3_OpenFilterIoTarget(
 				"WdfIoTargetCreate failed with status %!STATUS!",
 				status
 			);
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfIoTargetCreate", status);
 			break;
 		}
 
@@ -260,6 +268,7 @@ BthPS3_OpenFilterIoTarget(
 				"WdfIoTargetOpen failed with status %!STATUS!",
 				status
 			);
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfIoTargetOpen", status);
 			WdfObjectDelete(pCtx->PsmFilter.IoTarget);
 			break;
 		}
@@ -322,16 +331,19 @@ BthPS3_EvtWdfDeviceSelfManagedIoInit(
 	{
 		if (!NT_SUCCESS(status = BthPS3_RetrieveLocalInfo(&devCtx->Header)))
 		{
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_RetrieveLocalInfo", status);
 			break;
 		}
 
 		if (!NT_SUCCESS(status = BthPS3_RegisterPSM(devCtx)))
 		{
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_RegisterPSM", status);
 			break;
 		}
 
 		if (!NT_SUCCESS(status = BthPS3_RegisterL2CAPServer(devCtx)))
 		{
+			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_RegisterL2CAPServer", status);
 			break;
 		}
 

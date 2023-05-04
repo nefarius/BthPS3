@@ -121,4 +121,13 @@ BthPS3PSM_IsBthUsbDevice(
 	PBOOLEAN Result
 );
 
+_Success_(return == STATUS_SUCCESS)
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS
+BthPS3PSM_GetPropertyInstanceId(
+	_In_ PWDFDEVICE_INIT DeviceInit,
+	_Inout_ WDFMEMORY* Memory
+);
+
 EXTERN_C_END

@@ -42,6 +42,7 @@
 #include <usbdlib.h>
 #include <wdfusb.h>
 #include <BthPS3PSMETW.h>
+#include <devpkey.h>
 
 #ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
 extern WDFCOLLECTION   FilterDeviceCollection;
@@ -366,6 +367,33 @@ BthPS3PSM_IsBthUsbDevice(
 			&& (RtlCompareUnicodeString(&lhsClassName, &rhsClassName, TRUE) == 0));
 
 	return status;
+}
+
+_Success_(return == STATUS_SUCCESS)
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS
+BthPS3PSM_GetPropertyInstanceId(
+	_In_ PWDFDEVICE_INIT DeviceInit,
+	 _Inout_ WDFMEMORY* Memory
+)
+{
+	DEVPROPTYPE type;
+	WDF_OBJECT_ATTRIBUTES attributes;
+	WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+	WDF_DEVICE_PROPERTY_DATA property;
+	WDF_DEVICE_PROPERTY_DATA_INIT(&property, &DEVPKEY_Device_InstanceId);
+
+	//
+	// Query DEVPKEY_Device_InstanceId
+	// 
+	return WdfFdoInitAllocAndQueryPropertyEx(DeviceInit,
+		&property,
+		NonPagedPoolNx,
+		&attributes,
+		Memory,
+		&type
+	);
 }
 
 //

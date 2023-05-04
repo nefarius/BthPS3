@@ -40,6 +40,7 @@
 #include <wdfusb.h>
 #include <bthdef.h>
 #include <ntintsafe.h>
+#include <BthPS3PSMETW.h>
 
 
  //
@@ -87,6 +88,7 @@ ProxyUrbSelectConfiguration(
 			"WdfUsbTargetDeviceSelectConfig failed with status %!STATUS!",
 			status
 		);
+		EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfUsbTargetDeviceSelectConfig", status);
 
 		goto exit;
 	}
@@ -100,7 +102,8 @@ ProxyUrbSelectConfiguration(
 		Context->UsbDevice,
 		pIface->InterfaceNumber);
 
-	if (NULL == Context->UsbInterface) {
+	if (NULL == Context->UsbInterface) 
+	{
 		status = STATUS_UNSUCCESSFUL;
 		TraceError(
 			TRACE_FILTER,
@@ -108,6 +111,7 @@ ProxyUrbSelectConfiguration(
 			pIface->InterfaceNumber,
 			status
 		);
+		EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfUsbTargetDeviceGetInterface", status);
 
 		goto exit;
 	}
@@ -169,6 +173,7 @@ ProxyUrbSelectConfiguration(
 			"Device is not configured properly %!STATUS!",
 			status
 		);
+		EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"Device is not configured properly", status);
 
 		goto exit;
 	}
@@ -226,7 +231,8 @@ UrbFunctionBulkInTransferCompleted(
 				TraceVerbose(
 					TRACE_FILTER,
 					">> Connection request for HID Control PSM 0x%04X arrived",
-					pConReq->PSM);
+					pConReq->PSM
+				);
 
 				if (pDevCtx->IsPsmPatchingEnabled)
 				{
@@ -251,7 +257,8 @@ UrbFunctionBulkInTransferCompleted(
 				TraceVerbose(
 					TRACE_FILTER,
 					">> Connection request for HID Interrupt PSM 0x%04X arrived",
-					pConReq->PSM);
+					pConReq->PSM
+				);
 
 				if (pDevCtx->IsPsmPatchingEnabled)
 				{
@@ -260,7 +267,8 @@ UrbFunctionBulkInTransferCompleted(
 					TraceInformation(
 						TRACE_FILTER,
 						"++ Patching HID Interrupt PSM to 0x%04X",
-						pConReq->PSM);
+						pConReq->PSM
+					);
 				}
 				else
 				{

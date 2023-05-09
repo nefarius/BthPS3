@@ -57,7 +57,6 @@ extern WDFWAITLOCK     FilterDeviceCollectionLock;
 
 #define BTHPS3PSM_DEVICE_PROPERTY_LENGTH        0xFF
 #define BTHPS3PSM_USB_ENUMERATOR_NAME           L"USB"
-#define BTHPS3PSM_SYSTEM_ENUMERATOR_NAME        L"ROOT"
 
 
 //

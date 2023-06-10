@@ -1,5 +1,5 @@
-version: 2.6.{build}.0
-image: Visual Studio 2019
+version: 2.7.{build}.0
+image: Visual Studio 2022
 cache:
 - C:\projects\DMF -> appveyor.yml
 environment:

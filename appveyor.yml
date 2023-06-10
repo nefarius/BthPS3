@@ -17,13 +17,11 @@ install:
     cd "C:\projects\DMF"
     git pull > NUL
     cd %appveyor_build_folder%
-- cmd: copy "%appveyor_build_folder%\build\__Directory.Build.props" "C:\projects\DMF\Directory.Build.props"
 - cmd: vcpkg integrate install
 - cmd: vcpkg update
 - cmd: vcpkg install detours:x86-windows-static detours:x64-windows-static
 before_build:
 - cmd: nuget restore
-- ps: Invoke-WebRequest "https://github.com/nefarius/vpatch/releases/latest/download/vpatch.exe" -OutFile vpatch.exe
 - cmd: vpatch.exe --stamp-version "%APPVEYOR_BUILD_VERSION%" --target-file ".\BthPS3\BthPS3.vcxproj" --vcxproj.inf-time-stamp
 - cmd: vpatch.exe --stamp-version "%APPVEYOR_BUILD_VERSION%" --target-file ".\BthPS3\BthPS3.rc" --resource.file-version --resource.product-version
 - cmd: vpatch.exe --stamp-version "%APPVEYOR_BUILD_VERSION%" --target-file ".\BthPS3PSM\BthPS3PSM.vcxproj" --vcxproj.inf-time-stamp

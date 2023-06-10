@@ -5,9 +5,8 @@ cache:
 environment:
   DmfRootPath: C:\projects\DMF
 platform:
-- x86
 - x64
-#- ARM64
+- ARM64
 configuration:
 - Release
 install:

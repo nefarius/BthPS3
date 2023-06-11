@@ -90,6 +90,13 @@ Knowledge on how to build and (test-)sign Windows drivers is required for creati
 
 You can build individual projects of the solution within Visual Studio.
 
+### Branches
+
+The project uses the following branch strategies:
+
+- `master` - stable code base, in sync with tagged public releases
+- `devel` - work-in-progress changes, mostly bigger changes spanning a couple PRs
+
 ### Build artifacts
 
 Tagged CI builds get mirrored [to the buildbot web server](https://buildbot.vigem.org/builds/BthPS3/), use at your own risk, no support ptovided whatsoever!

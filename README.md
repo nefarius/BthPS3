@@ -39,6 +39,10 @@ This is a community project and not affiliated with Sony Interactive Entertainme
 
 BthPS3 components (drivers, utilities) are developed, designed and tested for **Windows 10 or newer** (x86, x64, ARM64).
 
+<details>
+
+<summary>Supported Bluetooth host devices</summary>
+
 ## Supported Bluetooth host devices
 
 The BthPS3 profile driver and supported devices have been tested successfully with host devices following [Link Manager Protocol (LMP)](https://www.bluetooth.com/specifications/assigned-numbers/link-manager/) core specification
@@ -68,6 +72,8 @@ For a list of tested devices [consult the extended documentation](https://vigem.
 | 9   | Bluetooth 5         |
 | 10  | Bluetooth 5.1       |
 | 11  | Bluetooth 5.2       |
+
+</details>
 
 ## Installation
 

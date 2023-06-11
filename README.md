@@ -96,7 +96,7 @@ Tagged CI builds get mirrored [to the buildbot web server](https://buildbot.vige
 
 ## Support & Documentation
 
-Everything you need to know is documented [on the project page](https://vigem.org/projects/BthPS3/), read carefully before considering filing a bug.
+Everything you need to know is documented [on the project page](https://vigem.org/projects/BthPS3/), read carefully before considering filing an issue.
 
 <details>
 

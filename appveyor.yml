@@ -8,6 +8,13 @@ platform:
 - ARM64
 configuration:
 - Release
+skip_commits:
+  files:
+    - .github/*
+    - '**/*.md'
+    - '**/*.png'
+    - '**/*.jpg'
+    - '**/*.aip'
 install:
 - ps: Invoke-WebRequest https://wixtoolset.org/downloads/v3.14.0.6526/wix314-binaries.zip -OutFile .\wix314-binaries.zip
 - ps: Expand-Archive .\wix314-binaries.zip -DestinationPath .\wix

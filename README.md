@@ -67,7 +67,15 @@ For a list of tested devices [consult the extended documentation](https://vigem.
 | 10  | Bluetooth 5.1       |
 | 11  | Bluetooth 5.2       |
 
+## Installation
+
+Pre-built binaries and instructions are provided by `Nefarius Software Solutions e.U.` and [available as an all-in-one setup](https://github.com/ViGEm/BthPS3/releases/latest). Official support covers **Windows 10/11 x64/ARM64** only, filing issues about any other version or architecture will be discarded.
+
+Check out the companion solution [DsHidMini](https://github.com/ViGEm/DsHidMini) for using the controller in games!
+
 ## How to build
+
+Knowledge on how to build and (test-)sign Windows drivers is required for creating usable builds. This is outside of the scope of project documentation.
 
 ### Prerequisites
 
@@ -82,9 +90,9 @@ For a list of tested devices [consult the extended documentation](https://vigem.
 
 You can build individual projects of the solution within Visual Studio.
 
-## Documentation
+## Support & Documentation
 
-Take a look at the [project page](https://vigem.org/projects/BthPS3/) for more information.
+Everything you need to know is documented [on the project page](https://vigem.org/projects/BthPS3/), read carefully before considering filing a bug.
 
 <details>
 
@@ -148,20 +156,6 @@ Below representation attempts to visualize the relationships between the drivers
 ```
 
 </details>
-
-## Installation
-
-Pre-built binaries and instructions are provided by `Nefarius Software Solutions e.U.` and [available as an all-in-one setup](https://github.com/ViGEm/BthPS3/releases/latest) (**note:** officially supports **Windows 10/11** only).
-
-Check out the companion solution [DsHidMini](https://github.com/ViGEm/DsHidMini) for using the controller in games!
-
-### Support
-
-If facing issues please [check out our official support resources](https://vigem.org/Community-Support/) first for similar cases and possible solutions.
-
-## Contributing
-
-This project was birthed out of curiosity and the drive to learn more about Bluetooth drivers for Microsoft Windows (and a lingering love for the DualShock 3). If it brought you joy please consider checking out the Sponsor-Button on top and toss a coin to your Developer, O' Valley of Gamers 😃
 
 ## Sources & 3rd party credits
 

@@ -71,16 +71,24 @@ For a list of tested devices [consult the extended documentation](https://vigem.
 
 ### Prerequisites
 
-- [Step 1: Install Visual Studio 2019](<https://docs.microsoft.com/en-us/windows-hardware/drivers/other-wdk-downloads#step-1-install-visual-studio>)
-  - From the Visual Studio Installer, add the Individual component `MSVC v142 - VS 2019 C++ x64/x86 Spectre-mitigated libs`
-- [Step 2: Install WDK for Windows 10, version 2004](<https://docs.microsoft.com/en-us/windows-hardware/drivers/other-wdk-downloads#step-2-install-the-wdk>)
-- [Step 3: Install the WiX Toolset **v3.14.0.6526**](https://wixtoolset.org/releases/v3-14-0-6526/)
+- [Step 1: Install Visual Studio 2022](https://learn.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk#download-icon-step-1-install-visual-studio-2022)
+  - On the `Workloads` tab under `Desktop & Mobile` select *at least* `.NET desktop development` and `Desktop development with C++`.  
+    ![workloads.png](assets/workloads.png)
+  - On the `Individual components` tab search for and select the `Spectre-mitigate libs (Latest)` for all architectures you wish to build for.  
+    ![components.png](assets/components.png)
+- [Step 2: Install Windows 11, version 22H2 SDK](https://learn.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk#download-icon-step-2-install-windows-11-version-22h2-sdk)
+- [Step 3: Install Windows 11, version 22H2 WDK](https://learn.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk#download-icon-step-3-install-windows-11-version-22h2-wdk)
+- [Step 4: Install the WiX Toolset **v3.14.0.6526**](https://wixtoolset.org/releases/v3-14-0-6526/) (or newer)
 
 You can build individual projects of the solution within Visual Studio.
 
 ## Documentation
 
 Take a look at the [project page](https://vigem.org/projects/BthPS3/) for more information.
+
+<details>
+
+<summary>Architecture overview</summary>
 
 ## Device tree
 
@@ -138,6 +146,8 @@ Below representation attempts to visualize the relationships between the drivers
                                   +----------------------+
 
 ```
+
+</details>
 
 ## Installation
 

@@ -33,6 +33,8 @@ This solution contains **BSD-3-Clause** and **MIT** licensed components:
 
 For details, please consult the individual `LICENSE` files.
 
+This is a community project and not affiliated with Sony Interactive Entertainment Inc. in any way. "PlayStation", "PSP", "PS2", "PS one", "DUALSHOCK" and "SIXAXIS" are registered trademarks of Sony Interactive Entertainment Inc.
+
 ## Environment
 
 BthPS3 components (drivers, utilities) are developed, designed and tested for **Windows 10 or newer** (x86, x64, ARM64).

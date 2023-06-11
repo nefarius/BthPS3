@@ -1,14 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug|Win32">
-      <Configuration>Debug</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Win32">
-      <Configuration>Release</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
@@ -57,23 +49,6 @@
     <RootNamespace>BthPS3PSM</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <TargetVersion>Windows10</TargetVersion>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-    <ConfigurationType>Driver</ConfigurationType>
-    <DriverType>KMDF</DriverType>
-    <DriverTargetPlatform>Universal</DriverTargetPlatform>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <TargetVersion>Windows10</TargetVersion>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-    <ConfigurationType>Driver</ConfigurationType>
-    <DriverType>KMDF</DriverType>
-    <DriverTargetPlatform>Desktop</DriverTargetPlatform>
-    <SignMode>Off</SignMode>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <TargetVersion>Windows10</TargetVersion>
     <UseDebugLibraries>true</UseDebugLibraries>
@@ -117,17 +92,6 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
-    <IncludePath>$(SolutionDir)\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
-    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
-    <IncludePath>$(SolutionDir)\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
-    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
-    <OutDir>$(SolutionDir)bin\$(PlatformShortName)\</OutDir>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <IncludePath>$(SolutionDir)\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
@@ -150,39 +114,6 @@
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <OutDir>$(SolutionDir)bin\$(PlatformShortName)\</OutDir>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <ClCompile>
-      <WppEnabled>true</WppEnabled>
-      <WppRecorderEnabled>true</WppRecorderEnabled>
-      <WppScanConfigurationData Condition="'%(ClCompile.ScanConfigurationData)' == ''">trace.h</WppScanConfigurationData>
-      <WppKernelMode>true</WppKernelMode>
-      <PreprocessorDefinitions>_NO_CRT_STDIO_INLINE;_X86_=1;i386=1;STD_CALL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>$(DDK_LIB_PATH)wdmsec.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib;$(KMDF_LIB_PATH)$(KMDF_VER_PATH)\WdfLdr.lib;$(KMDF_LIB_PATH)$(KMDF_VER_PATH)\WdfDriverEntry.lib</AdditionalDependencies>
-    </Link>
-	<DriverSign>
-      <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
-    </DriverSign>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ClCompile>
-      <WppEnabled>true</WppEnabled>
-      <WppRecorderEnabled>true</WppRecorderEnabled>
-      <WppScanConfigurationData Condition="'%(ClCompile.ScanConfigurationData)' == ''">trace.h</WppScanConfigurationData>
-      <WppKernelMode>true</WppKernelMode>
-      <PreprocessorDefinitions>_NO_CRT_STDIO_INLINE;_X86_=1;i386=1;STD_CALL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>$(DDK_LIB_PATH)wdmsec.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib;$(KMDF_LIB_PATH)$(KMDF_VER_PATH)\WdfLdr.lib;$(KMDF_LIB_PATH)$(KMDF_VER_PATH)\WdfDriverEntry.lib</AdditionalDependencies>
-    </Link>
-	<DriverSign>
-      <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
-    </DriverSign>
-    <Inf>
-      <TimeStamp>1.1.4.0</TimeStamp>
-    </Inf>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WppEnabled>true</WppEnabled>
@@ -194,7 +125,7 @@
     <Link>
       <AdditionalDependencies>$(DDK_LIB_PATH)wdmsec.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib;$(KMDF_LIB_PATH)$(KMDF_VER_PATH)\WdfLdr.lib;$(KMDF_LIB_PATH)$(KMDF_VER_PATH)\WdfDriverEntry.lib</AdditionalDependencies>
     </Link>
-	<DriverSign>
+    <DriverSign>
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
   </ItemDefinitionGroup>
@@ -209,7 +140,7 @@
     <Link>
       <AdditionalDependencies>$(DDK_LIB_PATH)wdmsec.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib;$(KMDF_LIB_PATH)$(KMDF_VER_PATH)\WdfLdr.lib;$(KMDF_LIB_PATH)$(KMDF_VER_PATH)\WdfDriverEntry.lib</AdditionalDependencies>
     </Link>
-	<DriverSign>
+    <DriverSign>
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
     <Inf>
@@ -226,7 +157,7 @@
     <Link>
       <AdditionalDependencies>$(DDK_LIB_PATH)wdmsec.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib;$(KMDF_LIB_PATH)$(KMDF_VER_PATH)\WdfLdr.lib;$(KMDF_LIB_PATH)$(KMDF_VER_PATH)\WdfDriverEntry.lib</AdditionalDependencies>
     </Link>
-	<DriverSign>
+    <DriverSign>
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
     <Inf>
@@ -243,7 +174,7 @@
     <Link>
       <AdditionalDependencies>$(DDK_LIB_PATH)wdmsec.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib;$(KMDF_LIB_PATH)$(KMDF_VER_PATH)\WdfLdr.lib;$(KMDF_LIB_PATH)$(KMDF_VER_PATH)\WdfDriverEntry.lib</AdditionalDependencies>
     </Link>
-	<DriverSign>
+    <DriverSign>
       <FileDigestAlgorithm>sha256</FileDigestAlgorithm>
     </DriverSign>
     <Inf>
@@ -255,14 +186,10 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="BthPS3PSM.rc" />
-	<ResourceCompile Include="$(IntDir)BthPS3PSMETW.rc" />
+    <ResourceCompile Include="$(IntDir)BthPS3PSMETW.rc" />
   </ItemGroup>
   <ItemGroup>
     <MessageCompile Include="BthPS3PSM.man">
-	  <GenerateKernelModeLoggingMacros Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</GenerateKernelModeLoggingMacros>
-      <UseBaseNameOfInput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</UseBaseNameOfInput>
-      <GenerateKernelModeLoggingMacros Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</GenerateKernelModeLoggingMacros>
-      <UseBaseNameOfInput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</UseBaseNameOfInput>
       <GenerateKernelModeLoggingMacros Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">true</GenerateKernelModeLoggingMacros>
       <UseBaseNameOfInput Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">true</UseBaseNameOfInput>
       <GenerateKernelModeLoggingMacros Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">true</GenerateKernelModeLoggingMacros>
@@ -272,13 +199,11 @@
       <UseBaseNameOfInput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</UseBaseNameOfInput>
       <GenerateKernelModeLoggingMacros Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateKernelModeLoggingMacros>
       <UseBaseNameOfInput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</UseBaseNameOfInput>
-      <GeneratedFilesBaseName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename)ETW</GeneratedFilesBaseName>
-      <GeneratedFilesBaseName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename)ETW</GeneratedFilesBaseName>
       <GeneratedFilesBaseName Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">%(Filename)ETW</GeneratedFilesBaseName>
       <GeneratedFilesBaseName Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">%(Filename)ETW</GeneratedFilesBaseName>
       <GeneratedFilesBaseName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename)ETW</GeneratedFilesBaseName>
       <GeneratedFilesBaseName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename)ETW</GeneratedFilesBaseName>
-	</MessageCompile>
+    </MessageCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

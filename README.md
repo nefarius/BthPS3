@@ -90,6 +90,10 @@ Knowledge on how to build and (test-)sign Windows drivers is required for creati
 
 You can build individual projects of the solution within Visual Studio.
 
+### Build artifacts
+
+Tagged CI builds get mirrored [to the buildbot web server](https://buildbot.vigem.org/builds/BthPS3/), use at your own risk, no support ptovided whatsoever!
+
 ## Support & Documentation
 
 Everything you need to know is documented [on the project page](https://vigem.org/projects/BthPS3/), read carefully before considering filing a bug.

@@ -35,7 +35,7 @@ BEGIN
 		VALUE "FileDescription",  "PlayStation(R) 3 Peripherals Bluetooth Profile and Bus Driver"
 		VALUE "FileVersion",      "1.1.4.0"
 		VALUE "InternalName",     "PlayStation(R) 3 Peripherals Bluetooth Profile and Bus Driver"
-		VALUE "LegalCopyright",   "(C) 2020 Nefarius Software Solutions e.U."
+		VALUE "LegalCopyright",   "(C) 2020-2023 Nefarius Software Solutions e.U."
 		VALUE "OriginalFilename", "BthPS3.sys"
 		VALUE "ProductName",      "PlayStation(R) 3 Peripherals Bluetooth Profile and Bus Driver"
 		VALUE "ProductVersion",	  "1.1.4.0"

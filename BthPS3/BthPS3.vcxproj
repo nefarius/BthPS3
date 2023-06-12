@@ -29,6 +29,7 @@
     <ClCompile Include="BusLogic.IO.c" />
     <ClCompile Include="BusLogic.Slots.c" />
     <ClCompile Include="BusLogic.State.c" />
+    <ClCompile Include="Compatibility.c" />
     <ClCompile Include="Device.c" />
     <ClCompile Include="Driver.c" />
     <ClCompile Include="L2CAP.Connect.c" />

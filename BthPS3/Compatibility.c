@@ -86,6 +86,7 @@ static PVOID FindDriverBaseAddress(STRING moduleName)
 	return baseAddress;
 }
 
+/*
 __declspec(dllexport)
 void
 imp_WppRecorderReplay(
@@ -156,3 +157,4 @@ imp_WppRecorderReplay(
 	FuncExitNoReturn(TRACE_COMPAT);
 }
 
+*/

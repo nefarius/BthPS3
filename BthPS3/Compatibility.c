@@ -91,7 +91,7 @@ VOID EnumerateExportedFunctions(PVOID ModuleBase)
 
     DECLARE_CONST_UNICODE_STRING(routineName, L"RtlImageDirectoryEntryToData");
 
-    t_RtlImageDirectoryEntryToData fp_RtlImageDirectoryEntryToData = MmGetSystemRoutineAddress(
+    t_RtlImageDirectoryEntryToData fp_RtlImageDirectoryEntryToData = (t_RtlImageDirectoryEntryToData)MmGetSystemRoutineAddress(
         (PUNICODE_STRING)&routineName
     );
 
@@ -120,10 +120,12 @@ VOID EnumerateExportedFunctions(PVOID ModuleBase)
     PULONG functionNames = (PULONG)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfNames);
     PULONG functionOrdinals = (PULONG)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfNameOrdinals);
 
+    UNREFERENCED_PARAMETER(functionAddresses);
+
     for (DWORD i = 0; i < exportDirectory->NumberOfNames; i++)
     {
         const char* functionName = (const char*)((ULONG_PTR)ModuleBase + functionNames[i]);
-        USHORT functionOrdinal = functionOrdinals[i];
+        USHORT functionOrdinal = (USHORT)functionOrdinals[i];
 
         // Process the exported function name and ordinal as needed
         // ...

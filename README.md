@@ -37,7 +37,7 @@ This is a community project and not affiliated with Sony Interactive Entertainme
 
 ## Environment
 
-BthPS3 components can run on **Windows 10 or newer** (x64, ARM64).
+BthPS3 components can run on **Windows 10 version 1507 or newer** (x64, ARM64).
 
 <details>
 

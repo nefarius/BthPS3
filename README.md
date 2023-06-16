@@ -83,7 +83,7 @@ Check out the companion solution [DsHidMini](https://github.com/ViGEm/DsHidMini)
 
 ## How to build
 
-Knowledge on how to build and (test-)sign Windows drivers is required for creating usable builds. This is outside of the scope of project documentation.
+Knowledge on how to build and (test-)sign Windows drivers is required for creating usable builds. This is outside of the scope of the project documentation.
 
 <details>
 

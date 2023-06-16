@@ -1,0 +1,18 @@
+LIBRARY WppRecorder.sys
+EXPORTS
+	DllInitialize
+	DllUnload
+	WppAutoLogStart
+	WppAutoLogStop
+	WppAutoLogTrace
+	imp_WppRecorderConfigure
+	imp_WppRecorderDumpLiveDriverData
+	imp_WppRecorderGetCounterHandle
+	imp_WppRecorderGetTriageInfo
+	imp_WppRecorderIsDefaultLogAvailable
+	imp_WppRecorderLinkCounters
+	imp_WppRecorderLogCreate
+	imp_WppRecorderLogDelete
+	imp_WppRecorderLogDumpLiveData
+	imp_WppRecorderLogGetDefault
+	imp_WppRecorderLogSetIdentifier

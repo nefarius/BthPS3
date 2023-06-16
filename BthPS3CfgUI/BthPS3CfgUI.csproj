@@ -16,6 +16,7 @@
     <OutputPath>$(SolutionDir)bin\</OutputPath>
     <UseWPF>true</UseWPF>
     <Version>2.2.0.0</Version>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>

@@ -13,7 +13,12 @@ PVOID FindDriverBaseAddress(STRING ModuleName)
     const ULONG SystemModuleInformation = 11;
 
     // Query the required buffer size for module information
-    NTSTATUS status = ZwQuerySystemInformation(SystemModuleInformation, &bufferSize, 0, &bufferSize);
+    NTSTATUS status = ZwQuerySystemInformation(
+        SystemModuleInformation,
+        &bufferSize,
+        0,
+        &bufferSize
+    );
 
     if (status != STATUS_INFO_LENGTH_MISMATCH)
     {
@@ -26,7 +31,11 @@ PVOID FindDriverBaseAddress(STRING ModuleName)
 
 #pragma warning(disable:4996)
     // Allocate memory for the module information
-    moduleInfo = (PSYSTEM_MODULE_INFORMATION)ExAllocatePoolWithTag(NonPagedPool, bufferSize, BTHPS_POOL_TAG);
+    moduleInfo = (PSYSTEM_MODULE_INFORMATION)ExAllocatePoolWithTag(
+        NonPagedPool,
+        bufferSize,
+        BTHPS_POOL_TAG
+    );
 #pragma warning(default:4996)
 
     if (moduleInfo == NULL)
@@ -39,7 +48,12 @@ PVOID FindDriverBaseAddress(STRING ModuleName)
     }
 
     // Retrieve the module information
-    status = ZwQuerySystemInformation(SystemModuleInformation, moduleInfo, bufferSize, NULL);
+    status = ZwQuerySystemInformation(
+        SystemModuleInformation,
+        moduleInfo,
+        bufferSize,
+        NULL
+    );
 
     if (!NT_SUCCESS(status))
     {
@@ -86,14 +100,12 @@ PVOID FindDriverBaseAddress(STRING ModuleName)
 
 VOID EnumerateExportedFunctions(PVOID ModuleBase)
 {
-    PIMAGE_EXPORT_DIRECTORY exportDirectory;
     ULONG exportSize;
 
     DECLARE_CONST_UNICODE_STRING(routineName, L"RtlImageDirectoryEntryToData");
 
-    t_RtlImageDirectoryEntryToData fp_RtlImageDirectoryEntryToData = (t_RtlImageDirectoryEntryToData)MmGetSystemRoutineAddress(
-        (PUNICODE_STRING)&routineName
-    );
+    const t_RtlImageDirectoryEntryToData fp_RtlImageDirectoryEntryToData =
+        (t_RtlImageDirectoryEntryToData)MmGetSystemRoutineAddress((PUNICODE_STRING)&routineName);
 
     if (fp_RtlImageDirectoryEntryToData == NULL)
     {
@@ -105,8 +117,13 @@ VOID EnumerateExportedFunctions(PVOID ModuleBase)
     }
 
     // Retrieve the export directory information
-    exportDirectory = (PIMAGE_EXPORT_DIRECTORY)fp_RtlImageDirectoryEntryToData(
-        ModuleBase, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &exportSize);
+    const PIMAGE_EXPORT_DIRECTORY exportDirectory = (PIMAGE_EXPORT_DIRECTORY)fp_RtlImageDirectoryEntryToData(
+        ModuleBase,
+        TRUE,
+        IMAGE_DIRECTORY_ENTRY_EXPORT,
+        &exportSize
+    );
+
     if (exportDirectory == NULL)
     {
         TraceError(
@@ -116,9 +133,9 @@ VOID EnumerateExportedFunctions(PVOID ModuleBase)
         return;
     }
 
-    PULONG functionAddresses = (PULONG)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfFunctions);
-    PULONG functionNames = (PULONG)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfNames);
-    PULONG functionOrdinals = (PULONG)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfNameOrdinals);
+    const PULONG functionAddresses = (PULONG)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfFunctions);
+    const PULONG functionNames = (PULONG)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfNames);
+    const PULONG functionOrdinals = (PULONG)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfNameOrdinals);
 
     UNREFERENCED_PARAMETER(functionAddresses);
 

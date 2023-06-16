@@ -85,6 +85,10 @@ Check out the companion solution [DsHidMini](https://github.com/ViGEm/DsHidMini)
 
 Knowledge on how to build and (test-)sign Windows drivers is required for creating usable builds. This is outside of the scope of project documentation.
 
+<details>
+
+<summary>Build instructions and details</summary>
+
 ### Prerequisites
 
 - [Step 1: Install Visual Studio 2022](https://learn.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk#download-icon-step-1-install-visual-studio-2022)
@@ -108,6 +112,8 @@ The project uses the following branch strategies:
 ### Build artifacts
 
 Tagged CI builds get mirrored [to the buildbot web server](https://buildbot.vigem.org/builds/BthPS3/), use at your own risk, no support ptovided whatsoever!
+
+</details>
 
 ## Support & Documentation
 

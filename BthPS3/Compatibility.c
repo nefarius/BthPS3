@@ -133,7 +133,12 @@ VOID EnumerateExportedFunctions(PVOID ModuleBase)
         return;
     }
 
+#if defined(_M_X64) || defined(__amd64__) || defined(__aarch64__) || defined(_M_ARM64)
+    const PULONGLONG functionAddresses = (PULONGLONG)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfFunctions);
+#else
     const PULONG functionAddresses = (PULONG)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfFunctions);
+#endif
+
     const PULONG functionNames = (PULONG)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfNames);
     const PUSHORT functionOrdinals = (PUSHORT)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfNameOrdinals);
 
@@ -141,6 +146,11 @@ VOID EnumerateExportedFunctions(PVOID ModuleBase)
 
     for (DWORD i = 0; i < exportDirectory->NumberOfNames; i++)
     {
+#if defined(_M_X64) || defined(__amd64__) || defined(__aarch64__) || defined(_M_ARM64)
+        PVOID functionAddress = (PULONGLONG)((ULONG_PTR)ModuleBase + functionAddresses[i]);
+#else
+        PVOID functionAddress = (PULONG)((ULONG_PTR)ModuleBase + functionAddresses[i]);
+#endif
         const char* functionName = (const char*)((ULONG_PTR)ModuleBase + functionNames[i]);
         USHORT functionOrdinal = functionOrdinals[i];
 
@@ -151,9 +161,10 @@ VOID EnumerateExportedFunctions(PVOID ModuleBase)
 
         TraceInformation(
             TRACE_COMPAT,
-            "Exported Function: %s (Ordinal: %hu)",
+            "Exported Function: %s (Ordinal: %hu, Address: %p)",
             functionName,
-            functionOrdinal
+            functionOrdinal,
+            functionAddress
         );
     }
 }

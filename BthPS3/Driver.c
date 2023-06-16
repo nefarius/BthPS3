@@ -141,3 +141,20 @@ BthPS3EvtDriverContextCleanup(
 	//
 	WPP_CLEANUP(WdfDriverWdmGetDriverObject((WDFDRIVER)DriverObject));
 }
+
+//
+// This satisfies the linker when looking for the import we patched out of "wpprecorder.lib"
+//
+VOID
+imp_WppRecorderReplay(
+	_In_ PVOID       WppCb,
+	_In_ TRACEHANDLE WppTraceHandle,
+	_In_ ULONG       EnableFlags,
+	_In_ UCHAR       EnableLevel
+)
+{
+	UNREFERENCED_PARAMETER(WppCb);
+	UNREFERENCED_PARAMETER(WppTraceHandle);
+	UNREFERENCED_PARAMETER(EnableFlags);
+	UNREFERENCED_PARAMETER(EnableLevel);
+}

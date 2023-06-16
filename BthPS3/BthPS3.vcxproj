@@ -221,10 +221,11 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   
+  <!-- this undoes the automatic linking of the WDK version of "wpprecorder.lib" so we can slip in our own instead -->
   <Target Name="RemoveWppRecorder" AfterTargets="SetLinkLibraryPaths">
 	<ItemGroup>
       <Link>
-        <AdditionalDependencies>$(ProjectDir)WppRecorderProxy.lib;$(DmfRootPath)\$(Configuration)\$(PlatformName)\lib\DmfK\DmfK.lib;$(DmfRootPath)\$(Configuration)\$(PlatformName)\individual_libs\DmfKModules.Template\DmfKModules.Template.lib;$(DDK_LIB_PATH)\wdmsec.lib;$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib;$(KMDF_LIB_PATH)$(KMDF_VER_PATH)\WdfLdr.lib;$(KMDF_LIB_PATH)$(KMDF_VER_PATH)\WdfDriverEntry.lib</AdditionalDependencies>
+        <AdditionalDependencies>$(ProjectDir)libs\$(PlatformName)\WppRecorder.lib;$(DmfRootPath)\$(Configuration)\$(PlatformName)\lib\DmfK\DmfK.lib;$(DmfRootPath)\$(Configuration)\$(PlatformName)\individual_libs\DmfKModules.Template\DmfKModules.Template.lib;$(DDK_LIB_PATH)\wdmsec.lib;$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib;$(KMDF_LIB_PATH)$(KMDF_VER_PATH)\WdfLdr.lib;$(KMDF_LIB_PATH)$(KMDF_VER_PATH)\WdfDriverEntry.lib</AdditionalDependencies>
       </Link>
     </ItemGroup>
   </Target>

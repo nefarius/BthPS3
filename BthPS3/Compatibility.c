@@ -8,7 +8,7 @@
 // 
 NTSTATUS
 FindDriverBaseAddress(
-    STRING ModuleName, 
+    STRING ModuleName,
     PVOID* ModuleBase
 )
 {
@@ -83,10 +83,19 @@ FindDriverBaseAddress(
     return status;
 }
 
+VOID
+imp_WppRecorderReplay(
+    _In_ PVOID       WppCb,
+    _In_ TRACEHANDLE WppTraceHandle,
+    _In_ ULONG       EnableFlags,
+    _In_ UCHAR       EnableLevel
+);
 
 VOID EnumerateExportedFunctions(PVOID ModuleBase)
 {
     ULONG exportSize;
+
+    FuncEntry(TRACE_COMPAT);
 
     DECLARE_CONST_UNICODE_STRING(routineName, L"RtlImageDirectoryEntryToData");
 
@@ -118,36 +127,27 @@ VOID EnumerateExportedFunctions(PVOID ModuleBase)
         );
         return;
     }
-
-#if defined(_M_X64) || defined(__amd64__) || defined(__aarch64__) || defined(_M_ARM64)
-    const PULONGLONG functionAddresses = (PULONGLONG)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfFunctions);
-#else
+    
     const PULONG functionAddresses = (PULONG)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfFunctions);
-#endif
-
     const PULONG functionNames = (PULONG)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfNames);
     const PUSHORT functionOrdinals = (PUSHORT)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfNameOrdinals);
 
-    UNREFERENCED_PARAMETER(functionAddresses);
-
     for (DWORD i = 0; i < exportDirectory->NumberOfNames; i++)
     {
-#if defined(_M_X64) || defined(__amd64__) || defined(__aarch64__) || defined(_M_ARM64)
-        PVOID functionAddress = (PULONGLONG)((ULONG_PTR)ModuleBase + functionAddresses[i]);
-#else
-        PVOID functionAddress = (PULONG)((ULONG_PTR)ModuleBase + functionAddresses[i]);
-#endif
         const char* functionName = (const char*)((ULONG_PTR)ModuleBase + functionNames[i]);
-        USHORT functionOrdinal = functionOrdinals[i];
+        const USHORT functionOrdinal = functionOrdinals[i];
+
+        const ULONG functionRva = functionAddresses[i];
+        const PVOID functionAddress = (PVOID)((ULONG_PTR)ModuleBase + functionRva);
 
         // Process the exported function name and ordinal as needed
         // ...
 
         DbgPrint("Exported Function: %s (Ordinal: %hu)\n", functionName, functionOrdinal);
-
+        
         TraceInformation(
             TRACE_COMPAT,
-            "Exported Function: %s (Ordinal: %hu, Address: %p)",
+            "Exported Function: %s (Ordinal: %hu, Address: 0x%p)",
             functionName,
             functionOrdinal,
             functionAddress

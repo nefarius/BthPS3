@@ -6,10 +6,13 @@
 // 
 // Finds the base address of a driver module
 // 
+_Success_(return == STATUS_SUCCESS)
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 FindDriverBaseAddress(
-    STRING ModuleName,
-    PVOID* ModuleBase
+    _In_ STRING ModuleName,
+    _Inout_ PVOID* ModuleBase
 )
 {
     ULONG bufferSize = 0;
@@ -83,19 +86,18 @@ FindDriverBaseAddress(
     return status;
 }
 
-VOID
-imp_WppRecorderReplay(
-    _In_ PVOID       WppCb,
-    _In_ TRACEHANDLE WppTraceHandle,
-    _In_ ULONG       EnableFlags,
-    _In_ UCHAR       EnableLevel
-);
-
-VOID EnumerateExportedFunctions(PVOID ModuleBase)
+_Success_(return == STATUS_SUCCESS)
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS
+FundExportedFunctionAddress(
+    _In_ PVOID ModuleBase,
+    _In_ STRING FunctionName,
+    _Inout_ PVOID* FunctionAddress
+)
 {
+    NTSTATUS status = STATUS_NOT_FOUND;
     ULONG exportSize;
-
-    FuncEntry(TRACE_COMPAT);
 
     DECLARE_CONST_UNICODE_STRING(routineName, L"RtlImageDirectoryEntryToData");
 
@@ -104,11 +106,7 @@ VOID EnumerateExportedFunctions(PVOID ModuleBase)
 
     if (fp_RtlImageDirectoryEntryToData == NULL)
     {
-        TraceError(
-            TRACE_COMPAT,
-            "RtlImageDirectoryEntryToData not found"
-        );
-        return;
+        return STATUS_NOT_IMPLEMENTED;
     }
 
     // Retrieve the export directory information
@@ -121,12 +119,10 @@ VOID EnumerateExportedFunctions(PVOID ModuleBase)
 
     if (exportDirectory == NULL)
     {
-        TraceError(
-            TRACE_COMPAT,
-            "Export directory not found in the module"
-        );
-        return;
+        return STATUS_INVALID_IMAGE_FORMAT;
     }
+
+    STRING currentFunctionName;
     
     const PULONG functionAddresses = (PULONG)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfFunctions);
     const PULONG functionNames = (PULONG)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfNames);
@@ -136,95 +132,23 @@ VOID EnumerateExportedFunctions(PVOID ModuleBase)
     {
         const char* functionName = (const char*)((ULONG_PTR)ModuleBase + functionNames[i]);
         const USHORT functionOrdinal = functionOrdinals[i];
+        UNREFERENCED_PARAMETER(functionOrdinal);
 
         const ULONG functionRva = functionAddresses[i];
         const PVOID functionAddress = (PVOID)((ULONG_PTR)ModuleBase + functionRva);
 
-        // Process the exported function name and ordinal as needed
-        // ...
+        RtlInitAnsiString(&currentFunctionName, functionName);
 
-        DbgPrint("Exported Function: %s (Ordinal: %hu)\n", functionName, functionOrdinal);
-        
-        TraceInformation(
-            TRACE_COMPAT,
-            "Exported Function: %s (Ordinal: %hu, Address: 0x%p)",
-            functionName,
-            functionOrdinal,
-            functionAddress
-        );
-    }
-}
-
-
-/*
-__declspec(dllexport)
-void
-imp_WppRecorderReplay(
-    _In_ PVOID       WppCb,
-    _In_ TRACEHANDLE WppTraceHandle,
-    _In_ ULONG       EnableFlags,
-    _In_ UCHAR       EnableLevel
-)
-{
-    FuncEntry(TRACE_COMPAT);
-
-    UNREFERENCED_PARAMETER(WppCb);
-    UNREFERENCED_PARAMETER(WppTraceHandle);
-    UNREFERENCED_PARAMETER(EnableFlags);
-    UNREFERENCED_PARAMETER(EnableLevel);
-
-    const KIRQL irql = KeGetCurrentIrql();
-
-    if (irql != PASSIVE_LEVEL)
-    {
-        TraceInformation(TRACE_COMPAT, "Incompatible IRQL %!irql!", irql);
-        return;
-    }
-
-    const STRING targetModuleName = RTL_CONSTANT_STRING("WppRecorder.sys");
-
-    const PVOID driverBaseAddress = FindDriverBaseAddress(targetModuleName);
-
-    if (driverBaseAddress != NULL)
-    {
-        TraceVerbose(TRACE_COMPAT, "Module found");
-
-        RTL_OSVERSIONINFOEXW versionInfo;
-        versionInfo.dwOSVersionInfoSize = sizeof(versionInfo);
-        NTSTATUS status = RtlGetVersion((PRTL_OSVERSIONINFOW)&versionInfo);
-
-        if (NT_SUCCESS(status))
+        if (0 == RtlCompareString(&FunctionName, &currentFunctionName, TRUE))
         {
-            TraceInformation(
-                TRACE_COMPAT,
-                "Version: %d.%d.%d",
-                versionInfo.dwMajorVersion,
-                versionInfo.dwMinorVersion,
-                versionInfo.dwBuildNumber
-            );
+            if (FunctionAddress)
+            {
+                status = STATUS_SUCCESS;
+                *FunctionAddress = functionAddress;
+            }
+            break;
         }
-
-        if (TRUE)
-            return;
-        // Calculate the address of the desired function
-        const ULONG_PTR moduleBase = (ULONG_PTR)driverBaseAddress;
-        const ULONG_PTR functionOffset = 0x000040D0;  // imp_WppRecorderReplay
-
-        const PVOID functionAddress = (PVOID)(moduleBase + functionOffset);
-
-        // Typecast the function address to the desired function pointer type
-        const t_WppRecorderReplay functionPointer = (t_WppRecorderReplay)functionAddress;
-
-        // Call the function
-        functionPointer(WppCb, WppTraceHandle, EnableFlags, EnableLevel);
-    }
-    else
-    {
-        TraceVerbose(TRACE_COMPAT, "Module not found");
-        // Driver module not found
     }
 
-    FuncExitNoReturn(TRACE_COMPAT);
+    return status;
 }
-
-*/

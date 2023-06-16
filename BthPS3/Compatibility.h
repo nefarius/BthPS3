@@ -69,10 +69,21 @@ typedef PVOID (NTAPI* t_RtlImageDirectoryEntryToData)(
 );
 
 
+_Success_(return == STATUS_SUCCESS)
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 FindDriverBaseAddress(
-    STRING ModuleName,
-    PVOID* ModuleBase
+    _In_ STRING ModuleName,
+    _Inout_ PVOID* ModuleBase
 );
 
-VOID EnumerateExportedFunctions(PVOID ModuleBase);
+_Success_(return == STATUS_SUCCESS)
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS
+FundExportedFunctionAddress(
+    _In_ PVOID ModuleBase,
+    _In_ STRING FunctionName,
+    _Inout_ PVOID* FunctionAddress
+);

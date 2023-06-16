@@ -46,6 +46,7 @@
 #include <initguid.h>
 #include <devpkey.h>
 
+#include "Compatibility.h"
 #include "device.h"
 #include "trace.h"
 #include "Bluetooth.h"

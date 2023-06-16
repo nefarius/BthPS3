@@ -43,6 +43,7 @@
     <ClInclude Include="..\common\include\BthPS3.h" />
     <ClInclude Include="Bluetooth.h" />
     <ClInclude Include="BusLogic.h" />
+    <ClInclude Include="Compatibility.h" />
     <ClInclude Include="Device.h" />
     <ClInclude Include="Driver.h" />
     <ClInclude Include="PSM.h" />

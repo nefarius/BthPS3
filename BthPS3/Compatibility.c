@@ -16,19 +16,38 @@ PVOID FindDriverBaseAddress(STRING ModuleName)
     NTSTATUS status = ZwQuerySystemInformation(SystemModuleInformation, &bufferSize, 0, &bufferSize);
 
     if (status != STATUS_INFO_LENGTH_MISMATCH)
+    {
+        TraceError(
+            TRACE_COMPAT,
+            "ZwQuerySystemInformation failed with unexpected error"
+        );
         return NULL;
+    }
 
+#pragma warning(disable:4996)
     // Allocate memory for the module information
-    moduleInfo = (PSYSTEM_MODULE_INFORMATION)ExAllocatePool2(NonPagedPool, bufferSize, BTHPS_POOL_TAG);
+    moduleInfo = (PSYSTEM_MODULE_INFORMATION)ExAllocatePoolWithTag(NonPagedPool, bufferSize, BTHPS_POOL_TAG);
+#pragma warning(default:4996)
 
     if (moduleInfo == NULL)
+    {
+        TraceError(
+            TRACE_COMPAT,
+            "ExAllocatePoolWithTag failed"
+        );
         return NULL;
+    }
 
     // Retrieve the module information
     status = ZwQuerySystemInformation(SystemModuleInformation, moduleInfo, bufferSize, NULL);
 
     if (!NT_SUCCESS(status))
     {
+        TraceError(
+            TRACE_COMPAT,
+            "ZwQuerySystemInformation failed with status %!STATUS!",
+            status
+        );
         ExFreePool(moduleInfo);
         return NULL;
     }
@@ -38,10 +57,21 @@ PVOID FindDriverBaseAddress(STRING ModuleName)
     // Iterate through the loaded modules and find the desired module
     for (ULONG i = 0; i < moduleInfo->Count; i++)
     {
-        RtlInitAnsiString(&currentImageName, (PCSZ)moduleInfo->Module[i].ImageName);
+        RtlInitAnsiString(&currentImageName, moduleInfo->Module[i].ImageName);
+
+        TraceVerbose(
+            TRACE_COMPAT,
+            "Current image name: %Z",
+            &currentImageName
+        );
 
         if (0 == RtlCompareString(&ModuleName, &currentImageName, TRUE))
         {
+            TraceInformation(
+                TRACE_COMPAT,
+                "Found module"
+            );
+
             // Found the module, store the base address
             baseAddress = moduleInfo->Module[i].Base;
             break;
@@ -49,6 +79,7 @@ PVOID FindDriverBaseAddress(STRING ModuleName)
     }
 
     ExFreePool(moduleInfo);
+
     return baseAddress;
 }
 
@@ -60,7 +91,7 @@ VOID EnumerateExportedFunctions(PVOID ModuleBase)
 
     DECLARE_CONST_UNICODE_STRING(routineName, L"RtlImageDirectoryEntryToData");
 
-    t_RtlImageDirectoryEntryToData fp_RtlImageDirectoryEntryToData = (t_RtlImageDirectoryEntryToData)MmGetSystemRoutineAddress(
+    t_RtlImageDirectoryEntryToData fp_RtlImageDirectoryEntryToData = MmGetSystemRoutineAddress(
         (PUNICODE_STRING)&routineName
     );
 
@@ -74,7 +105,8 @@ VOID EnumerateExportedFunctions(PVOID ModuleBase)
     }
 
     // Retrieve the export directory information
-    exportDirectory = (PIMAGE_EXPORT_DIRECTORY)fp_RtlImageDirectoryEntryToData(ModuleBase, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &exportSize);
+    exportDirectory = (PIMAGE_EXPORT_DIRECTORY)fp_RtlImageDirectoryEntryToData(
+        ModuleBase, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &exportSize);
     if (exportDirectory == NULL)
     {
         TraceError(
@@ -84,13 +116,14 @@ VOID EnumerateExportedFunctions(PVOID ModuleBase)
         return;
     }
 
+    PULONG functionAddresses = (PULONG)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfFunctions);
     PULONG functionNames = (PULONG)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfNames);
     PULONG functionOrdinals = (PULONG)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfNameOrdinals);
 
     for (DWORD i = 0; i < exportDirectory->NumberOfNames; i++)
     {
         const char* functionName = (const char*)((ULONG_PTR)ModuleBase + functionNames[i]);
-        USHORT functionOrdinal = (USHORT)functionOrdinals[i];
+        USHORT functionOrdinal = functionOrdinals[i];
 
         // Process the exported function name and ordinal as needed
         // ...

@@ -322,7 +322,7 @@
             <!-- About -->
             <TabItem Header="About">
                 <TextBlock TextAlignment="Justify" TextWrapping="Wrap">
-                    Copyright (C) 2018-2022 - Nefarius Software Solutions e.U.<LineBreak/><LineBreak/>
+                    Copyright (C) 2018-2023 - Nefarius Software Solutions e.U.<LineBreak/><LineBreak/>
                     This is a community project and not affiliated with Sony Interactive Entertainment Inc. in any way.<LineBreak/><LineBreak/>
                     "PlayStation", "PSP", "PS2", "PS one", "DUALSHOCK" and "SIXAXIS" are registered trademarks of Sony Interactive Entertainment Inc.<LineBreak/><LineBreak/>
                     BthPS3 is released as freeware. You are allowed to freely distribute this solution via floppy disk, CD-ROM, Internet, or in any other way, as long as you don't charge anything for this. If you distribute this solution, you must include all files in the distribution package, without any modification.<LineBreak/><LineBreak/>

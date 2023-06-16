@@ -17,8 +17,6 @@ skip_commits:
     - '**/*.jpg'
     - '**/*.aip'
 install:
-- ps: Invoke-WebRequest https://wixtoolset.org/downloads/v3.14.0.6526/wix314-binaries.zip -OutFile .\wix314-binaries.zip
-- ps: Expand-Archive .\wix314-binaries.zip -DestinationPath .\wix
 - cmd: git submodule -q update --init
 - cmd: git clone -q https://github.com/microsoft/DMF.git C:\projects\DMF 2> nul || set ERRORLEVEL=0
 - cmd: |

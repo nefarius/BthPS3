@@ -33,7 +33,8 @@
           <event value="1" channel="SYSTEM" level="win:Informational" message="$(string.StartEvent.EventMessage)" opcode="win:Start" symbol="StartEvent" template="tid_load_template"/>
           <event value="2" channel="SYSTEM" level="win:Informational" message="$(string.UnloadEvent.EventMessage)" opcode="win:Stop" symbol="UnloadEvent" template="tid_unload_template"/>
           <event value="3" channel="SYSTEM" level="win:Error" message="$(string.FailedWithNTStatus.EventMessage)" opcode="win:Info" symbol="FailedWithNTStatus" template="tid_failed_with_ntstatus"/>
-          <event value="4" channel="SYSTEM" level="win:Informational" message="$(string.PatchStatusForDeviceInstance.EventMessage)" opcode="win:Info" symbol="PatchStatusForDeviceInstance" template="tid_patch_status_for_device_instance"/>
+          <event value="4" channel="SYSTEM" level="win:Informational" message="$(string.GetPatchStatusForDeviceInstance.EventMessage)" opcode="win:Info" symbol="GetPatchStatusForDeviceInstance" template="tid_patch_status_for_device_instance"/>
+          <event value="5" channel="SYSTEM" level="win:Informational" message="$(string.SetPatchStatusForDeviceInstance.EventMessage)" opcode="win:Info" symbol="SetPatchStatusForDeviceInstance" template="tid_patch_status_for_device_instance"/>
         </events>
       </provider>
     </events>
@@ -44,7 +45,8 @@
         <string id="StartEvent.EventMessage" value="Driver loaded (obj: %1, status: %2)"/>
         <string id="UnloadEvent.EventMessage" value="Driver unloaded (obj: %1)"/>
         <string id="FailedWithNTStatus.EventMessage" value="[%1] %2 failed with NTSTATUS %3"/>
-        <string id="PatchStatusForDeviceInstance.EventMessage" value="Retrieved patch status %1 for device instance %2"/>
+        <string id="GetPatchStatusForDeviceInstance.EventMessage" value="Retrieved patch status %1 for device instance %2"/>
+        <string id="SetPatchStatusForDeviceInstance.EventMessage" value="Stored patch status %1 on device instance %2"/>
       </stringTable>
     </resources>
   </localization>

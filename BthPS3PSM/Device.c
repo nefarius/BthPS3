@@ -159,6 +159,8 @@ BthPS3PSM_CreateDevice(
 
         PDEVICE_CONTEXT deviceContext = DeviceGetContext(device);
 
+        deviceContext->InstanceId = instanceId;
+
 #pragma region Add this device to global collection
 
 #ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
@@ -254,7 +256,7 @@ BthPS3PSM_CreateDevice(
 
             const PWSTR instanceIdString = (const PWSTR)WdfMemoryGetBuffer(instanceId, NULL);
 
-            EventWritePatchStatusForDeviceInstance(
+            EventWriteGetPatchStatusForDeviceInstance(
                 NULL,
                 deviceContext->IsPsmPatchingEnabled,
                 instanceIdString
@@ -333,7 +335,7 @@ BthPS3PSM_CreateDevice(
 
     } while (FALSE);
 
-    if (instanceId)
+    if (instanceId && !NT_SUCCESS(status))
     {
         WdfObjectDelete(instanceId);
     }
@@ -591,6 +593,14 @@ BthPS3PSM_EvtDeviceContextCleanup(
                 TRACE_DEVICE,
                 "Settings stored"
             );
+
+            const PWSTR instanceIdString = (const PWSTR)WdfMemoryGetBuffer(pDevCtx->InstanceId, NULL);
+
+            EventWriteSetPatchStatusForDeviceInstance(
+                NULL,
+                pDevCtx->IsPsmPatchingEnabled,
+                instanceIdString
+            );
         }
 
         WdfRegistryClose(key);
@@ -607,10 +617,15 @@ BthPS3PSM_EvtDeviceContextCleanup(
 
 #pragma endregion
 
+    //
+    // This object has no parent so we need to delete it manually
+    // 
+    WdfObjectDelete(pDevCtx->InstanceId);
+
 #else
     UNREFERENCED_PARAMETER(Device);
 #endif
 
     FuncExitNoReturn(TRACE_DEVICE);
-    }
+}
 #pragma warning(pop) // enable 28118 again

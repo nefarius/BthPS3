@@ -95,6 +95,11 @@ typedef struct _DEVICE_CONTEXT
 	// 
 	WDFSTRING SymbolicLinkName;
 
+    //
+    // Device Instance ID
+    // 
+    WDFMEMORY InstanceId;
+
 } DEVICE_CONTEXT, * PDEVICE_CONTEXT;
 
 //

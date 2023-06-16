@@ -3,12 +3,17 @@
 #include "Compatibility.tmh"
 
 
-// Function to find the base address of the driver module
-PVOID FindDriverBaseAddress(STRING ModuleName)
+// 
+// Finds the base address of a driver module
+// 
+NTSTATUS
+FindDriverBaseAddress(
+    STRING ModuleName, 
+    PVOID* ModuleBase
+)
 {
     ULONG bufferSize = 0;
     PSYSTEM_MODULE_INFORMATION moduleInfo = NULL;
-    PVOID baseAddress = NULL;
 
     const ULONG SystemModuleInformation = 11;
 
@@ -22,11 +27,7 @@ PVOID FindDriverBaseAddress(STRING ModuleName)
 
     if (status != STATUS_INFO_LENGTH_MISMATCH)
     {
-        TraceError(
-            TRACE_COMPAT,
-            "ZwQuerySystemInformation failed with unexpected error"
-        );
-        return NULL;
+        return status;
     }
 
 #pragma warning(disable:4996)
@@ -40,11 +41,7 @@ PVOID FindDriverBaseAddress(STRING ModuleName)
 
     if (moduleInfo == NULL)
     {
-        TraceError(
-            TRACE_COMPAT,
-            "ExAllocatePoolWithTag failed"
-        );
-        return NULL;
+        return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     // Retrieve the module information
@@ -57,44 +54,33 @@ PVOID FindDriverBaseAddress(STRING ModuleName)
 
     if (!NT_SUCCESS(status))
     {
-        TraceError(
-            TRACE_COMPAT,
-            "ZwQuerySystemInformation failed with status %!STATUS!",
-            status
-        );
         ExFreePool(moduleInfo);
-        return NULL;
+        return status;
     }
 
     STRING currentImageName;
 
+    status = STATUS_NOT_FOUND;
     // Iterate through the loaded modules and find the desired module
     for (ULONG i = 0; i < moduleInfo->Count; i++)
     {
         RtlInitAnsiString(&currentImageName, moduleInfo->Module[i].ImageName);
 
-        TraceVerbose(
-            TRACE_COMPAT,
-            "Current image name: %Z",
-            &currentImageName
-        );
-
         if (0 == RtlCompareString(&ModuleName, &currentImageName, TRUE))
         {
-            TraceInformation(
-                TRACE_COMPAT,
-                "Found module"
-            );
-
             // Found the module, store the base address
-            baseAddress = moduleInfo->Module[i].Base;
+            if (ModuleBase)
+            {
+                status = STATUS_SUCCESS;
+                *ModuleBase = moduleInfo->Module[i].Base;
+            }
             break;
         }
     }
 
     ExFreePool(moduleInfo);
 
-    return baseAddress;
+    return status;
 }
 
 

@@ -1,31 +1,33 @@
 #pragma once
 
-typedef VOID(*t_WppRecorderReplay)(
-    _In_ PVOID       WppCb,
+typedef VOID (*t_WppRecorderReplay)(
+    _In_ PVOID WppCb,
     _In_ TRACEHANDLE WppTraceHandle,
-    _In_ ULONG       EnableFlags,
-    _In_ UCHAR       EnableLevel
-    );
+    _In_ ULONG EnableFlags,
+    _In_ UCHAR EnableLevel
+);
 
 // Structure representing a loaded module
-typedef struct _SYSTEM_MODULE_INFORMATION_ENTRY {
-    PVOID   Unknown1;
-    PVOID   Unknown2;
-    PVOID   Base;
-    ULONG   Size;
-    ULONG   Flags;
-    USHORT  Index;
-    USHORT  NameLength;
-    USHORT  LoadCount;
-    USHORT  PathLength;
-    CHAR    ImageName[256];
-} SYSTEM_MODULE_INFORMATION_ENTRY, * PSYSTEM_MODULE_INFORMATION_ENTRY;
+typedef struct _SYSTEM_MODULE_INFORMATION_ENTRY
+{
+    PVOID Unknown1;
+    PVOID Unknown2;
+    PVOID Base;
+    ULONG Size;
+    ULONG Flags;
+    USHORT Index;
+    USHORT NameLength;
+    USHORT LoadCount;
+    USHORT PathLength;
+    CHAR ImageName[256];
+} SYSTEM_MODULE_INFORMATION_ENTRY, *PSYSTEM_MODULE_INFORMATION_ENTRY;
 
 // Structure representing the loaded module information
-typedef struct _SYSTEM_MODULE_INFORMATION {
-    ULONG   Count;
+typedef struct _SYSTEM_MODULE_INFORMATION
+{
+    ULONG Count;
     SYSTEM_MODULE_INFORMATION_ENTRY Module[1];
-} SYSTEM_MODULE_INFORMATION, * PSYSTEM_MODULE_INFORMATION;
+} SYSTEM_MODULE_INFORMATION, *PSYSTEM_MODULE_INFORMATION;
 
 // Function prototype for ZwQuerySystemInformation
 NTSYSAPI NTSTATUS NTAPI ZwQuerySystemInformation(
@@ -57,11 +59,20 @@ typedef struct _LDR_DATA_TABLE_ENTRY
     PVOID LoadedImports;
     PVOID EntryPointActivationContext;
     PVOID PatchInformation;
-} LDR_DATA_TABLE_ENTRY, * PLDR_DATA_TABLE_ENTRY;
+} LDR_DATA_TABLE_ENTRY, *PLDR_DATA_TABLE_ENTRY;
 
-typedef PVOID(NTAPI* t_RtlImageDirectoryEntryToData)(IN PVOID Base, IN BOOLEAN MappedAsImage, IN USHORT DirectoryEntry, OUT PULONG Size);
+typedef PVOID (NTAPI* t_RtlImageDirectoryEntryToData)(
+    IN PVOID Base,
+    IN BOOLEAN MappedAsImage,
+    IN USHORT DirectoryEntry,
+    OUT PULONG Size
+);
 
 
-PVOID FindDriverBaseAddress(STRING ModuleName);
+NTSTATUS
+FindDriverBaseAddress(
+    STRING ModuleName,
+    PVOID* ModuleBase
+);
 
 VOID EnumerateExportedFunctions(PVOID ModuleBase);

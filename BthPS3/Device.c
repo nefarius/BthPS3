@@ -117,9 +117,9 @@ BthPS3_CreateDevice(
         
         const STRING targetModuleName = RTL_CONSTANT_STRING("\\SystemRoot\\System32\\Drivers\\WppRecorder.sys");
 
-        const PVOID driverBaseAddress = FindDriverBaseAddress(targetModuleName);
-
-        if (driverBaseAddress)
+        PVOID driverBaseAddress = NULL;
+                
+        if (NT_SUCCESS(FindDriverBaseAddress(targetModuleName, &driverBaseAddress)))
         {
             EnumerateExportedFunctions(driverBaseAddress);
         }

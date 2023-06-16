@@ -135,14 +135,14 @@ VOID EnumerateExportedFunctions(PVOID ModuleBase)
 
     const PULONG functionAddresses = (PULONG)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfFunctions);
     const PULONG functionNames = (PULONG)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfNames);
-    const PULONG functionOrdinals = (PULONG)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfNameOrdinals);
+    const PUSHORT functionOrdinals = (PUSHORT)((ULONG_PTR)ModuleBase + exportDirectory->AddressOfNameOrdinals);
 
     UNREFERENCED_PARAMETER(functionAddresses);
 
     for (DWORD i = 0; i < exportDirectory->NumberOfNames; i++)
     {
         const char* functionName = (const char*)((ULONG_PTR)ModuleBase + functionNames[i]);
-        USHORT functionOrdinal = (USHORT)functionOrdinals[i];
+        USHORT functionOrdinal = functionOrdinals[i];
 
         // Process the exported function name and ordinal as needed
         // ...

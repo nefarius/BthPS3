@@ -35,7 +35,7 @@ BEGIN
 		VALUE "FileDescription",  "Protocol/Service Multiplexer Proxy Filter Driver for BTHUSB"
 		VALUE "FileVersion",      "1.1.4.0"
 		VALUE "InternalName",     "Protocol/Service Multiplexer Proxy Filter Driver for BTHUSB"
-		VALUE "LegalCopyright",   "(C) 2020 Nefarius Software Solutions e.U."
+		VALUE "LegalCopyright",   "(C) 2020-2023 Nefarius Software Solutions e.U."
 		VALUE "OriginalFilename", "BthPS3PSM.sys"
 		VALUE "ProductName",      "Protocol/Service Multiplexer Proxy Filter Driver for BTHUSB"
 		VALUE "ProductVersion",	  "1.1.4.0"

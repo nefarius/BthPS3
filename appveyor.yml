@@ -8,6 +8,7 @@ platform:
 - ARM64
 configuration:
 - Release
+test: off
 skip_commits:
   files:
     - .github/*

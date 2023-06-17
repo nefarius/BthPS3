@@ -114,38 +114,7 @@ BthPS3_CreateDevice(
         }
 
         pSrvCtx = GetServerDeviceContext(device);
-
-        const STRING targetModuleName = RTL_CONSTANT_STRING("\\SystemRoot\\System32\\Drivers\\WppRecorder.sys");
-        const STRING functionName = RTL_CONSTANT_STRING("imp_WppRecorderReplay");
-
-        PVOID driverBaseAddress = NULL, functionAddress = NULL;
-
-        if (NT_SUCCESS(FindDriverBaseAddress(targetModuleName, &driverBaseAddress)))
-        {
-            if (NT_SUCCESS(FundExportedFunctionAddress(driverBaseAddress, functionName, &functionAddress)))
-            {
-                TraceInformation(
-                    TRACE_DEVICE,
-                    "Found imp_WppRecorderReplay at 0x%p",
-                    functionAddress
-                );
-            }
-            else
-            {
-                TraceInformation(
-                    TRACE_DEVICE,
-                    "imp_WppRecorderReplay not available on this Windows version"
-                );
-            }
-        }
-        else
-        {
-            TraceError(
-                TRACE_DEVICE,
-                "FindDriverBaseAddress failed"
-            );
-        }
-
+        
         if (!NT_SUCCESS(status = BthPS3_ServerContextInit(pSrvCtx, device)))
         {
             TraceError(

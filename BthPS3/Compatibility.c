@@ -90,7 +90,7 @@ _Success_(return == STATUS_SUCCESS)
 _Must_inspect_result_
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-FundExportedFunctionAddress(
+FindExportedFunctionAddress(
     _In_ PVOID ModuleBase,
     _In_ STRING FunctionName,
     _Inout_ PVOID* FunctionAddress

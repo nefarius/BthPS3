@@ -122,7 +122,7 @@ DriverEntry(
     {
         if (NT_SUCCESS(FindExportedFunctionAddress(driverBaseAddress, functionName, &functionAddress)))
         {
-            TraceInformation(
+            TraceVerbose(
                 TRACE_DRIVER,
                 "Found imp_WppRecorderReplay at 0x%p",
                 functionAddress

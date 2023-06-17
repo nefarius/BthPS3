@@ -1,12 +1,5 @@
 #pragma once
 
-typedef VOID (*t_WppRecorderReplay)(
-    _In_ PVOID WppCb,
-    _In_ TRACEHANDLE WppTraceHandle,
-    _In_ ULONG EnableFlags,
-    _In_ UCHAR EnableLevel
-);
-
 // Structure representing a loaded module
 typedef struct _SYSTEM_MODULE_INFORMATION_ENTRY
 {

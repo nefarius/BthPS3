@@ -91,7 +91,7 @@ typedef struct _BTHPS3_DEVICE_CONTEXT_HEADER
 	//
 	// Lock for ClientConnections collection
 	// 
-	WDFSPINLOCK ClientsLock;
+	WDFWAITLOCK ClientsLock;
 
 	//
 	// DMF module to handle PDO creation
@@ -261,7 +261,7 @@ BthPS3_UnregisterL2CAPServer(
 
 #pragma endregion
 
-_IRQL_requires_max_(DISPATCH_LEVEL)
+_IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_DeviceContextHeaderInit(
 	PBTHPS3_DEVICE_CONTEXT_HEADER Header,

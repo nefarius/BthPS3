@@ -361,8 +361,6 @@ BthPS3_GetHciVersion(
 	return status;
 }
 
-_IRQL_requires_max_(PASSIVE_LEVEL)
-_IRQL_requires_same_
 ScheduledTask_Result_Type
 BthPS3_EvtQueuedWorkItemHandler(
 	_In_ DMFMODULE DmfModule,

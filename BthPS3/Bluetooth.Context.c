@@ -88,7 +88,7 @@ BthPS3_DeviceContextHeaderInit(
 			break;
 		}
 
-		if (!NT_SUCCESS(status = WdfSpinLockCreate(
+		if (!NT_SUCCESS(status = WdfWaitLockCreate(
 			&attributes,
 			&Header->ClientsLock
 		)))

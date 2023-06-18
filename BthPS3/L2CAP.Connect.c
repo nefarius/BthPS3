@@ -295,8 +295,8 @@ L2CAP_PS3_HandleRemoteConnect(
 		brb = (struct _BRB_L2CA_OPEN_CHANNEL*)&(pPdoCtx->HidInterruptChannel.ConnectDisconnectBrb);
 		break;
 	default:
-		// Doesn't happen
-		break;
+        status = STATUS_INVALID_PARAMETER;
+		goto exit;
 	}
 
 	CLIENT_CONNECTION_REQUEST_REUSE(brbAsyncRequest);

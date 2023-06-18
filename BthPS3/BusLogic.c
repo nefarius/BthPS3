@@ -826,8 +826,6 @@ BthPS3_PDO_Destroy(
 //
 // Will be called before the PDO device object gets destroyed
 // 
-_IRQL_requires_same_
-_IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 BthPS3_PDO_EvtContextCleanup(
 	_In_

@@ -106,7 +106,7 @@ typedef struct _BTHPS3_DEVICE_CONTEXT_HEADER
 	//
 	// Lock protecting Slots access
 	// 
-	WDFSPINLOCK SlotsSpinLock;
+	WDFWAITLOCK SlotsLock;
 
 	//
 	// DMF module to enqueue work items

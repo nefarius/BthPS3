@@ -42,7 +42,6 @@
  //
  // Handles IOCTL_BTHPS3_HID_CONTROL_READ
  // 
-_IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_PDO_HandleHidControlRead(
 	_In_ DMFMODULE DmfModule,
@@ -60,7 +59,6 @@ BthPS3_PDO_HandleHidControlRead(
 	UNREFERENCED_PARAMETER(IoctlCode);
 	UNREFERENCED_PARAMETER(InputBuffer);
 	UNREFERENCED_PARAMETER(InputBufferSize);
-	UNREFERENCED_PARAMETER(BytesReturned);
 	UNREFERENCED_PARAMETER(OutputBufferSize);
 	UNREFERENCED_PARAMETER(OutputBuffer);
 
@@ -69,6 +67,8 @@ BthPS3_PDO_HandleHidControlRead(
 	NTSTATUS status;
 	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
 	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
+
+    *BytesReturned = 0;
 
 	if (!NT_SUCCESS(status = WdfRequestForwardToIoQueue(
 		Request,
@@ -91,7 +91,6 @@ BthPS3_PDO_HandleHidControlRead(
 //
 // Handles IOCTL_BTHPS3_HID_CONTROL_WRITE
 // 
-_IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_PDO_HandleHidControlWrite(
 	_In_ DMFMODULE DmfModule,
@@ -109,7 +108,6 @@ BthPS3_PDO_HandleHidControlWrite(
 	UNREFERENCED_PARAMETER(IoctlCode);
 	UNREFERENCED_PARAMETER(OutputBuffer);
 	UNREFERENCED_PARAMETER(OutputBufferSize);
-	UNREFERENCED_PARAMETER(BytesReturned);
 	UNREFERENCED_PARAMETER(InputBuffer);
 	UNREFERENCED_PARAMETER(InputBufferSize);
 
@@ -118,6 +116,8 @@ BthPS3_PDO_HandleHidControlWrite(
 	NTSTATUS status;
 	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
 	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
+
+    *BytesReturned = 0;
 
 	if (!NT_SUCCESS(status = WdfRequestForwardToIoQueue(
 		Request,
@@ -140,7 +140,6 @@ BthPS3_PDO_HandleHidControlWrite(
 //
 // Handles IOCTL_BTHPS3_HID_INTERRUPT_READ
 // 
-_IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_PDO_HandleHidInterruptRead(
 	_In_ DMFMODULE DmfModule,
@@ -158,11 +157,12 @@ BthPS3_PDO_HandleHidInterruptRead(
 	UNREFERENCED_PARAMETER(IoctlCode);
 	UNREFERENCED_PARAMETER(InputBuffer);
 	UNREFERENCED_PARAMETER(InputBufferSize);
-	UNREFERENCED_PARAMETER(BytesReturned);
 	UNREFERENCED_PARAMETER(OutputBuffer);
 	UNREFERENCED_PARAMETER(OutputBufferSize);
 
 	FuncEntry(TRACE_BUSLOGIC);
+
+    *BytesReturned = 0;
 
 	NTSTATUS status;
 	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
@@ -189,7 +189,6 @@ BthPS3_PDO_HandleHidInterruptRead(
 //
 // Handles IOCTL_BTHPS3_HID_INTERRUPT_WRITE
 // 
-_IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_PDO_HandleHidInterruptWrite(
 	_In_ DMFMODULE DmfModule,
@@ -207,7 +206,6 @@ BthPS3_PDO_HandleHidInterruptWrite(
 	UNREFERENCED_PARAMETER(IoctlCode);
 	UNREFERENCED_PARAMETER(OutputBuffer);
 	UNREFERENCED_PARAMETER(OutputBufferSize);
-	UNREFERENCED_PARAMETER(BytesReturned);
 	UNREFERENCED_PARAMETER(InputBuffer);
 	UNREFERENCED_PARAMETER(InputBufferSize);
 
@@ -216,6 +214,8 @@ BthPS3_PDO_HandleHidInterruptWrite(
 	NTSTATUS status;
 	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
 	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
+
+    *BytesReturned = 0;
 
 	if (!NT_SUCCESS(status = WdfRequestForwardToIoQueue(
 		Request,
@@ -238,7 +238,6 @@ BthPS3_PDO_HandleHidInterruptWrite(
 //
 // Handles IOCTL_BTH_DISCONNECT_DEVICE requests
 // 
-_IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_PDO_HandleBthDisconnect(
 	_In_ DMFMODULE DmfModule,
@@ -261,7 +260,6 @@ BthPS3_PDO_HandleBthDisconnect(
 	UNREFERENCED_PARAMETER(InputBuffer);
 	UNREFERENCED_PARAMETER(OutputBufferSize);
 	UNREFERENCED_PARAMETER(OutputBuffer);
-	UNREFERENCED_PARAMETER(BytesReturned);
 
 	NTSTATUS status;
 	const WDFDEVICE device = DMF_ParentDeviceGet(DmfModule);
@@ -270,6 +268,8 @@ BthPS3_PDO_HandleBthDisconnect(
 	WDF_OBJECT_ATTRIBUTES attributes;
 	WDFMEMORY payload;
 	WDFREQUEST dcRequest = NULL;
+
+    *BytesReturned = 0;
 
 	do
 	{
@@ -381,8 +381,6 @@ BthPS3_PDO_HandleBthDisconnect(
 //
 // Sends pending HID Control Read Requests through L2CAP channel to remote device
 // 
-_IRQL_requires_same_
-_IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 BthPS3_PDO_DispatchHidControlRead(
 	_In_ WDFQUEUE Queue,
@@ -441,8 +439,6 @@ BthPS3_PDO_DispatchHidControlRead(
 //
 // Sends pending HID Control Write Requests through L2CAP channel to remote device
 // 
-_IRQL_requires_same_
-_IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 BthPS3_PDO_DispatchHidControlWrite(
 	_In_ WDFQUEUE Queue,
@@ -501,8 +497,6 @@ BthPS3_PDO_DispatchHidControlWrite(
 //
 // Sends pending HID Interrupt Read Requests through L2CAP channel to remote device
 // 
-_IRQL_requires_same_
-_IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 BthPS3_PDO_DispatchHidInterruptRead(
 	_In_ WDFQUEUE Queue,
@@ -561,8 +555,6 @@ BthPS3_PDO_DispatchHidInterruptRead(
 //
 // Sends pending HID Interrupt Write Requests through L2CAP channel to remote device
 // 
-_IRQL_requires_same_
-_IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 BthPS3_PDO_DispatchHidInterruptWrite(
 	_In_ WDFQUEUE Queue,

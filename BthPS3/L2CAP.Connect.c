@@ -120,7 +120,8 @@ L2CAP_PS3_HandleRemoteConnect(
         // Check if PLAYSTATION(R)3 Controller
         // 
         if (DevCtx->Settings.IsSIXAXISSupported
-            && StringUtil_BthNameIsInCollection(remoteName, DevCtx->Settings.SIXAXISSupportedNames)) {
+            && StringUtil_BthNameIsInCollection(remoteName, DevCtx->Settings.SIXAXISSupportedNames)) 
+        {
             deviceType = DS_DEVICE_TYPE_SIXAXIS;
 
             TraceInformation(
@@ -138,7 +139,8 @@ L2CAP_PS3_HandleRemoteConnect(
         // Check if Navigation Controller
         // 
         if (DevCtx->Settings.IsNAVIGATIONSupported
-            && StringUtil_BthNameIsInCollection(remoteName, DevCtx->Settings.NAVIGATIONSupportedNames)) {
+            && StringUtil_BthNameIsInCollection(remoteName, DevCtx->Settings.NAVIGATIONSupportedNames)) 
+        {
             deviceType = DS_DEVICE_TYPE_NAVIGATION;
 
             TraceInformation(
@@ -156,7 +158,8 @@ L2CAP_PS3_HandleRemoteConnect(
         // Check if Motion Controller
         // 
         if (DevCtx->Settings.IsMOTIONSupported
-            && StringUtil_BthNameIsInCollection(remoteName, DevCtx->Settings.MOTIONSupportedNames)) {
+            && StringUtil_BthNameIsInCollection(remoteName, DevCtx->Settings.MOTIONSupportedNames)) 
+        {
             deviceType = DS_DEVICE_TYPE_MOTION;
 
             TraceInformation(
@@ -174,7 +177,8 @@ L2CAP_PS3_HandleRemoteConnect(
         // Check if Wireless Controller
         // 
         if (DevCtx->Settings.IsWIRELESSSupported
-            && StringUtil_BthNameIsInCollection(remoteName, DevCtx->Settings.WIRELESSSupportedNames)) {
+            && StringUtil_BthNameIsInCollection(remoteName, DevCtx->Settings.WIRELESSSupportedNames))
+        {
             deviceType = DS_DEVICE_TYPE_WIRELESS;
 
             TraceInformation(
@@ -268,9 +272,17 @@ L2CAP_PS3_HandleRemoteConnect(
         {
             TraceError(
                 TRACE_L2CAP,
-                "ClientConnections_CreateAndInsert failed with status %!STATUS!", status);
+                "ClientConnections_CreateAndInsert failed with status %!STATUS!", 
+                status
+            );
             goto exit;
         }
+    }
+
+    if (pPdoCtx == NULL)
+    {
+        status = STATUS_INSUFFICIENT_RESOURCES;
+        goto exit;
     }
 
     //

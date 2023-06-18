@@ -74,7 +74,7 @@ BthPS3PSM_CreateDevice(
     WDFKEY key = NULL;
     WDF_OBJECT_ATTRIBUTES stringAttributes;
     BOOLEAN isUsb = FALSE;
-    BOOLEAN ret;
+    BOOLEAN ret = FALSE;
     WDFMEMORY instanceId = NULL;
 
     DECLARE_CONST_UNICODE_STRING(patchPSMRegValue, G_PatchPSMRegValue);

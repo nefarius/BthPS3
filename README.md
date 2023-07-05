@@ -193,3 +193,4 @@ This application benefits from these awesome projects ❤ (appearance in no spec
 - [Microsoft Bluetooth DDI - Reserved PSMs](https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/bthddi/ns-bthddi-_brb_psm#members)
 - [Eleccelerator Wiki - DualShock 3](http://eleccelerator.com/wiki/index.php?title=DualShock_3)
 - [Link Manager Protocol (LMP)](https://www.bluetooth.com/specifications/assigned-numbers/link-manager/)
+- [Nefarius' Domito Library](https://git.nefarius.at/nefarius/Domito)

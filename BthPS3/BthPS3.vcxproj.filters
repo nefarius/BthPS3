@@ -66,9 +66,6 @@
     <ClInclude Include="Util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Compatibility.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Device.c">
@@ -124,9 +121,6 @@
     </ClCompile>
     <ClCompile Include="BusLogic.Slots.c">
       <Filter>Source Files\BusLogic</Filter>
-    </ClCompile>
-    <ClCompile Include="Compatibility.c">
-      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -113,14 +113,14 @@ DriverEntry(
     // Dynamically check if WppRecorder::imp_WppRecorderReplay is available
     // 
 
-    const STRING targetModuleName = RTL_CONSTANT_STRING("\\SystemRoot\\System32\\Drivers\\WppRecorder.sys");
-    const STRING functionName = RTL_CONSTANT_STRING("imp_WppRecorderReplay");
+    STRING targetModuleName = RTL_CONSTANT_STRING("\\SystemRoot\\System32\\Drivers\\WppRecorder.sys");
+    STRING functionName = RTL_CONSTANT_STRING("imp_WppRecorderReplay");
 
     PVOID driverBaseAddress = NULL, functionAddress = NULL;
 
-    if (NT_SUCCESS(FindDriverBaseAddress(targetModuleName, &driverBaseAddress)))
+    if (NT_SUCCESS(DomitoFindModuleBaseAddress(&targetModuleName, &driverBaseAddress)))
     {
-        if (NT_SUCCESS(FindExportedFunctionAddress(driverBaseAddress, functionName, &functionAddress)))
+        if (NT_SUCCESS(DomitoFindExportedFunctionAddress(driverBaseAddress, &functionName, &functionAddress)))
         {
             TraceVerbose(
                 TRACE_DRIVER,

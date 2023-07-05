@@ -109,6 +109,17 @@ DriverEntry(
         return status;
     }
 
+    if (!NT_SUCCESS(status = DomitoInit()))
+    {
+        TraceError(
+            TRACE_DRIVER,
+            "DomitoInit failed %!STATUS!",
+            status
+        );
+        WPP_CLEANUP(DriverObject);
+        return status;
+    }
+
     //
     // Dynamically check if WppRecorder::imp_WppRecorderReplay is available
     // 
@@ -182,6 +193,8 @@ BthPS3EvtDriverContextCleanup(
     PAGED_CODE();
 
     FuncEntry(TRACE_DRIVER);
+
+    DomitoShutdown();
 
     EventWriteUnloadEvent(NULL, DriverObject);
 

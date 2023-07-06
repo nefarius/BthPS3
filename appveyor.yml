@@ -3,6 +3,8 @@ build_cloud: WIN-LKR467JS4GL
 image: Windows
 environment:
   DmfRootPath: C:\projects\DMF
+  DOMITO_INC_PATH: C:\projects\Domito\include
+  DOMITO_LIB_PATH: C:\projects\Domito\lib
 platform:
 - x64
 - ARM64
@@ -22,6 +24,11 @@ install:
 - cmd: git clone -q https://github.com/microsoft/DMF.git C:\projects\DMF 2> nul || set ERRORLEVEL=0
 - cmd: |
     cd "C:\projects\DMF"
+    git pull > NUL
+    cd %appveyor_build_folder%
+- cmd: git clone -q https://git.nefarius.at/nefarius/Domito.git C:\projects\Domito 2> nul || set ERRORLEVEL=0
+- cmd: |
+    cd "C:\projects\Domito"
     git pull > NUL
     cd %appveyor_build_folder%
 - cmd: vcpkg integrate install

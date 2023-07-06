@@ -91,11 +91,11 @@ BthPS3_PDO_QuerySlot(
 				break;
 			}
 
-			WdfSpinLockAcquire(Header->SlotsSpinLock);
+			WdfWaitLockAcquire(Header->SlotsLock, NULL);
 
 			SetBit(Header->Slots, *Slot);
 
-			WdfSpinLockRelease(Header->SlotsSpinLock);
+			WdfWaitLockRelease(Header->SlotsLock);
 
 			status = STATUS_SUCCESS;
 		}
@@ -109,7 +109,7 @@ BthPS3_PDO_QuerySlot(
 				"Looking for free serial"
 			);
 
-			WdfSpinLockAcquire(Header->SlotsSpinLock);
+			WdfWaitLockAcquire(Header->SlotsLock, NULL);
 
 			//
 			// ...otherwise get next free serial number
@@ -136,7 +136,7 @@ BthPS3_PDO_QuerySlot(
 				status = STATUS_NO_MORE_ENTRIES;
 			}
 
-			WdfSpinLockRelease(Header->SlotsSpinLock);
+			WdfWaitLockRelease(Header->SlotsLock);
 		}
 
 	} while (FALSE);
@@ -261,11 +261,11 @@ BthPS3_PDO_AssignSlot(
 			break;
 		}
 
-		WdfSpinLockAcquire(Header->SlotsSpinLock);
+		WdfWaitLockAcquire(Header->SlotsLock, NULL);
 
 		SetBit(Header->Slots, Slot);
 
-		WdfSpinLockRelease(Header->SlotsSpinLock);
+		WdfWaitLockRelease(Header->SlotsLock);
 
 		//
 		// Store occupied slots in registry

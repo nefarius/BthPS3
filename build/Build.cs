@@ -33,6 +33,7 @@ class Build : NukeBuild
     [GitRepository] readonly GitRepository GitRepository;
 
     AbsolutePath DmfSolution => ((AbsolutePath)"C:/projects/DMF/Dmf.sln");
+    AbsolutePath DomitoSolution => ((AbsolutePath)"C:/projects/Domito/Domito.sln");
 
     Target Clean => _ => _
         .Before(Restore)
@@ -73,9 +74,35 @@ class Build : NukeBuild
                 .SetNodeReuse(IsLocalBuild));
         });
 
+    Target BuildDomito => _ => _
+        .Executes(() =>
+        {
+            if (IsLocalBuild)
+                return;
+
+            Console.WriteLine($"Domito solution path: {DomitoSolution}");
+
+            var platform = MSBuildTargetPlatform.x64;
+
+            if (AppVeyor.Instance.Platform is "x86")
+                platform = MSBuildTargetPlatform.Win32;
+
+            if (AppVeyor.Instance.Platform is "ARM64")
+                platform = (MSBuildTargetPlatform) "ARM64";
+
+            MSBuild(s => s
+                .SetTargetPath(DomitoSolution)
+                .SetTargets("Build")
+                .SetConfiguration(Configuration)
+                .SetTargetPlatform(platform)
+                .SetMaxCpuCount(Environment.ProcessorCount)
+                .SetNodeReuse(IsLocalBuild));
+        });
+
     Target Compile => _ => _
         .DependsOn(Restore)
         .DependsOn(BuildDmf)
+        .DependsOn(BuildDomito)
         .Executes(() =>
         {
             MSBuild(s => s

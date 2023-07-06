@@ -103,13 +103,15 @@ BthPS3_PDO_EvtDmfModulesAdd(
 // Creates a new PDO and connection context for a given remote address
 // 
 _IRQL_requires_max_(PASSIVE_LEVEL)
+_Must_inspect_result_
+_Success_(return == STATUS_SUCCESS)
 NTSTATUS
 BthPS3_PDO_Create(
 	_In_ PBTHPS3_SERVER_CONTEXT Context,
 	_In_ BTH_ADDR RemoteAddress,
 	_In_ DS_DEVICE_TYPE DeviceType,
 	_In_ PSTR RemoteName,
-	_Out_ PBTHPS3_PDO_CONTEXT* PdoContext
+	_Outptr_result_maybenull_ BTHPS3_PDO_CONTEXT** PdoContext
 )
 {
 	FuncEntry(TRACE_BUSLOGIC);
@@ -124,6 +126,8 @@ BthPS3_PDO_Create(
 	LARGE_INTEGER lastConnectionTime;
 	WDFKEY hKey = NULL;
 	ULONG rawPdo = 0;
+
+    *PdoContext = NULL;
 
 	DECLARE_UNICODE_STRING_SIZE(hardwareId, MAX_DEVICE_ID_LEN);
 	DECLARE_UNICODE_STRING_SIZE(remotenameWide, BTH_MAX_NAME_SIZE);
@@ -678,12 +682,14 @@ BthPS3_PDO_Create(
 //
 // Retrieves an existing connection from connection list identified by BTH_ADDR
 // 
-_IRQL_requires_max_(DISPATCH_LEVEL)
+_IRQL_requires_max_(PASSIVE_LEVEL)
+_Must_inspect_result_
+_Success_(return == STATUS_SUCCESS)
 NTSTATUS
 BthPS3_PDO_RetrieveByBthAddr(
 	_In_ PBTHPS3_SERVER_CONTEXT Context,
 	_In_ BTH_ADDR RemoteAddress,
-	_Out_ PBTHPS3_PDO_CONTEXT* PdoContext
+	_Outptr_result_maybenull_ PBTHPS3_PDO_CONTEXT* PdoContext
 )
 {
 	NTSTATUS status = STATUS_NOT_FOUND;
@@ -694,7 +700,9 @@ BthPS3_PDO_RetrieveByBthAddr(
 		RemoteAddress
 	);
 
-	WdfSpinLockAcquire(Context->Header.ClientsLock);
+    *PdoContext = NULL;
+
+	WdfWaitLockAcquire(Context->Header.ClientsLock, NULL);
 
 	const ULONG itemCount = WdfCollectionGetCount(Context->Header.Clients);
 
@@ -716,7 +724,7 @@ BthPS3_PDO_RetrieveByBthAddr(
 		}
 	}
 
-	WdfSpinLockRelease(Context->Header.ClientsLock);
+	WdfWaitLockRelease(Context->Header.ClientsLock);
 
 	FuncExit(TRACE_BUSLOGIC, "status=%!STATUS!", status);
 
@@ -739,7 +747,7 @@ BthPS3_PDO_Destroy(
 		PdoContext
 	);
 
-	WdfSpinLockAcquire(Context->ClientsLock);
+	WdfWaitLockAcquire(Context->ClientsLock, NULL);
 
 	const WDFDEVICE device = WdfObjectContextGetObject(PdoContext);
 	const ULONG itemCount = WdfCollectionGetCount(Context->Clients);
@@ -810,7 +818,7 @@ BthPS3_PDO_Destroy(
 		}
 	}
 
-	WdfSpinLockRelease(Context->ClientsLock);
+	WdfWaitLockRelease(Context->ClientsLock);
 
 	FuncExitNoReturn(TRACE_BUSLOGIC);
 }
@@ -818,8 +826,6 @@ BthPS3_PDO_Destroy(
 //
 // Will be called before the PDO device object gets destroyed
 // 
-_IRQL_requires_same_
-_IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 BthPS3_PDO_EvtContextCleanup(
 	_In_

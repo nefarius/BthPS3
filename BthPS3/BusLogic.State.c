@@ -43,8 +43,6 @@
  //
  // Called before PDO creation
  // 
-_IRQL_requires_max_(PASSIVE_LEVEL)
-_IRQL_requires_same_
 NTSTATUS
 BthPS3_PDO_EvtPreCreate(
 	_In_ DMFMODULE DmfModule,
@@ -176,8 +174,6 @@ BthPS3_PDO_EvtPreCreate(
 //
 // Called after PDO creation
 // 
-_IRQL_requires_max_(PASSIVE_LEVEL)
-_IRQL_requires_same_
 NTSTATUS
 BthPS3_PDO_EvtPostCreate(
 	_In_ DMFMODULE DmfModule,

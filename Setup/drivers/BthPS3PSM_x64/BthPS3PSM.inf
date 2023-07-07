@@ -2,7 +2,7 @@
 ; 
 ; BSD 3-Clause License
 ; 
-; Copyright (c) 2018-2022, Nefarius Software Solutions e.U.
+; Copyright (c) 2018-2023, Nefarius Software Solutions e.U.
 ; All rights reserved.
 ; 
 ; Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@ ClassGuid = {e0cbf06c-cd8b-4647-bb8a-263b43f0f974}
 DriverPackageType = ClassFilter
 Provider = %ManufacturerName%
 CatalogFile = BthPS3PSM.cat
-DriverVer = 08/29/2022,2.6.167.0
+DriverVer = 07/07/2023,2.7.296.0
 PnpLockdown = 1
  
 
@@ -89,4 +89,3 @@ ManufacturerName = "Nefarius Software Solutions e.U."
 DiskName = "Nefarius Bluetooth PS Filter Device Driver Disk"
 BthPS3PSMServiceDesc = "Nefarius Bluetooth PS Filter Service"
 BthPS3PSMServiceName = "BthPS3PSM"
-

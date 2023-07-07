@@ -112,8 +112,6 @@ Get-AppVeyorArtifacts -Account "nefarius" -Project "BthPS3" -Path $Path -Token $
 # Download x64 binaries
 Get-AppVeyorArtifacts -Account "nefarius" -Project "BthPS3" -Path $Path -Token $Token -Branch $BuildVersion -JobName "Platform: x64"
 
-# Download x86 binaries
-Get-AppVeyorArtifacts -Account "nefarius" -Project "BthPS3" -Path $Path -Token $Token -Branch $BuildVersion -JobName "Platform: x86"
 
 # List of files to sign
 $files =    "`".\artifacts\bin\*.exe`" " + 
@@ -121,9 +119,7 @@ $files =    "`".\artifacts\bin\*.exe`" " +
 			"`".\artifacts\bin\ARM64\*.exe`" " + 
             "`".\artifacts\bin\ARM64\*.dll`" " + 
             "`".\artifacts\bin\x64\*.exe`" " + 
-            "`".\artifacts\bin\x64\*.dll`" " + 
-            "`".\artifacts\bin\x86\*.exe`" " +
-            "`".\artifacts\bin\x86\*.dll`" "
+            "`".\artifacts\bin\x64\*.dll`" "
 
 if ($NoSigning -eq $false) {
     # sign with only one certificate
@@ -138,4 +134,3 @@ $regex = '(?<=<\?define VERSION = ")[^"]*'
 # Print helper job names for sign portal
 "BthPS3 ARM64 v$BuildVersion $(Get-Date -Format "dd.MM.yyyy")"
 "BthPS3 x64 v$BuildVersion $(Get-Date -Format "dd.MM.yyyy")"
-"BthPS3 x86 v$BuildVersion $(Get-Date -Format "dd.MM.yyyy")"

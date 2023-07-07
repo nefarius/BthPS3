@@ -1,0 +1,133 @@
+; BthPS3 - Windows kernel-mode Bluetooth profile and bus driver
+; 
+; BSD 3-Clause License
+; 
+; Copyright (c) 2018-2022, Nefarius Software Solutions e.U.
+; All rights reserved.
+; 
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+; 
+; 1. Redistributions of source code must retain the above copyright notice, this
+;    list of conditions and the following disclaimer.
+; 
+; 2. Redistributions in binary form must reproduce the above copyright notice,
+;    this list of conditions and the following disclaimer in the documentation
+;    and/or other materials provided with the distribution.
+; 
+; 3. Neither the name of the copyright holder nor the names of its
+;    contributors may be used to endorse or promote products derived from
+;    this software without specific prior written permission.
+; 
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+; DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+; FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+; DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+; SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+; CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+; OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=Bluetooth
+ClassGuid={e0cbf06c-cd8b-4647-bb8a-263b43f0f974}
+Provider=%ManufacturerName%
+CatalogFile=BthPS3.cat
+DriverVer = 08/29/2022,2.6.167.0
+PnpLockdown=1
+
+[DestinationDirs]
+DefaultDestDir = 12
+BthPS3_Device_CoInstaller_CopyFiles = 11
+
+; ================= Class section =====================
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+BthPS3.sys  = 1,,
+
+;*****************************************
+; Install Section
+;*****************************************
+
+[Manufacturer]
+%ManufacturerName%=BthPS3,NTamd64
+
+[BthPS3.NTamd64]
+%BthPS3.DeviceDesc%=BthPS3_Device, BTHENUM\{1cb831ea-79cd-4508-b0fc-85f7c85ae8e0}
+
+[BthPS3_Device.NT]
+CopyFiles=Drivers_Dir
+
+[Drivers_Dir]
+BthPS3.sys
+
+;-------------- Service installation
+[BthPS3_Device.NT.Services]
+AddService = BthPS3,%SPSVCINST_ASSOCSERVICE%, BthPS3_Service_Inst
+
+; -------------- BthPS3 driver install sections
+[BthPS3_Service_Inst]
+DisplayName    = %BthPS3.SVCDESC%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\BthPS3.sys
+AddReg         = BthPS3_Service_AddReg
+
+; Populate default service values
+[BthPS3_Service_AddReg]
+; Bring up exposed device in raw mode (no function driver required)
+HKR,Parameters,RawPDO,0x00010003,0
+; Hide driver-less device in Device Manager UI (cosmetic setting)
+HKR,Parameters,HidePDO,0x00010003,0
+; Restrict access to RAW PDO device to elevated processes only
+HKR,Parameters,AdminOnlyPDO,0x00010003,0
+; Restrict access to RAW PDO device to one handle only
+HKR,Parameters,ExclusivePDO,0x00010003,1
+; I/O idle timeout value in milliseconds
+HKR,Parameters,ChildIdleTimeout,0x00010003,10000
+; Should the profile driver attempt to auto-enable the patch again
+HKR,Parameters,AutoEnableFilter,0x00010003,1
+; Should the profile driver attempt to auto-disable the patch
+HKR,Parameters,AutoDisableFilter,0x00010003,1
+; Time (in seconds) to wait for patch re-enable
+HKR,Parameters,AutoEnableFilterDelay,0x00010003,10
+; SIXAXIS connection requests will be dropped, if 0
+HKR,Parameters,IsSIXAXISSupported,0x00010003,1
+; NAVIGATION connection requests will be dropped, if 0
+HKR,Parameters,IsNAVIGATIONSupported,0x00010003,1
+; MOTION connection requests will be dropped, if 0
+HKR,Parameters,IsMOTIONSupported,0x00010003,0
+; WIRELESS connection requests will be dropped, if 0
+HKR,Parameters,IsWIRELESSSupported,0x00010003,0
+; Collection of supported remote names for SIXAXIS device
+HKR,Parameters,SIXAXISSupportedNames,0x00010002,"PLAYSTATION(R)3 Controller","PLAYSTATION(R)3Conteroller-PANHAI","PS(R) Ga`epad","PS3 GamePad","PS(R) Gamepad","PLAYSTATION(3)Conteroller","PLAYSTATION(R)3Conteroller-ghic","PLAYSTATION(R)3Controller-ghic","Sony PLAYSTATION(R)3 Controller"
+; Collection of supported remote names for NAVIGATION device
+HKR,Parameters,NAVIGATIONSupportedNames,0x00010002,"Navigation Controller"
+; Collection of supported remote names for MOTION device
+HKR,Parameters,MOTIONSupportedNames,0x00010002,"Motion Controller"
+; Collection of supported remote names for WIRELESS device
+HKR,Parameters,WIRELESSSupportedNames,0x00010002,"Wireless Controller"
+; Sub-key to store occupied slot information
+HKR,"Parameters\Devices",,0x00000010,
+
+
+[BthPS3_Device.NT.Wdf]
+KmdfService =  BthPS3, BthPS3_wdfsect
+[BthPS3_wdfsect]
+KmdfLibraryVersion = 1.15
+
+[Strings]
+SPSVCINST_ASSOCSERVICE= 0x00000002
+ManufacturerName="Nefarius Software Solutions e.U."
+DiskName = "BthPS3 Installation Disk"
+BthPS3.DeviceDesc = "Nefarius Bluetooth PS Enumerator"
+BthPS3.SVCDESC = "BthPS3 Service"
+

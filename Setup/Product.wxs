@@ -221,6 +221,7 @@
         <File Name="BthPS3CfgUI.exe" Source="$(var.SolutionDir)Setup\artifacts\bin\BthPS3CfgUI.exe" />
         <File Name="LICENSE" Source="$(var.SolutionDir)\LICENSE" />
         <File Name="BthPS3.man" Source="$(var.SolutionDir)\BthPS3\BthPS3.man" />
+        <File Name="BthPS3PSM.man" Source="$(var.SolutionDir)\BthPS3PSM\BthPS3PSM.man" />
         <?else ?>
         <!-- CI build -->
         <File Name="BthPS3.sys" Source="$(var.SolutionDir)bin\$(var.ArchDir)\BthPS3\BthPS3.sys" />
@@ -240,6 +241,7 @@
         <File Name="BthPS3CfgUI.exe" Source="$(var.SolutionDir)bin\BthPS3CfgUI.exe" />
         <File Name="LICENSE" Source="$(var.SolutionDir)\LICENSE" />
         <File Name="BthPS3.man" Source="$(var.SolutionDir)\BthPS3\BthPS3.man" />
+        <File Name="BthPS3PSM.man" Source="$(var.SolutionDir)\BthPS3PSM\BthPS3PSM.man" />
         <?endif ?>
       </Component>
     </ComponentGroup>

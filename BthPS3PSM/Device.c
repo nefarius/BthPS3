@@ -500,15 +500,12 @@ BthPS3PSM_EvtDeviceContextCleanup(
 
     FuncEntry(TRACE_DEVICE);
 
-    PDEVICE_CONTEXT pDevCtx = DeviceGetContext(Device);
+    const PDEVICE_CONTEXT pDevCtx = DeviceGetContext(Device);
 
 #ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
 
-    WDFKEY key;
     NTSTATUS status;
     WDFDEVICE devIter = NULL;
-
-    DECLARE_CONST_UNICODE_STRING(patchPSMRegValue, G_PatchPSMRegValue);
 
     if (!NT_SUCCESS(status = WdfWaitLockAcquire(
         FilterDeviceCollectionLock,
@@ -555,67 +552,6 @@ BthPS3PSM_EvtDeviceContextCleanup(
     }
 
     WdfWaitLockRelease(FilterDeviceCollectionLock);
-
-#pragma region Store settings in Registry Hardware Key
-
-    pDevCtx = DeviceGetContext(Device);
-
-    if (NT_SUCCESS(status = WdfDeviceOpenRegistryKey(
-        Device,
-        /*
-         * Expands to e.g.:
-         *
-         * "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\USB\VID_XXXX&PID_XXXX\a&c9c4e92&0&4\Device Parameters"
-         *
-         */
-        PLUGPLAY_REGKEY_DEVICE,
-        KEY_WRITE,
-        WDF_NO_OBJECT_ATTRIBUTES,
-        &key
-    )))
-    {
-        if (!NT_SUCCESS(status = WdfRegistryAssignULong(
-            key,
-            &patchPSMRegValue,
-            pDevCtx->IsPsmPatchingEnabled
-        )))
-        {
-            TraceError(
-                TRACE_DEVICE,
-                "WdfRegistryAssignULong failed with status %!STATUS!",
-                status
-            );
-            EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfRegistryAssignULong", status);
-        }
-        else
-        {
-            TraceVerbose(
-                TRACE_DEVICE,
-                "Settings stored"
-            );
-
-            const PWSTR instanceIdString = (const PWSTR)WdfMemoryGetBuffer(pDevCtx->InstanceId, NULL);
-
-            EventWriteSetPatchStatusForDeviceInstance(
-                NULL,
-                pDevCtx->IsPsmPatchingEnabled,
-                instanceIdString
-            );
-        }
-
-        WdfRegistryClose(key);
-    }
-    else
-    {
-        TraceError(
-            TRACE_DEVICE,
-            "WdfDeviceOpenRegistryKey failed with status %!STATUS!",
-            status
-        );
-        EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfDeviceOpenRegistryKey", status);
-    }
-
-#pragma endregion
 
     //
     // This object has no parent so we need to delete it manually

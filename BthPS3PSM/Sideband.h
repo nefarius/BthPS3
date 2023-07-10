@@ -55,4 +55,6 @@ BthPS3PSM_DeleteControlDevice(
     WDFDEVICE Device
 );
 
+EVT_WDF_WORKITEM BthPS3PSM_EvtSaveConfigToRegistry;
+
 #endif

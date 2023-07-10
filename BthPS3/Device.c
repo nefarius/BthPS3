@@ -46,169 +46,169 @@
 #pragma code_seg("PAGE")
 NTSTATUS
 BthPS3_CreateDevice(
-	_Inout_ PWDFDEVICE_INIT DeviceInit
+    _Inout_ PWDFDEVICE_INIT DeviceInit
 )
 {
-	WDF_OBJECT_ATTRIBUTES attributes;
-	WDFDEVICE device = NULL;
-	NTSTATUS status;
-	WDF_PNPPOWER_EVENT_CALLBACKS pnpPowerCallbacks;
-	PBTHPS3_SERVER_CONTEXT pSrvCtx = NULL;
-	PDMFDEVICE_INIT dmfDeviceInit = NULL;
-	DMF_EVENT_CALLBACKS dmfEventCallbacks;
+    WDF_OBJECT_ATTRIBUTES attributes;
+    WDFDEVICE device = NULL;
+    NTSTATUS status;
+    WDF_PNPPOWER_EVENT_CALLBACKS pnpPowerCallbacks;
+    PBTHPS3_SERVER_CONTEXT pSrvCtx = NULL;
+    PDMFDEVICE_INIT dmfDeviceInit = NULL;
+    DMF_EVENT_CALLBACKS dmfEventCallbacks;
 
-	PAGED_CODE();
+    PAGED_CODE();
 
 
-	FuncEntry(TRACE_DEVICE);
+    FuncEntry(TRACE_DEVICE);
 
-	WdfDeviceInitSetDeviceType(DeviceInit, FILE_DEVICE_BUS_EXTENDER);
+    WdfDeviceInitSetDeviceType(DeviceInit, FILE_DEVICE_BUS_EXTENDER);
 
-	dmfDeviceInit = DMF_DmfDeviceInitAllocate(DeviceInit);
+    dmfDeviceInit = DMF_DmfDeviceInitAllocate(DeviceInit);
 
-	if (dmfDeviceInit == NULL)
-	{
-		TraceEvents(
-			TRACE_LEVEL_ERROR,
-			TRACE_DEVICE,
-			"DMF_DmfDeviceInitAllocate failed"
-		);
-		
-		status = STATUS_INSUFFICIENT_RESOURCES;
+    if (dmfDeviceInit == NULL)
+    {
+        TraceEvents(
+            TRACE_LEVEL_ERROR,
+            TRACE_DEVICE,
+            "DMF_DmfDeviceInitAllocate failed"
+        );
 
-		EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"DMF_DmfDeviceInitAllocate", status);
+        status = STATUS_INSUFFICIENT_RESOURCES;
 
-		goto exitFailure;
-	}
+        EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"DMF_DmfDeviceInitAllocate", status);
 
-	DMF_DmfDeviceInitHookFileObjectConfig(dmfDeviceInit, NULL);
-	DMF_DmfDeviceInitHookPowerPolicyEventCallbacks(dmfDeviceInit, NULL);
+        goto exitFailure;
+    }
 
-	//
-	// Configure PNP/power callbacks
-	//
-	WDF_PNPPOWER_EVENT_CALLBACKS_INIT(&pnpPowerCallbacks);
-	pnpPowerCallbacks.EvtDeviceSelfManagedIoInit = BthPS3_EvtWdfDeviceSelfManagedIoInit;
-	pnpPowerCallbacks.EvtDeviceSelfManagedIoCleanup = BthPS3_EvtWdfDeviceSelfManagedIoCleanup;
+    DMF_DmfDeviceInitHookFileObjectConfig(dmfDeviceInit, NULL);
+    DMF_DmfDeviceInitHookPowerPolicyEventCallbacks(dmfDeviceInit, NULL);
 
-	DMF_DmfDeviceInitHookPnpPowerEventCallbacks(dmfDeviceInit, &pnpPowerCallbacks);
+    //
+    // Configure PNP/power callbacks
+    //
+    WDF_PNPPOWER_EVENT_CALLBACKS_INIT(&pnpPowerCallbacks);
+    pnpPowerCallbacks.EvtDeviceSelfManagedIoInit = BthPS3_EvtWdfDeviceSelfManagedIoInit;
+    pnpPowerCallbacks.EvtDeviceSelfManagedIoCleanup = BthPS3_EvtWdfDeviceSelfManagedIoCleanup;
 
-	WdfDeviceInitSetPnpPowerEventCallbacks(
-		DeviceInit,
-		&pnpPowerCallbacks
-	);
+    DMF_DmfDeviceInitHookPnpPowerEventCallbacks(dmfDeviceInit, &pnpPowerCallbacks);
 
-	WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&attributes, BTHPS3_SERVER_CONTEXT);
+    WdfDeviceInitSetPnpPowerEventCallbacks(
+        DeviceInit,
+        &pnpPowerCallbacks
+    );
 
-	do
-	{
-		if (!NT_SUCCESS(status = WdfDeviceCreate(&DeviceInit, &attributes, &device)))
-		{
-			TraceError(
-				TRACE_DEVICE,
-				"WdfDeviceCreate failed with status %!STATUS!",
-				status
-			);
-			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfDeviceCreate", status);
-			break;
-		}
+    WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&attributes, BTHPS3_SERVER_CONTEXT);
 
-		pSrvCtx = GetServerDeviceContext(device);
+    do
+    {
+        if (!NT_SUCCESS(status = WdfDeviceCreate(&DeviceInit, &attributes, &device)))
+        {
+            TraceError(
+                TRACE_DEVICE,
+                "WdfDeviceCreate failed with status %!STATUS!",
+                status
+            );
+            EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfDeviceCreate", status);
+            break;
+        }
 
-		if (!NT_SUCCESS(status = BthPS3_ServerContextInit(pSrvCtx, device)))
-		{
-			TraceError(
-				TRACE_DEVICE,
-				"Initialization of context failed with status %!STATUS!",
-				status
-			);
-			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_ServerContextInit", status);
-			break;
-		}
+        pSrvCtx = GetServerDeviceContext(device);
+        
+        if (!NT_SUCCESS(status = BthPS3_ServerContextInit(pSrvCtx, device)))
+        {
+            TraceError(
+                TRACE_DEVICE,
+                "Initialization of context failed with status %!STATUS!",
+                status
+            );
+            EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_ServerContextInit", status);
+            break;
+        }
 
-		//
-		// Query for interfaces and pre-allocate BRBs
-		//
+        //
+        // Query for interfaces and pre-allocate BRBs
+        //
 
-		if (!NT_SUCCESS(status = BthPS3_Initialize(GetServerDeviceContext(device))))
-		{
-			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_Initialize", status);
-			break;
-		}
+        if (!NT_SUCCESS(status = BthPS3_Initialize(GetServerDeviceContext(device))))
+        {
+            EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_Initialize", status);
+            break;
+        }
 
-		//
-		// Search and open filter remote I/O target
-		// 
+        //
+        // Search and open filter remote I/O target
+        // 
 
-		if (!NT_SUCCESS(status = BthPS3_OpenFilterIoTarget(device)))
-		{
-			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_OpenFilterIoTarget", status);
-			break;
-		}
+        if (!NT_SUCCESS(status = BthPS3_OpenFilterIoTarget(device)))
+        {
+            EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_OpenFilterIoTarget", status);
+            break;
+        }
 
-		//
-		// Allocate request object for async filter communication
-		// 
+        //
+        // Allocate request object for async filter communication
+        // 
 
-		WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
-		attributes.ParentObject = pSrvCtx->PsmFilter.IoTarget;
+        WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+        attributes.ParentObject = pSrvCtx->PsmFilter.IoTarget;
 
-		if (!NT_SUCCESS(status = WdfRequestCreate(
-			&attributes,
-			pSrvCtx->PsmFilter.IoTarget,
-			&pSrvCtx->PsmFilter.AsyncRequest
-		)))
-		{
-			TraceError(
-				TRACE_DEVICE,
-				"WdfRequestCreate failed with status %!STATUS!",
-				status
-			);
-			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfRequestCreate", status);
-			break;
-		}
+        if (!NT_SUCCESS(status = WdfRequestCreate(
+            &attributes,
+            pSrvCtx->PsmFilter.IoTarget,
+            &pSrvCtx->PsmFilter.AsyncRequest
+        )))
+        {
+            TraceError(
+                TRACE_DEVICE,
+                "WdfRequestCreate failed with status %!STATUS!",
+                status
+            );
+            EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfRequestCreate", status);
+            break;
+        }
 
-		//
-		// DMF Module initialization
-		// 
-		DMF_EVENT_CALLBACKS_INIT(&dmfEventCallbacks);
-		dmfEventCallbacks.EvtDmfDeviceModulesAdd = DmfDeviceModulesAdd;
-		DMF_DmfDeviceInitSetEventCallbacks(
-			dmfDeviceInit,
-			&dmfEventCallbacks
-		);
+        //
+        // DMF Module initialization
+        // 
+        DMF_EVENT_CALLBACKS_INIT(&dmfEventCallbacks);
+        dmfEventCallbacks.EvtDmfDeviceModulesAdd = DmfDeviceModulesAdd;
+        DMF_DmfDeviceInitSetEventCallbacks(
+            dmfDeviceInit,
+            &dmfEventCallbacks
+        );
 
-		status = DMF_ModulesCreate(device, &dmfDeviceInit);
+        status = DMF_ModulesCreate(device, &dmfDeviceInit);
 
-		if (!NT_SUCCESS(status))
-		{
-			TraceEvents(
-				TRACE_LEVEL_ERROR,
-				TRACE_DEVICE,
-				"DMF_ModulesCreate failed with status %!STATUS!",
-				status
-			);
-			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"DMF_ModulesCreate", status);
-			break;
-		}
+        if (!NT_SUCCESS(status))
+        {
+            TraceEvents(
+                TRACE_LEVEL_ERROR,
+                TRACE_DEVICE,
+                "DMF_ModulesCreate failed with status %!STATUS!",
+                status
+            );
+            EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"DMF_ModulesCreate", status);
+            break;
+        }
 
-	} while (FALSE);
+    } while (FALSE);
 
 exitFailure:
 
-	if (dmfDeviceInit != NULL)
-	{
-		DMF_DmfDeviceInitFree(&dmfDeviceInit);
-	}
+    if (dmfDeviceInit != NULL)
+    {
+        DMF_DmfDeviceInitFree(&dmfDeviceInit);
+    }
 
-	if (!NT_SUCCESS(status) && device != NULL)
-	{
-		WdfObjectDelete(device);
-	}
+    if (!NT_SUCCESS(status) && device != NULL)
+    {
+        WdfObjectDelete(device);
+    }
 
-	FuncExit(TRACE_DEVICE, "status=%!STATUS!", status);
+    FuncExit(TRACE_DEVICE, "status=%!STATUS!", status);
 
-	return status;
+    return status;
 }
 #pragma code_seg()
 
@@ -218,66 +218,66 @@ exitFailure:
 #pragma code_seg("PAGE")
 NTSTATUS
 BthPS3_OpenFilterIoTarget(
-	_In_ WDFDEVICE Device
+    _In_ WDFDEVICE Device
 )
 {
-	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	WDF_OBJECT_ATTRIBUTES ioTargetAttrib;
-	WDF_IO_TARGET_OPEN_PARAMS openParams;
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    WDF_OBJECT_ATTRIBUTES ioTargetAttrib;
+    WDF_IO_TARGET_OPEN_PARAMS openParams;
 
-	DECLARE_CONST_UNICODE_STRING(symbolicLink, BTHPS3PSM_SYMBOLIC_NAME_STRING);
+    DECLARE_CONST_UNICODE_STRING(symbolicLink, BTHPS3PSM_SYMBOLIC_NAME_STRING);
 
-	PAGED_CODE();
+    PAGED_CODE();
 
-	FuncEntry(TRACE_DEVICE);
+    FuncEntry(TRACE_DEVICE);
 
-	const PBTHPS3_SERVER_CONTEXT pCtx = GetServerDeviceContext(Device);
+    const PBTHPS3_SERVER_CONTEXT pCtx = GetServerDeviceContext(Device);
 
-	WDF_OBJECT_ATTRIBUTES_INIT(&ioTargetAttrib);
+    WDF_OBJECT_ATTRIBUTES_INIT(&ioTargetAttrib);
 
-	do
-	{
-		if (!NT_SUCCESS(status = WdfIoTargetCreate(
-			Device,
-			&ioTargetAttrib,
-			&pCtx->PsmFilter.IoTarget
-		)))
-		{
-			TraceError(
-				TRACE_DEVICE,
-				"WdfIoTargetCreate failed with status %!STATUS!",
-				status
-			);
-			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfIoTargetCreate", status);
-			break;
-		}
+    do
+    {
+        if (!NT_SUCCESS(status = WdfIoTargetCreate(
+            Device,
+            &ioTargetAttrib,
+            &pCtx->PsmFilter.IoTarget
+        )))
+        {
+            TraceError(
+                TRACE_DEVICE,
+                "WdfIoTargetCreate failed with status %!STATUS!",
+                status
+            );
+            EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfIoTargetCreate", status);
+            break;
+        }
 
-		WDF_IO_TARGET_OPEN_PARAMS_INIT_OPEN_BY_NAME(
-			&openParams,
-			&symbolicLink,
-			STANDARD_RIGHTS_ALL
-		);
+        WDF_IO_TARGET_OPEN_PARAMS_INIT_OPEN_BY_NAME(
+            &openParams,
+            &symbolicLink,
+            STANDARD_RIGHTS_ALL
+        );
 
-		if (!NT_SUCCESS(status = WdfIoTargetOpen(
-			pCtx->PsmFilter.IoTarget,
-			&openParams
-		)))
-		{
-			TraceError(
-				TRACE_DEVICE,
-				"WdfIoTargetOpen failed with status %!STATUS!",
-				status
-			);
-			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfIoTargetOpen", status);
-			WdfObjectDelete(pCtx->PsmFilter.IoTarget);
-			break;
-		}
+        if (!NT_SUCCESS(status = WdfIoTargetOpen(
+            pCtx->PsmFilter.IoTarget,
+            &openParams
+        )))
+        {
+            TraceError(
+                TRACE_DEVICE,
+                "WdfIoTargetOpen failed with status %!STATUS!",
+                status
+            );
+            EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfIoTargetOpen", status);
+            WdfObjectDelete(pCtx->PsmFilter.IoTarget);
+            break;
+        }
 
-	} while (FALSE);
+    } while (FALSE);
 
-	FuncExit(TRACE_DEVICE, "status=%!STATUS!", status);
+    FuncExit(TRACE_DEVICE, "status=%!STATUS!", status);
 
-	return status;
+    return status;
 }
 #pragma code_seg()
 
@@ -285,32 +285,32 @@ BthPS3_OpenFilterIoTarget(
 // Timed auto-reset of filter driver
 // 
 void BthPS3_EnablePatchEvtWdfTimer(
-	WDFTIMER Timer
+    WDFTIMER Timer
 )
 {
-	NTSTATUS status;
-	PBTHPS3_SERVER_CONTEXT devCtx = GetServerDeviceContext(WdfTimerGetParentObject(Timer));
+    NTSTATUS status;
+    PBTHPS3_SERVER_CONTEXT devCtx = GetServerDeviceContext(WdfTimerGetParentObject(Timer));
 
-	TraceVerbose(TRACE_DEVICE,
-		"Requesting filter to enable patch"
-	);
+    TraceVerbose(TRACE_DEVICE,
+        "Requesting filter to enable patch"
+    );
 
-	if (!NT_SUCCESS(status = BthPS3PSM_EnablePatchAsync(
-		devCtx->PsmFilter.IoTarget,
-		0 // TODO: read from registry?
-	)))
-	{
-		TraceVerbose(TRACE_DEVICE,
-			"BthPS3PSM_EnablePatchAsync failed with status %!STATUS!",
-			status
-		);
+    if (!NT_SUCCESS(status = BthPS3PSM_EnablePatchAsync(
+        devCtx->PsmFilter.IoTarget,
+        0 // TODO: read from registry?
+    )))
+    {
+        TraceVerbose(TRACE_DEVICE,
+            "BthPS3PSM_EnablePatchAsync failed with status %!STATUS!",
+            status
+        );
 
-		EventWriteFilterAutoEnabledFailed(NULL, status);
-	}
-	else
-	{
-		EventWriteFilterAutoEnabledSuccessfully(NULL);
-	}
+        EventWriteFilterAutoEnabledFailed(NULL, status);
+    }
+    else
+    {
+        EventWriteFilterAutoEnabledSuccessfully(NULL);
+    }
 }
 
 //
@@ -319,50 +319,50 @@ void BthPS3_EnablePatchEvtWdfTimer(
 _Use_decl_annotations_
 NTSTATUS
 BthPS3_EvtWdfDeviceSelfManagedIoInit(
-	WDFDEVICE Device
+    WDFDEVICE Device
 )
 {
-	NTSTATUS status;
-	PBTHPS3_SERVER_CONTEXT devCtx = GetServerDeviceContext(Device);
+    NTSTATUS status;
+    PBTHPS3_SERVER_CONTEXT devCtx = GetServerDeviceContext(Device);
 
-	FuncEntry(TRACE_DEVICE);
+    FuncEntry(TRACE_DEVICE);
 
-	do
-	{
-		if (!NT_SUCCESS(status = BthPS3_RetrieveLocalInfo(&devCtx->Header)))
-		{
-			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_RetrieveLocalInfo", status);
-			break;
-		}
+    do
+    {
+        if (!NT_SUCCESS(status = BthPS3_RetrieveLocalInfo(&devCtx->Header)))
+        {
+            EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_RetrieveLocalInfo", status);
+            break;
+        }
 
-		if (!NT_SUCCESS(status = BthPS3_RegisterPSM(devCtx)))
-		{
-			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_RegisterPSM", status);
-			break;
-		}
+        if (!NT_SUCCESS(status = BthPS3_RegisterPSM(devCtx)))
+        {
+            EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_RegisterPSM", status);
+            break;
+        }
 
-		if (!NT_SUCCESS(status = BthPS3_RegisterL2CAPServer(devCtx)))
-		{
-			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_RegisterL2CAPServer", status);
-			break;
-		}
+        if (!NT_SUCCESS(status = BthPS3_RegisterL2CAPServer(devCtx)))
+        {
+            EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_RegisterL2CAPServer", status);
+            break;
+        }
 
-		//
-		// Attempt to enable, but ignore failure
-		//
-		if (devCtx->Settings.AutoEnableFilter)
-		{
-			(void)BthPS3PSM_EnablePatchSync(
-				devCtx->PsmFilter.IoTarget,
-				0
-			);
-		}
+        //
+        // Attempt to enable, but ignore failure
+        //
+        if (devCtx->Settings.AutoEnableFilter)
+        {
+            (void)BthPS3PSM_EnablePatchSync(
+                devCtx->PsmFilter.IoTarget,
+                0
+            );
+        }
 
-	} while (FALSE);
+    } while (FALSE);
 
-	FuncExit(TRACE_DEVICE, "status=%!STATUS!", status);
+    FuncExit(TRACE_DEVICE, "status=%!STATUS!", status);
 
-	return status;
+    return status;
 }
 
 //
@@ -372,32 +372,32 @@ BthPS3_EvtWdfDeviceSelfManagedIoInit(
 _Use_decl_annotations_
 VOID
 BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
-	WDFDEVICE Device
+    WDFDEVICE Device
 )
 {
-	const PBTHPS3_SERVER_CONTEXT devCtx = GetServerDeviceContext(Device);
+    const PBTHPS3_SERVER_CONTEXT devCtx = GetServerDeviceContext(Device);
 
-	PAGED_CODE();
+    PAGED_CODE();
 
-	FuncEntry(TRACE_DEVICE);
+    FuncEntry(TRACE_DEVICE);
 
-	if (devCtx->PsmFilter.IoTarget != NULL)
-	{
-		WdfIoTargetClose(devCtx->PsmFilter.IoTarget);
-		WdfObjectDelete(devCtx->PsmFilter.IoTarget);
-	}
+    if (devCtx->PsmFilter.IoTarget != NULL)
+    {
+        WdfIoTargetClose(devCtx->PsmFilter.IoTarget);
+        WdfObjectDelete(devCtx->PsmFilter.IoTarget);
+    }
 
-	if (NULL != devCtx->L2CAPServerHandle)
-	{
-		BthPS3_UnregisterL2CAPServer(devCtx);
-	}
+    if (NULL != devCtx->L2CAPServerHandle)
+    {
+        BthPS3_UnregisterL2CAPServer(devCtx);
+    }
 
-	if (0 != devCtx->PsmHidControl)
-	{
-		BthPS3_UnregisterPSM(devCtx);
-	}
+    if (0 != devCtx->PsmHidControl)
+    {
+        BthPS3_UnregisterPSM(devCtx);
+    }
 
-	FuncExitNoReturn(TRACE_DEVICE);
+    FuncExitNoReturn(TRACE_DEVICE);
 }
 #pragma code_seg()
 
@@ -407,66 +407,66 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
 _IRQL_requires_max_(PASSIVE_LEVEL)
 VOID
 DmfDeviceModulesAdd(
-	_In_ WDFDEVICE Device,
-	_In_ PDMFMODULE_INIT DmfModuleInit
+    _In_ WDFDEVICE Device,
+    _In_ PDMFMODULE_INIT DmfModuleInit
 )
 {
-	FuncEntry(TRACE_DEVICE);
+    FuncEntry(TRACE_DEVICE);
 
-	DMF_MODULE_ATTRIBUTES moduleAttributes;
-	DMF_CONFIG_Pdo moduleConfigPdo;
-	DMF_CONFIG_QueuedWorkItem moduleConfigQwi;
+    DMF_MODULE_ATTRIBUTES moduleAttributes;
+    DMF_CONFIG_Pdo moduleConfigPdo;
+    DMF_CONFIG_QueuedWorkItem moduleConfigQwi;
 
-	const PBTHPS3_SERVER_CONTEXT pSrvCtx = GetServerDeviceContext(Device);
+    const PBTHPS3_SERVER_CONTEXT pSrvCtx = GetServerDeviceContext(Device);
 
-	//
-	// PDO module
-	// 
+    //
+    // PDO module
+    // 
 
-	DMF_CONFIG_Pdo_AND_ATTRIBUTES_INIT(
-		&moduleConfigPdo,
-		&moduleAttributes
-	);
+    DMF_CONFIG_Pdo_AND_ATTRIBUTES_INIT(
+        &moduleConfigPdo,
+        &moduleAttributes
+    );
 
-	moduleConfigPdo.DeviceLocation = L"Nefarius Bluetooth PS Enumerator";
-	moduleConfigPdo.InstanceIdFormatString = L"BTHPS3_DEVICE_%02d";
-	// Do not create any PDOs during Module create.
-	// PDOs will be created dynamically through Module Method.
-	//
-	moduleConfigPdo.PdoRecordCount = 0;
-	moduleConfigPdo.PdoRecords = NULL;
-	moduleConfigPdo.EvtPdoPnpCapabilities = NULL;
-	moduleConfigPdo.EvtPdoPowerCapabilities = NULL;
-	moduleConfigPdo.EvtPdoPreCreate = BthPS3_PDO_EvtPreCreate;
-	moduleConfigPdo.EvtPdoPostCreate = BthPS3_PDO_EvtPostCreate;
+    moduleConfigPdo.DeviceLocation = L"Nefarius Bluetooth PS Enumerator";
+    moduleConfigPdo.InstanceIdFormatString = L"BTHPS3_DEVICE_%02d";
+    // Do not create any PDOs during Module create.
+    // PDOs will be created dynamically through Module Method.
+    //
+    moduleConfigPdo.PdoRecordCount = 0;
+    moduleConfigPdo.PdoRecords = NULL;
+    moduleConfigPdo.EvtPdoPnpCapabilities = NULL;
+    moduleConfigPdo.EvtPdoPowerCapabilities = NULL;
+    moduleConfigPdo.EvtPdoPreCreate = BthPS3_PDO_EvtPreCreate;
+    moduleConfigPdo.EvtPdoPostCreate = BthPS3_PDO_EvtPostCreate;
 
-	DMF_DmfModuleAdd(
-		DmfModuleInit,
-		&moduleAttributes,
-		WDF_NO_OBJECT_ATTRIBUTES,
-		&pSrvCtx->Header.PdoModule
-	);
+    DMF_DmfModuleAdd(
+        DmfModuleInit,
+        &moduleAttributes,
+        WDF_NO_OBJECT_ATTRIBUTES,
+        &pSrvCtx->Header.PdoModule
+    );
 
-	//
-	// Queued Work Item Module
-	// 
+    //
+    // Queued Work Item Module
+    // 
 
-	DMF_CONFIG_QueuedWorkItem_AND_ATTRIBUTES_INIT(
-		&moduleConfigQwi,
-		&moduleAttributes
-	);
-		
-	moduleConfigQwi.BufferQueueConfig.SourceSettings.BufferCount = 4;
-	moduleConfigQwi.BufferQueueConfig.SourceSettings.BufferSize = sizeof(BTHPS3_QWI_CONTEXT);
-	moduleConfigQwi.BufferQueueConfig.SourceSettings.PoolType = NonPagedPoolNx;
-	moduleConfigQwi.EvtQueuedWorkitemFunction = BthPS3_EvtQueuedWorkItemHandler;
+    DMF_CONFIG_QueuedWorkItem_AND_ATTRIBUTES_INIT(
+        &moduleConfigQwi,
+        &moduleAttributes
+    );
 
-	DMF_DmfModuleAdd(
-		DmfModuleInit,
-		&moduleAttributes,
-		WDF_NO_OBJECT_ATTRIBUTES,
-		&pSrvCtx->Header.QueuedWorkItemModule
-	);
+    moduleConfigQwi.BufferQueueConfig.SourceSettings.BufferCount = 4;
+    moduleConfigQwi.BufferQueueConfig.SourceSettings.BufferSize = sizeof(BTHPS3_QWI_CONTEXT);
+    moduleConfigQwi.BufferQueueConfig.SourceSettings.PoolType = NonPagedPoolNx;
+    moduleConfigQwi.EvtQueuedWorkitemFunction = BthPS3_EvtQueuedWorkItemHandler;
 
-	FuncExitNoReturn(TRACE_DEVICE);
+    DMF_DmfModuleAdd(
+        DmfModuleInit,
+        &moduleAttributes,
+        WDF_NO_OBJECT_ATTRIBUTES,
+        &pSrvCtx->Header.QueuedWorkItemModule
+    );
+
+    FuncExitNoReturn(TRACE_DEVICE);
 }

@@ -45,6 +45,9 @@
 #include <wdf.h>
 #include <initguid.h>
 #include <devpkey.h>
+#include <ntimage.h>
+#include <bcrypt.h>
+#include <Domito.h>
 
 #include "device.h"
 #include "trace.h"

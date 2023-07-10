@@ -46,98 +46,187 @@
 #pragma alloc_text (PAGE, BthPS3EvtDriverContextCleanup)
 #endif
 
+
+typedef VOID(NTAPI* t_WppRecorderReplay)(
+    _In_ PVOID WppCb,
+    _In_ TRACEHANDLE WppTraceHandle,
+    _In_ ULONG EnableFlags,
+    _In_ UCHAR EnableLevel
+    );
+
+//
+// Stores real WppRecorder::imp_WppRecorderReplay export, if available
+// 
+static t_WppRecorderReplay G_WppRecorderReplay = NULL;
+
+
 NTSTATUS
 DriverEntry(
-	_In_ PDRIVER_OBJECT  DriverObject,
-	_In_ PUNICODE_STRING RegistryPath
+    _In_ PDRIVER_OBJECT  DriverObject,
+    _In_ PUNICODE_STRING RegistryPath
 )
 {
-	WDF_DRIVER_CONFIG config;
-	NTSTATUS status;
-	WDF_OBJECT_ATTRIBUTES attributes;
+    WDF_DRIVER_CONFIG config;
+    NTSTATUS status;
+    WDF_OBJECT_ATTRIBUTES attributes;
 
-	//
-	// Initialize WPP Tracing
-	//
-	WPP_INIT_TRACING(DriverObject, RegistryPath);
+    //
+    // Initialize WPP Tracing
+    //
+    WPP_INIT_TRACING(DriverObject, RegistryPath);
 
-	EventRegisterNefarius_BthPS3_Profile_Driver();
+    EventRegisterNefarius_BthPS3_Profile_Driver();
 
-	FuncEntry(TRACE_DRIVER);
+    FuncEntry(TRACE_DRIVER);
 
-	ExInitializeDriverRuntime(DrvRtPoolNxOptIn);
+    ExInitializeDriverRuntime(DrvRtPoolNxOptIn);
 
-	//
-	// Register a cleanup callback so that we can call WPP_CLEANUP when
-	// the framework driver object is deleted during driver unload.
-	//
-	WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
-	attributes.EvtCleanupCallback = BthPS3EvtDriverContextCleanup;
+    //
+    // Register a cleanup callback so that we can call WPP_CLEANUP when
+    // the framework driver object is deleted during driver unload.
+    //
+    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+    attributes.EvtCleanupCallback = BthPS3EvtDriverContextCleanup;
 
-	WDF_DRIVER_CONFIG_INIT(&config,
-		BthPS3EvtDeviceAdd
-	);
+    WDF_DRIVER_CONFIG_INIT(&config,
+        BthPS3EvtDeviceAdd
+    );
 
-	if (!NT_SUCCESS(status = WdfDriverCreate(
-		DriverObject,
-		RegistryPath,
-		&attributes,
-		&config,
-		WDF_NO_HANDLE
-	)))
-	{
-		TraceError(
-			TRACE_DRIVER,
-			"WdfDriverCreate failed %!STATUS!",
-			status
-		);
-		WPP_CLEANUP(DriverObject);
-		return status;
-	}
+    if (!NT_SUCCESS(status = WdfDriverCreate(
+        DriverObject,
+        RegistryPath,
+        &attributes,
+        &config,
+        WDF_NO_HANDLE
+    )))
+    {
+        TraceError(
+            TRACE_DRIVER,
+            "WdfDriverCreate failed %!STATUS!",
+            status
+        );
+        WPP_CLEANUP(DriverObject);
+        return status;
+    }
 
-	EventWriteStartEvent(NULL, DriverObject, status);
+    if (!NT_SUCCESS(status = DomitoInit()))
+    {
+        TraceError(
+            TRACE_DRIVER,
+            "DomitoInit failed %!STATUS!",
+            status
+        );
+        WPP_CLEANUP(DriverObject);
+        return status;
+    }
 
-	FuncExit(TRACE_DRIVER, "status=%!STATUS!", status);
+    //
+    // Dynamically check if WppRecorder::imp_WppRecorderReplay is available
+    // 
 
-	return status;
+    STRING targetModuleName = RTL_CONSTANT_STRING("\\SystemRoot\\System32\\Drivers\\WppRecorder.sys");
+    STRING functionName = RTL_CONSTANT_STRING("imp_WppRecorderReplay");
+
+    PVOID driverBaseAddress = NULL, functionAddress = NULL;
+
+    if (NT_SUCCESS(DomitoFindModuleBaseAddress(&targetModuleName, &driverBaseAddress)))
+    {
+        if (NT_SUCCESS(DomitoFindExportedFunctionAddress(driverBaseAddress, &functionName, &functionAddress)))
+        {
+            TraceVerbose(
+                TRACE_DRIVER,
+                "Found imp_WppRecorderReplay at 0x%p",
+                functionAddress
+            );
+
+            G_WppRecorderReplay = (t_WppRecorderReplay)functionAddress;
+        }
+        else
+        {
+            TraceInformation(
+                TRACE_DRIVER,
+                "imp_WppRecorderReplay not available on this Windows version"
+            );
+        }
+    }
+    else
+    {
+        TraceError(
+            TRACE_DRIVER,
+            "Failed to get base address for WppRecorder.sys"
+        );
+    }
+
+    EventWriteStartEvent(NULL, DriverObject, status);
+
+    FuncExit(TRACE_DRIVER, "status=%!STATUS!", status);
+
+    return status;
 }
 
 NTSTATUS
 BthPS3EvtDeviceAdd(
-	_In_    WDFDRIVER       Driver,
-	_Inout_ PWDFDEVICE_INIT DeviceInit
+    _In_    WDFDRIVER       Driver,
+    _Inout_ PWDFDEVICE_INIT DeviceInit
 )
 {
-	NTSTATUS status;
+    NTSTATUS status;
 
-	UNREFERENCED_PARAMETER(Driver);
+    UNREFERENCED_PARAMETER(Driver);
 
-	PAGED_CODE();
+    PAGED_CODE();
 
-	FuncEntry(TRACE_DRIVER);
+    FuncEntry(TRACE_DRIVER);
 
-	status = BthPS3_CreateDevice(DeviceInit);
+    status = BthPS3_CreateDevice(DeviceInit);
 
-	FuncExit(TRACE_DRIVER, "status=%!STATUS!", status);
+    FuncExit(TRACE_DRIVER, "status=%!STATUS!", status);
 
-	return status;
+    return status;
 }
 
 VOID
 BthPS3EvtDriverContextCleanup(
-	_In_ WDFOBJECT DriverObject
+    _In_ WDFOBJECT DriverObject
 )
 {
-	PAGED_CODE();
+    PAGED_CODE();
 
-	FuncEntry(TRACE_DRIVER);
+    FuncEntry(TRACE_DRIVER);
 
-	EventWriteUnloadEvent(NULL, DriverObject);
+    DomitoShutdown();
 
-	EventUnregisterNefarius_BthPS3_Profile_Driver();
+    EventWriteUnloadEvent(NULL, DriverObject);
 
-	//
-	// Stop WPP Tracing
-	//
-	WPP_CLEANUP(WdfDriverWdmGetDriverObject((WDFDRIVER)DriverObject));
+    EventUnregisterNefarius_BthPS3_Profile_Driver();
+
+    //
+    // Stop WPP Tracing
+    //
+    WPP_CLEANUP(WdfDriverWdmGetDriverObject((WDFDRIVER)DriverObject));
+}
+
+//
+// This satisfies the linker when looking for the import we patched out of "wpprecorder.lib"
+//
+VOID
+imp_WppRecorderReplay(
+    _In_ PVOID       WppCb,
+    _In_ TRACEHANDLE WppTraceHandle,
+    _In_ ULONG       EnableFlags,
+    _In_ UCHAR       EnableLevel
+)
+{
+    //
+    // Export not available, nothing to do
+    // 
+    if (!G_WppRecorderReplay)
+    {
+        return;
+    }
+
+    //
+    // Forward call to export driver
+    // 
+    G_WppRecorderReplay(WppCb, WppTraceHandle, EnableFlags, EnableLevel);
 }

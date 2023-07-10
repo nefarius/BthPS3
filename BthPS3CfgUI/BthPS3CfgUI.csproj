@@ -16,6 +16,7 @@
     <OutputPath>$(SolutionDir)bin\</OutputPath>
     <UseWPF>true</UseWPF>
     <Version>2.2.0.0</Version>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
@@ -35,12 +36,12 @@
     <PackageReference Include="Costura.Fody" Version="5.7.0">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Fody" Version="6.6.3">
+    <PackageReference Include="Fody" Version="6.7.0">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="PInvoke.Kernel32" Version="0.7.124" />
     <PackageReference Include="PInvoke.Windows.Core" Version="0.7.124" />
-    <PackageReference Include="PropertyChanged.Fody" Version="3.4.1">
+    <PackageReference Include="PropertyChanged.Fody" Version="4.1.0">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="WpfBindingErrors" Version="1.1.0" />

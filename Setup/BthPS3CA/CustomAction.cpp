@@ -9,7 +9,8 @@
 const std::wstring g_nullInf = L"BthPS3_PDO_NULL_Device.inf";
 const std::wstring g_profileInf = L"BthPS3.inf";
 const std::wstring g_filterInf = L"BthPS3PSM.inf";
-const std::wstring g_manifest = L"BthPS3.man";
+const std::wstring g_profileManifest = L"BthPS3.man";
+const std::wstring g_filterManifest = L"BthPS3PSM.man";
 
 
 //
@@ -65,10 +66,14 @@ UINT __stdcall InstallDrivers(
 	HRESULT hr = S_OK;
 	UINT er = ERROR_SUCCESS;
 
+    STARTUPINFO si = {};
+	PROCESS_INFORMATION pi = {};
+
 	std::wstring nullInfPath;
 	std::wstring profileInfPath;
 	std::wstring filterInfPath;
-	std::wstring manifestPath;
+	std::wstring profileManifestPath;
+	std::wstring filterManifestPath;
 	std::wstring importCmd;
 
 	hr = WcaInitialize(hInstall, "InstallDrivers");
@@ -85,7 +90,8 @@ UINT __stdcall InstallDrivers(
 	nullInfPath = std::wstring(targetPath) + L"\\" + g_nullInf;
 	profileInfPath = std::wstring(targetPath) + L"\\" + g_profileInf;
 	filterInfPath = std::wstring(targetPath) + L"\\" + g_filterInf;
-	manifestPath = std::wstring(targetPath) + L"\\" + g_manifest;
+	profileManifestPath = std::wstring(targetPath) + L"\\" + g_profileManifest;
+	filterManifestPath = std::wstring(targetPath) + L"\\" + g_filterManifest;
 
 
 	WcaLog(LOGMSG_STANDARD, "Installing BthPS3PSM filter driver.");
@@ -130,17 +136,14 @@ UINT __stdcall InstallDrivers(
 	WcaLog(LOGMSG_STANDARD, "Profile service for BTHENUM enabled.");
 
 
-	WcaLog(LOGMSG_STANDARD, "Importing instrumentation manifest.");
-	STARTUPINFO si;
-	PROCESS_INFORMATION pi;
-
+	WcaLog(LOGMSG_STANDARD, "Importing profile instrumentation manifest.");
 	ZeroMemory(&si, sizeof(si));
 	si.cb = sizeof(si);
 	ZeroMemory(&pi, sizeof(pi));
 
 	importCmd = 
 		std::wstring(L"C:\\Windows\\System32\\wevtutil.exe im \"") +
-		manifestPath +
+		profileManifestPath +
 		std::wstring(L"\"");
 
 	if (!CreateProcessW(NULL,
@@ -155,7 +158,7 @@ UINT __stdcall InstallDrivers(
 		&pi)
 		)
 	{
-		ExitOnLastError(hr, "Failed to import instrumentation manifest, error: %s",
+		ExitOnLastError(hr, "Failed to import profile instrumentation manifest, error: %s",
 			winapi::GetLastErrorStdStr(Dutil_er).c_str());
 	}
 	else
@@ -167,7 +170,43 @@ UINT __stdcall InstallDrivers(
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
 	}
-	WcaLog(LOGMSG_STANDARD, "Instrumentation manifest imported.");
+	WcaLog(LOGMSG_STANDARD, "Profile instrumentation manifest imported.");
+
+    WcaLog(LOGMSG_STANDARD, "Importing filter instrumentation manifest.");
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
+	ZeroMemory(&pi, sizeof(pi));
+
+	importCmd = 
+		std::wstring(L"C:\\Windows\\System32\\wevtutil.exe im \"") +
+		filterManifestPath +
+		std::wstring(L"\"");
+
+	if (!CreateProcessW(NULL,
+		const_cast<LPWSTR>(importCmd.c_str()),
+		NULL,
+		NULL,
+		FALSE,
+		CREATE_NO_WINDOW,
+		NULL,
+		NULL,
+		&si,
+		&pi)
+		)
+	{
+		ExitOnLastError(hr, "Failed to import filter instrumentation manifest, error: %s",
+			winapi::GetLastErrorStdStr(Dutil_er).c_str());
+	}
+	else
+	{
+		// Wait until child process exits.
+		WaitForSingleObject(pi.hProcess, INFINITE);
+
+		// Close process and thread handles. 
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+	}
+	WcaLog(LOGMSG_STANDARD, "Filter instrumentation manifest imported.");
 
 
 	if (!bthps3::filter::enable_psm_patch()
@@ -202,8 +241,12 @@ UINT __stdcall UninstallDrivers(
 {
 	HRESULT hr = S_OK;
 	UINT er = ERROR_SUCCESS;
-	std::wstring manifestPath;
+	std::wstring profileManifestPath;
+	std::wstring filterManifestPath;
 	std::wstring importCmd;
+
+    STARTUPINFO si = {};
+	PROCESS_INFORMATION pi = {};
 
 	hr = WcaInitialize(hInstall, "UninstallDrivers");
 	ExitOnFailure(hr, "Failed to initialize");
@@ -216,20 +259,17 @@ UINT __stdcall UninstallDrivers(
 
 	(void)MsiGetProperty(hInstall, L"CustomActionData", targetPath, &length);
 
-
-	WcaLog(LOGMSG_STANDARD, "Removing instrumentation manifest.");
-	STARTUPINFO si;
-	PROCESS_INFORMATION pi;
-
+    
+	WcaLog(LOGMSG_STANDARD, "Removing profile instrumentation manifest.");
 	ZeroMemory(&si, sizeof(si));
 	si.cb = sizeof(si);
 	ZeroMemory(&pi, sizeof(pi));
 
-	manifestPath = std::wstring(targetPath) + L"\\" + g_manifest;
+	profileManifestPath = std::wstring(targetPath) + L"\\" + g_profileManifest;
 
 	importCmd = 
 		std::wstring(L"C:\\Windows\\System32\\wevtutil.exe um \"") +
-		manifestPath +
+		profileManifestPath +
 		std::wstring(L"\"");
 
 	if (!CreateProcessW(NULL,
@@ -244,7 +284,7 @@ UINT __stdcall UninstallDrivers(
 		&pi)
 		)
 	{
-		ExitOnLastError(hr, "Failed to remove instrumentation manifest, error: %s",
+		ExitOnLastError(hr, "Failed to remove profile instrumentation manifest, error: %s",
 			winapi::GetLastErrorStdStr(Dutil_er).c_str());
 	}
 	else
@@ -256,7 +296,45 @@ UINT __stdcall UninstallDrivers(
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
 	}
-	WcaLog(LOGMSG_STANDARD, "Instrumentation manifest removed.");
+	WcaLog(LOGMSG_STANDARD, "Profile instrumentation manifest removed.");
+
+    WcaLog(LOGMSG_STANDARD, "Removing filter instrumentation manifest.");
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
+	ZeroMemory(&pi, sizeof(pi));
+
+	filterManifestPath = std::wstring(targetPath) + L"\\" + g_filterManifest;
+
+	importCmd = 
+		std::wstring(L"C:\\Windows\\System32\\wevtutil.exe um \"") +
+		filterManifestPath +
+		std::wstring(L"\"");
+
+	if (!CreateProcessW(NULL,
+		const_cast<LPWSTR>(importCmd.c_str()),
+		NULL,
+		NULL,
+		FALSE,
+		CREATE_NO_WINDOW,
+		NULL,
+		NULL,
+		&si,
+		&pi)
+		)
+	{
+		ExitOnLastError(hr, "Failed to remove filter instrumentation manifest, error: %s",
+			winapi::GetLastErrorStdStr(Dutil_er).c_str());
+	}
+	else
+	{
+		// Wait until child process exits.
+		WaitForSingleObject(pi.hProcess, INFINITE);
+
+		// Close process and thread handles. 
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+	}
+	WcaLog(LOGMSG_STANDARD, "Filter instrumentation manifest removed.");
 
 
 	WcaLog(LOGMSG_STANDARD, "Removing BthPS3PSM from Bluetooth class filters.");

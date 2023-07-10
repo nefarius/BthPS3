@@ -1,31 +1,41 @@
-version: 2.6.{build}.0
-image: Visual Studio 2019
-cache:
-- C:\projects\DMF -> appveyor.yml
+version: 2.8.{build}.0
+build_cloud: WIN-LKR467JS4GL
+image: Windows
 environment:
   DmfRootPath: C:\projects\DMF
+  DOMITO_INC_PATH: C:\projects\Domito\include
+  DOMITO_LIB_PATH: C:\projects\Domito\lib
 platform:
-- x86
 - x64
-#- ARM64
+- ARM64
 configuration:
 - Release
+test: off
+skip_commits:
+  files:
+    - .github/*
+    - '**/*.md'
+    - '**/*.png'
+    - '**/*.jpg'
+    - '**/*.aip'
+    - '**/*.DotSettings'
 install:
-- ps: Invoke-WebRequest https://wixtoolset.org/downloads/v3.14.0.6526/wix314-binaries.zip -OutFile .\wix314-binaries.zip
-- ps: Expand-Archive .\wix314-binaries.zip -DestinationPath .\wix
 - cmd: git submodule -q update --init
 - cmd: git clone -q https://github.com/microsoft/DMF.git C:\projects\DMF 2> nul || set ERRORLEVEL=0
 - cmd: |
     cd "C:\projects\DMF"
     git pull > NUL
     cd %appveyor_build_folder%
-- cmd: copy "%appveyor_build_folder%\build\__Directory.Build.props" "C:\projects\DMF\Directory.Build.props"
+- cmd: git clone -q https://git.nefarius.at/nefarius/Domito.git C:\projects\Domito 2> nul || set ERRORLEVEL=0
+- cmd: |
+    cd "C:\projects\Domito"
+    git pull > NUL
+    cd %appveyor_build_folder%
 - cmd: vcpkg integrate install
 - cmd: vcpkg update
 - cmd: vcpkg install detours:x86-windows-static detours:x64-windows-static
 before_build:
 - cmd: nuget restore
-- ps: Invoke-WebRequest "https://github.com/nefarius/vpatch/releases/latest/download/vpatch.exe" -OutFile vpatch.exe
 - cmd: vpatch.exe --stamp-version "%APPVEYOR_BUILD_VERSION%" --target-file ".\BthPS3\BthPS3.vcxproj" --vcxproj.inf-time-stamp
 - cmd: vpatch.exe --stamp-version "%APPVEYOR_BUILD_VERSION%" --target-file ".\BthPS3\BthPS3.rc" --resource.file-version --resource.product-version
 - cmd: vpatch.exe --stamp-version "%APPVEYOR_BUILD_VERSION%" --target-file ".\BthPS3PSM\BthPS3PSM.vcxproj" --vcxproj.inf-time-stamp

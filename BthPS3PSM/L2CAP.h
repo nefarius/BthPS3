@@ -73,7 +73,7 @@ typedef enum _L2CAP_SIGNALLING_COMMAND_CODE
     /// <summary>
     ///     A Disconnection Request packet has been received and the channel must initiate the disconnection process. Following
     ///     the completion of an L2CAP channel disconnection process, an L2CAP entity should return the corresponding local CID
-    ///     to the pool of “unassigned” CIDs.
+    ///     to the pool of "unassigned" CIDs.
     /// </summary>
     L2CAP_Disconnection_Request = 0x06,
 
@@ -103,17 +103,17 @@ typedef enum _L2CAP_CONFIGURATION_RESPONSE_RESULT
     L2CAP_ConfigurationResponseResult_Success = 0x0000,
 
     /// <summary>
-    ///     Failure – unacceptable parameters
+    ///     Failure - unacceptable parameters
     /// </summary>
     L2CAP_ConfigurationResponseResult_FailureUnacceptableParameters = 0x0001,
 
     /// <summary>
-    ///     Failure – rejected (no reason provided)
+    ///     Failure - rejected (no reason provided)
     /// </summary>
     L2CAP_ConfigurationResponseResult_FailureRejected = 0x0002,
 
     /// <summary>
-    ///     Failure – unknown options
+    ///     Failure - unknown options
     /// </summary>
     L2CAP_ConfigurationResponseResult_FailureUnknownOptions = 0x0003
 
@@ -137,17 +137,17 @@ typedef enum _L2CAP_CONNECTION_RESPONSE_RESULT
     L2CAP_ConnectionResponseResult_ConnectionPending = 0x0001,
 
     /// <summary>
-    ///     Connection refused – PSM not supported.
+    ///     Connection refused - PSM not supported.
     /// </summary>
     L2CAP_ConnectionResponseResult_ConnectionRefusedPsmNotSupported = 0x0002,
 
     /// <summary>
-    ///     Connection refused – security block.
+    ///     Connection refused - security block.
     /// </summary>
     L2CAP_ConnectionResponseResult_ConnectionRefusedSecurityBlock = 0x0003,
 
     /// <summary>
-    ///     Connection refused – no resources available.
+    ///     Connection refused - no resources available.
     /// </summary>
     L2CAP_ConnectionResponseResult_ConnectionRefusedNoResourcesAvailable = 0x0004
 
@@ -169,9 +169,9 @@ typedef enum _L2CAP_CONNECTION_RESPONSE_STATUS
     /// </summary>
     L2CAP_ConnectionResponseStatus_AuthenticationPending = 0x0001,
     /// <summary>
-    ///     Authorisation pending.
+    ///     Authorization pending.
     /// </summary>
-    L2CAP_ConnectionResponseStatus_AuthorisationPending = 0x0002
+    L2CAP_ConnectionResponseStatus_AuthorizationPending = 0x0002
 
 } L2CAP_CONNECTION_RESPONSE_STATUS;
 
@@ -308,54 +308,24 @@ typedef struct _L2CAP_SIGNALLING_DISCONNECTION_RESPONSE
 
 } L2CAP_SIGNALLING_DISCONNECTION_RESPONSE, *PL2CAP_SIGNALLING_DISCONNECTION_RESPONSE;
 
-/**
-* \def L2CAP_IS_CONTROL_CHANNEL(_buf_) ((BOOLEAN)_buf_[6] == 0x01 && _buf_[7] == 0x00)
-*
-* \brief   A macro that identifies the control channel.
-*
-* \author  Benjamin "Nefarius" Höglinger
-* \date    18.09.2017
-*
-* \param   _buf_   The buffer.
-*/
-#define L2CAP_IS_CONTROL_CHANNEL(_buf_)                     ((BOOLEAN)_buf_[6] == 0x01 && _buf_[7] == 0x00)
+//
+// A macro that identifies the control channel
+// 
+#define L2CAP_IS_CONTROL_CHANNEL(_buf_)                     ((BOOLEAN)(_buf_)[6] == 0x01 && (_buf_)[7] == 0x00)
 
-/**
-* \def L2CAP_IS_HID_INPUT_REPORT(_buf_) ((BOOLEAN)_buf_[8] == 0xA1 && _buf_[9] == 0x01)
-*
-* \brief   A macro that identifies a HID input report.
-*
-* \author  Benjamin "Nefarius" Höglinger
-* \date    18.09.2017
-*
-* \param   _buf_   The buffer.
-*/
-#define L2CAP_IS_HID_INPUT_REPORT(_buf_)                    ((BOOLEAN)_buf_[8] == 0xA1 && _buf_[9] == 0x01)
+//
+// A macro that identifies a HID input report
+// 
+#define L2CAP_IS_HID_INPUT_REPORT(_buf_)                    ((BOOLEAN)(_buf_)[8] == 0xA1 && (_buf_)[9] == 0x01)
 
-/**
-* \def L2CAP_GET_SIGNALLING_COMMAND_CODE(_buf_) ((L2CAP_SIGNALLING_COMMAND_CODE)_buf_[8])
-*
-* \brief   A macro that validates the signaling command code.
-*
-* \author  Benjamin "Nefarius" Höglinger
-* \date    18.09.2017
-*
-* \param   _buf_   The buffer.
-*/
-#define L2CAP_GET_SIGNALLING_COMMAND_CODE(_buf_)            ((L2CAP_SIGNALLING_COMMAND_CODE)_buf_[8])
+//
+// A macro that validates the signaling command code
+// 
+#define L2CAP_GET_SIGNALLING_COMMAND_CODE(_buf_)            ((L2CAP_SIGNALLING_COMMAND_CODE)(_buf_)[8])
 
-/**
-* \fn  BOOLEAN FORCEINLINE L2CAP_IS_SIGNALLING_COMMAND_CODE( PUCHAR Buffer )
-*
-* \brief   Checks if the supplied buffer represents a valid L2CAP signaling command code.
-*
-* \author  Benjamin "Nefarius" Höglinger
-* \date    18.09.2017
-*
-* \param   Buffer  The buffer.
-*
-* \return  TRUE if valid, FALSE otherwise.
-*/
+//
+// Checks if the supplied buffer represents a valid L2CAP signaling command code
+// 
 BOOLEAN FORCEINLINE L2CAP_IS_SIGNALLING_COMMAND_CODE(
     PUCHAR Buffer
 )

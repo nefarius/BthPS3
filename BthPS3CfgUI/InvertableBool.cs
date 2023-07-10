@@ -1,24 +1,23 @@
-﻿namespace BthPS3CfgUI
+﻿namespace BthPS3CfgUI;
+
+public class InvertableBool
 {
-    public class InvertableBool
+    public InvertableBool(bool b)
     {
-        public InvertableBool(bool b)
-        {
-            Value = b;
-        }
+        Value = b;
+    }
 
-        public bool Value { get; }
+    public bool Value { get; }
 
-        public bool Invert => !Value;
+    public bool Invert => !Value;
 
-        public static implicit operator InvertableBool(bool b)
-        {
-            return new InvertableBool(b);
-        }
+    public static implicit operator InvertableBool(bool b)
+    {
+        return new InvertableBool(b);
+    }
 
-        public static implicit operator bool(InvertableBool b)
-        {
-            return b.Value;
-        }
+    public static implicit operator bool(InvertableBool b)
+    {
+        return b.Value;
     }
 }

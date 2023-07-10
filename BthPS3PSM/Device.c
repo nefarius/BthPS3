@@ -245,7 +245,14 @@ BthPS3PSM_CreateDevice(
                 "WdfRegistryQueryULong failed with status %!STATUS!",
                 status
             );
-            EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfRegistryQueryULong", status);
+
+            //
+            // Do not log this case to ETW as it is normal on first launch
+            // 
+            if (status != STATUS_OBJECT_NAME_NOT_FOUND)
+            {
+                EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfRegistryQueryULong", status);
+            }
         }
         else
         {
@@ -333,22 +340,22 @@ BthPS3PSM_CreateDevice(
         //
         status = BthPS3PSM_QueueInitialize(device);
 
-    } while (FALSE);
+        } while (FALSE);
 
-    if (instanceId && !NT_SUCCESS(status))
-    {
-        WdfObjectDelete(instanceId);
+        if (instanceId && !NT_SUCCESS(status))
+        {
+            WdfObjectDelete(instanceId);
+        }
+
+        if (key)
+        {
+            WdfRegistryClose(key);
+        }
+
+        FuncExit(TRACE_DEVICE, "status=%!STATUS!", status);
+
+        return status;
     }
-
-    if (key)
-    {
-        WdfRegistryClose(key);
-    }
-
-    FuncExit(TRACE_DEVICE, "status=%!STATUS!", status);
-
-    return status;
-}
 
 _Success_(return == STATUS_SUCCESS)
 _Must_inspect_result_

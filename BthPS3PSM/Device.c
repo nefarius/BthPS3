@@ -71,7 +71,6 @@ BthPS3PSM_CreateDevice(
     WDFDEVICE device;
     NTSTATUS status;
     WDF_PNPPOWER_EVENT_CALLBACKS pnpPowerCallbacks;
-    WDFKEY key = NULL;
     WDF_OBJECT_ATTRIBUTES stringAttributes;
     BOOLEAN isUsb = FALSE;
     BOOLEAN ret = FALSE;
@@ -219,7 +218,7 @@ BthPS3PSM_CreateDevice(
             PLUGPLAY_REGKEY_DEVICE,
             KEY_READ,
             WDF_NO_OBJECT_ATTRIBUTES,
-            &key
+            &deviceContext->RegKeyDeviceNode
         )))
         {
             TraceError(
@@ -235,7 +234,7 @@ BthPS3PSM_CreateDevice(
         // Query for BthPS3PSMPatchEnabled value
         // 
         if (!NT_SUCCESS(status = WdfRegistryQueryULong(
-            key,
+            deviceContext->RegKeyDeviceNode,
             &patchPSMRegValue,
             &deviceContext->IsPsmPatchingEnabled
         )))
@@ -295,7 +294,7 @@ BthPS3PSM_CreateDevice(
         // Grab symbolic link so device can be associated with radio in user-mode
         // 
         if (!NT_SUCCESS(status = WdfRegistryQueryString(
-            key,
+            deviceContext->RegKeyDeviceNode,
             &linkNameRegValue,
             deviceContext->SymbolicLinkName
         )))
@@ -345,11 +344,6 @@ BthPS3PSM_CreateDevice(
         if (instanceId && !NT_SUCCESS(status))
         {
             WdfObjectDelete(instanceId);
-        }
-
-        if (key)
-        {
-            WdfRegistryClose(key);
         }
 
         FuncExit(TRACE_DEVICE, "status=%!STATUS!", status);

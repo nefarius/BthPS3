@@ -272,12 +272,13 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
     PBTHPS3PSM_DISABLE_PSM_PATCHING pDisable = NULL;
     PBTHPS3PSM_GET_PSM_PATCHING pGet = NULL;
     UNICODE_STRING linkName;
-    WDFKEY key = NULL;
-
-    DECLARE_CONST_UNICODE_STRING(patchPSMRegValue, G_PatchPSMRegValue);
+    WDF_WORKITEM_CONFIG wiCfg;
+    WDF_OBJECT_ATTRIBUTES attributes;
+    WDFWORKITEM workItem = NULL;
 
     FuncEntry(TRACE_SIDEBAND);
 
+    UNREFERENCED_PARAMETER(Queue);
     UNREFERENCED_PARAMETER(OutputBufferLength);
     UNREFERENCED_PARAMETER(InputBufferLength);
 
@@ -328,59 +329,29 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
                 pEnable->DeviceIndex
             );
 
-            if (NT_SUCCESS(status = WdfDeviceOpenRegistryKey(
-                WdfIoQueueGetDevice(Queue),
-                /*
-                 * Expands to e.g.:
-                 *
-                 * "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\USB\VID_XXXX&PID_XXXX\a&c9c4e92&0&4\Device Parameters"
-                 *
-                 */
-                PLUGPLAY_REGKEY_DEVICE,
-                KEY_WRITE,
-                WDF_NO_OBJECT_ATTRIBUTES,
-                &key
+            //
+            // Prepare async saving at PASSIVE_LEVEL
+            // 
+            WDF_WORKITEM_CONFIG_INIT(&wiCfg, BthPS3PSM_EvtSaveConfigToRegistry);
+            WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+            attributes.ParentObject = device;
+
+            if (!NT_SUCCESS(status = WdfWorkItemCreate(
+                &wiCfg,
+                &attributes,
+                &workItem
             )))
-            {
-                if (!NT_SUCCESS(status = WdfRegistryAssignULong(
-                    key,
-                    &patchPSMRegValue,
-                    pDevCtx->IsPsmPatchingEnabled
-                )))
-                {
-                    TraceError(
-                        TRACE_SIDEBAND,
-                        "WdfRegistryAssignULong failed with status %!STATUS!",
-                        status
-                    );
-                    EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfRegistryAssignULong", status);
-                }
-                else
-                {
-                    TraceVerbose(
-                        TRACE_SIDEBAND,
-                        "Settings stored"
-                    );
-
-                    const PWSTR instanceIdString = (const PWSTR)WdfMemoryGetBuffer(pDevCtx->InstanceId, NULL);
-
-                    EventWriteSetPatchStatusForDeviceInstance(
-                        NULL,
-                        pDevCtx->IsPsmPatchingEnabled,
-                        instanceIdString
-                    );
-                }
-
-                WdfRegistryClose(key);
-            }
-            else
             {
                 TraceError(
                     TRACE_SIDEBAND,
-                    "WdfDeviceOpenRegistryKey failed with status %!STATUS!",
+                    "WdfWorkItemCreate failed with status %!STATUS!",
                     status
                 );
-                EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfDeviceOpenRegistryKey", status);
+                EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfWorkItemCreate", status);
+            }
+            else
+            {
+                WdfWorkItemEnqueue(workItem);
             }
         }
 
@@ -434,59 +405,29 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
                 pDisable->DeviceIndex
             );
 
-            if (NT_SUCCESS(status = WdfDeviceOpenRegistryKey(
-                WdfIoQueueGetDevice(Queue),
-                /*
-                 * Expands to e.g.:
-                 *
-                 * "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\USB\VID_XXXX&PID_XXXX\a&c9c4e92&0&4\Device Parameters"
-                 *
-                 */
-                PLUGPLAY_REGKEY_DEVICE,
-                KEY_WRITE,
-                WDF_NO_OBJECT_ATTRIBUTES,
-                &key
+            //
+            // Prepare async saving at PASSIVE_LEVEL
+            // 
+            WDF_WORKITEM_CONFIG_INIT(&wiCfg, BthPS3PSM_EvtSaveConfigToRegistry);
+            WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+            attributes.ParentObject = device;
+
+            if (!NT_SUCCESS(status = WdfWorkItemCreate(
+                &wiCfg,
+                &attributes,
+                &workItem
             )))
-            {
-                if (!NT_SUCCESS(status = WdfRegistryAssignULong(
-                    key,
-                    &patchPSMRegValue,
-                    pDevCtx->IsPsmPatchingEnabled
-                )))
-                {
-                    TraceError(
-                        TRACE_SIDEBAND,
-                        "WdfRegistryAssignULong failed with status %!STATUS!",
-                        status
-                    );
-                    EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfRegistryAssignULong", status);
-                }
-                else
-                {
-                    TraceVerbose(
-                        TRACE_SIDEBAND,
-                        "Settings stored"
-                    );
-
-                    const PWSTR instanceIdString = (const PWSTR)WdfMemoryGetBuffer(pDevCtx->InstanceId, NULL);
-
-                    EventWriteSetPatchStatusForDeviceInstance(
-                        NULL,
-                        pDevCtx->IsPsmPatchingEnabled,
-                        instanceIdString
-                    );
-                }
-
-                WdfRegistryClose(key);
-            }
-            else
             {
                 TraceError(
                     TRACE_SIDEBAND,
-                    "WdfDeviceOpenRegistryKey failed with status %!STATUS!",
+                    "WdfWorkItemCreate failed with status %!STATUS!",
                     status
                 );
-                EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfDeviceOpenRegistryKey", status);
+                EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfWorkItemCreate", status);
+            }
+            else
+            {
+                WdfWorkItemEnqueue(workItem);
             }
         }
 
@@ -595,5 +536,54 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
     FuncExitNoReturn(TRACE_SIDEBAND);
 }
 #pragma warning(pop) // enable 28118 again
+
+//
+// Async operation to store changed settings to registry at PASSIVE_LEVEL
+// 
+void BthPS3PSM_EvtSaveConfigToRegistry(
+    WDFWORKITEM WorkItem
+)
+{
+    NTSTATUS status;
+    const WDFDEVICE device = WdfWorkItemGetParentObject(WorkItem);
+    const PDEVICE_CONTEXT pDevCtx = DeviceGetContext(device);
+
+    DECLARE_CONST_UNICODE_STRING(patchPSMRegValue, G_PatchPSMRegValue);
+
+    FuncEntryArguments(TRACE_SIDEBAND, "IRQL=%!irql!", KeGetCurrentIrql());
+
+    if (!NT_SUCCESS(status = WdfRegistryAssignULong(
+        pDevCtx->RegKeyDeviceNode,
+        &patchPSMRegValue,
+        pDevCtx->IsPsmPatchingEnabled
+    )))
+    {
+        TraceError(
+            TRACE_SIDEBAND,
+            "WdfRegistryAssignULong failed with status %!STATUS!",
+            status
+        );
+        EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfRegistryAssignULong", status);
+    }
+    else
+    {
+        TraceVerbose(
+            TRACE_SIDEBAND,
+            "Settings stored"
+        );
+
+        const PWSTR instanceIdString = (const PWSTR)WdfMemoryGetBuffer(pDevCtx->InstanceId, NULL);
+
+        EventWriteSetPatchStatusForDeviceInstance(
+            NULL,
+            pDevCtx->IsPsmPatchingEnabled,
+            instanceIdString
+        );
+    }
+    
+    WdfObjectDelete(WorkItem);
+
+    FuncExitNoReturn(TRACE_SIDEBAND);
+}
 
 #endif

@@ -1,4 +1,4 @@
-version: 2.7.{build}.0
+version: 2.8.{build}.0
 build_cloud: WIN-LKR467JS4GL
 image: Windows
 environment:

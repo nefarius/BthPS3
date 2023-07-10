@@ -196,3 +196,4 @@ This application benefits from these awesome projects ❤ (appearance in no spec
 - [Eleccelerator Wiki - DualShock 3](http://eleccelerator.com/wiki/index.php?title=DualShock_3)
 - [Link Manager Protocol (LMP)](https://www.bluetooth.com/specifications/assigned-numbers/link-manager/)
 - [Nefarius' Domito Library](https://git.nefarius.at/nefarius/Domito)
+- [NUKE Build Automation](https://nuke.build/)

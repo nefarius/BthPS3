@@ -113,7 +113,7 @@ The project uses the following branch strategies:
 
 ### Build artifacts
 
-Tagged CI builds get mirrored [to the buildbot web server](https://buildbot.vigem.org/builds/BthPS3/), use at your own risk, no support ptovided whatsoever!
+Tagged CI builds get mirrored [to the buildbot web server](https://buildbot.vigem.org/builds/BthPS3/), use at your own risk, no support provided whatsoever!
 
 </details>
 

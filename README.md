@@ -77,7 +77,7 @@ For a list of tested devices [consult the extended documentation](https://vigem.
 
 ## Installation
 
-Pre-built binaries and instructions are provided by `Nefarius Software Solutions e.U.` and [available as an all-in-one setup](https://github.com/ViGEm/BthPS3/releases/latest). Official support covers **Windows 10/11 x64/ARM64** only, filing issues about any other version or architecture will be discarded.
+Pre-built binaries and instructions are provided by `Nefarius Software Solutions e.U.` and [available via setup](https://github.com/ViGEm/BthPS3/releases/latest). Official support covers **Windows 10/11 x64/ARM64** only, filing issues about any other version or architecture will be discarded.
 
 Check out the companion solution [DsHidMini](https://github.com/ViGEm/DsHidMini) for using the controller in games!
 

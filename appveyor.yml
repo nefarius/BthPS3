@@ -21,7 +21,7 @@ skip_commits:
     - '**/*.DotSettings'
 install:
 - cmd: git submodule -q update --init
-- cmd: git clone -b Merge20230714 -q https://github.com/microsoft/DMF.git C:\projects\DMF 2> nul || set ERRORLEVEL=0
+- cmd: git clone -q https://github.com/microsoft/DMF.git C:\projects\DMF 2> nul || set ERRORLEVEL=0
 - cmd: |
     cd "C:\projects\DMF"
     git pull > NUL

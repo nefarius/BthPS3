@@ -5,7 +5,7 @@
 Windows kernel-mode Bluetooth Profile & Filter Drivers for PS3 peripherals.
 
 [![Build status](https://ci.appveyor.com/api/projects/status/lna6ewnbck5diu6l/branch/master?svg=true)](https://ci.appveyor.com/project/nefarius/bthps3/branch/master)
- [![GitHub All Releases](https://img.shields.io/github/downloads/ViGEm/BthPS3/total)](https://somsubhra.github.io/github-release-stats/?username=ViGEm&repository=BthPS3) [![Discord](https://img.shields.io/discord/346756263763378176.svg)](https://discord.vigem.org) [![Website](https://img.shields.io/website-up-down-green-red/https/vigem.org.svg?label=ViGEm.org)](https://vigem.org/) [![GitHub followers](https://img.shields.io/github/followers/nefarius.svg?style=social&label=Follow)](https://github.com/nefarius) [![Twitter Follow](https://img.shields.io/twitter/follow/nefariusmaximus.svg?style=social&label=Follow)](https://twitter.com/nefariusmaximus)
+ [![GitHub All Releases](https://img.shields.io/github/downloads/ViGEm/BthPS3/total)](https://somsubhra.github.io/github-release-stats/?username=ViGEm&repository=BthPS3) [![Discord](https://img.shields.io/discord/346756263763378176.svg)](https://discord.nefarius.at) [![Website](https://img.shields.io/website-up-down-green-red/https/docs.nefarius.at.svg?label=docs.nefarius.at)](https://docs.nefarius.at/) [![GitHub followers](https://img.shields.io/github/followers/nefarius.svg?style=social&label=Follow)](https://github.com/nefarius) [![Twitter Follow](https://img.shields.io/twitter/follow/nefariusmaximus.svg?style=social&label=Follow)](https://twitter.com/nefariusmaximus)
 
 ## About
 
@@ -54,7 +54,7 @@ When loaded onto an unsupported host radio, device boot will fail with `STATUS_D
 
 ![P37N2cgWdG.png](docs/P37N2cgWdG.png)
 
-For a list of tested devices [consult the extended documentation](https://vigem.org/projects/BthPS3/Compatible-Bluetooth-Devices/).
+For a list of tested devices [consult the extended documentation](https://docs.nefarius.at/projects/BthPS3/Compatible-Bluetooth-Devices/).
 
 ### Link Manager Versions
 
@@ -113,13 +113,13 @@ The project uses the following branch strategies:
 
 ### Build artifacts
 
-Tagged CI builds get mirrored [to the buildbot web server](https://buildbot.vigem.org/builds/BthPS3/), use at your own risk, no support provided whatsoever!
+Tagged CI builds get mirrored [to the buildbot web server](https://buildbot.nefarius.at/builds/BthPS3/), use at your own risk, no support provided whatsoever!
 
 </details>
 
 ## Support & Documentation
 
-Everything you need to know is documented [on the project page](https://vigem.org/projects/BthPS3/), read carefully before considering filing an issue.
+Everything you need to know is documented [on the project page](https://docs.nefarius.at/projects/BthPS3/), read carefully before considering filing an issue.
 
 <details>
 

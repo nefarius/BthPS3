@@ -25,6 +25,6 @@ public partial class MainWindow : AdonisWindow
 
     private void Help_OnClick(object sender, RoutedEventArgs e)
     {
-        Process.Start("https://vigem.org/projects/BthPS3/");
+        Process.Start("https://docs.nefarius.at/projects/BthPS3/");
     }
 }

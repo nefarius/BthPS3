@@ -5,7 +5,7 @@
 Windows kernel-mode Bluetooth Profile & Filter Drivers for PS3 peripherals.
 
 [![Build status](https://ci.appveyor.com/api/projects/status/lna6ewnbck5diu6l/branch/master?svg=true)](https://ci.appveyor.com/project/nefarius/bthps3/branch/master)
- [![GitHub All Releases](https://img.shields.io/github/downloads/ViGEm/BthPS3/total)](https://somsubhra.github.io/github-release-stats/?username=ViGEm&repository=BthPS3) [![Discord](https://img.shields.io/discord/346756263763378176.svg)](https://discord.nefarius.at) [![Website](https://img.shields.io/website-up-down-green-red/https/docs.nefarius.at.svg?label=docs.nefarius.at)](https://docs.nefarius.at/) [![GitHub followers](https://img.shields.io/github/followers/nefarius.svg?style=social&label=Follow)](https://github.com/nefarius) [![Twitter Follow](https://img.shields.io/twitter/follow/nefariusmaximus.svg?style=social&label=Follow)](https://twitter.com/nefariusmaximus)
+ [![GitHub All Releases](https://img.shields.io/github/downloads/ViGEm/BthPS3/total)](https://somsubhra.github.io/github-release-stats/?username=ViGEm&repository=BthPS3) [![Discord](https://img.shields.io/discord/346756263763378176.svg)](https://discord.nefarius.at) [![Website](https://img.shields.io/website-up-down-green-red/https/docs.nefarius.at.svg?label=docs.nefarius.at)](https://docs.nefarius.at/) [![GitHub followers](https://img.shields.io/github/followers/nefarius.svg?style=social&label=Follow)](https://github.com/nefarius) [![Mastodon Follow](https://img.shields.io/mastodon/follow/109321120351128938?domain=https%3A%2F%2Ffosstodon.org%2F&style=social)](https://fosstodon.org/@Nefarius)
 
 ## About
 

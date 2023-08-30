@@ -201,98 +201,94 @@ BthPS3_Initialize(
 #pragma code_seg()
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
+
 NTSTATUS
 BthPS3_GetDeviceName(
-	WDFIOTARGET IoTarget,
-	BTH_ADDR RemoteAddress,
-	PCHAR Name
+    WDFIOTARGET IoTarget,
+    BTH_ADDR RemoteAddress,
+    PCHAR Name
 )
 {
-	FuncEntry(TRACE_BTH);
+    FuncEntry(TRACE_BTH);
 
-	NTSTATUS status = STATUS_INVALID_BUFFER_SIZE;
-	ULONG index = 0;
-	WDF_MEMORY_DESCRIPTOR MemoryDescriptor;
-	WDFMEMORY MemoryHandle = NULL;
-	PBTH_DEVICE_INFO_LIST pDeviceInfoList = NULL;
-	ULONG maxDevices = BTH_DEVICE_INFO_MAX_COUNT;
-	ULONG retryCount = 0;
+    NTSTATUS status = STATUS_INVALID_BUFFER_SIZE;
+    ULONG index = 0;
+    WDF_MEMORY_DESCRIPTOR memoryDescriptor;
+    WDFMEMORY memoryHandle = NULL;
+    PBTH_DEVICE_INFO_LIST pDeviceInfoList = NULL;
+    ULONG maxDevices = BTH_DEVICE_INFO_MAX_COUNT;
+    ULONG retryCount = 0;
 
-	//
-	// Retry increasing the buffer a few times if _a lot_ of devices
-	// are cached and the allocated memory can't store them all.
-	// 
-	for (retryCount = 0; (retryCount <= BTH_DEVICE_INFO_MAX_RETRIES
-		&& status == STATUS_INVALID_BUFFER_SIZE); retryCount++)
-	{
-		if (MemoryHandle != NULL)
-		{
-			WdfObjectDelete(MemoryHandle);
-		}
+    //
+    // Retry increasing the buffer a few times if _a lot_ of devices
+    // are cached and the allocated memory can't store them all.
+    // 
+    for (retryCount = 0; (retryCount <= BTH_DEVICE_INFO_MAX_RETRIES
+             && status == STATUS_INVALID_BUFFER_SIZE); retryCount++)
+    {
+        if (memoryHandle != NULL)
+        {
+            WdfObjectDelete(memoryHandle);
+        }
 
-		if (!NT_SUCCESS(status = WdfMemoryCreate(NULL,
-			NonPagedPoolNx,
-			POOLTAG_BTHPS3,
-			sizeof(BTH_DEVICE_INFO_LIST) + (sizeof(BTH_DEVICE_INFO) * maxDevices),
-			&MemoryHandle,
-			NULL)))
-		{
-			return status;
-		}
+        if (!NT_SUCCESS(status = WdfMemoryCreate(NULL,
+            NonPagedPoolNx,
+            POOLTAG_BTHPS3,
+            sizeof(BTH_DEVICE_INFO_LIST) + (sizeof(BTH_DEVICE_INFO) * maxDevices),
+            &memoryHandle,
+            NULL)))
+        {
+            return status;
+        }
 
-		WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(
-			&MemoryDescriptor,
-			MemoryHandle,
-			NULL
-		);
+        WDF_MEMORY_DESCRIPTOR_INIT_HANDLE(
+            &memoryDescriptor,
+            memoryHandle,
+            NULL
+        );
 
-		status = WdfIoTargetSendIoctlSynchronously(
-			IoTarget,
-			NULL,
-			IOCTL_BTH_GET_DEVICE_INFO,
-			&MemoryDescriptor,
-			&MemoryDescriptor,
-			NULL,
-			NULL
-		);
+        status = WdfIoTargetSendIoctlSynchronously(
+            IoTarget,
+            NULL,
+            IOCTL_BTH_GET_DEVICE_INFO,
+            &memoryDescriptor,
+            &memoryDescriptor,
+            NULL,
+            NULL
+        );
 
-		//
-		// Increase memory to allocate
-		// 
-		maxDevices += BTH_DEVICE_INFO_MAX_COUNT;
-	}
+        //
+        // Increase memory to allocate
+        // 
+        maxDevices += BTH_DEVICE_INFO_MAX_COUNT;
+    }
 
-	if (!NT_SUCCESS(status)) {
-		WdfObjectDelete(MemoryHandle);
-		return status;
-	}
+    if (!NT_SUCCESS(status))
+    {
+        WdfObjectDelete(memoryHandle);
+        return status;
+    }
 
-	pDeviceInfoList = WdfMemoryGetBuffer(MemoryHandle, NULL);
-	status = STATUS_NOT_FOUND;
+    pDeviceInfoList = WdfMemoryGetBuffer(memoryHandle, NULL);
+    status = STATUS_NOT_FOUND;
 
-	for (index = 0; index < pDeviceInfoList->numOfDevices; index++)
-	{
-		const PBTH_DEVICE_INFO pDeviceInfo = &pDeviceInfoList->deviceList[index];
+    for (index = 0; index < pDeviceInfoList->numOfDevices; index++)
+    {
+        const PBTH_DEVICE_INFO pDeviceInfo = &pDeviceInfoList->deviceList[index];
 
-		if (pDeviceInfo->address == RemoteAddress)
-		{
-			if (strlen(pDeviceInfo->name) == 0)
-			{
-				status = STATUS_INVALID_PARAMETER;
-				break;
-			}
+        if (pDeviceInfo->address == RemoteAddress)
+        {
+            strcpy_s(Name, BTH_MAX_NAME_SIZE, pDeviceInfo->name);
+            status = STATUS_SUCCESS;
+            break;
+        }
+    }
 
-			strcpy_s(Name, BTH_MAX_NAME_SIZE, pDeviceInfo->name);
-			status = STATUS_SUCCESS;
-			break;
-		}
-	}
+    WdfObjectDelete(memoryHandle);
 
-	WdfObjectDelete(MemoryHandle);
+    FuncExit(TRACE_BTH, "status=%!STATUS!", status);
 
-	FuncExit(TRACE_BTH, "status=%!STATUS!", status);
-
-	return status;
+    return status;
 }
 
 _IRQL_requires_max_(PASSIVE_LEVEL)

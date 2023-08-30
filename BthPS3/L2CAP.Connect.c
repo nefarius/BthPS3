@@ -80,6 +80,8 @@ L2CAP_PS3_HandleRemoteConnect(
     // 
     if (status == STATUS_NOT_FOUND)
     {
+        RtlZeroMemory(remoteName, BTH_MAX_NAME_SIZE);
+
         //
         // Request remote name from radio for device identification
         // 
@@ -105,6 +107,8 @@ L2CAP_PS3_HandleRemoteConnect(
                 "BthPS3_GetDeviceName failed with status %!STATUS!, dropping connection",
                 status
             );
+
+            EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_GetDeviceName", status);
 
             //
             // Name couldn't be resolved, drop connection

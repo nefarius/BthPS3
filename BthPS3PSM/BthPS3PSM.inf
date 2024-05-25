@@ -59,7 +59,7 @@ AddReg = BthPS3PSM_AddReg
 
 [DefaultUninstall.NT$ARCH$]
 LegacyUninstall = 1
-DelFiles = @BthPS3PSM.sys
+; DelFiles = @BthPS3PSM.sys
 DelReg = BthPS3PSM_DelReg
 
 [BthPS3PSM_AddReg]

@@ -38,7 +38,7 @@ ClassGuid = {e0cbf06c-cd8b-4647-bb8a-263b43f0f974}
 DriverPackageType = ClassFilter
 Provider = %ManufacturerName%
 CatalogFile = BthPS3PSM.cat
-DriverVer = 07/17/2023,2.8.320.0
+DriverVer = 07/11/2024,2.9.336.0
 PnpLockdown = 1
  
 
@@ -59,7 +59,7 @@ AddReg = BthPS3PSM_AddReg
 
 [DefaultUninstall.NTARM64]
 LegacyUninstall = 1
-DelFiles = @BthPS3PSM.sys
+; DelFiles = @BthPS3PSM.sys
 DelReg = BthPS3PSM_DelReg
 
 [BthPS3PSM_AddReg]

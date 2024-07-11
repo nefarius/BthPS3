@@ -1,39 +1,27 @@
 using System;
-using System.Linq;
+
 using Nuke.Common;
-using Nuke.Common.CI;
 using Nuke.Common.CI.AppVeyor;
-using Nuke.Common.Execution;
 using Nuke.Common.Git;
 using Nuke.Common.IO;
 using Nuke.Common.ProjectModel;
-using Nuke.Common.Tooling;
 using Nuke.Common.Tools.MSBuild;
-using Nuke.Common.Utilities.Collections;
-using static Nuke.Common.EnvironmentInfo;
-using static Nuke.Common.IO.FileSystemTasks;
-using static Nuke.Common.IO.PathConstruction;
+
 using static Nuke.Common.Tools.MSBuild.MSBuildTasks;
 
-[CheckBuildProjectConfigurations]
 class Build : NukeBuild
 {
-    /// Support plugins are available for:
-    ///   - JetBrains ReSharper        https://nuke.build/resharper
-    ///   - JetBrains Rider            https://nuke.build/rider
-    ///   - Microsoft VisualStudio     https://nuke.build/visualstudio
-    ///   - Microsoft VSCode           https://nuke.build/vscode
-
-    public static int Main () => Execute<Build>(x => x.Compile);
-
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
     readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
-    [Solution] readonly Solution Solution;
-    [GitRepository] readonly GitRepository GitRepository;
+    [GitRepository]
+    readonly GitRepository GitRepository;
 
-    AbsolutePath DmfSolution => ((AbsolutePath)"C:/projects/DMF/Dmf.sln");
-    AbsolutePath DomitoSolution => ((AbsolutePath)"C:/projects/Domito/Domito.sln");
+    [Solution]
+    readonly Solution Solution;
+
+    AbsolutePath DmfSolution => "C:/projects/DMF/Dmf.sln";
+    AbsolutePath DomitoSolution => "C:/projects/Domito/Domito.sln";
 
     Target Clean => _ => _
         .Before(Restore)
@@ -53,17 +41,18 @@ class Build : NukeBuild
         .Executes(() =>
         {
             if (IsLocalBuild)
+            {
                 return;
+            }
 
             Console.WriteLine($"DMF solution path: {DmfSolution}");
 
-            var platform = MSBuildTargetPlatform.x64;
-
-            if (AppVeyor.Instance.Platform is "x86")
-                platform = MSBuildTargetPlatform.Win32;
-
-            if (AppVeyor.Instance.Platform is "ARM64")
-                platform = (MSBuildTargetPlatform) "ARM64";
+            MSBuildTargetPlatform platform = AppVeyor.Instance.Platform switch
+            {
+                "x86" => MSBuildTargetPlatform.Win32,
+                "ARM64" => "ARM64",
+                _ => MSBuildTargetPlatform.x64
+            };
 
             MSBuild(s => s
                 .SetTargetPath(DmfSolution)
@@ -78,17 +67,18 @@ class Build : NukeBuild
         .Executes(() =>
         {
             if (IsLocalBuild)
+            {
                 return;
+            }
 
             Console.WriteLine($"Domito solution path: {DomitoSolution}");
 
-            var platform = MSBuildTargetPlatform.x64;
-
-            if (AppVeyor.Instance.Platform is "x86")
-                platform = MSBuildTargetPlatform.Win32;
-
-            if (AppVeyor.Instance.Platform is "ARM64")
-                platform = (MSBuildTargetPlatform) "ARM64";
+            MSBuildTargetPlatform platform = AppVeyor.Instance.Platform switch
+            {
+                "x86" => MSBuildTargetPlatform.Win32,
+                "ARM64" => "ARM64",
+                _ => MSBuildTargetPlatform.x64
+            };
 
             MSBuild(s => s
                 .SetTargetPath(DomitoSolution)
@@ -113,4 +103,10 @@ class Build : NukeBuild
                 .SetNodeReuse(IsLocalBuild));
         });
 
+    /// Support plugins are available for:
+    /// - JetBrains ReSharper        https://nuke.build/resharper
+    /// - JetBrains Rider            https://nuke.build/rider
+    /// - Microsoft VisualStudio     https://nuke.build/visualstudio
+    /// - Microsoft VSCode           https://nuke.build/vscode
+    public static int Main() => Execute<Build>(x => x.Compile);
 }

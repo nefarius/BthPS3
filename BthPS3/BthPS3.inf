@@ -108,7 +108,7 @@ HKR,Parameters,IsMOTIONSupported,0x00010003,0
 ; WIRELESS connection requests will be dropped, if 0
 HKR,Parameters,IsWIRELESSSupported,0x00010003,0
 ; Collection of supported remote names for SIXAXIS device
-HKR,Parameters,SIXAXISSupportedNames,0x00010002,"PLAYSTATION(R)3 Controller","PLAYSTATION(R)3Conteroller-PANHAI","PS(R) Ga`epad","PS3 GamePad","PS(R) Gamepad","PLAYSTATION(3)Conteroller","PLAYSTATION(R)3Conteroller-ghic","PLAYSTATION(R)3Controller-ghic","Sony PLAYSTATION(R)3 Controller"
+HKR,Parameters,SIXAXISSupportedNames,0x00010002,"PLAYSTATION(R)3 Controller","PLAYSTATION(R)3Conteroller-PANHAI","PS(R) Ga`epad","PS3 GamePad","PS(R) Gamepad","PLAYSTATION(3)Conteroller","PLAYSTATION(R)3Conteroller-ghic","PLAYSTATION(R)3Controller-ghic","Sony PLAYSTATION(R)3 Controller","PS3 Wireless Controller"
 ; Collection of supported remote names for NAVIGATION device
 HKR,Parameters,NAVIGATIONSupportedNames,0x00010002,"Navigation Controller"
 ; Collection of supported remote names for MOTION device

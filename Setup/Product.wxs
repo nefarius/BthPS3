@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 
@@ -31,7 +31,7 @@
   <?endif ?>
 
   <!-- file version for installer -->
-  <?define VERSION = "2.8.320.0" ?>
+  <?define VERSION = "2.9.336.0" ?>
 
   <!-- basic product properties -->
   <Product Id="*" Name="Nefarius BthPS3 Bluetooth Drivers" Language="1033" Version="$(var.VERSION)"

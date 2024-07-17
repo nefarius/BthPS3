@@ -317,7 +317,7 @@ BthPS3_PDO_Create(
 			entries[1].ValueData = &BTHPS3_WIRELESS_PID;
 			break;
 		case DS_DEVICE_TYPE_UNKNOWN:
-		default:
+		default:  // NOLINT(clang-diagnostic-covered-switch-default)
 			status = STATUS_INVALID_PARAMETER;
 			break;
 		}
@@ -359,7 +359,7 @@ BthPS3_PDO_Create(
 			);
 			break;
 		case DS_DEVICE_TYPE_UNKNOWN:
-		default:
+		default:  // NOLINT(clang-diagnostic-covered-switch-default)
 			status = STATUS_INVALID_PARAMETER;
 			break;
 		}
@@ -374,6 +374,11 @@ BthPS3_PDO_Create(
 			break;
 		}
 
+        //
+        // Format string to build hardware ID with
+        // 
+        PCWSTR hardwareIdFormat = L"%ws\\%wZ&Dev&VID_%04X&PID_%04X";
+
 		//
 		// Build Hardware ID depending on device type
 		// 
@@ -382,9 +387,9 @@ BthPS3_PDO_Create(
 		case DS_DEVICE_TYPE_SIXAXIS:
 			status = RtlUnicodeStringPrintf(
 				&hardwareId,
-				L"%ws\\%wZ&Dev&VID_%04X&PID_%04X",
+				hardwareIdFormat,
 				BthPS3BusEnumeratorName,
-				guidString,
+				&guidString,
 				BTHPS3_SIXAXIS_VID,
 				BTHPS3_SIXAXIS_PID
 			);
@@ -392,9 +397,9 @@ BthPS3_PDO_Create(
 		case DS_DEVICE_TYPE_NAVIGATION:
 			status = RtlUnicodeStringPrintf(
 				&hardwareId,
-				L"%ws\\%wZ&Dev&VID_%04X&PID_%04X",
+				hardwareIdFormat,
 				BthPS3BusEnumeratorName,
-				guidString,
+				&guidString,
 				BTHPS3_NAVIGATION_VID,
 				BTHPS3_NAVIGATION_PID
 			);
@@ -402,9 +407,9 @@ BthPS3_PDO_Create(
 		case DS_DEVICE_TYPE_MOTION:
 			status = RtlUnicodeStringPrintf(
 				&hardwareId,
-				L"%ws\\%wZ&Dev&VID_%04X&PID_%04X",
+				hardwareIdFormat,
 				BthPS3BusEnumeratorName,
-				guidString,
+				&guidString,
 				BTHPS3_MOTION_VID,
 				BTHPS3_MOTION_PID
 			);
@@ -412,15 +417,15 @@ BthPS3_PDO_Create(
 		case DS_DEVICE_TYPE_WIRELESS:
 			status = RtlUnicodeStringPrintf(
 				&hardwareId,
-				L"%ws\\%wZ&Dev&VID_%04X&PID_%04X",
+				hardwareIdFormat,
 				BthPS3BusEnumeratorName,
-				guidString,
+				&guidString,
 				BTHPS3_WIRELESS_VID,
 				BTHPS3_WIRELESS_PID
 			);
 			break;
 		case DS_DEVICE_TYPE_UNKNOWN:
-		default:
+		default:  // NOLINT(clang-diagnostic-covered-switch-default)
 			status = STATUS_INVALID_PARAMETER;
 			break;
 		}
@@ -462,7 +467,7 @@ BthPS3_PDO_Create(
 				record.RawDeviceClassGuid = &GUID_DEVCLASS_BTHPS3_WIRELESS;
 				break;
 			case DS_DEVICE_TYPE_UNKNOWN:
-			default:
+			default:  // NOLINT(clang-diagnostic-covered-switch-default)
 				status = STATUS_INVALID_PARAMETER;
 				break;
 			}

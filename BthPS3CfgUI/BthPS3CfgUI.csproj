@@ -36,7 +36,7 @@
     <PackageReference Include="Costura.Fody" Version="5.7.0">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Fody" Version="6.7.0">
+    <PackageReference Include="Fody" Version="6.8.2">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="PInvoke.Kernel32" Version="0.7.124" />

@@ -37,7 +37,7 @@ Class=Bluetooth
 ClassGuid={e0cbf06c-cd8b-4647-bb8a-263b43f0f974}
 Provider=%ManufacturerName%
 CatalogFile=BthPS3.cat
-DriverVer = 09/18/2024,2.10.353.0
+DriverVer = 09/18/2024,2.10.371.0
 PnpLockdown=1
 
 [DestinationDirs]

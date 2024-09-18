@@ -35,12 +35,16 @@
  **********************************************************************************/
 
 
+#pragma once
+
 EXTERN_C_START
 
+_Success_(return == STATUS_SUCCESS)
+_Must_inspect_result_
 NTSTATUS
 BthPS3PSM_QueueInitialize(
     _In_ WDFDEVICE Device
-    );
+);
 
 //
 // Events from the IoQueue object

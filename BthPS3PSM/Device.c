@@ -227,17 +227,16 @@ BthPS3PSM_CreateDevice(
             &deviceContext->IsPsmPatchingEnabled
         )))
         {
-            TraceError(
-                TRACE_DEVICE,
-                "WdfRegistryQueryULong failed with status %!STATUS!",
-                status
-            );
-
             //
             // Do not log this case to ETW as it is normal on first launch
             // 
             if (status != STATUS_OBJECT_NAME_NOT_FOUND)
             {
+                TraceError(
+                    TRACE_DEVICE,
+                    "WdfRegistryQueryULong failed with status %!STATUS!",
+                    status
+                );
                 EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfRegistryQueryULong", status);
             }
         }
@@ -326,18 +325,18 @@ BthPS3PSM_CreateDevice(
         // Initialize the I/O Package and any Queues
         //
         status = BthPS3PSM_QueueInitialize(device);
-
-        } while (FALSE);
-
-        if (instanceId && !NT_SUCCESS(status))
-        {
-            WdfObjectDelete(instanceId);
-        }
-
-        FuncExit(TRACE_DEVICE, "status=%!STATUS!", status);
-
-        return status;
     }
+    while (FALSE);
+
+    if (instanceId && !NT_SUCCESS(status))
+    {
+        WdfObjectDelete(instanceId);
+    }
+
+    FuncExit(TRACE_DEVICE, "status=%!STATUS!", status);
+
+    return status;
+}
 
 _Use_decl_annotations_
 NTSTATUS
@@ -433,7 +432,6 @@ BthPS3PSM_EvtDeviceContextCleanup(
 #ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
 
     NTSTATUS status;
-    WDFDEVICE devIter = NULL;
 
     if (!NT_SUCCESS(status = WdfWaitLockAcquire(
         FilterDeviceCollectionLock,
@@ -470,7 +468,7 @@ BthPS3PSM_EvtDeviceContextCleanup(
     // 
     for (ULONG i = 0; i < count; i++)
     {
-        devIter = WdfCollectionGetItem(FilterDeviceCollection, i);
+        WDFDEVICE devIter = WdfCollectionGetItem(FilterDeviceCollection, i);
 
         if (devIter == Device)
         {

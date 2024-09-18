@@ -40,7 +40,6 @@
 #include "queue.tmh"
 #include <usb.h>
 #include <usbioctl.h>
-#include <wdfusb.h>
 #include <BthPS3PSMETW.h>
 
 
@@ -49,6 +48,7 @@
 #endif
 
 
+_Use_decl_annotations_
 NTSTATUS
 BthPS3PSM_QueueInitialize(
     _In_ WDFDEVICE Device
@@ -60,11 +60,6 @@ BthPS3PSM_QueueInitialize(
 
     PAGED_CODE();
 
-    //
-    // Configure a default queue so that requests that are not
-    // configure-forwarded using WdfDeviceConfigureRequestDispatching to goto
-    // other queues get dispatched here.
-    //
     WDF_IO_QUEUE_CONFIG_INIT_DEFAULT_QUEUE(
         &queueConfig,
         WdfIoQueueDispatchParallel
@@ -98,6 +93,7 @@ BthPS3PSM_QueueInitialize(
 //
 // Handle IRP_MJ_INTERNAL_DEVICE_CONTROL requests
 // 
+_Use_decl_annotations_
 VOID
 BthPS3PSMEvtIoInternalDeviceControl(
     _In_ WDFQUEUE Queue,

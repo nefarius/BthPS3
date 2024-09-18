@@ -195,3 +195,4 @@ This application benefits from these awesome projects ❤ (appearance in no spec
 - [Link Manager Protocol (LMP)](https://www.bluetooth.com/specifications/assigned-numbers/link-manager/)
 - [Nefarius' Domito Library](https://git.nefarius.at/nefarius/Domito)
 - [NUKE Build Automation](https://nuke.build/)
+- [Nefarius.Tools.WDKWhere](https://github.com/nefarius/wdkwhere)

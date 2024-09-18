@@ -40,7 +40,6 @@
 #include <usb.h>
 #include <usbdi.h>
 #include <usbdlib.h>
-#include <wdfusb.h>
 #include <BthPS3PSMETW.h>
 #include <devpkey.h>
 
@@ -61,6 +60,7 @@ extern WDFWAITLOCK     FilterDeviceCollectionLock;
 //
 // Called upon device creation
 // 
+_Use_decl_annotations_
 NTSTATUS
 BthPS3PSM_CreateDevice(
     _Inout_ PWDFDEVICE_INIT DeviceInit

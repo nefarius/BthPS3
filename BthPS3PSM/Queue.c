@@ -164,9 +164,11 @@ BthPS3PSMEvtIoInternalDeviceControl(
                 ret = WdfRequestSend(
                     Request,
                     WdfDeviceGetIoTarget(WdfIoQueueGetDevice(Queue)),
-                    WDF_NO_SEND_OPTIONS);
+                    WDF_NO_SEND_OPTIONS
+                );
 
-                if (ret == FALSE) {
+                if (ret == FALSE)
+                {
                     status = WdfRequestGetStatus(Request);
                     TraceError(
                         TRACE_QUEUE,
@@ -204,11 +206,12 @@ BthPS3PSMEvtIoInternalDeviceControl(
         &options
     );
 
-    if (ret == FALSE) {
+    if (ret == FALSE)
+    {
         status = WdfRequestGetStatus(Request);
         TraceError(
             TRACE_QUEUE,
-            "WdfRequestSend failed with status %!STATUS!", 
+            "WdfRequestSend failed with status %!STATUS!",
             status
         );
         EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfRequestGetStatus", status);

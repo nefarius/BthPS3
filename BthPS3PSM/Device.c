@@ -37,9 +37,7 @@
 
 #include "driver.h"
 #include "device.tmh"
-#include <usb.h>
 #include <usbdi.h>
-#include <usbdlib.h>
 #include <BthPS3PSMETW.h>
 #include <devpkey.h>
 

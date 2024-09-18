@@ -6,6 +6,8 @@
 [![GitHub followers](https://img.shields.io/github/followers/nefarius.svg?style=social&label=Follow)](https://github.com/nefarius)
 [![Mastodon Follow](https://img.shields.io/mastodon/follow/109321120351128938?domain=https%3A%2F%2Ffosstodon.org%2F&style=social)](https://fosstodon.org/@Nefarius)
 
+> Pronounced **/biː θriː/**
+
 Windows kernel-mode Bluetooth Profile & Filter Drivers for PS3 peripherals.
 
 ## About

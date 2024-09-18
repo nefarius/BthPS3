@@ -35,7 +35,6 @@
  **********************************************************************************/
 
 
-
 #include "driver.h"
 #include "queue.tmh"
 #include <usb.h>
@@ -75,7 +74,7 @@ BthPS3PSM_QueueInitialize(
         &queueConfig,
         WDF_NO_OBJECT_ATTRIBUTES,
         &queue
-    ))) 
+    )))
     {
         TraceError(
             TRACE_QUEUE,
@@ -103,24 +102,24 @@ BthPS3PSMEvtIoInternalDeviceControl(
     _In_ ULONG IoControlCode
 )
 {
-	NTSTATUS status;
-	WDF_REQUEST_SEND_OPTIONS options;
-	BOOLEAN ret;
+    NTSTATUS status;
+    WDF_REQUEST_SEND_OPTIONS options;
+    BOOLEAN ret;
 
 
-	UNREFERENCED_PARAMETER(OutputBufferLength);
+    UNREFERENCED_PARAMETER(OutputBufferLength);
     UNREFERENCED_PARAMETER(InputBufferLength);
 
-	const WDFDEVICE device = WdfIoQueueGetDevice(Queue);
-	const PDEVICE_CONTEXT pContext = DeviceGetContext(device);
-	const PIRP irp = WdfRequestWdmGetIrp(Request);
+    const WDFDEVICE device = WdfIoQueueGetDevice(Queue);
+    const PDEVICE_CONTEXT pContext = DeviceGetContext(device);
+    const PIRP irp = WdfRequestWdmGetIrp(Request);
 
     //
     // As a BTHUSB lower filter driver we expect USB/URB traffic
     // 
     if (IoControlCode == IOCTL_INTERNAL_USB_SUBMIT_URB)
     {
-	    const PURB urb = (PURB)URB_FROM_IRP(irp);
+        const PURB urb = (PURB)URB_FROM_IRP(irp);
 
         switch (urb->UrbHeader.Function)
         {

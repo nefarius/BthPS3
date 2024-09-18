@@ -42,8 +42,8 @@
 #include <devpkey.h>
 
 #ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
-extern WDFCOLLECTION   FilterDeviceCollection;
-extern WDFWAITLOCK     FilterDeviceCollectionLock;
+extern WDFCOLLECTION FilterDeviceCollection;
+extern WDFWAITLOCK FilterDeviceCollectionLock;
 #endif
 
 #ifdef ALLOC_PRAGMA
@@ -91,8 +91,8 @@ BthPS3PSM_CreateDevice(
     else
     {
         TraceEvents(TRACE_LEVEL_WARNING,
-            TRACE_DEVICE,
-            "Unsupported device type, aborting initialization"
+                    TRACE_DEVICE,
+                    "Unsupported device type, aborting initialization"
         );
     }
 
@@ -391,7 +391,7 @@ _Use_decl_annotations_
 NTSTATUS
 BthPS3PSM_GetPropertyInstanceId(
     _In_ PWDFDEVICE_INIT DeviceInit,
-    _Inout_ WDFMEMORY * Memory
+    _Inout_ WDFMEMORY* Memory
 )
 {
     DEVPROPTYPE type;
@@ -404,11 +404,11 @@ BthPS3PSM_GetPropertyInstanceId(
     // Query DEVPKEY_Device_InstanceId
     // 
     return WdfFdoInitAllocAndQueryPropertyEx(DeviceInit,
-        &property,
-        NonPagedPoolNx,
-        &attributes,
-        Memory,
-        &type
+                                             &property,
+                                             NonPagedPoolNx,
+                                             &attributes,
+                                             Memory,
+                                             &type
     );
 }
 

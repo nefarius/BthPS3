@@ -40,8 +40,8 @@
 #include "BthPS3PSMETW.h"
 
 #ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
-extern WDFCOLLECTION   FilterDeviceCollection;
-extern WDFWAITLOCK     FilterDeviceCollectionLock;
+extern WDFCOLLECTION FilterDeviceCollection;
+extern WDFWAITLOCK FilterDeviceCollectionLock;
 #endif
 
 #ifdef ALLOC_PRAGMA
@@ -50,139 +50,142 @@ extern WDFWAITLOCK     FilterDeviceCollectionLock;
 #pragma alloc_text (PAGE, BthPS3PSM_EvtDriverContextCleanup)
 #endif
 
+
+_Use_decl_annotations_
 NTSTATUS
 DriverEntry(
-	_In_ PDRIVER_OBJECT  DriverObject,
-	_In_ PUNICODE_STRING RegistryPath
+    _In_ PDRIVER_OBJECT DriverObject,
+    _In_ PUNICODE_STRING RegistryPath
 )
 {
-	WDF_DRIVER_CONFIG config;
-	NTSTATUS status;
-	WDF_OBJECT_ATTRIBUTES attributes;
+    WDF_DRIVER_CONFIG config;
+    NTSTATUS status;
+    WDF_OBJECT_ATTRIBUTES attributes;
 
-	//
-	// Initialize WPP Tracing
-	//
-	WPP_INIT_TRACING(DriverObject, RegistryPath);
+    //
+    // Initialize WPP Tracing
+    //
+    WPP_INIT_TRACING(DriverObject, RegistryPath);
 
-	EventRegisterNefarius_Bluetooth_PS_Filter_Service();
+    EventRegisterNefarius_Bluetooth_PS_Filter_Service();
 
-	FuncEntry(TRACE_DRIVER);
+    FuncEntry(TRACE_DRIVER);
 
-	//
-	// Register a cleanup callback so that we can call WPP_CLEANUP when
-	// the framework driver object is deleted during driver unload.
-	//
-	WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
-	attributes.EvtCleanupCallback = BthPS3PSM_EvtDriverContextCleanup;
+    //
+    // Register a cleanup callback so that we can call WPP_CLEANUP when
+    // the framework driver object is deleted during driver unload.
+    //
+    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+    attributes.EvtCleanupCallback = BthPS3PSM_EvtDriverContextCleanup;
 
-	WDF_DRIVER_CONFIG_INIT(&config,
-		BthPS3PSM_EvtDeviceAdd
-	);
+    WDF_DRIVER_CONFIG_INIT(&config,
+                           BthPS3PSM_EvtDeviceAdd
+    );
 
-	if (!NT_SUCCESS(status = WdfDriverCreate(DriverObject,
-		RegistryPath,
-		&attributes,
-		&config,
-		WDF_NO_HANDLE
-	)))
-	{
-		TraceError(
-			TRACE_DRIVER,
-			"WdfDriverCreate failed with status %!STATUS!",
-			status
-		);
-		EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfDriverCreate", status);
-		EventUnregisterNefarius_Bluetooth_PS_Filter_Service();
-		WPP_CLEANUP(DriverObject);
-		return status;
-	}
+    if (!NT_SUCCESS(status = WdfDriverCreate(
+        DriverObject,
+        RegistryPath,
+        &attributes,
+        &config,
+        WDF_NO_HANDLE
+    )))
+    {
+        TraceError(
+            TRACE_DRIVER,
+            "WdfDriverCreate failed with status %!STATUS!",
+            status
+        );
+        EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfDriverCreate", status);
+        EventUnregisterNefarius_Bluetooth_PS_Filter_Service();
+        WPP_CLEANUP(DriverObject);
+        return status;
+    }
 
 #ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
 
-	if (!NT_SUCCESS(status = WdfCollectionCreate(
-		WDF_NO_OBJECT_ATTRIBUTES,
-		&FilterDeviceCollection
-	)))
-	{
-		TraceError(
-			TRACE_DRIVER,
-			"WdfCollectionCreate failed with %!STATUS!",
-			status
-		);
-		EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfCollectionCreate", status);
-		EventUnregisterNefarius_Bluetooth_PS_Filter_Service();
-		WPP_CLEANUP(DriverObject);
-		return status;
-	}
+    if (!NT_SUCCESS(status = WdfCollectionCreate(
+        WDF_NO_OBJECT_ATTRIBUTES,
+        &FilterDeviceCollection
+    )))
+    {
+        TraceError(
+            TRACE_DRIVER,
+            "WdfCollectionCreate failed with %!STATUS!",
+            status
+        );
+        EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfCollectionCreate", status);
+        EventUnregisterNefarius_Bluetooth_PS_Filter_Service();
+        WPP_CLEANUP(DriverObject);
+        return status;
+    }
 
-	//
-	// The wait-lock object has the driver object as a default parent.
-	//
+    //
+    // The wait-lock object has the driver object as a default parent.
+    //
 
-	if (!NT_SUCCESS(status = WdfWaitLockCreate(
-		WDF_NO_OBJECT_ATTRIBUTES,
-		&FilterDeviceCollectionLock
-	)))
-	{
-		TraceError(
-			TRACE_DRIVER,
-			"WdfWaitLockCreate failed with %!STATUS!",
-			status
-		);
-		EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfWaitLockCreate", status);
-		EventUnregisterNefarius_Bluetooth_PS_Filter_Service();
-		WPP_CLEANUP(DriverObject);
-		return status;
-	}
+    if (!NT_SUCCESS(status = WdfWaitLockCreate(
+        WDF_NO_OBJECT_ATTRIBUTES,
+        &FilterDeviceCollectionLock
+    )))
+    {
+        TraceError(
+            TRACE_DRIVER,
+            "WdfWaitLockCreate failed with %!STATUS!",
+            status
+        );
+        EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfWaitLockCreate", status);
+        EventUnregisterNefarius_Bluetooth_PS_Filter_Service();
+        WPP_CLEANUP(DriverObject);
+        return status;
+    }
 
 #endif
 
-	EventWriteStartEvent(NULL, DriverObject, status);
+    EventWriteStartEvent(NULL, DriverObject, status);
 
-	FuncExit(TRACE_DRIVER, "status=%!STATUS!", status);
+    FuncExit(TRACE_DRIVER, "status=%!STATUS!", status);
 
-	return status;
+    return status;
 }
 
+_Use_decl_annotations_
 NTSTATUS
 BthPS3PSM_EvtDeviceAdd(
-	_In_    WDFDRIVER       Driver,
-	_Inout_ PWDFDEVICE_INIT DeviceInit
+    _In_ WDFDRIVER Driver,
+    _Inout_ PWDFDEVICE_INIT DeviceInit
 )
 {
-	NTSTATUS status;
+    UNREFERENCED_PARAMETER(Driver);
 
-	UNREFERENCED_PARAMETER(Driver);
+    PAGED_CODE();
 
-	PAGED_CODE();
+    FuncEntry(TRACE_DRIVER);
 
-	FuncEntry(TRACE_DRIVER);
+    NTSTATUS status = BthPS3PSM_CreateDevice(DeviceInit);
 
-	status = BthPS3PSM_CreateDevice(DeviceInit);
+    FuncExit(TRACE_DRIVER, "status=%!STATUS!", status);
 
-	FuncExit(TRACE_DRIVER, "status=%!STATUS!", status);
-
-	return status;
+    return status;
 }
 
+_Use_decl_annotations_
 VOID
 BthPS3PSM_EvtDriverContextCleanup(
-	_In_ WDFOBJECT DriverObject
+    _In_ WDFOBJECT DriverObject
 )
 {
-	UNREFERENCED_PARAMETER(DriverObject);
+    UNREFERENCED_PARAMETER(DriverObject);
 
-	PAGED_CODE();
+    PAGED_CODE();
 
-	FuncEntry(TRACE_DRIVER);
+    FuncEntry(TRACE_DRIVER);
 
-	EventWriteUnloadEvent(NULL, DriverObject);
+    EventWriteUnloadEvent(NULL, DriverObject);
 
-	EventUnregisterNefarius_Bluetooth_PS_Filter_Service();
+    EventUnregisterNefarius_Bluetooth_PS_Filter_Service();
 
-	//
-	// Stop WPP Tracing
-	//
-	WPP_CLEANUP(WdfDriverWdmGetDriverObject((WDFDRIVER)DriverObject));
+    //
+    // Stop WPP Tracing
+    //
+    WPP_CLEANUP(WdfDriverWdmGetDriverObject((WDFDRIVER)DriverObject));
 }

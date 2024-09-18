@@ -42,7 +42,7 @@ PVOID
 USBPcapURBGetBufferPointer(
     ULONG length,
     PVOID buffer,
-    PMDL  bufferMDL
+    PMDL bufferMDL
 )
 {
     ASSERT((length == 0) ||
@@ -58,13 +58,14 @@ USBPcapURBGetBufferPointer(
     }
     else if (bufferMDL != NULL)
     {
-        PVOID address = MmGetSystemAddressForMdlSafe(bufferMDL,
-            NormalPagePriority);
+        PVOID address = MmGetSystemAddressForMdlSafe(
+            bufferMDL,
+            NormalPagePriority
+        );
         return address;
     }
     else
     {
-        //DkDbgStr("Invalid buffer!");
         return NULL;
     }
 }

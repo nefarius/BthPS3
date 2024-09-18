@@ -97,6 +97,15 @@ UrbSelectConfigurationCompleted(
         }
     }
 
+    if (pDevCtx->BulkReadPipe == NULL)
+    {
+        TraceError(
+            TRACE_QUEUE,
+            "Failed to find BULK IN pipe"
+        );
+        EventWriteFailedToFindBulkInPipe(NULL);
+    }
+
     WdfRequestComplete(Request, Params->IoStatus.Status);
 
     FuncExitNoReturn(TRACE_FILTER);

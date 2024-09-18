@@ -42,9 +42,9 @@
 #include <BthPS3PSMETW.h>
 
 
- //
- // Gets called when URB_FUNCTION_SELECT_CONFIGURATION is coming our way
- // 
+//
+// Gets called when URB_FUNCTION_SELECT_CONFIGURATION is coming our way
+// 
 void
 ProcessUrbSelectConfiguration(
 	_In_ PURB Urb,

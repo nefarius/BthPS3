@@ -43,32 +43,61 @@
 
 
 //
-// Gets called when URB_FUNCTION_SELECT_CONFIGURATION is coming our way
+// Gets called when URB_FUNCTION_SELECT_CONFIGURATION got completed
 // 
-void
-ProcessUrbSelectConfiguration(
-    _In_ PURB Urb,
-    _Inout_ PDEVICE_CONTEXT Context
+_Use_decl_annotations_
+VOID
+UrbSelectConfigurationCompleted(
+    IN WDFREQUEST Request,
+    IN WDFIOTARGET Target,
+    IN PWDF_REQUEST_COMPLETION_PARAMS Params,
+    IN WDFCONTEXT Context
 )
 {
+    UNREFERENCED_PARAMETER(Target);
+
     FuncEntry(TRACE_FILTER);
 
-    const PUSBD_INTERFACE_INFORMATION interfaceInfo = &Urb->UrbSelectConfiguration.Interface;
+    const WDFDEVICE device = (WDFDEVICE)Context;
+    const PDEVICE_CONTEXT pDevCtx = DeviceGetContext(device);
+    const PIRP pIrp = WdfRequestWdmGetIrp(Request);
+    const PURB pUrb = (PURB)URB_FROM_IRP(pIrp);
+
+    const PUSBD_INTERFACE_INFORMATION interfaceInfo = &pUrb->UrbSelectConfiguration.Interface;
+
+    TraceVerbose(
+        TRACE_FILTER,
+        "Enumerating %d pipes",
+        interfaceInfo->NumberOfPipes
+    );
 
     for (ULONG i = 0; i < interfaceInfo->NumberOfPipes; i++)
     {
         const PUSBD_PIPE_INFORMATION pipeInfo = &interfaceInfo->Pipes[i];
 
+        TraceVerbose(
+            TRACE_FILTER,
+            "Enumerating pipe %d with type 0x%X and address 0x%02X (handle 0x%p)",
+            i, pipeInfo->PipeType, pipeInfo->EndpointAddress, pipeInfo->PipeHandle
+        );
+
         if (pipeInfo->PipeType == UsbdPipeTypeBulk)
         {
             if (USB_ENDPOINT_DIRECTION_IN(pipeInfo->EndpointAddress))
             {
+                TraceInformation(
+                    TRACE_FILTER,
+                    "Found Bulk IN pipe handle 0x%p for endpoint 0x%02X",
+                    pipeInfo->PipeHandle, pipeInfo->EndpointAddress
+                );
                 // store handle so we later only hook the relevant transfer
-                Context->BulkReadPipe = pipeInfo->PipeHandle;
+                pDevCtx->BulkReadPipe = pipeInfo->PipeHandle;
                 break;
             }
         }
     }
+
+    WdfRequestComplete(Request, Params->IoStatus.Status);
 
     FuncExitNoReturn(TRACE_FILTER);
 }

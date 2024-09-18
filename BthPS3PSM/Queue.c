@@ -131,7 +131,32 @@ BthPS3PSMEvtIoInternalDeviceControl(
                 TRACE_QUEUE,
                 "<< URB_FUNCTION_SELECT_CONFIGURATION");
 
-            ProcessUrbSelectConfiguration(urb, pContext);
+            WdfRequestFormatRequestUsingCurrentType(Request);
+
+            WdfRequestSetCompletionRoutine(
+                Request,
+                UrbSelectConfigurationCompleted,
+                device
+            );
+
+            ret = WdfRequestSend(
+                Request,
+                WdfDeviceGetIoTarget(WdfIoQueueGetDevice(Queue)),
+                WDF_NO_SEND_OPTIONS
+            );
+
+            if (ret == FALSE)
+            {
+                status = WdfRequestGetStatus(Request);
+                TraceError(
+                    TRACE_QUEUE,
+                    "WdfRequestSend failed with status %!STATUS!",
+                    status
+                );
+                WdfRequestComplete(Request, status);
+            }
+
+            return;
 
 #pragma endregion
 

@@ -42,10 +42,7 @@
 
 #define L2CAP_MIN_BUFFER_LEN    0x10
 
-void
-ProcessUrbSelectConfiguration(
-    _In_ PURB Urb,
-    _Inout_ PDEVICE_CONTEXT Context
-);
+
+EVT_WDF_REQUEST_COMPLETION_ROUTINE UrbSelectConfigurationCompleted;
 
 EVT_WDF_REQUEST_COMPLETION_ROUTINE UrbFunctionBulkInTransferCompleted;

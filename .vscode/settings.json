@@ -3,9 +3,13 @@
         "bthenum",
         "bthport",
         "bthusb",
+        "buildbot",
+        "devel",
         "Domito",
         "Eleccelerator",
         "felis",
+        "minidriver",
+        "SIXAXIS",
         "Toolset"
     ]
 }

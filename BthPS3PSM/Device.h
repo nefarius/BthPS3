@@ -4,7 +4,7 @@
  *                                                                                *
  * BSD 3-Clause License                                                           *
  *                                                                                *
- * Copyright (c) 2018-2023, Nefarius Software Solutions e.U.                      *
+ * Copyright (c) 2018-2024, Nefarius Software Solutions e.U.                      *
  * All rights reserved.                                                           *
  *                                                                                *
  * Redistribution and use in source and binary forms, with or without             *
@@ -35,7 +35,10 @@
  **********************************************************************************/
 
 
+#pragma once
+
 #include "BthPS3.h"
+#include <usb.h>
 
 EXTERN_C_START
 
@@ -61,29 +64,9 @@ EXTERN_C_START
 typedef struct _DEVICE_CONTEXT
 {
 	//
-	// Framework USB object
-	// 
-	WDFUSBDEVICE UsbDevice;
-
-	//
-	// USB interface object
-	// 
-	WDFUSBINTERFACE UsbInterface;
-
-	//
-	// USB Interrupt (in) pipe handle
-	// 
-	WDFUSBPIPE InterruptPipe;
-
-	//
 	// USB Bulk Read (in) handle
 	// 
-	WDFUSBPIPE BulkReadPipe;
-
-	//
-	// USB Bulk Write (out) handle
-	// 
-	WDFUSBPIPE BulkWritePipe;
+	USBD_PIPE_HANDLE BulkReadPipe;
 
 	//
 	// Patches PSM values if TRUE
@@ -123,7 +106,6 @@ BthPS3PSM_CreateDevice(
 );
 
 EVT_WDF_DEVICE_CONTEXT_CLEANUP BthPS3PSM_EvtDeviceContextCleanup;
-EVT_WDF_DEVICE_PREPARE_HARDWARE BthPS3PSM_EvtDevicePrepareHardware;
 
 _Success_(return == STATUS_SUCCESS)
 _Must_inspect_result_

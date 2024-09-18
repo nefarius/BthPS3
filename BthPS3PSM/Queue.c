@@ -4,7 +4,7 @@
  *                                                                                *
  * BSD 3-Clause License                                                           *
  *                                                                                *
- * Copyright (c) 2018-2023, Nefarius Software Solutions e.U.                      *
+ * Copyright (c) 2018-2024, Nefarius Software Solutions e.U.                      *
  * All rights reserved.                                                           *
  *                                                                                *
  * Redistribution and use in source and binary forms, with or without             *
@@ -136,20 +136,7 @@ BthPS3PSMEvtIoInternalDeviceControl(
                 TRACE_QUEUE,
                 "<< URB_FUNCTION_SELECT_CONFIGURATION");
 
-            //
-            // "Hijack" this URB from the upper function driver and
-            // use the framework functions to enumerate the endpoints
-            // so we can later conveniently distinguish the pipes for
-            // interrupt (HCI) and bulk (L2CAP) traffic coming through.
-            // 
-            status = ProxyUrbSelectConfiguration(urb, pContext);
-
-            //
-            // We configured the device in by proxy for the upper
-            // function driver, so complete instead of forward.
-            // 
-            WdfRequestComplete(Request, status);
-            return;
+            ProcessUrbSelectConfiguration(urb, pContext);
 
 #pragma endregion
 
@@ -162,8 +149,7 @@ BthPS3PSMEvtIoInternalDeviceControl(
             // routine to it so we can grab the incoming data once coming
             // back from the lower driver.
             // 
-            if (urb->UrbBulkOrInterruptTransfer.PipeHandle ==
-                WdfUsbTargetPipeWdmGetPipeHandle(pContext->BulkReadPipe))
+            if (urb->UrbBulkOrInterruptTransfer.PipeHandle == pContext->BulkReadPipe)
             {
                 TraceVerbose(
                     TRACE_QUEUE,
@@ -232,6 +218,4 @@ BthPS3PSMEvtIoInternalDeviceControl(
         EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfRequestGetStatus", status);
         WdfRequestComplete(Request, status);
     }
-
-    return;
 }

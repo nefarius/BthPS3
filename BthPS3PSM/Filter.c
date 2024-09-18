@@ -4,7 +4,7 @@
  *                                                                                *
  * BSD 3-Clause License                                                           *
  *                                                                                *
- * Copyright (c) 2018-2023, Nefarius Software Solutions e.U.                      *
+ * Copyright (c) 2018-2024, Nefarius Software Solutions e.U.                      *
  * All rights reserved.                                                           *
  *                                                                                *
  * Redistribution and use in source and binary forms, with or without             *
@@ -37,7 +37,6 @@
 
 #include "driver.h"
 #include "filter.tmh"
-#include <wdfusb.h>
 #include <bthdef.h>
 #include <ntintsafe.h>
 #include <BthPS3PSMETW.h>
@@ -46,147 +45,38 @@
  //
  // Gets called when URB_FUNCTION_SELECT_CONFIGURATION is coming our way
  // 
-NTSTATUS
-ProxyUrbSelectConfiguration(
-	PURB Urb,
-	PDEVICE_CONTEXT Context
+void
+ProcessUrbSelectConfiguration(
+	_In_ PURB Urb,
+	_Inout_ PDEVICE_CONTEXT Context
 )
 {
-	NTSTATUS status = STATUS_SUCCESS;
-	WDF_USB_DEVICE_SELECT_CONFIG_PARAMS selectCfgParams;
-	PUSBD_INTERFACE_INFORMATION pIface;
-	WDF_USB_PIPE_INFORMATION pipeInfo;
-
 	FuncEntry(TRACE_FILTER);
 
-	pIface = &Urb->UrbSelectConfiguration.Interface;
+    const PUSBD_INTERFACE_INFORMATION interfaceInfo = &Urb->UrbSelectConfiguration.Interface;
 
-	//
-	// "Hijack" this URB from the upper function driver and
-	// use the framework functions to enumerate the endpoints
-	// so we can later conveniently distinguish the pipes for
-	// interrupt (HCI) and bulk (L2CAP) traffic coming through.
-	// 
-	WDF_USB_DEVICE_SELECT_CONFIG_PARAMS_INIT_URB(
-		&selectCfgParams,
-		Urb
-	);
+    for (ULONG i = 0; i < interfaceInfo->NumberOfPipes; i++)
+    {
+        const PUSBD_PIPE_INFORMATION pipeInfo = &interfaceInfo->Pipes[i];
 
-	// 
-	// This call sends our own request down the stack
-	// but with the desired configuration mirrored from
-	// the upper request we're currently keeping on hold.
-	// 
-	if (!NT_SUCCESS(status = WdfUsbTargetDeviceSelectConfig(
-		Context->UsbDevice,
-		WDF_NO_OBJECT_ATTRIBUTES,
-		&selectCfgParams
-	)))
-	{
-		TraceError(
-			TRACE_FILTER,
-			"WdfUsbTargetDeviceSelectConfig failed with status %!STATUS!",
-			status
-		);
-		EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfUsbTargetDeviceSelectConfig", status);
+        if (pipeInfo->PipeType == UsbdPipeTypeBulk)
+        {
+            if (USB_ENDPOINT_DIRECTION_IN(pipeInfo->EndpointAddress))
+            {
+                // store handle so we later only hook the relevant transfer
+                Context->BulkReadPipe = pipeInfo->PipeHandle;
+                break;
+            }
+        }
+    }
 
-		goto exit;
-	}
-
-	//
-	// There could be multiple interfaces although every 
-	// tested and compatible host device uses the first
-	// interface so we can get away with a bit of laziness ;)
-	// 
-	Context->UsbInterface = WdfUsbTargetDeviceGetInterface(
-		Context->UsbDevice,
-		pIface->InterfaceNumber);
-
-	if (NULL == Context->UsbInterface) 
-	{
-		status = STATUS_UNSUCCESSFUL;
-		TraceError(
-			TRACE_FILTER,
-			"WdfUsbTargetDeviceGetInterface for interface %d failed with status %!STATUS!",
-			pIface->InterfaceNumber,
-			status
-		);
-		EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfUsbTargetDeviceGetInterface", status);
-
-		goto exit;
-	}
-
-	const UCHAR numberConfiguredPipes = WdfUsbInterfaceGetNumConfiguredPipes(Context->UsbInterface);
-
-	for (UCHAR index = 0; index < numberConfiguredPipes; index++) {
-
-		WDF_USB_PIPE_INFORMATION_INIT(&pipeInfo);
-
-		const WDFUSBPIPE pipe = WdfUsbInterfaceGetConfiguredPipe(
-			Context->UsbInterface,
-			index, //PipeIndex,
-			&pipeInfo
-		);
-
-		if (WdfUsbPipeTypeInterrupt == pipeInfo.PipeType) {
-			TraceInformation(
-				TRACE_FILTER,
-				"Interrupt Pipe is 0x%p",
-				WdfUsbTargetPipeWdmGetPipeHandle(pipe)
-			);
-
-			Context->InterruptPipe = pipe;
-		}
-
-		if (WdfUsbPipeTypeBulk == pipeInfo.PipeType &&
-			WdfUsbTargetPipeIsInEndpoint(pipe)) {
-			TraceInformation(
-				TRACE_FILTER,
-				"BulkInput Pipe is 0x%p",
-				WdfUsbTargetPipeWdmGetPipeHandle(pipe)
-			);
-
-			Context->BulkReadPipe = pipe;
-		}
-
-		if (WdfUsbPipeTypeBulk == pipeInfo.PipeType &&
-			WdfUsbTargetPipeIsOutEndpoint(pipe)) {
-			TraceInformation(
-				TRACE_FILTER,
-				"BulkOutput Pipe is 0x%p",
-				WdfUsbTargetPipeWdmGetPipeHandle(pipe)
-			);
-
-			Context->BulkWritePipe = pipe;
-		}
-	}
-
-	//
-	// If we didn't find all 3 pipes, fail the request
-	//
-	if (!(Context->BulkWritePipe
-		&& Context->BulkReadPipe && Context->InterruptPipe)) {
-		status = STATUS_INVALID_DEVICE_STATE;
-
-		TraceError(
-			TRACE_FILTER,
-			"Device is not configured properly %!STATUS!",
-			status
-		);
-		EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"Device is not configured properly", status);
-
-		goto exit;
-	}
-
-exit:
-	FuncExit(TRACE_FILTER, "status=%!STATUS!", status);
-
-	return status;
+	FuncExitNoReturn(TRACE_FILTER);
 }
 
 //
 // Gets called when Bulk IN (L2CAP) data is available
 // 
+_Use_decl_annotations_
 VOID
 UrbFunctionBulkInTransferCompleted(
 	IN WDFREQUEST Request,

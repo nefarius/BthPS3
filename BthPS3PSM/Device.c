@@ -4,7 +4,7 @@
  *                                                                                *
  * BSD 3-Clause License                                                           *
  *                                                                                *
- * Copyright (c) 2018-2023, Nefarius Software Solutions e.U.                      *
+ * Copyright (c) 2018-2024, Nefarius Software Solutions e.U.                      *
  * All rights reserved.                                                           *
  *                                                                                *
  * Redistribution and use in source and binary forms, with or without             *
@@ -51,7 +51,6 @@ extern WDFWAITLOCK     FilterDeviceCollectionLock;
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (PAGE, BthPS3PSM_CreateDevice)
-#pragma alloc_text (PAGE, BthPS3PSM_EvtDevicePrepareHardware)
 #pragma alloc_text (PAGE, BthPS3PSM_EvtDeviceContextCleanup)
 #endif
 
@@ -70,7 +69,6 @@ BthPS3PSM_CreateDevice(
     WDF_OBJECT_ATTRIBUTES deviceAttributes;
     WDFDEVICE device;
     NTSTATUS status;
-    WDF_PNPPOWER_EVENT_CALLBACKS pnpPowerCallbacks;
     WDF_OBJECT_ATTRIBUTES stringAttributes;
     BOOLEAN isUsb = FALSE;
     BOOLEAN ret = FALSE;
@@ -126,14 +124,6 @@ BthPS3PSM_CreateDevice(
         }
 
         WdfFdoInitSetFilter(DeviceInit);
-
-        //
-        // PNP/Power callbacks
-        // 
-        WDF_PNPPOWER_EVENT_CALLBACKS_INIT(&pnpPowerCallbacks);
-        pnpPowerCallbacks.EvtDevicePrepareHardware = BthPS3PSM_EvtDevicePrepareHardware;
-
-        WdfDeviceInitSetPnpPowerEventCallbacks(DeviceInit, &pnpPowerCallbacks);
 
         //
         // Device object attributes
@@ -351,9 +341,7 @@ BthPS3PSM_CreateDevice(
         return status;
     }
 
-_Success_(return == STATUS_SUCCESS)
-_Must_inspect_result_
-_IRQL_requires_max_(PASSIVE_LEVEL)
+_Use_decl_annotations_
 NTSTATUS
 BthPS3PSM_IsBthUsbDevice(
     _In_ PWDFDEVICE_INIT DeviceInit,
@@ -402,9 +390,7 @@ BthPS3PSM_IsBthUsbDevice(
     return status;
 }
 
-_Success_(return == STATUS_SUCCESS)
-_Must_inspect_result_
-_IRQL_requires_max_(PASSIVE_LEVEL)
+_Use_decl_annotations_
 NTSTATUS
 BthPS3PSM_GetPropertyInstanceId(
     _In_ PWDFDEVICE_INIT DeviceInit,
@@ -427,63 +413,6 @@ BthPS3PSM_GetPropertyInstanceId(
         Memory,
         &type
     );
-}
-
-//
-// Called upon powering up
-// 
-NTSTATUS
-BthPS3PSM_EvtDevicePrepareHardware(
-    WDFDEVICE Device,
-    WDFCMRESLIST ResourcesRaw,
-    WDFCMRESLIST ResourcesTranslated
-)
-{
-    NTSTATUS status = STATUS_SUCCESS;
-    WDF_USB_DEVICE_CREATE_CONFIG usbConfig;
-
-    UNREFERENCED_PARAMETER(ResourcesRaw);
-    UNREFERENCED_PARAMETER(ResourcesTranslated);
-
-    PAGED_CODE();
-
-    FuncEntry(TRACE_DEVICE);
-
-    const PDEVICE_CONTEXT deviceContext = DeviceGetContext(Device);
-
-    //
-    // Initialize the USB config context.
-    //
-    WDF_USB_DEVICE_CREATE_CONFIG_INIT(
-        &usbConfig,
-        USBD_CLIENT_CONTRACT_VERSION_602
-    );
-
-    //
-    // Allocate framework USB device object
-    // 
-    // Since we're a filter we _must not_ blindly
-    // call WdfUsb* functions but "abuse" the URBs
-    // coming from the upper function driver.
-    // 
-    if (!NT_SUCCESS(status = WdfUsbTargetDeviceCreateWithParameters(
-        Device,
-        &usbConfig,
-        WDF_NO_OBJECT_ATTRIBUTES,
-        &deviceContext->UsbDevice
-    )))
-    {
-        TraceError(
-            TRACE_QUEUE,
-            "WdfUsbTargetDeviceCreateWithParameters failed with status %!STATUS!",
-            status
-        );
-        EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfUsbTargetDeviceCreateWithParameters", status);
-    }
-
-    FuncExit(TRACE_DEVICE, "status=%!STATUS!", status);
-
-    return status;
 }
 
 //

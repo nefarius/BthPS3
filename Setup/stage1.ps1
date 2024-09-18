@@ -1,4 +1,4 @@
-$signTool = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64\signtool.exe"
+$signTool = "$(wdkwhere)\signtool.exe"
 $timestampUrl = "http://timestamp.digicert.com"
 $certName = "Nefarius Software Solutions e.U."
 

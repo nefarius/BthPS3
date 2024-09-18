@@ -31,7 +31,7 @@
   <?endif ?>
 
   <!-- file version for installer -->
-  <?define VERSION = "2.9.336.0" ?>
+  <?define VERSION = "2.10.353" ?>
 
   <!-- basic product properties -->
   <Product Id="*" Name="Nefarius BthPS3 Bluetooth Drivers" Language="1033" Version="$(var.VERSION)"

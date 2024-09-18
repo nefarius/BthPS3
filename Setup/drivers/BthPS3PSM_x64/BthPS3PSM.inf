@@ -2,7 +2,7 @@
 ; 
 ; BSD 3-Clause License
 ; 
-; Copyright (c) 2018-2023, Nefarius Software Solutions e.U.
+; Copyright (c) 2018-2024, Nefarius Software Solutions e.U.
 ; All rights reserved.
 ; 
 ; Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@ ClassGuid = {e0cbf06c-cd8b-4647-bb8a-263b43f0f974}
 DriverPackageType = ClassFilter
 Provider = %ManufacturerName%
 CatalogFile = BthPS3PSM.cat
-DriverVer = 07/11/2024,2.9.336.0
+DriverVer = 09/18/2024,2.10.371.0
 PnpLockdown = 1
  
 

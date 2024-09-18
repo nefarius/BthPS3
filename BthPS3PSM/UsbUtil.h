@@ -4,7 +4,7 @@
  *                                                                                *
  * BSD 3-Clause License                                                           *
  *                                                                                *
- * Copyright (c) 2018-2023, Nefarius Software Solutions e.U.                      *
+ * Copyright (c) 2018-2024, Nefarius Software Solutions e.U.                      *
  * All rights reserved.                                                           *
  *                                                                                *
  * Redistribution and use in source and binary forms, with or without             *
@@ -42,7 +42,7 @@ PVOID
 USBPcapURBGetBufferPointer(
     ULONG length,
     PVOID buffer,
-    PMDL  bufferMDL
+    PMDL bufferMDL
 )
 {
     ASSERT((length == 0) ||
@@ -58,13 +58,14 @@ USBPcapURBGetBufferPointer(
     }
     else if (bufferMDL != NULL)
     {
-        PVOID address = MmGetSystemAddressForMdlSafe(bufferMDL,
-            NormalPagePriority);
+        PVOID address = MmGetSystemAddressForMdlSafe(
+            bufferMDL,
+            NormalPagePriority
+        );
         return address;
     }
     else
     {
-        //DkDbgStr("Invalid buffer!");
         return NULL;
     }
 }

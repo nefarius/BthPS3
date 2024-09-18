@@ -2,7 +2,7 @@
 ; 
 ; BSD 3-Clause License
 ; 
-; Copyright (c) 2018-2023, Nefarius Software Solutions e.U.
+; Copyright (c) 2018-2024, Nefarius Software Solutions e.U.
 ; All rights reserved.
 ; 
 ; Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@ Class=%ClassName%
 ClassGuid={409ED5DE-6FC0-4566-BDB6-4878D965D914} ; artificial class
 Provider=%ManufacturerName%
 CatalogFile=BthPS3_PDO_NULL_Device.cat
-DriverVer = 07/11/2024,2.9.336.0
+DriverVer = 09/18/2024,2.10.371.0
 PnpLockdown=1
 
 

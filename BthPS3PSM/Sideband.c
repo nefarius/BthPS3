@@ -4,7 +4,7 @@
  *                                                                                *
  * BSD 3-Clause License                                                           *
  *                                                                                *
- * Copyright (c) 2018-2023, Nefarius Software Solutions e.U.                      *
+ * Copyright (c) 2018-2024, Nefarius Software Solutions e.U.                      *
  * All rights reserved.                                                           *
  *                                                                                *
  * Redistribution and use in source and binary forms, with or without             *
@@ -43,9 +43,9 @@
 
 #ifdef BTHPS3PSM_WITH_CONTROL_DEVICE
 
-WDFCOLLECTION   FilterDeviceCollection;
-WDFWAITLOCK     FilterDeviceCollectionLock;
-WDFDEVICE       ControlDevice = NULL;
+WDFCOLLECTION FilterDeviceCollection;
+WDFWAITLOCK FilterDeviceCollectionLock;
+WDFDEVICE ControlDevice = NULL;
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (PAGE, BthPS3PSM_CreateControlDevice)
@@ -61,12 +61,12 @@ BthPS3PSM_CreateControlDevice(
     WDFDEVICE Device
 )
 {
-    NTSTATUS                status = STATUS_SUCCESS;
-    BOOLEAN                 bCreate = FALSE;
-    PWDFDEVICE_INIT         pInit = NULL;
-    WDFDEVICE               controlDevice = NULL;
-    WDF_IO_QUEUE_CONFIG     ioQueueConfig;
-    WDFQUEUE                queue;
+    NTSTATUS status = STATUS_SUCCESS;
+    BOOLEAN bCreate = FALSE;
+    PWDFDEVICE_INIT pInit = NULL;
+    WDFDEVICE controlDevice = NULL;
+    WDF_IO_QUEUE_CONFIG ioQueueConfig;
+    WDFQUEUE queue;
 
     DECLARE_CONST_UNICODE_STRING(ntDeviceName, BTHPS3PSM_NTDEVICE_NAME_STRING);
     DECLARE_CONST_UNICODE_STRING(symbolicLinkName, BTHPS3PSM_SYMBOLIC_NAME_STRING);
@@ -83,13 +83,15 @@ BthPS3PSM_CreateControlDevice(
     //
     WdfWaitLockAcquire(FilterDeviceCollectionLock, NULL);
 
-    if (WdfCollectionGetCount(FilterDeviceCollection) == 1) {
+    if (WdfCollectionGetCount(FilterDeviceCollection) == 1)
+    {
         bCreate = TRUE;
     }
 
     WdfWaitLockRelease(FilterDeviceCollectionLock);
 
-    if (!bCreate) {
+    if (!bCreate)
+    {
         //
         // Control device is already created. So return success.
         //
@@ -206,8 +208,8 @@ BthPS3PSM_CreateControlDevice(
         WdfControlFinishInitializing(controlDevice);
 
         ControlDevice = controlDevice;
-
-    } while (FALSE);
+    }
+    while (FALSE);
 
     if (pInit != NULL)
     {
@@ -247,7 +249,8 @@ BthPS3PSM_DeleteControlDevice(
         "Deleting Control Device"
     );
 
-    if (ControlDevice) {
+    if (ControlDevice)
+    {
         WdfObjectDelete(ControlDevice);
         ControlDevice = NULL;
     }
@@ -257,11 +260,11 @@ BthPS3PSM_DeleteControlDevice(
 #pragma warning(disable:28118) // this callback will run at IRQL=PASSIVE_LEVEL
 _Use_decl_annotations_
 VOID BthPS3PSM_SidebandIoDeviceControl(
-    _In_ WDFQUEUE   Queue,
+    _In_ WDFQUEUE Queue,
     _In_ WDFREQUEST Request,
-    _In_ size_t     OutputBufferLength,
-    _In_ size_t     InputBufferLength,
-    _In_ ULONG      IoControlCode
+    _In_ size_t OutputBufferLength,
+    _In_ size_t InputBufferLength,
+    _In_ ULONG IoControlCode
 )
 {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
@@ -540,6 +543,7 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
 //
 // Async operation to store changed settings to registry at PASSIVE_LEVEL
 // 
+_Use_decl_annotations_
 void BthPS3PSM_EvtSaveConfigToRegistry(
     WDFWORKITEM WorkItem
 )
@@ -580,7 +584,7 @@ void BthPS3PSM_EvtSaveConfigToRegistry(
             instanceIdString
         );
     }
-    
+
     WdfObjectDelete(WorkItem);
 
     FuncExitNoReturn(TRACE_SIDEBAND);

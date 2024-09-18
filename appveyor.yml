@@ -1,4 +1,4 @@
-version: 2.9.{build}.0
+version: 2.10.{build}.0
 build_cloud: WIN-LKR467JS4GL
 image: Windows
 environment:
@@ -32,7 +32,6 @@ install:
     git pull > NUL
     cd %appveyor_build_folder%
 - cmd: vcpkg integrate install
-- cmd: vcpkg update
 - cmd: vcpkg install detours:x86-windows-static detours:x64-windows-static
 before_build:
 - cmd: nuget restore

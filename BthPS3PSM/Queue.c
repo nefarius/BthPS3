@@ -4,7 +4,7 @@
  *                                                                                *
  * BSD 3-Clause License                                                           *
  *                                                                                *
- * Copyright (c) 2018-2023, Nefarius Software Solutions e.U.                      *
+ * Copyright (c) 2018-2024, Nefarius Software Solutions e.U.                      *
  * All rights reserved.                                                           *
  *                                                                                *
  * Redistribution and use in source and binary forms, with or without             *
@@ -35,12 +35,10 @@
  **********************************************************************************/
 
 
-
 #include "driver.h"
 #include "queue.tmh"
 #include <usb.h>
 #include <usbioctl.h>
-#include <wdfusb.h>
 #include <BthPS3PSMETW.h>
 
 
@@ -49,6 +47,7 @@
 #endif
 
 
+_Use_decl_annotations_
 NTSTATUS
 BthPS3PSM_QueueInitialize(
     _In_ WDFDEVICE Device
@@ -60,11 +59,6 @@ BthPS3PSM_QueueInitialize(
 
     PAGED_CODE();
 
-    //
-    // Configure a default queue so that requests that are not
-    // configure-forwarded using WdfDeviceConfigureRequestDispatching to goto
-    // other queues get dispatched here.
-    //
     WDF_IO_QUEUE_CONFIG_INIT_DEFAULT_QUEUE(
         &queueConfig,
         WdfIoQueueDispatchParallel
@@ -80,7 +74,7 @@ BthPS3PSM_QueueInitialize(
         &queueConfig,
         WDF_NO_OBJECT_ATTRIBUTES,
         &queue
-    ))) 
+    )))
     {
         TraceError(
             TRACE_QUEUE,
@@ -98,6 +92,7 @@ BthPS3PSM_QueueInitialize(
 //
 // Handle IRP_MJ_INTERNAL_DEVICE_CONTROL requests
 // 
+_Use_decl_annotations_
 VOID
 BthPS3PSMEvtIoInternalDeviceControl(
     _In_ WDFQUEUE Queue,
@@ -107,24 +102,24 @@ BthPS3PSMEvtIoInternalDeviceControl(
     _In_ ULONG IoControlCode
 )
 {
-	NTSTATUS status;
-	WDF_REQUEST_SEND_OPTIONS options;
-	BOOLEAN ret;
+    NTSTATUS status;
+    WDF_REQUEST_SEND_OPTIONS options;
+    BOOLEAN ret;
 
 
-	UNREFERENCED_PARAMETER(OutputBufferLength);
+    UNREFERENCED_PARAMETER(OutputBufferLength);
     UNREFERENCED_PARAMETER(InputBufferLength);
 
-	const WDFDEVICE device = WdfIoQueueGetDevice(Queue);
-	const PDEVICE_CONTEXT pContext = DeviceGetContext(device);
-	const PIRP irp = WdfRequestWdmGetIrp(Request);
+    const WDFDEVICE device = WdfIoQueueGetDevice(Queue);
+    const PDEVICE_CONTEXT pContext = DeviceGetContext(device);
+    const PIRP irp = WdfRequestWdmGetIrp(Request);
 
     //
     // As a BTHUSB lower filter driver we expect USB/URB traffic
     // 
     if (IoControlCode == IOCTL_INTERNAL_USB_SUBMIT_URB)
     {
-	    const PURB urb = (PURB)URB_FROM_IRP(irp);
+        const PURB urb = (PURB)URB_FROM_IRP(irp);
 
         switch (urb->UrbHeader.Function)
         {
@@ -136,19 +131,31 @@ BthPS3PSMEvtIoInternalDeviceControl(
                 TRACE_QUEUE,
                 "<< URB_FUNCTION_SELECT_CONFIGURATION");
 
-            //
-            // "Hijack" this URB from the upper function driver and
-            // use the framework functions to enumerate the endpoints
-            // so we can later conveniently distinguish the pipes for
-            // interrupt (HCI) and bulk (L2CAP) traffic coming through.
-            // 
-            status = ProxyUrbSelectConfiguration(urb, pContext);
+            WdfRequestFormatRequestUsingCurrentType(Request);
 
-            //
-            // We configured the device in by proxy for the upper
-            // function driver, so complete instead of forward.
-            // 
-            WdfRequestComplete(Request, status);
+            WdfRequestSetCompletionRoutine(
+                Request,
+                UrbSelectConfigurationCompleted,
+                device
+            );
+
+            ret = WdfRequestSend(
+                Request,
+                WdfDeviceGetIoTarget(WdfIoQueueGetDevice(Queue)),
+                WDF_NO_SEND_OPTIONS
+            );
+
+            if (ret == FALSE)
+            {
+                status = WdfRequestGetStatus(Request);
+                TraceError(
+                    TRACE_QUEUE,
+                    "WdfRequestSend failed with status %!STATUS!",
+                    status
+                );
+                WdfRequestComplete(Request, status);
+            }
+
             return;
 
 #pragma endregion
@@ -162,8 +169,7 @@ BthPS3PSMEvtIoInternalDeviceControl(
             // routine to it so we can grab the incoming data once coming
             // back from the lower driver.
             // 
-            if (urb->UrbBulkOrInterruptTransfer.PipeHandle ==
-                WdfUsbTargetPipeWdmGetPipeHandle(pContext->BulkReadPipe))
+            if (urb->UrbBulkOrInterruptTransfer.PipeHandle == pContext->BulkReadPipe)
             {
                 TraceVerbose(
                     TRACE_QUEUE,
@@ -182,9 +188,11 @@ BthPS3PSMEvtIoInternalDeviceControl(
                 ret = WdfRequestSend(
                     Request,
                     WdfDeviceGetIoTarget(WdfIoQueueGetDevice(Queue)),
-                    WDF_NO_SEND_OPTIONS);
+                    WDF_NO_SEND_OPTIONS
+                );
 
-                if (ret == FALSE) {
+                if (ret == FALSE)
+                {
                     status = WdfRequestGetStatus(Request);
                     TraceError(
                         TRACE_QUEUE,
@@ -222,16 +230,15 @@ BthPS3PSMEvtIoInternalDeviceControl(
         &options
     );
 
-    if (ret == FALSE) {
+    if (ret == FALSE)
+    {
         status = WdfRequestGetStatus(Request);
         TraceError(
             TRACE_QUEUE,
-            "WdfRequestSend failed with status %!STATUS!", 
+            "WdfRequestSend failed with status %!STATUS!",
             status
         );
         EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfRequestGetStatus", status);
         WdfRequestComplete(Request, status);
     }
-
-    return;
 }

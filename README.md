@@ -1,9 +1,16 @@
 # <img src="icon.png" align="left" />BthPS3
 
 [![Build status](https://ci.appveyor.com/api/projects/status/lna6ewnbck5diu6l/branch/master?svg=true)](https://ci.appveyor.com/project/nefarius/bthps3/branch/master)
- [![GitHub All Releases](https://img.shields.io/github/downloads/ViGEm/BthPS3/total)](https://somsubhra.github.io/github-release-stats/?username=ViGEm&repository=BthPS3) [![Discord](https://img.shields.io/discord/346756263763378176.svg)](https://discord.nefarius.at) [![GitHub followers](https://img.shields.io/github/followers/nefarius.svg?style=social&label=Follow)](https://github.com/nefarius) [![Mastodon Follow](https://img.shields.io/mastodon/follow/109321120351128938?domain=https%3A%2F%2Ffosstodon.org%2F&style=social)](https://fosstodon.org/@Nefarius)
+[![GitHub All Releases](https://img.shields.io/github/downloads/ViGEm/BthPS3/total)](https://somsubhra.github.io/github-release-stats/?username=ViGEm&repository=BthPS3)
+[![Discord](https://img.shields.io/discord/346756263763378176.svg)](https://discord.nefarius.at)
+[![GitHub followers](https://img.shields.io/github/followers/nefarius.svg?style=social&label=Follow)](https://github.com/nefarius)
+[![Mastodon Follow](https://img.shields.io/mastodon/follow/109321120351128938?domain=https%3A%2F%2Ffosstodon.org%2F&style=social)](https://fosstodon.org/@Nefarius)
 
 Windows kernel-mode Bluetooth Profile & Filter Drivers for PS3 peripherals.
+
+## Pronunciation
+
+`/biː θriː/`
 
 ## About
 
@@ -195,3 +202,4 @@ This application benefits from these awesome projects ❤ (appearance in no spec
 - [Link Manager Protocol (LMP)](https://www.bluetooth.com/specifications/assigned-numbers/link-manager/)
 - [Nefarius' Domito Library](https://git.nefarius.at/nefarius/Domito)
 - [NUKE Build Automation](https://nuke.build/)
+- [Nefarius.Tools.WDKWhere](https://github.com/nefarius/wdkwhere)

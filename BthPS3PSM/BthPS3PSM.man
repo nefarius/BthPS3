@@ -35,6 +35,7 @@
           <event value="3" channel="SYSTEM" level="win:Error" message="$(string.FailedWithNTStatus.EventMessage)" opcode="win:Info" symbol="FailedWithNTStatus" template="tid_failed_with_ntstatus"/>
           <event value="4" channel="SYSTEM" level="win:Informational" message="$(string.GetPatchStatusForDeviceInstance.EventMessage)" opcode="win:Info" symbol="GetPatchStatusForDeviceInstance" template="tid_patch_status_for_device_instance"/>
           <event value="5" channel="SYSTEM" level="win:Informational" message="$(string.SetPatchStatusForDeviceInstance.EventMessage)" opcode="win:Info" symbol="SetPatchStatusForDeviceInstance" template="tid_patch_status_for_device_instance"/>
+          <event value="6" channel="SYSTEM" level="win:Error" message="$(string.FailedToFindBulkInPipe.EventMessage)" opcode="win:Info" symbol="FailedToFindBulkInPipe" />
         </events>
       </provider>
     </events>
@@ -47,6 +48,7 @@
         <string id="FailedWithNTStatus.EventMessage" value="[%1] %2 failed with NTSTATUS %3"/>
         <string id="GetPatchStatusForDeviceInstance.EventMessage" value="Retrieved patch status %1 for device instance %2"/>
         <string id="SetPatchStatusForDeviceInstance.EventMessage" value="Stored patch status %1 on device instance %2"/>
+        <string id="FailedToFindBulkInPipe.EventMessage" value="Couldn't find the BULK IN endpoint to hook, patching will not work"/>
       </stringTable>
     </resources>
   </localization>

@@ -47,11 +47,11 @@
 // 
 void
 ProcessUrbSelectConfiguration(
-	_In_ PURB Urb,
-	_Inout_ PDEVICE_CONTEXT Context
+    _In_ PURB Urb,
+    _Inout_ PDEVICE_CONTEXT Context
 )
 {
-	FuncEntry(TRACE_FILTER);
+    FuncEntry(TRACE_FILTER);
 
     const PUSBD_INTERFACE_INFORMATION interfaceInfo = &Urb->UrbSelectConfiguration.Interface;
 
@@ -70,7 +70,7 @@ ProcessUrbSelectConfiguration(
         }
     }
 
-	FuncExitNoReturn(TRACE_FILTER);
+    FuncExitNoReturn(TRACE_FILTER);
 }
 
 //
@@ -79,99 +79,99 @@ ProcessUrbSelectConfiguration(
 _Use_decl_annotations_
 VOID
 UrbFunctionBulkInTransferCompleted(
-	IN WDFREQUEST Request,
-	IN WDFIOTARGET Target,
-	IN PWDF_REQUEST_COMPLETION_PARAMS Params,
-	IN WDFCONTEXT Context
+    IN WDFREQUEST Request,
+    IN WDFIOTARGET Target,
+    IN PWDF_REQUEST_COMPLETION_PARAMS Params,
+    IN WDFCONTEXT Context
 )
 {
-	PUCHAR buffer;
-	UNREFERENCED_PARAMETER(Target);
+    PUCHAR buffer;
+    UNREFERENCED_PARAMETER(Target);
 
-	FuncEntry(TRACE_FILTER);
+    FuncEntry(TRACE_FILTER);
 
-	const WDFDEVICE device = (WDFDEVICE)Context;
-	const PDEVICE_CONTEXT pDevCtx = DeviceGetContext(device);
-	const PIRP pIrp = WdfRequestWdmGetIrp(Request);
-	const PURB pUrb = (PURB)URB_FROM_IRP(pIrp);
+    const WDFDEVICE device = (WDFDEVICE)Context;
+    const PDEVICE_CONTEXT pDevCtx = DeviceGetContext(device);
+    const PIRP pIrp = WdfRequestWdmGetIrp(Request);
+    const PURB pUrb = (PURB)URB_FROM_IRP(pIrp);
 
-	const struct _URB_BULK_OR_INTERRUPT_TRANSFER* pTransfer = &pUrb->UrbBulkOrInterruptTransfer;
+    const struct _URB_BULK_OR_INTERRUPT_TRANSFER* pTransfer = &pUrb->UrbBulkOrInterruptTransfer;
 
-	const ULONG bufferLength = pTransfer->TransferBufferLength;
-	buffer = (PUCHAR)USBPcapURBGetBufferPointer(
-		pTransfer->TransferBufferLength,
-		pTransfer->TransferBuffer,
-		pTransfer->TransferBufferMDL
-	);
+    const ULONG bufferLength = pTransfer->TransferBufferLength;
+    buffer = (PUCHAR)USBPcapURBGetBufferPointer(
+        pTransfer->TransferBufferLength,
+        pTransfer->TransferBuffer,
+        pTransfer->TransferBufferMDL
+    );
 
-	if (
-		bufferLength >= L2CAP_MIN_BUFFER_LEN
-		&& L2CAP_IS_CONTROL_CHANNEL(buffer)
-		&& L2CAP_IS_SIGNALLING_COMMAND_CODE(buffer)
-		)
-	{
-		const L2CAP_SIGNALLING_COMMAND_CODE code = L2CAP_GET_SIGNALLING_COMMAND_CODE(buffer);
+    if (
+        bufferLength >= L2CAP_MIN_BUFFER_LEN
+        && L2CAP_IS_CONTROL_CHANNEL(buffer)
+        && L2CAP_IS_SIGNALLING_COMMAND_CODE(buffer)
+    )
+    {
+        const L2CAP_SIGNALLING_COMMAND_CODE code = L2CAP_GET_SIGNALLING_COMMAND_CODE(buffer);
 
-		if (code == L2CAP_Connection_Request)
-		{
-			const PL2CAP_SIGNALLING_CONNECTION_REQUEST pConReq = (PL2CAP_SIGNALLING_CONNECTION_REQUEST)&buffer[8];
+        if (code == L2CAP_Connection_Request)
+        {
+            const PL2CAP_SIGNALLING_CONNECTION_REQUEST pConReq = (PL2CAP_SIGNALLING_CONNECTION_REQUEST)&buffer[8];
 
-			if (pConReq->PSM == PSM_HID_CONTROL)
-			{
-				TraceVerbose(
-					TRACE_FILTER,
-					">> Connection request for HID Control PSM 0x%04X arrived",
-					pConReq->PSM
-				);
+            if (pConReq->PSM == PSM_HID_CONTROL)
+            {
+                TraceVerbose(
+                    TRACE_FILTER,
+                    ">> Connection request for HID Control PSM 0x%04X arrived",
+                    pConReq->PSM
+                );
 
-				if (pDevCtx->IsPsmPatchingEnabled)
-				{
-					pConReq->PSM = PSM_DS3_HID_CONTROL;
+                if (pDevCtx->IsPsmPatchingEnabled)
+                {
+                    pConReq->PSM = PSM_DS3_HID_CONTROL;
 
-					TraceInformation(
-						TRACE_FILTER,
-						"++ Patching HID Control PSM to 0x%04X",
-						pConReq->PSM);
-				}
-				else
-				{
-					TraceVerbose(
-						TRACE_FILTER,
-						"-- NOT Patching HID Control PSM"
-					);
-				}
-			}
+                    TraceInformation(
+                        TRACE_FILTER,
+                        "++ Patching HID Control PSM to 0x%04X",
+                        pConReq->PSM);
+                }
+                else
+                {
+                    TraceVerbose(
+                        TRACE_FILTER,
+                        "-- NOT Patching HID Control PSM"
+                    );
+                }
+            }
 
-			if (pConReq->PSM == PSM_HID_INTERRUPT)
-			{
-				TraceVerbose(
-					TRACE_FILTER,
-					">> Connection request for HID Interrupt PSM 0x%04X arrived",
-					pConReq->PSM
-				);
+            if (pConReq->PSM == PSM_HID_INTERRUPT)
+            {
+                TraceVerbose(
+                    TRACE_FILTER,
+                    ">> Connection request for HID Interrupt PSM 0x%04X arrived",
+                    pConReq->PSM
+                );
 
-				if (pDevCtx->IsPsmPatchingEnabled)
-				{
-					pConReq->PSM = PSM_DS3_HID_INTERRUPT;
+                if (pDevCtx->IsPsmPatchingEnabled)
+                {
+                    pConReq->PSM = PSM_DS3_HID_INTERRUPT;
 
-					TraceInformation(
-						TRACE_FILTER,
-						"++ Patching HID Interrupt PSM to 0x%04X",
-						pConReq->PSM
-					);
-				}
-				else
-				{
-					TraceVerbose(
-						TRACE_FILTER,
-						"-- NOT Patching HID Interrupt PSM"
-					);
-				}
-			}
-		}
-	}
+                    TraceInformation(
+                        TRACE_FILTER,
+                        "++ Patching HID Interrupt PSM to 0x%04X",
+                        pConReq->PSM
+                    );
+                }
+                else
+                {
+                    TraceVerbose(
+                        TRACE_FILTER,
+                        "-- NOT Patching HID Interrupt PSM"
+                    );
+                }
+            }
+        }
+    }
 
-	WdfRequestComplete(Request, Params->IoStatus.Status);
+    WdfRequestComplete(Request, Params->IoStatus.Status);
 
-	FuncExitNoReturn(TRACE_FILTER);
+    FuncExitNoReturn(TRACE_FILTER);
 }

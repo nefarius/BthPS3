@@ -272,3 +272,6 @@ __pycache__/
 /artifacts
 RC*
 **/vcpkg_installed/
+*.msi
+*.g.wxs
+*.g.cs

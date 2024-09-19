@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+      <RootNamespace>Nefarius.BthPS3.Setup</RootNamespace>
+  </PropertyGroup>
+
+    <PropertyGroup>
+        <SetupVersion Condition="'$(SetupVersion)' == ''">2.10.0</SetupVersion>
+    </PropertyGroup>
+    <Target Name="GenerateBuildVariableFile" BeforeTargets="BeforeBuild">
+        <WriteLinesToFile File="GeneratedBuildVariables.g.cs" Lines="namespace Nefarius.BthPS3.Setup { public static class BuildVariables { public const string SetupVersion = &quot;$(SetupVersion)&quot;%3B } }" Overwrite="true" />
+    </Target>
+  
+  <ItemGroup>
+    <None Remove="*.msi" />
+    <None Remove="*.exe" />
+    <None Remove="*.wxs" />
+    <None Remove="*.wixpdb" />
+    <None Remove="*.wixobj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Nefarius.Utilities.Bluetooth" Version="1.4.8" />
+    <PackageReference Include="Nefarius.Utilities.DeviceManagement" Version="3.23.0" />
+    <PackageReference Include="WixSharp_wix4" Version="2.3.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="cd .\&#xD;&#xA;set ide=true&#xD;&#xA;&quot;$(TargetPath)&quot;" />
+  </Target>
+
+</Project>

@@ -203,3 +203,4 @@ This application benefits from these awesome projects ❤ (appearance in no spec
 - [Nefarius' Domito Library](https://git.nefarius.at/nefarius/Domito)
 - [NUKE Build Automation](https://nuke.build/)
 - [Nefarius.Tools.WDKWhere](https://github.com/nefarius/wdkwhere)
+- [Nefarius.Utilities.Bluetooth](https://github.com/nefarius/Nefarius.Utilities.Bluetooth)

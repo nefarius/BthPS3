@@ -57,15 +57,20 @@ internal class InstallScript
 
         ManagedProject project = new(ProductName,
             new Dir(driversFeature, @"%ProgramFiles%\Nefarius Software Solutions\BthPS3",
+                // nefcon
                 new Dir(driversFeature, "nefcon")
                 {
                     Files = new DirFiles(driversFeature, "*.*").GetFiles(nefconDir),
                     Dirs = GetSubDirectories(driversFeature, nefconDir).ToArray()
                 },
+                // driver binaries
                 new Dir(driversFeature, "drivers")
                 {
                     Dirs = GetSubDirectories(driversFeature, DriversRoot).ToArray()
-                }
+                },
+                // manifest files
+                new File(driversFeature, @"..\BthPS3\BthPS3.man"),
+                new File(driversFeature, @"..\BthPS3PSM\BthPS3PSM.man")
             ),
             // registry values
             new RegKey(driversFeature, RegistryHive.LocalMachine,

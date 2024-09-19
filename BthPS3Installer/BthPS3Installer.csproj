@@ -19,6 +19,7 @@
     <None Remove="*.wxs" />
     <None Remove="*.wixpdb" />
     <None Remove="*.wixobj" />
+    <None Remove="*.g.cs" />
   </ItemGroup>
 
   <ItemGroup>

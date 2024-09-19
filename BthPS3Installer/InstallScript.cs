@@ -30,17 +30,20 @@ internal class InstallScript
 {
     public const string ProductName = "BthPS3 Bluetooth Drivers";
     public const string SetupRoot = @"..\setup";
+    public const string DriversRoot = @"..\setup\drivers";
 
     private static void Main()
     {
         Version version = Version.Parse(BuildVariables.SetupVersion);
         string archShortName = ArchitectureInfo.PlatformShortName;
 
-        string driverPath = Path.Combine(SetupRoot, @"drivers\BthPS3_x64\BthPS3.sys");
+        string driverPath = Path.Combine(DriversRoot, @"BthPS3_x64\BthPS3.sys");
         Version driverVersion = Version.Parse(FileVersionInfo.GetVersionInfo(driverPath).FileVersion);
 
-        string filterPath = Path.Combine(SetupRoot, @"drivers\BthPS3PSM_x64\BthPS3PSM.sys");
+        string filterPath = Path.Combine(DriversRoot, @"BthPS3PSM_x64\BthPS3PSM.sys");
         Version filterVersion = Version.Parse(FileVersionInfo.GetVersionInfo(filterPath).FileVersion);
+
+        const string nefconDir = @".\nefcon";
 
         Console.WriteLine($"Setup version: {version}");
         Console.WriteLine($"Driver version: {driverVersion}");
@@ -54,7 +57,16 @@ internal class InstallScript
 
         ManagedProject project = new(ProductName,
             new Dir(driversFeature, @"%ProgramFiles%\Nefarius Software Solutions\BthPS3",
-                new File("InstallScript.cs")),
+                new Dir(driversFeature, "nefcon")
+                {
+                    Files = new DirFiles(driversFeature, "*.*").GetFiles(nefconDir),
+                    Dirs = GetSubDirectories(driversFeature, nefconDir).ToArray()
+                },
+                new Dir(driversFeature, "drivers")
+                {
+                    Dirs = GetSubDirectories(driversFeature, DriversRoot).ToArray()
+                }
+            ),
             // registry values
             new RegKey(driversFeature, RegistryHive.LocalMachine,
                 $@"Software\Nefarius Software Solutions e.U.\{ProductName}",

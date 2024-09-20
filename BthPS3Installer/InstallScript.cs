@@ -79,7 +79,20 @@ internal class InstallScript
                 new RegValue("Version", version.ToString()) { Win64 = true },
                 new RegValue("DriverVersion", driverVersion.ToString()) { Win64 = true },
                 new RegValue("FilterVersion", filterVersion.ToString()) { Win64 = true }
-            ) { Win64 = true })
+            ) { Win64 = true },
+            // install drivers
+            new ElevatedManagedAction(CustomActions.InstallDrivers, Return.check,
+                When.After,
+                Step.InstallFiles,
+                Condition.NOT_Installed
+            ),
+            // install manifests
+            new ElevatedManagedAction(CustomActions.InstallManifest, Return.check,
+                When.After,
+                Step.InstallFiles,
+                Condition.NOT_Installed
+            )
+        )
         {
             GUID = new Guid("CC32A6ED-BDFE-4D51-9FFF-2AB51D9ECE18"),
             CAConfigFile = "CustomActions.config",
@@ -103,9 +116,7 @@ internal class InstallScript
             .Add(Dialogs.Progress)
             .Add(Dialogs.Exit);
 
-        project.Load += Msi_Load;
-        project.BeforeInstall += Msi_BeforeInstall;
-        project.AfterInstall += Msi_AfterInstall;
+        project.AfterInstall += ProjectOnAfterInstall;
 
         // embed types of dependencies
         project.DefaultRefAssemblies.Add(typeof(Devcon).Assembly.Location);
@@ -131,27 +142,14 @@ internal class InstallScript
         project.BuildMsi();
     }
 
-    private static void Msi_Load(SetupEventArgs e)
+    /// <summary>
+    ///     Put uninstall logic that doesn't access packaged files in here.
+    /// </summary>
+    private static void ProjectOnAfterInstall(SetupEventArgs e)
     {
-        if (!e.IsUISupressed && !e.IsUninstalling)
+        if (e.IsUninstalling)
         {
-            MessageBox.Show(e.ToString(), "Load");
-        }
-    }
-
-    private static void Msi_BeforeInstall(SetupEventArgs e)
-    {
-        if (!e.IsUISupressed && !e.IsUninstalling)
-        {
-            MessageBox.Show(e.ToString(), "BeforeInstall");
-        }
-    }
-
-    private static void Msi_AfterInstall(SetupEventArgs e)
-    {
-        if (!e.IsUISupressed && !e.IsUninstalling)
-        {
-            MessageBox.Show(e.ToString(), "AfterExecute");
+            CustomActions.UninstallDrivers(e.Session);
         }
     }
 
@@ -179,6 +177,23 @@ internal class InstallScript
 
 public static class CustomActions
 {
+    /// <summary>
+    ///     Put install logic here.
+    /// </summary>
+    [CustomAction]
+    public static ActionResult InstallDrivers(Session session)
+    {
+        return ActionResult.Success;
+    }
+
+    /// <summary>
+    ///     Uninstalls and cleans all driver residue.
+    /// </summary>
+    public static bool UninstallDrivers(Session session)
+    {
+        return true;
+    }
+
     /// <summary>
     ///     Installs the ETW manifests
     /// </summary>

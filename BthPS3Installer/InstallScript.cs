@@ -109,7 +109,16 @@ internal class InstallScript
             WildCardDedup = Project.UniqueFileNameDedup
         };
 
+        #region Fixes for setups < v2.10.x
+
+        // override radio check with success
+        project.AddProperty(new Property("RADIOFOUND", "1"));
+        // override old detection check with absent
+        project.AddProperty(new Property("FILTERNOTFOUND", "1"));
+        // suppresses reboot dialogs from removing older versions
         project.AddProperty(new Property("REBOOT", "ReallySuppress"));
+
+        #endregion
 
         project.MajorUpgrade = new MajorUpgrade
         {

@@ -38,7 +38,7 @@ namespace Nefarius.BthPS3.Setup;
 internal class InstallScript
 {
     public const string ProductName = "Nefarius BthPS3 Bluetooth Drivers";
-    public const string SetupRoot = @"..\setup";
+    public const string ArtifactsDir = @"..\setup\artifacts";
     public const string DriversRoot = @"..\setup\drivers";
     public const string ManifestsDir = "manifests";
 
@@ -82,7 +82,14 @@ internal class InstallScript
                 new Dir(driversFeature, ManifestsDir,
                     new File(driversFeature, @"..\BthPS3\BthPS3.man"),
                     new File(driversFeature, @"..\BthPS3PSM\BthPS3PSM.man")
-                )
+                ),
+                // config tool
+                new File(driversFeature, Path.Combine(ArtifactsDir, @"bin\BthPS3CfgUI.exe"),
+                    new FileShortcut("BthPS3 Driver Configuration Tool") { WorkingDirectory = "[INSTALLDIR]" }
+                ),
+                new Dir(@"%ProgramMenu%\Nefarius Software Solutions\BthPS3",
+                    new ExeFileShortcut("Uninstall BthPS3", "[System64Folder]msiexec.exe", "/x [ProductCode]"),
+                    new ExeFileShortcut("BthPS3 Driver Configuration Tool", "[INSTALLDIR]BthPS3CfgUI.exe", ""))
             ),
             // registry values
             new RegKey(driversFeature, RegistryHive.LocalMachine,
@@ -114,7 +121,7 @@ internal class InstallScript
             new Error("9000",
                 "Driver installation succeeded but a reboot is required to be fully operational. " +
                 "After the setup is finished, please reboot the system before using the software."
-                )
+            )
         )
         {
             GUID = new Guid("CC32A6ED-BDFE-4D51-9FFF-2AB51D9ECE18"),

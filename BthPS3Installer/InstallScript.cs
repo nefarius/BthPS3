@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -14,6 +15,7 @@ using Microsoft.Win32;
 
 using Nefarius.BthPS3.Setup.Util;
 using Nefarius.Utilities.Bluetooth;
+using Nefarius.Utilities.DeviceManagement.Drivers;
 using Nefarius.Utilities.DeviceManagement.PnP;
 
 using WixSharp;
@@ -183,6 +185,21 @@ public static class CustomActions
     [CustomAction]
     public static ActionResult InstallDrivers(Session session)
     {
+        // clean out whatever has been on the machine before
+        bool rebootRequired = UninstallDrivers(session);
+
+        DirectoryInfo installDir = new(session.Property("INSTALLDIR"));
+        session.Log($"installDir = {installDir}");
+        string driversDir = Path.Combine(installDir.FullName, "drivers");
+        session.Log($"driversDir = {driversDir}");
+        string nefconDir = Path.Combine(installDir.FullName, "nefcon");
+        session.Log($"nefconDir = {nefconDir}");
+        string archShortName = ArchitectureInfo.PlatformShortName;
+        session.Log($"archShortName = {archShortName}");
+
+        string nefconcPath = Path.Combine(nefconDir, archShortName, "nefconc.exe");
+        session.Log($"nefconcPath = {nefconcPath}");
+
         return ActionResult.Success;
     }
 
@@ -191,6 +208,50 @@ public static class CustomActions
     /// </summary>
     public static bool UninstallDrivers(Session session)
     {
+        List<string> allDriverPackages = DriverStore.ExistingDrivers.ToList();
+
+        // remove all old copies of BthPS3
+        foreach (string driverPackage in allDriverPackages.Where(p =>
+                     p.Contains("bthps3.inf", StringComparison.OrdinalIgnoreCase)))
+        {
+            try
+            {
+                DriverStore.RemoveDriver(driverPackage);
+            }
+            catch (Exception ex)
+            {
+                session.Log($"Removal of BthPS3 package {driverPackage} failed with error {ex}");
+            }
+        }
+
+        // remove all old copies of BthPS3 NULL driver
+        foreach (string driverPackage in allDriverPackages.Where(p =>
+                     p.Contains("bthps3_pdo_null_device.inf", StringComparison.OrdinalIgnoreCase)))
+        {
+            try
+            {
+                DriverStore.RemoveDriver(driverPackage);
+            }
+            catch (Exception ex)
+            {
+                session.Log($"Removal of BthPS3 NULL driver package {driverPackage} failed with error {ex}");
+            }
+        }
+
+        // remove all old copies of BthPS3PSM
+        foreach (string driverPackage in allDriverPackages.Where(p =>
+                     p.Contains("bthps3psm.inf", StringComparison.OrdinalIgnoreCase)))
+        {
+            try
+            {
+                DriverStore.RemoveDriver(driverPackage);
+            }
+            catch (Exception ex)
+            {
+                session.Log($"Removal of BthPS3PSM package {driverPackage} failed with error {ex}");
+            }
+        }
+
         return true;
     }
 

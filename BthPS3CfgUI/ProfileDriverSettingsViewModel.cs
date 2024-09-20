@@ -6,6 +6,8 @@ using System.Windows.Threading;
 
 using Microsoft.Win32;
 
+using Nefarius.BthPS3.Shared;
+
 namespace BthPS3CfgUI;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global")]

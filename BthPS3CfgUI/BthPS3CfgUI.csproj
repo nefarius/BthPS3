@@ -53,6 +53,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\shared\Nefarius.BthPS3.Shared.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <Resource Include="B3.ico" />
   </ItemGroup>
   <ItemGroup>

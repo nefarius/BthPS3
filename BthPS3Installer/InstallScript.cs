@@ -14,9 +14,12 @@ using CliWrap;
 using Microsoft.Win32;
 
 using Nefarius.BthPS3.Setup.Util;
+using Nefarius.BthPS3.Shared;
 using Nefarius.Utilities.Bluetooth;
 using Nefarius.Utilities.DeviceManagement.Drivers;
 using Nefarius.Utilities.DeviceManagement.PnP;
+
+using PInvoke;
 
 using WixSharp;
 using WixSharp.CommonTasks;
@@ -158,6 +161,9 @@ internal class InstallScript
         project.DefaultRefAssemblies.Add(typeof(Unsafe).Assembly.Location);
         project.DefaultRefAssemblies.Add(typeof(BuffersExtensions).Assembly.Location);
         project.DefaultRefAssemblies.Add(typeof(ArrayPool<>).Assembly.Location);
+        project.DefaultRefAssemblies.Add(typeof(Kernel32.SafeObjectHandle).Assembly.Location);
+        project.DefaultRefAssemblies.Add(typeof(FilterDriver).Assembly.Location);
+        project.DefaultRefAssemblies.Add(typeof(BluetoothHelper).Assembly.Location);
 
         project.ControlPanelInfo.ProductIcon = @"..\Setup\Icons\B3.ico";
         project.ControlPanelInfo.Manufacturer = "Nefarius Software Solutions e.U.";
@@ -173,6 +179,7 @@ internal class InstallScript
     /// <summary>
     ///     Put uninstall logic that doesn't access packaged files in here.
     /// </summary>
+    /// <remarks>Runs with elevated privileges.</remarks>
     private static void ProjectOnAfterInstall(SetupEventArgs e)
     {
         if (e.IsUninstalling)
@@ -236,6 +243,8 @@ public static class CustomActions
     /// </summary>
     public static bool UninstallDrivers(Session session)
     {
+        #region Driver store clean-up
+
         List<string> allDriverPackages = DriverStore.ExistingDrivers.ToList();
 
         // remove all old copies of BthPS3
@@ -279,6 +288,10 @@ public static class CustomActions
                 session.Log($"Removal of BthPS3PSM package {driverPackage} failed with error {ex}");
             }
         }
+
+        #endregion
+
+        
 
         return true;
     }

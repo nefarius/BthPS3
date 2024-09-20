@@ -18,6 +18,11 @@ public class FilterDriver
     private static string ErrorMessage =>
         "BthPS3 filter driver access failed. Is Bluetooth turned on? Are the drivers installed?";
 
+    /// <summary>
+    ///     Filter driver service name.
+    /// </summary>
+    public const string FilterServiceName = "BthPS3PSM";
+
     public static bool IsFilterEnabled
     {
         get
@@ -42,7 +47,7 @@ public class FilterDriver
             }
 
             IntPtr payloadBuffer = Marshal.AllocHGlobal(Marshal.SizeOf<BTHPS3PSM_GET_PSM_PATCHING>());
-            BTHPS3PSM_GET_PSM_PATCHING payload = new BTHPS3PSM_GET_PSM_PATCHING { DeviceIndex = 0 };
+            BTHPS3PSM_GET_PSM_PATCHING payload = new() { DeviceIndex = 0 };
 
             try
             {
@@ -85,9 +90,9 @@ public class FilterDriver
             }
 
             IntPtr payloadEnableBuffer = Marshal.AllocHGlobal(Marshal.SizeOf<BTHPS3PSM_ENABLE_PSM_PATCHING>());
-            BTHPS3PSM_ENABLE_PSM_PATCHING payloadEnable = new BTHPS3PSM_ENABLE_PSM_PATCHING { DeviceIndex = 0 };
+            BTHPS3PSM_ENABLE_PSM_PATCHING payloadEnable = new() { DeviceIndex = 0 };
             IntPtr payloadDisableBuffer = Marshal.AllocHGlobal(Marshal.SizeOf<BTHPS3PSM_DISABLE_PSM_PATCHING>());
-            BTHPS3PSM_DISABLE_PSM_PATCHING payloadDisable = new BTHPS3PSM_DISABLE_PSM_PATCHING { DeviceIndex = 0 };
+            BTHPS3PSM_DISABLE_PSM_PATCHING payloadDisable = new() { DeviceIndex = 0 };
 
             try
             {

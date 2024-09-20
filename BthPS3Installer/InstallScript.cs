@@ -6,6 +6,7 @@ using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -40,6 +41,9 @@ internal class InstallScript
     public const string SetupRoot = @"..\setup";
     public const string DriversRoot = @"..\setup\drivers";
     public const string ManifestsDir = "manifests";
+
+    public static string BthPS3ServiceName => "BthPS3Service";
+    public static Guid BthPS3ServiceGuid => Guid.Parse("{1cb831ea-79cd-4508-b0fc-85f7c85ae8e0}");
 
     private static void Main()
     {
@@ -99,6 +103,12 @@ internal class InstallScript
                 When.After,
                 Step.InstallFiles,
                 Condition.NOT_Installed
+            ),
+            // remove manifests
+            new ElevatedManagedAction(CustomActions.UninstallManifest, Return.check,
+                When.Before,
+                Step.RemoveFiles,
+                Condition.Installed
             )
         )
         {
@@ -241,8 +251,58 @@ public static class CustomActions
     /// <summary>
     ///     Uninstalls and cleans all driver residue.
     /// </summary>
+    /// <remarks>Requires elevated permissions.</remarks>
     public static bool UninstallDrivers(Session session)
     {
+        try
+        {
+            // de-register filter
+            session.Log("Removing lower filter entry");
+            DeviceClassFilters.RemoveLower(DeviceClassIds.Bluetooth, FilterDriver.FilterServiceName);
+            session.Log("Removed lower filter entry");
+        }
+        catch (Exception ex)
+        {
+            session.Log($"Removing lower filter failed with error {ex}");
+        }
+
+        HostRadio radio = new();
+
+        try
+        {
+            session.Log("Disabling BthPS3 service");
+            // disabling service unloads PDO
+            radio.DisableService(InstallScript.BthPS3ServiceGuid, InstallScript.BthPS3ServiceName);
+            session.Log("Disabled BthPS3 service");
+
+            session.Log("Disabling radio");
+            // unloads complete stack
+            radio.DisableRadio();
+            session.Log("Disabled radio");
+        }
+        catch (Exception ex)
+        {
+            session.Log($"Disabling service or radio failed with error {ex}");
+        }
+        finally
+        {
+            radio.Dispose();
+        }
+
+        try
+        {
+            session.Log("Restarting radio device");
+            // restart device, filter is unloaded afterward
+            HostRadio.RestartRadioDevice();
+            session.Log("Restarted radio device");
+            // safety margin
+            Thread.Sleep(1000);
+        }
+        catch (Exception ex)
+        {
+            session.Log($"Restarting radio device failed with error {ex}");
+        }
+
         #region Driver store clean-up
 
         List<string> allDriverPackages = DriverStore.ExistingDrivers.ToList();
@@ -253,6 +313,7 @@ public static class CustomActions
         {
             try
             {
+                session.Log($"Removing driver package {driverPackage}");
                 DriverStore.RemoveDriver(driverPackage);
             }
             catch (Exception ex)
@@ -267,6 +328,7 @@ public static class CustomActions
         {
             try
             {
+                session.Log($"Removing driver package {driverPackage}");
                 DriverStore.RemoveDriver(driverPackage);
             }
             catch (Exception ex)
@@ -281,6 +343,7 @@ public static class CustomActions
         {
             try
             {
+                session.Log($"Removing driver package {driverPackage}");
                 DriverStore.RemoveDriver(driverPackage);
             }
             catch (Exception ex)
@@ -291,10 +354,28 @@ public static class CustomActions
 
         #endregion
 
-        
+        radio = new HostRadio();
 
-        return true;
+        try
+        {
+            session.Log("Enabling radio");
+            // starts vanilla radio operation
+            radio.EnableRadio();
+            session.Log("Enabled radio");
+        }
+        catch (Exception ex)
+        {
+            session.Log($"Disabling service or radio failed with error {ex}");
+        }
+        finally
+        {
+            radio.Dispose();
+        }
+
+        return false;
     }
+
+    #region ETW Manifests
 
     /// <summary>
     ///     Installs the ETW manifests
@@ -379,4 +460,6 @@ public static class CustomActions
 
         return ActionResult.Success;
     }
+
+    #endregion
 }

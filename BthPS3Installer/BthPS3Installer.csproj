@@ -3,18 +3,18 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net48</TargetFramework>
-      <RootNamespace>Nefarius.BthPS3.Setup</RootNamespace>
+    <RootNamespace>Nefarius.BthPS3.Setup</RootNamespace>
   </PropertyGroup>
 
-    <PropertyGroup>
-        <SetupVersion Condition="'$(SetupVersion)' == ''">2.10.0</SetupVersion>
-        <LangVersion>latest</LangVersion>
-        <Nullable>enable</Nullable>
-    </PropertyGroup>
-    <Target Name="GenerateBuildVariableFile" BeforeTargets="BeforeBuild">
-        <WriteLinesToFile File="GeneratedBuildVariables.g.cs" Lines="namespace Nefarius.BthPS3.Setup { public static class BuildVariables { public const string SetupVersion = &quot;$(SetupVersion)&quot;%3B } }" Overwrite="true" />
-    </Target>
-  
+  <PropertyGroup>
+    <SetupVersion Condition="'$(SetupVersion)' == ''">2.10.0</SetupVersion>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <Target Name="GenerateBuildVariableFile" BeforeTargets="BeforeBuild">
+    <WriteLinesToFile File="GeneratedBuildVariables.g.cs" Lines="namespace Nefarius.BthPS3.Setup { public static class BuildVariables { public const string SetupVersion = &quot;$(SetupVersion)&quot;%3B } }" Overwrite="true" />
+  </Target>
+
   <ItemGroup>
     <None Remove="*.msi" />
     <None Remove="*.exe" />

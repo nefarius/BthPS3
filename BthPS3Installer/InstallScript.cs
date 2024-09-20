@@ -2,13 +2,11 @@
 using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 
 using CliWrap;
 
@@ -27,8 +25,6 @@ using WixSharp.CommonTasks;
 using WixSharp.Forms;
 
 using WixToolset.Dtf.WindowsInstaller;
-
-using static System.Collections.Specialized.BitVector32;
 
 using File = WixSharp.File;
 using RegistryHive = WixSharp.RegistryHive;
@@ -161,6 +157,23 @@ internal class InstallScript
 
         project.AfterInstall += ProjectOnAfterInstall;
 
+        string typeName = "Microsoft.Win32.Registry";
+
+        // Get all loaded assemblies in the current AppDomain
+        var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+        foreach (var assembly in assemblies)
+        {
+            // Try to get the type from each assembly
+            var type = assembly.GetType(typeName, false);
+            if (type != null)
+            {
+                // Print the assembly and its location
+                Console.WriteLine($"Assembly: {assembly.FullName}");
+                Console.WriteLine($"Location: {assembly.Location}");
+            }
+        }
+
         // embed types of dependencies
         project.DefaultRefAssemblies.Add(typeof(Devcon).Assembly.Location);
         project.DefaultRefAssemblies.Add(typeof(HostRadio).Assembly.Location);
@@ -225,11 +238,10 @@ public static class CustomActions
     /// <summary>
     ///     Put install logic here.
     /// </summary>
+    /// <remarks>Requires elevated permissions.</remarks>
     [CustomAction]
     public static ActionResult InstallDrivers(Session session)
     {
-        return ActionResult.Success;
-
         // clean out whatever has been on the machine before
         bool rebootRequired = UninstallDrivers(session);
 

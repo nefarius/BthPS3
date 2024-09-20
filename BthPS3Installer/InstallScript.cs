@@ -242,6 +242,18 @@ public static class CustomActions
         string nefconcPath = Path.Combine(nefconDir, archShortName, "nefconc.exe");
         session.Log($"nefconcPath = {nefconcPath}");
 
+        string bthPs3DriverDir = Path.Combine(driversDir, $"BthPS3_{archShortName}");
+        session.Log($"bthPs3DriverDir = {bthPs3DriverDir}");
+        string bthPs3PsmDriverDir = Path.Combine(driversDir, $"BthPS3PSM_{archShortName}");
+        session.Log($"bthPs3PsmDriverDir = {bthPs3PsmDriverDir}");
+
+        string bthPs3InfPath = Path.Combine(bthPs3DriverDir, "BthPS3.inf");
+        session.Log($"bthPs3InfPath = {bthPs3InfPath}");
+        string bthPs3PsmInfPath = Path.Combine(bthPs3PsmDriverDir, "BthPS3PSM.inf");
+        session.Log($"bthPs3PsmInfPath = {bthPs3PsmInfPath}");
+        string bthPs3NullInfPath = Path.Combine(bthPs3DriverDir, "BthPS3_PDO_NULL_Device.inf");
+        session.Log($"bthPs3NullInfPath = {bthPs3NullInfPath}");
+
         return ActionResult.Success;
     }
 

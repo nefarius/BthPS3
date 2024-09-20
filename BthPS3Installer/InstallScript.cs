@@ -179,6 +179,10 @@ internal class InstallScript
 
 public static class CustomActions
 {
+    /// <summary>
+    ///     Installs the ETW manifests
+    /// </summary>
+    /// <remarks>Requires elevated permissions.</remarks>
     [CustomAction]
     public static ActionResult InstallManifest(Session session)
     {
@@ -217,6 +221,10 @@ public static class CustomActions
         return ActionResult.Success;
     }
 
+    /// <summary>
+    ///     Uninstalls the ETW manifests.
+    /// </summary>
+    /// <remarks>Requires elevated permissions.</remarks>
     [CustomAction]
     public static ActionResult UninstallManifest(Session session)
     {

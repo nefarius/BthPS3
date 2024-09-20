@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using CliWrap;
 
 using Microsoft.Win32;
+using Microsoft.Win32.SafeHandles;
 
 using Nefarius.BthPS3.Setup.Util;
 using Nefarius.BthPS3.Shared;
@@ -157,23 +158,6 @@ internal class InstallScript
 
         project.AfterInstall += ProjectOnAfterInstall;
 
-        string typeName = "Microsoft.Win32.Registry";
-
-        // Get all loaded assemblies in the current AppDomain
-        var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-
-        foreach (var assembly in assemblies)
-        {
-            // Try to get the type from each assembly
-            var type = assembly.GetType(typeName, false);
-            if (type != null)
-            {
-                // Print the assembly and its location
-                Console.WriteLine($"Assembly: {assembly.FullName}");
-                Console.WriteLine($"Location: {assembly.Location}");
-            }
-        }
-
         // embed types of dependencies
         project.DefaultRefAssemblies.Add(typeof(Devcon).Assembly.Location);
         project.DefaultRefAssemblies.Add(typeof(HostRadio).Assembly.Location);
@@ -187,6 +171,7 @@ internal class InstallScript
         project.DefaultRefAssemblies.Add(typeof(Kernel32.SafeObjectHandle).Assembly.Location);
         project.DefaultRefAssemblies.Add(typeof(FilterDriver).Assembly.Location);
         project.DefaultRefAssemblies.Add(typeof(BluetoothHelper).Assembly.Location);
+        project.DefaultRefAssemblies.Add(typeof(SafeRegistryHandle).Assembly.Location);
 
         project.ControlPanelInfo.ProductIcon = @"..\Setup\Icons\B3.ico";
         project.ControlPanelInfo.Manufacturer = "Nefarius Software Solutions e.U.";

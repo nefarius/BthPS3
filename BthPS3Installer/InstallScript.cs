@@ -385,6 +385,13 @@ public static class CustomActions
 
         #endregion
 
+        #region Filter settings
+
+        // make sure patching is enabled, might not be in the registry
+        FilterDriver.IsFilterEnabled = true;
+
+        #endregion
+
         if (rebootRequired)
         {
             Record record = new(1);

@@ -220,16 +220,37 @@ public static class CustomActions
     [CustomAction]
     public static ActionResult UninstallManifest(Session session)
     {
-        CommandResult? result = Cli.Wrap("wevtutil")
+        DirectoryInfo installDir = new(session.Property("INSTALLDIR"));
+        string bthPs3Manifest = Path.Combine(installDir.FullName, InstallScript.ManifestsDir, "BthPS3.man");
+        string bthPs3PsmManifest = Path.Combine(installDir.FullName, InstallScript.ManifestsDir, "BthPS3PSM.man");
+
+        CommandResult? bthPs3ManifestResult = Cli.Wrap("wevtutil")
             .WithArguments(builder => builder
                 .Add("um")
+                .Add(bthPs3Manifest)
             )
             .WithValidation(CommandResultValidation.None)
             .ExecuteAsync()
             .GetAwaiter()
             .GetResult();
 
-        session.Log($"Manifest removal {(result.IsSuccess ? "succeeded" : "failed")}, exit code: {result.ExitCode}");
+        session.Log(
+            $"BthPS3 manifest removal {(bthPs3ManifestResult.IsSuccess ? "succeeded" : "failed")}, " +
+            $"exit code: {bthPs3ManifestResult.ExitCode}");
+
+        CommandResult? bthPs3PsmManifestResult = Cli.Wrap("wevtutil")
+            .WithArguments(builder => builder
+                .Add("um")
+                .Add(bthPs3PsmManifest)
+            )
+            .WithValidation(CommandResultValidation.None)
+            .ExecuteAsync()
+            .GetAwaiter()
+            .GetResult();
+
+        session.Log(
+            $"BthPS3PSM manifest removal {(bthPs3PsmManifestResult.IsSuccess ? "succeeded" : "failed")}, " +
+            $"exit code: {bthPs3PsmManifestResult.ExitCode}");
 
         return ActionResult.Success;
     }

@@ -31,6 +31,7 @@ internal class InstallScript
     public const string ProductName = "BthPS3 Bluetooth Drivers";
     public const string SetupRoot = @"..\setup";
     public const string DriversRoot = @"..\setup\drivers";
+    public const string ManifestsDir = "manifests";
 
     private static void Main()
     {
@@ -66,7 +67,7 @@ internal class InstallScript
                 // driver binaries
                 new Dir(driversFeature, "drivers") { Dirs = GetSubDirectories(driversFeature, DriversRoot).ToArray() },
                 // manifest files
-                new Dir(driversFeature, "manifests",
+                new Dir(driversFeature, ManifestsDir,
                     new File(driversFeature, @"..\BthPS3\BthPS3.man"),
                     new File(driversFeature, @"..\BthPS3PSM\BthPS3PSM.man")
                 )
@@ -181,16 +182,37 @@ public static class CustomActions
     [CustomAction]
     public static ActionResult InstallManifest(Session session)
     {
-        CommandResult? result = Cli.Wrap("wevtutil")
+        DirectoryInfo installDir = new(session.Property("INSTALLDIR"));
+        string bthPs3Manifest = Path.Combine(installDir.FullName, InstallScript.ManifestsDir, "BthPS3.man");
+        string bthPs3PsmManifest = Path.Combine(installDir.FullName, InstallScript.ManifestsDir, "BthPS3PSM.man");
+
+        CommandResult? bthPs3ManifestResult = Cli.Wrap("wevtutil")
             .WithArguments(builder => builder
                 .Add("im")
+                .Add(bthPs3Manifest)
             )
             .WithValidation(CommandResultValidation.None)
             .ExecuteAsync()
             .GetAwaiter()
             .GetResult();
 
-        session.Log($"Manifest import {(result.IsSuccess ? "succeeded" : "failed")}, exit code: {result.ExitCode}");
+        session.Log(
+            $"BthPS3 manifest import {(bthPs3ManifestResult.IsSuccess ? "succeeded" : "failed")}, " +
+            $"exit code: {bthPs3ManifestResult.ExitCode}");
+
+        CommandResult? bthPs3PsmManifestResult = Cli.Wrap("wevtutil")
+            .WithArguments(builder => builder
+                .Add("im")
+                .Add(bthPs3PsmManifest)
+            )
+            .WithValidation(CommandResultValidation.None)
+            .ExecuteAsync()
+            .GetAwaiter()
+            .GetResult();
+
+        session.Log(
+            $"BthPS3PSM manifest import {(bthPs3PsmManifestResult.IsSuccess ? "succeeded" : "failed")}, " +
+            $"exit code: {bthPs3PsmManifestResult.ExitCode}");
 
         return ActionResult.Success;
     }

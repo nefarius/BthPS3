@@ -19,9 +19,12 @@ using Nefarius.Utilities.DeviceManagement.Drivers;
 using Nefarius.Utilities.DeviceManagement.PnP;
 
 using WixSharp;
+using WixSharp.CommonTasks;
 using WixSharp.Forms;
 
 using WixToolset.Dtf.WindowsInstaller;
+
+using static System.Collections.Specialized.BitVector32;
 
 using File = WixSharp.File;
 using RegistryHive = WixSharp.RegistryHive;
@@ -30,7 +33,7 @@ namespace Nefarius.BthPS3.Setup;
 
 internal class InstallScript
 {
-    public const string ProductName = "BthPS3 Bluetooth Drivers";
+    public const string ProductName = "Nefarius BthPS3 Bluetooth Drivers";
     public const string SetupRoot = @"..\setup";
     public const string DriversRoot = @"..\setup\drivers";
     public const string ManifestsDir = "manifests";
@@ -52,7 +55,7 @@ internal class InstallScript
         Console.WriteLine($"Driver version: {driverVersion}");
         Console.WriteLine($"Filter version: {filterVersion}");
 
-        Feature driversFeature = new(ProductName, true, false)
+        Feature driversFeature = new("BthPS3 Bluetooth Drivers", true, false)
         {
             Description = "Installs the Nefarius BthPS3 drivers for PS3 peripherals. " +
                           "This is a mandatory core component and can't be de-selected."
@@ -103,9 +106,25 @@ internal class InstallScript
             ManagedUI = new ManagedUI(),
             Version = version,
             Platform = Platform.x64,
-            WildCardDedup = Project.UniqueFileNameDedup,
-            MajorUpgradeStrategy = MajorUpgradeStrategy.Default
+            WildCardDedup = Project.UniqueFileNameDedup
         };
+
+        project.AddProperty(new Property("REBOOT", "ReallySuppress"));
+
+        project.MajorUpgrade = new MajorUpgrade
+        {
+            Schedule = UpgradeSchedule.afterInstallInitialize,
+            DowngradeErrorMessage = "A later version of [ProductName] is already installed. Setup will now exit."
+        };
+
+        /*
+        project.Load +=
+            e =>
+            {
+                MessageBox.Show(e.Session.GetMainWindow(), e.ToString(),
+                    "Before (Install/Uninstall) - " + new Version(e.Session["FOUNDPREVIOUSVERSION"]));
+            };
+        */
 
         project.ManagedUI.InstallDialogs.Add(Dialogs.Welcome)
             .Add(Dialogs.Licence)
@@ -136,8 +155,6 @@ internal class InstallScript
         project.ControlPanelInfo.HelpLink = "https://docs.nefarius.at/Community-Support/";
         project.ControlPanelInfo.UrlInfoAbout = "https://github.com/nefarius/BthPS3";
         project.ControlPanelInfo.NoModify = true;
-
-        project.MajorUpgradeStrategy.PreventDowngradingVersions.OnlyDetect = false;
 
         project.ResolveWildCards();
 
@@ -185,6 +202,8 @@ public static class CustomActions
     [CustomAction]
     public static ActionResult InstallDrivers(Session session)
     {
+        return ActionResult.Success;
+
         // clean out whatever has been on the machine before
         bool rebootRequired = UninstallDrivers(session);
 

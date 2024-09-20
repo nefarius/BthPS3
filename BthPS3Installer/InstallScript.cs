@@ -228,7 +228,7 @@ public static class CustomActions
     public static ActionResult InstallDrivers(Session session)
     {
         // clean out whatever has been on the machine before
-        bool rebootRequired = UninstallDrivers(session);
+        UninstallDrivers(session);
 
         DirectoryInfo installDir = new(session.Property("INSTALLDIR"));
         session.Log($"installDir = {installDir}");
@@ -249,7 +249,7 @@ public static class CustomActions
     ///     Uninstalls and cleans all driver residue.
     /// </summary>
     /// <remarks>Requires elevated permissions.</remarks>
-    public static bool UninstallDrivers(Session session)
+    public static void UninstallDrivers(Session session)
     {
         try
         {
@@ -368,8 +368,6 @@ public static class CustomActions
         {
             radio.Dispose();
         }
-
-        return false;
     }
 
     #region ETW Manifests

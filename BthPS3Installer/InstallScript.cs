@@ -5,10 +5,12 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
 using CliWrap;
+using CliWrap.Buffered;
 
 using Microsoft.Win32;
 using Microsoft.Win32.SafeHandles;
@@ -29,6 +31,7 @@ using WixToolset.Dtf.WindowsInstaller;
 
 using File = WixSharp.File;
 using RegistryHive = WixSharp.RegistryHive;
+using Win32Exception = Nefarius.Utilities.DeviceManagement.Exceptions.Win32Exception;
 
 namespace Nefarius.BthPS3.Setup;
 
@@ -106,7 +109,12 @@ internal class InstallScript
                 When.Before,
                 Step.RemoveFiles,
                 Condition.Installed
-            )
+            ),
+            // custom reboot prompt message
+            new Error("9000",
+                "Driver installation succeeded but a reboot is required to be fully operational. " +
+                "After the setup is finished, please reboot the system before using the software."
+                )
         )
         {
             GUID = new Guid("CC32A6ED-BDFE-4D51-9FFF-2AB51D9ECE18"),
@@ -253,6 +261,135 @@ public static class CustomActions
         session.Log($"bthPs3PsmInfPath = {bthPs3PsmInfPath}");
         string bthPs3NullInfPath = Path.Combine(bthPs3DriverDir, "BthPS3_PDO_NULL_Device.inf");
         session.Log($"bthPs3NullInfPath = {bthPs3NullInfPath}");
+
+        #region Filter install
+
+        // BthPS3PSM filter install
+        BufferedCommandResult? result = Cli.Wrap(nefconcPath)
+            .WithArguments(builder => builder
+                .Add("--inf-default-install")
+                .Add("--inf-path")
+                .Add(bthPs3PsmInfPath)
+            )
+            .WithValidation(CommandResultValidation.None)
+            .ExecuteBufferedAsync()
+            .GetAwaiter()
+            .GetResult();
+
+        session.Log($"BthPS3PSM command stdout: {result.StandardOutput}");
+        session.Log($"BthPS3PSM command stderr: {result.StandardError}");
+
+        bool rebootRequired = result?.ExitCode == 3010;
+
+        if (result?.ExitCode != 0 && result?.ExitCode != 3010)
+        {
+            session.Log(
+                $"Filter installer failed with exit code: {result?.ExitCode}, message: {Win32Exception.GetMessageFor(result?.ExitCode)}");
+
+            return ActionResult.Failure;
+        }
+
+        #endregion
+
+        #region Register filter
+
+        try
+        {
+            // register filter
+            session.Log("Adding lower filter entry");
+            DeviceClassFilters.AddLower(DeviceClassIds.Bluetooth, FilterDriver.FilterServiceName);
+            session.Log("Added lower filter entry");
+        }
+        catch (Exception ex)
+        {
+            session.Log($"Adding lower filter failed with error {ex}");
+            return ActionResult.Failure;
+        }
+
+        #endregion
+
+        #region Restart radio
+
+        try
+        {
+            session.Log("Restarting radio device");
+            // restart device, filter is loaded afterward
+            HostRadio.RestartRadioDevice();
+            session.Log("Restarted radio device");
+            // safety margin
+            Thread.Sleep(1000);
+        }
+        catch (Exception ex)
+        {
+            session.Log($"Restarting radio device failed with error {ex}");
+        }
+
+        #endregion
+
+        #region Profile driver
+
+        if (!Devcon.Install(bthPs3InfPath, out bool profileRebootRequired))
+        {
+            int error = Marshal.GetLastWin32Error();
+            session.Log(
+                $"Profile driver installation failed with win32 error: {error}, message: {Win32Exception.GetMessageFor(error)}");
+
+            return ActionResult.Failure;
+        }
+
+        if (profileRebootRequired)
+        {
+            rebootRequired = true;
+        }
+
+        #endregion
+
+        #region NULL driver
+
+        if (!Devcon.Install(bthPs3NullInfPath, out bool nullRebootRequired))
+        {
+            int error = Marshal.GetLastWin32Error();
+            session.Log(
+                $"NULL driver installation failed with win32 error: {error}, message: {Win32Exception.GetMessageFor(error)}");
+
+            return ActionResult.Failure;
+        }
+
+        if (nullRebootRequired)
+        {
+            rebootRequired = true;
+        }
+
+        #endregion
+
+        HostRadio radio = new();
+
+        try
+        {
+            session.Log("Enabling BthPS3 service");
+            // enable service, spawns profile driver PDO
+            radio.EnableService(InstallScript.BthPS3ServiceGuid, InstallScript.BthPS3ServiceName);
+            session.Log("Enabled BthPS3 service");
+        }
+        catch (Exception ex)
+        {
+            session.Log($"Enabling service or radio failed with error {ex}");
+            return ActionResult.Failure;
+        }
+        finally
+        {
+            radio.Dispose();
+        }
+
+        if (rebootRequired)
+        {
+            Record record = new(1);
+            record[1] = "9000";
+
+            session.Message(
+                InstallMessage.User | (InstallMessage)MessageButtons.OK | (InstallMessage)MessageIcon.Information,
+                record);
+        }
 
         return ActionResult.Success;
     }

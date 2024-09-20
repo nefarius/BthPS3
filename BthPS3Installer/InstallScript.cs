@@ -362,6 +362,8 @@ public static class CustomActions
 
         #endregion
 
+        #region Profile driver service
+
         HostRadio radio = new();
 
         try
@@ -380,6 +382,8 @@ public static class CustomActions
         {
             radio.Dispose();
         }
+
+        #endregion
 
         if (rebootRequired)
         {

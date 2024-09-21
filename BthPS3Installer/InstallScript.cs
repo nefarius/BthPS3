@@ -236,6 +236,12 @@ internal class InstallScript
 
         Session? session = e.Session;
 
+        if (session is null)
+        {
+            e.Result = ActionResult.Failure;
+            return;
+        }
+
         Record record = new(1);
         record[1] = "9001";
 

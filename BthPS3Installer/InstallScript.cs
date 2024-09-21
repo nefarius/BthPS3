@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 using CliWrap;
 using CliWrap.Buffered;
@@ -69,6 +70,7 @@ internal class InstallScript
 
         Feature postInstallArticleFeature = new("Open post-installation article", true, true)
         {
+            Id = "PostInstArticle",
             Description = "When setup has finished successfully, open the post-installation web article."
         };
 
@@ -306,7 +308,7 @@ public static class CustomActions
     [CustomAction]
     public static ActionResult OpenArticle(Session session)
     {
-        if (!session.IsFeatureEnabledPartial("article"))
+        if (!session.IsFeatureEnabled("PostInstArticle"))
         {
             return ActionResult.Success;
         }

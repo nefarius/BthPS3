@@ -204,3 +204,4 @@ This application benefits from these awesome projects ❤ (appearance in no spec
 - [NUKE Build Automation](https://nuke.build/)
 - [Nefarius.Tools.WDKWhere](https://github.com/nefarius/wdkwhere)
 - [Nefarius.Utilities.Bluetooth](https://github.com/nefarius/Nefarius.Utilities.Bluetooth)
+- [WixSharp (WixSharp) - managed interface for WiX](https://github.com/oleg-shilo/wixsharp)

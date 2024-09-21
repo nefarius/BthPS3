@@ -48,7 +48,6 @@ internal class InstallScript
     private static void Main()
     {
         Version version = Version.Parse(BuildVariables.SetupVersion);
-        string archShortName = ArchitectureInfo.PlatformShortName;
 
         string driverPath = Path.Combine(DriversRoot, @"BthPS3_x64\BthPS3.sys");
         Version driverVersion = Version.Parse(FileVersionInfo.GetVersionInfo(driverPath).FileVersion);
@@ -67,6 +66,14 @@ internal class InstallScript
             Description = "Installs the Nefarius BthPS3 drivers for PS3 peripherals. " +
                           "This is a mandatory core component and can't be de-selected."
         };
+
+        Feature postInstallArticleFeature = new("Open post-installation article", true, true)
+        {
+            Description = "When setup has finished successfully, open the post-installation web article."
+        };
+
+        driversFeature.Add(postInstallArticleFeature);
+        driversFeature.Display = FeatureDisplay.expand;
 
         ManagedProject project = new(ProductName,
             new Dir(driversFeature, @"%ProgramFiles%\Nefarius Software Solutions\BthPS3",
@@ -131,6 +138,11 @@ internal class InstallScript
                 Step.RemoveFiles,
                 Condition.Installed
             ),
+            new ManagedAction(CustomActions.OpenArticle, Return.check,
+                When.After,
+                Step.InstallFinalize,
+                Condition.NOT_Installed
+            ),
             // custom reboot prompt message
             new Error("9000",
                 "Driver installation succeeded but a reboot is required to be fully operational. " +
@@ -150,7 +162,8 @@ internal class InstallScript
             ManagedUI = new ManagedUI(),
             Version = version,
             Platform = Platform.x64,
-            WildCardDedup = Project.UniqueFileNameDedup
+            WildCardDedup = Project.UniqueFileNameDedup,
+            DefaultFeature = driversFeature
         };
 
         #region Fixes for setups < v2.10.x
@@ -288,6 +301,31 @@ internal class InstallScript
 
 public static class CustomActions
 {
+    #region Web
+
+    [CustomAction]
+    public static ActionResult OpenArticle(Session session)
+    {
+        if (!session.IsFeatureEnabledPartial("article"))
+        {
+            return ActionResult.Success;
+        }
+
+        CommandResult? result = Cli.Wrap("explorer")
+            .WithArguments("https://docs.nefarius.at/projects/BthPS3/Welcome/Installation-Successful/")
+            .WithValidation(CommandResultValidation.None)
+            .ExecuteAsync()
+            .GetAwaiter()
+            .GetResult();
+
+        session.Log(
+            $"Beta article launch {(result.IsSuccess ? "succeeded" : "failed")}, exit code: {result.ExitCode}");
+
+        return ActionResult.Success;
+    }
+
+    #endregion
+
     #region Driver management
 
     /// <summary>

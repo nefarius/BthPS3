@@ -42,8 +42,8 @@ internal class InstallScript
     public const string DriversRoot = @"..\setup\drivers";
     public const string ManifestsDir = "manifests";
 
-    public static string BthPS3ServiceName => "BthPS3Service";
-    public static Guid BthPS3ServiceGuid => Guid.Parse("{1cb831ea-79cd-4508-b0fc-85f7c85ae8e0}");
+    public static string BthPs3ServiceName => "BthPS3Service";
+    public static Guid BthPs3ServiceGuid => Guid.Parse("{1cb831ea-79cd-4508-b0fc-85f7c85ae8e0}");
 
     private static void Main()
     {
@@ -454,7 +454,7 @@ public static class CustomActions
         {
             session.Log("Enabling BthPS3 service");
             // enable service, spawns profile driver PDO
-            radio.EnableService(InstallScript.BthPS3ServiceGuid, InstallScript.BthPS3ServiceName);
+            radio.EnableService(InstallScript.BthPs3ServiceGuid, InstallScript.BthPs3ServiceName);
             session.Log("Enabled BthPS3 service");
         }
         catch (Exception ex)
@@ -513,7 +513,7 @@ public static class CustomActions
         {
             session.Log("Disabling BthPS3 service");
             // disabling service unloads PDO
-            radio.DisableService(InstallScript.BthPS3ServiceGuid, InstallScript.BthPS3ServiceName);
+            radio.DisableService(InstallScript.BthPs3ServiceGuid, InstallScript.BthPs3ServiceName);
             session.Log("Disabled BthPS3 service");
 
             session.Log("Disabling radio");

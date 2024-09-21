@@ -89,7 +89,9 @@ internal class InstallScript
                 ),
                 new Dir(@"%ProgramMenu%\Nefarius Software Solutions\BthPS3",
                     new ExeFileShortcut("Uninstall BthPS3", "[System64Folder]msiexec.exe", "/x [ProductCode]"),
-                    new ExeFileShortcut("BthPS3 Driver Configuration Tool", "[INSTALLDIR]BthPS3CfgUI.exe", ""))
+                    new ExeFileShortcut("BthPS3 Driver Configuration Tool", "[INSTALLDIR]BthPS3CfgUI.exe", "")
+                ),
+                new File(driversFeature, "nefarius_BthPS3_Updater.exe")
             ),
             // registry values
             new RegKey(driversFeature, RegistryHive.LocalMachine,
@@ -113,6 +115,18 @@ internal class InstallScript
             ),
             // remove manifests
             new ElevatedManagedAction(CustomActions.UninstallManifest, Return.check,
+                When.Before,
+                Step.RemoveFiles,
+                Condition.Installed
+            ),
+            // register updater
+            new ManagedAction(CustomActions.RegisterUpdater, Return.check,
+                When.After,
+                Step.InstallFinalize,
+                Condition.NOT_Installed
+            ),
+            // remove updater cleanly
+            new ManagedAction(CustomActions.DeregisterUpdater, Return.check,
                 When.Before,
                 Step.RemoveFiles,
                 Condition.Installed
@@ -235,6 +249,8 @@ internal class InstallScript
 
 public static class CustomActions
 {
+    #region Driver management
+
     /// <summary>
     ///     Put install logic here.
     /// </summary>
@@ -536,6 +552,72 @@ public static class CustomActions
             radio.Dispose();
         }
     }
+
+    #endregion
+
+    #region Updater
+
+    /// <summary>
+    ///     Register the auto-updater.
+    /// </summary>
+    [CustomAction]
+    public static ActionResult RegisterUpdater(Session session)
+    {
+        DirectoryInfo installDir = new(session.Property("INSTALLDIR"));
+        string updaterPath = Path.Combine(installDir.FullName, "nefarius_BthPS3_Updater.exe");
+
+        CommandResult? result = Cli.Wrap(updaterPath)
+            .WithArguments(builder => builder
+                .Add("--install")
+                .Add("--silent")
+            )
+            .WithValidation(CommandResultValidation.None)
+            .ExecuteAsync()
+            .GetAwaiter()
+            .GetResult();
+
+        session.Log(
+            $"Updater registration {(result.IsSuccess ? "succeeded" : "failed")}, exit code: {result.ExitCode}");
+
+        return ActionResult.Success;
+    }
+
+    /// <summary>
+    ///     De-register the auto-updater.
+    /// </summary>
+    [CustomAction]
+    public static ActionResult DeregisterUpdater(Session session)
+    {
+        try
+        {
+            DirectoryInfo installDir = new(session.Property("INSTALLDIR"));
+            string updaterPath = Path.Combine(installDir.FullName, "nefarius_BthPS3_Updater.exe");
+
+            CommandResult? result = Cli.Wrap(updaterPath)
+                .WithArguments(builder => builder
+                    .Add("--uninstall")
+                    .Add("--silent")
+                )
+                .WithValidation(CommandResultValidation.None)
+                .ExecuteAsync()
+                .GetAwaiter()
+                .GetResult();
+
+            session.Log(
+                $"Updater de-registration {(result.IsSuccess ? "succeeded" : "failed")}, exit code: {result.ExitCode}");
+
+            return ActionResult.Success;
+        }
+        catch
+        {
+            //
+            // Not failing a removal here
+            // 
+            return ActionResult.Success;
+        }
+    }
+
+    #endregion
 
     #region ETW Manifests
 

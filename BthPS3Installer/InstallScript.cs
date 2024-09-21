@@ -288,28 +288,6 @@ internal class InstallScript
 
 public static class CustomActions
 {
-    #region Check radio
-
-    [CustomAction]
-    public static ActionResult CheckRadio(Session session)
-    {
-        if (HostRadio.IsAvailable)
-        {
-            return ActionResult.Success;
-        }
-
-        Record record = new(1);
-        record[1] = "9001";
-
-        session.Message(
-            InstallMessage.User | (InstallMessage)MessageButtons.OK | (InstallMessage)MessageIcon.Information,
-            record);
-
-        return ActionResult.Failure;
-    }
-
-    #endregion
-
     #region Driver management
 
     /// <summary>

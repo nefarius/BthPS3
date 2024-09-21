@@ -135,6 +135,11 @@ internal class InstallScript
             new Error("9000",
                 "Driver installation succeeded but a reboot is required to be fully operational. " +
                 "After the setup is finished, please reboot the system before using the software."
+            ),
+            new Error("9001",
+                "No Bluetooth host radio was found. " +
+                "This machine has to have working Bluetooth set up for some of the installation/removal steps to succeed. " +
+                "Setup will now exit."
             )
         )
         {
@@ -174,6 +179,8 @@ internal class InstallScript
             };
         */
 
+        project.Load += ProjectOnLoad;
+
         project.ManagedUI.InstallDialogs.Add(Dialogs.Welcome)
             .Add(Dialogs.Licence)
             .Add(Dialogs.Features)
@@ -187,7 +194,8 @@ internal class InstallScript
 
         project.AfterInstall += ProjectOnAfterInstall;
 
-        // embed types of dependencies
+        #region Embed types of dependencies
+
         project.DefaultRefAssemblies.Add(typeof(Devcon).Assembly.Location);
         project.DefaultRefAssemblies.Add(typeof(HostRadio).Assembly.Location);
         project.DefaultRefAssemblies.Add(typeof(Cli).Assembly.Location);
@@ -202,15 +210,40 @@ internal class InstallScript
         project.DefaultRefAssemblies.Add(typeof(BluetoothHelper).Assembly.Location);
         project.DefaultRefAssemblies.Add(typeof(SafeRegistryHandle).Assembly.Location);
 
+        #endregion
+
+        #region Control Panel
+
         project.ControlPanelInfo.ProductIcon = @"..\Setup\Icons\B3.ico";
         project.ControlPanelInfo.Manufacturer = "Nefarius Software Solutions e.U.";
         project.ControlPanelInfo.HelpLink = "https://docs.nefarius.at/Community-Support/";
         project.ControlPanelInfo.UrlInfoAbout = "https://github.com/nefarius/BthPS3";
         project.ControlPanelInfo.NoModify = true;
 
+        #endregion
+
         project.ResolveWildCards();
 
         project.BuildMsi();
+    }
+
+    private static void ProjectOnLoad(SetupEventArgs e)
+    {
+        if (HostRadio.IsAvailable)
+        {
+            return;
+        }
+
+        Session? session = e.Session;
+
+        Record record = new(1);
+        record[1] = "9001";
+
+        session.Message(
+            InstallMessage.User | (InstallMessage)MessageButtons.OK | (InstallMessage)MessageIcon.Error,
+            record);
+
+        e.Result = ActionResult.UserExit;
     }
 
     /// <summary>
@@ -249,6 +282,28 @@ internal class InstallScript
 
 public static class CustomActions
 {
+    #region Check radio
+
+    [CustomAction]
+    public static ActionResult CheckRadio(Session session)
+    {
+        if (HostRadio.IsAvailable)
+        {
+            return ActionResult.Success;
+        }
+
+        Record record = new(1);
+        record[1] = "9001";
+
+        session.Message(
+            InstallMessage.User | (InstallMessage)MessageButtons.OK | (InstallMessage)MessageIcon.Information,
+            record);
+
+        return ActionResult.Failure;
+    }
+
+    #endregion
+
     #region Driver management
 
     /// <summary>

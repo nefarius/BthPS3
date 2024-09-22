@@ -321,7 +321,7 @@ public static class CustomActions
             .GetResult();
 
         session.Log(
-            $"Beta article launch {(result.IsSuccess ? "succeeded" : "failed")}, exit code: {result.ExitCode}");
+            $"Post-installation article launch {(result.IsSuccess ? "succeeded" : "failed")}, exit code: {result.ExitCode}");
 
         return ActionResult.Success;
     }

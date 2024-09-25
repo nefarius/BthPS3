@@ -21,20 +21,17 @@ This set of Windows kernel-mode drivers enhances the standard (a.k.a. vanilla) B
 The solution consists of the following individual projects:
 
 - [`BthPS3`](/BthPS3) - Multi-purpose kernel-mode driver. Function driver for service PDO exposed by `BTHENUM` (Microsoft), Bluetooth profile (L2CAP server service) and bus driver for PS3 wireless peripherals.
-- [`BthPS3PSM`](/BthPS3PSM) - Lower filter driver for `BTHUSB`, patching L2CAP packets. Required for profile driver to receive L2CAP traffic.
-- [`BthPS3Util`](/BthPS3Util) - User-land command-line utility for managing driver installation tasks and configuration changes.
+- [`BthPS3PSM`](/BthPS3PSM) - Lower filter driver for `BTHUSB`, patching L2CAP packets. Reroutes L2CAP traffic to profile driver.
 - [`BthPS3CfgUI`](/BthPS3CfgUI) - User-land GUI utility to safely edit driver settings.
-- [`BthPS3SetupHelper`](/BthPS3SetupHelper) - Library hosting utility functions for driver management.
-- [`BthPS3CA`](/Setup/BthPS3CA) - Custom Actions for [WiX](https://wixtoolset.org/)-based setup.
-- [`BthPS3Setup`](/Setup) - [WiX](https://wixtoolset.org/)-based setup for driver installation and removal.
+- [`BthPS3Installer`](/BthPS3Installer) - [WiXSharp](https://github.com/oleg-shilo/wixsharp)-based setup for driver installation and removal.
 
 ## Licensing
 
 This solution contains **BSD-3-Clause** and **MIT** licensed components:
 
 - Drivers (BthPS3.sys, BthPS3PSM.sys) - **BSD-3-Clause**
-- [Setup](/Setup) (WiX project and assets) - **BSD-3-Clause**
-- User-land utilities (BthPS3Util.exe, BthPS3CfgUI.exe) - **MIT**
+- [Installer](/BthPS3Installer)/[Setup](/Setup) (WiXSharp project and assets) - **BSD-3-Clause**
+- User-land utilities (BthPS3CfgUI.exe) - **MIT**
 
 For details, please consult the individual `LICENSE` files.
 
@@ -203,3 +200,5 @@ This application benefits from these awesome projects ❤ (appearance in no spec
 - [Nefarius' Domito Library](https://git.nefarius.at/nefarius/Domito)
 - [NUKE Build Automation](https://nuke.build/)
 - [Nefarius.Tools.WDKWhere](https://github.com/nefarius/wdkwhere)
+- [Nefarius.Utilities.Bluetooth](https://github.com/nefarius/Nefarius.Utilities.Bluetooth)
+- [WixSharp (WixSharp) - managed interface for WiX](https://github.com/oleg-shilo/wixsharp)

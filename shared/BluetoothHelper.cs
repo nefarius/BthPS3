@@ -4,7 +4,7 @@ using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security;
 
-namespace BthPS3CfgUI;
+namespace Nefarius.BthPS3.Shared;
 
 public static class BluetoothHelper
 {

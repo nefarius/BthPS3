@@ -11,7 +11,7 @@
 - Tag setup version as `setup-vX.X.X`
 - Push with tags enabled
 - Let CI build the fun
-- Adjust and run `.\stage0.ps1 -Token "APPVEYOR-API-TOKEN-HERE" -BuildVersion "1.3.79.0" -SetupVersion "1.3.79.0"`
+- Adjust and run `.\stage0.ps1 -Token "$appVeyorToken" -BuildVersion "1.3.65.0"`
   - This downloads and signs the binaries and submissions files
 - Upload `*.cab` files to Microsoft Portal and wait for signed results (stick to consistent names for submissions)
   - Example (x86): `BthPS3 x86 v1.3.65.0 09.01.2021`
@@ -21,8 +21,8 @@
 - Run `.\stage1.ps1`
   - This ensures all binaries are properly signed before getting packed by setup
 - Build the MSI for all platforms
-- Run `.\stage2.ps1`
-  - This will sign the generated MSI files
+- Run `.\stage2.ps1 -SetupVersion "1.3.65"`
+  - This will build and sign the MSI files
 - Craft new release for the previously created `setup-vX.X.X` tag
   - Fill in release notes
   - Attach MSI files

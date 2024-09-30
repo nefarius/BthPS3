@@ -500,23 +500,31 @@ public static class CustomActions
 
         #region Profile driver service
 
-        HostRadio radio = new();
-
         try
         {
-            session.Log("Enabling BthPS3 service");
-            // enable service, spawns profile driver PDO
-            radio.EnableService(InstallScript.BthPs3ServiceGuid, InstallScript.BthPs3ServiceName);
-            session.Log("Enabled BthPS3 service");
+            HostRadio radio = new();
+
+            try
+            {
+                session.Log("Enabling BthPS3 service");
+                // enable service, spawns profile driver PDO
+                radio.EnableService(InstallScript.BthPs3ServiceGuid, InstallScript.BthPs3ServiceName);
+                session.Log("Enabled BthPS3 service");
+            }
+            catch (Exception ex)
+            {
+                session.Log($"Enabling service failed with error {ex}");
+                return ActionResult.Failure;
+            }
+            finally
+            {
+                radio.Dispose();
+            }
         }
         catch (Exception ex)
         {
-            session.Log($"Enabling service or radio failed with error {ex}");
+            session.Log($"Enabling radio failed with error {ex}");
             return ActionResult.Failure;
-        }
-        finally
-        {
-            radio.Dispose();
         }
 
         #endregion

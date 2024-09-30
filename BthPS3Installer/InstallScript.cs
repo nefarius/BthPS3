@@ -414,23 +414,49 @@ public static class CustomActions
 
         #region Restart radio
 
+        AutoResetEvent waitEvent = new(false);
+        DeviceNotificationListener listener = new();
+
         try
         {
+
+            listener.RegisterDeviceArrived(RadioDeviceArrived, HostRadio.DeviceInterface);
+
+            void RadioDeviceArrived(DeviceEventArgs obj)
+            {
+                session.Log("Radio arrival event, path: {0}", obj.SymLink);
+                waitEvent.Set();
+            }
+
             session.Log("Restarting radio device");
             // restart device, filter is loaded afterward
             HostRadio.RestartRadioDevice();
             session.Log("Restarted radio device");
-            // safety margin
-            Thread.Sleep(1000);
+            session.Log("Waiting for radio device to come online...");
+
+            // wait until either event fired OR the timeout has been reached
+            if (!HostRadio.IsAvailable && !waitEvent.WaitOne(TimeSpan.FromSeconds(30)))
+            {
+                session.Log("Timeout reached while waiting for radio to come online");
+                return ActionResult.Failure;
+            }
+
+            session.Log("Radio device online");
         }
         catch (Exception ex)
         {
             session.Log($"Restarting radio device failed with error {ex}");
         }
+        finally
+        {
+            listener.Dispose();
+        }
 
         #endregion
 
         #region Profile driver
+
+        session.Log("Installing profile driver");
 
         if (!Devcon.Install(bthPs3InfPath, out bool profileRebootRequired))
         {
@@ -441,6 +467,8 @@ public static class CustomActions
             return ActionResult.Failure;
         }
 
+        session.Log("Installed profile driver");
+
         if (profileRebootRequired)
         {
             rebootRequired = true;
@@ -450,6 +478,8 @@ public static class CustomActions
 
         #region NULL driver
 
+        session.Log("Installing NULL driver");
+
         if (!Devcon.Install(bthPs3NullInfPath, out bool nullRebootRequired))
         {
             int error = Marshal.GetLastWin32Error();
@@ -458,6 +488,8 @@ public static class CustomActions
 
             return ActionResult.Failure;
         }
+
+        session.Log("Installed NULL driver");
 
         if (nullRebootRequired)
         {
@@ -491,8 +523,16 @@ public static class CustomActions
 
         #region Filter settings
 
-        // make sure patching is enabled, might not be in the registry
-        FilterDriver.IsFilterEnabled = true;
+        try
+        {
+            // make sure patching is enabled, might not be in the registry
+            FilterDriver.IsFilterEnabled = true;
+        }
+        catch (Exception ex)
+        {
+            session.Log($"Enabling filter failed with {ex}");
+            return ActionResult.Failure;
+        }
 
         #endregion
 

@@ -166,7 +166,9 @@ internal class InstallScript
             Platform = Platform.x64,
             WildCardDedup = Project.UniqueFileNameDedup,
             DefaultFeature = driversFeature,
-            LicenceFile = @"..\Setup\BthPS3_EULA.rtf"
+            LicenceFile = @"..\Setup\BthPS3_EULA.rtf",
+            BackgroundImage = "left-banner.png",
+            BannerImage = "top-banner.png"
         };
 
         #region Fixes for setups < v2.10.x

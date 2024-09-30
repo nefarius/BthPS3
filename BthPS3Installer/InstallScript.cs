@@ -165,7 +165,8 @@ internal class InstallScript
             Version = version,
             Platform = Platform.x64,
             WildCardDedup = Project.UniqueFileNameDedup,
-            DefaultFeature = driversFeature
+            DefaultFeature = driversFeature,
+            LicenceFile = @"..\Setup\BthPS3_EULA.rtf"
         };
 
         #region Fixes for setups < v2.10.x

@@ -316,15 +316,14 @@ public static class CustomActions
             return ActionResult.Success;
         }
 
-        CommandResult? result = Cli.Wrap("explorer")
-            .WithArguments("https://docs.nefarius.at/projects/BthPS3/Welcome/Installation-Successful/")
-            .WithValidation(CommandResultValidation.None)
-            .ExecuteAsync()
-            .GetAwaiter()
-            .GetResult();
-
-        session.Log(
-            $"Post-installation article launch {(result.IsSuccess ? "succeeded" : "failed")}, exit code: {result.ExitCode}");
+        try
+        {
+            Process.Start("https://docs.nefarius.at/projects/BthPS3/Welcome/Installation-Successful/");
+        }
+        catch (Exception ex)
+        {
+            session.Log($"Spawning article process failed with {ex}");
+        }
 
         return ActionResult.Success;
     }

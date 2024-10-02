@@ -8,7 +8,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 
 using CliWrap;
 using CliWrap.Buffered;
@@ -16,11 +15,11 @@ using CliWrap.Buffered;
 using Microsoft.Win32;
 using Microsoft.Win32.SafeHandles;
 
-using Nefarius.BthPS3.Setup.Util;
 using Nefarius.BthPS3.Shared;
 using Nefarius.Utilities.Bluetooth;
 using Nefarius.Utilities.DeviceManagement.Drivers;
 using Nefarius.Utilities.DeviceManagement.PnP;
+using Nefarius.Utilities.WixSharp.Util;
 
 using PInvoke;
 
@@ -83,10 +82,10 @@ internal class InstallScript
                 new Dir(driversFeature, "nefcon")
                 {
                     Files = new DirFiles(driversFeature, "*.*").GetFiles(nefconDir),
-                    Dirs = GetSubDirectories(driversFeature, nefconDir).ToArray()
+                    Dirs = WixExt.GetSubDirectories(driversFeature, nefconDir).ToArray()
                 },
                 // driver binaries
-                new Dir(driversFeature, "drivers") { Dirs = GetSubDirectories(driversFeature, DriversRoot).ToArray() },
+                new Dir(driversFeature, "drivers") { Dirs = WixExt.GetSubDirectories(driversFeature, DriversRoot).ToArray() },
                 // manifest files
                 new Dir(driversFeature, ManifestsDir,
                     new File(driversFeature, @"..\BthPS3\BthPS3.man"),
@@ -165,7 +164,10 @@ internal class InstallScript
             Version = version,
             Platform = Platform.x64,
             WildCardDedup = Project.UniqueFileNameDedup,
-            DefaultFeature = driversFeature
+            DefaultFeature = driversFeature,
+            LicenceFile = @"..\Setup\BthPS3_EULA.rtf",
+            BackgroundImage = "left-banner.png",
+            BannerImage = "top-banner.png"
         };
 
         #region Fixes for setups < v2.10.x
@@ -278,27 +280,6 @@ internal class InstallScript
             CustomActions.UninstallDrivers(e.Session);
         }
     }
-
-    /// <summary>
-    ///     Recursively resolves all subdirectories and their containing files.
-    /// </summary>
-    private static List<Dir> GetSubDirectories(Feature feature, string directory)
-    {
-        List<Dir> subDirectoryInfosCollection = new();
-
-        foreach (string subDirectory in Directory.GetDirectories(directory))
-        {
-            string subDirectoryName = subDirectory.Remove(0, subDirectory.LastIndexOf('\\') + 1);
-            Dir newDir =
-                new(feature, subDirectoryName, new Files(feature, subDirectory + @"\*.*")) { Name = subDirectoryName };
-            subDirectoryInfosCollection.Add(newDir);
-
-            // Recursively traverse nested directories
-            GetSubDirectories(feature, subDirectory);
-        }
-
-        return subDirectoryInfosCollection;
-    }
 }
 
 public static class CustomActions
@@ -313,15 +294,14 @@ public static class CustomActions
             return ActionResult.Success;
         }
 
-        CommandResult? result = Cli.Wrap("explorer")
-            .WithArguments("https://docs.nefarius.at/projects/BthPS3/Welcome/Installation-Successful/")
-            .WithValidation(CommandResultValidation.None)
-            .ExecuteAsync()
-            .GetAwaiter()
-            .GetResult();
-
-        session.Log(
-            $"Post-installation article launch {(result.IsSuccess ? "succeeded" : "failed")}, exit code: {result.ExitCode}");
+        try
+        {
+            Process.Start("https://docs.nefarius.at/projects/BthPS3/Welcome/Installation-Successful/");
+        }
+        catch (Exception ex)
+        {
+            session.Log($"Spawning article process failed with {ex}");
+        }
 
         return ActionResult.Success;
     }
@@ -412,23 +392,49 @@ public static class CustomActions
 
         #region Restart radio
 
+        AutoResetEvent waitEvent = new(false);
+        DeviceNotificationListener listener = new();
+
         try
         {
+
+            listener.RegisterDeviceArrived(RadioDeviceArrived, HostRadio.DeviceInterface);
+
+            void RadioDeviceArrived(DeviceEventArgs obj)
+            {
+                session.Log("Radio arrival event, path: {0}", obj.SymLink);
+                waitEvent.Set();
+            }
+
             session.Log("Restarting radio device");
             // restart device, filter is loaded afterward
             HostRadio.RestartRadioDevice();
             session.Log("Restarted radio device");
-            // safety margin
-            Thread.Sleep(1000);
+            session.Log("Waiting for radio device to come online...");
+
+            // wait until either event fired OR the timeout has been reached
+            if (!HostRadio.IsAvailable && !waitEvent.WaitOne(TimeSpan.FromSeconds(30)))
+            {
+                session.Log("Timeout reached while waiting for radio to come online");
+                return ActionResult.Failure;
+            }
+
+            session.Log("Radio device online");
         }
         catch (Exception ex)
         {
             session.Log($"Restarting radio device failed with error {ex}");
         }
+        finally
+        {
+            listener.Dispose();
+        }
 
         #endregion
 
         #region Profile driver
+
+        session.Log("Installing profile driver");
 
         if (!Devcon.Install(bthPs3InfPath, out bool profileRebootRequired))
         {
@@ -439,6 +445,8 @@ public static class CustomActions
             return ActionResult.Failure;
         }
 
+        session.Log("Installed profile driver");
+
         if (profileRebootRequired)
         {
             rebootRequired = true;
@@ -447,6 +455,8 @@ public static class CustomActions
         #endregion
 
         #region NULL driver
+
+        session.Log("Installing NULL driver");
 
         if (!Devcon.Install(bthPs3NullInfPath, out bool nullRebootRequired))
         {
@@ -457,6 +467,8 @@ public static class CustomActions
             return ActionResult.Failure;
         }
 
+        session.Log("Installed NULL driver");
+
         if (nullRebootRequired)
         {
             rebootRequired = true;
@@ -466,31 +478,47 @@ public static class CustomActions
 
         #region Profile driver service
 
-        HostRadio radio = new();
-
         try
         {
-            session.Log("Enabling BthPS3 service");
-            // enable service, spawns profile driver PDO
-            radio.EnableService(InstallScript.BthPs3ServiceGuid, InstallScript.BthPs3ServiceName);
-            session.Log("Enabled BthPS3 service");
+            HostRadio radio = new();
+
+            try
+            {
+                session.Log("Enabling BthPS3 service");
+                // enable service, spawns profile driver PDO
+                radio.EnableService(InstallScript.BthPs3ServiceGuid, InstallScript.BthPs3ServiceName);
+                session.Log("Enabled BthPS3 service");
+            }
+            catch (Exception ex)
+            {
+                session.Log($"Enabling service failed with error {ex}");
+                return ActionResult.Failure;
+            }
+            finally
+            {
+                radio.Dispose();
+            }
         }
         catch (Exception ex)
         {
-            session.Log($"Enabling service or radio failed with error {ex}");
+            session.Log($"Enabling radio failed with error {ex}");
             return ActionResult.Failure;
-        }
-        finally
-        {
-            radio.Dispose();
         }
 
         #endregion
 
         #region Filter settings
 
-        // make sure patching is enabled, might not be in the registry
-        FilterDriver.IsFilterEnabled = true;
+        try
+        {
+            // make sure patching is enabled, might not be in the registry
+            FilterDriver.IsFilterEnabled = true;
+        }
+        catch (Exception ex)
+        {
+            session.Log($"Enabling filter failed with {ex}");
+            return ActionResult.Failure;
+        }
 
         #endregion
 

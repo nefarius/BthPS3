@@ -8,7 +8,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 
 using CliWrap;
 using CliWrap.Buffered;
@@ -16,11 +15,11 @@ using CliWrap.Buffered;
 using Microsoft.Win32;
 using Microsoft.Win32.SafeHandles;
 
-using Nefarius.BthPS3.Setup.Util;
 using Nefarius.BthPS3.Shared;
 using Nefarius.Utilities.Bluetooth;
 using Nefarius.Utilities.DeviceManagement.Drivers;
 using Nefarius.Utilities.DeviceManagement.PnP;
+using Nefarius.Utilities.WixSharp.Util;
 
 using PInvoke;
 
@@ -83,10 +82,10 @@ internal class InstallScript
                 new Dir(driversFeature, "nefcon")
                 {
                     Files = new DirFiles(driversFeature, "*.*").GetFiles(nefconDir),
-                    Dirs = GetSubDirectories(driversFeature, nefconDir).ToArray()
+                    Dirs = WixExt.GetSubDirectories(driversFeature, nefconDir).ToArray()
                 },
                 // driver binaries
-                new Dir(driversFeature, "drivers") { Dirs = GetSubDirectories(driversFeature, DriversRoot).ToArray() },
+                new Dir(driversFeature, "drivers") { Dirs = WixExt.GetSubDirectories(driversFeature, DriversRoot).ToArray() },
                 // manifest files
                 new Dir(driversFeature, ManifestsDir,
                     new File(driversFeature, @"..\BthPS3\BthPS3.man"),
@@ -280,27 +279,6 @@ internal class InstallScript
         {
             CustomActions.UninstallDrivers(e.Session);
         }
-    }
-
-    /// <summary>
-    ///     Recursively resolves all subdirectories and their containing files.
-    /// </summary>
-    private static List<Dir> GetSubDirectories(Feature feature, string directory)
-    {
-        List<Dir> subDirectoryInfosCollection = new();
-
-        foreach (string subDirectory in Directory.GetDirectories(directory))
-        {
-            string subDirectoryName = subDirectory.Remove(0, subDirectory.LastIndexOf('\\') + 1);
-            Dir newDir =
-                new(feature, subDirectoryName, new Files(feature, subDirectory + @"\*.*")) { Name = subDirectoryName };
-            subDirectoryInfosCollection.Add(newDir);
-
-            // Recursively traverse nested directories
-            GetSubDirectories(feature, subDirectory);
-        }
-
-        return subDirectoryInfosCollection;
     }
 }
 

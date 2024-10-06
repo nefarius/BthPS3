@@ -229,6 +229,7 @@ internal class InstallScript
         project.DefaultRefAssemblies.Add(typeof(FilterDriver).Assembly.Location);
         project.DefaultRefAssemblies.Add(typeof(BluetoothHelper).Assembly.Location);
         project.DefaultRefAssemblies.Add(typeof(SafeRegistryHandle).Assembly.Location);
+        project.DefaultRefAssemblies.Add(typeof(WixExt).Assembly.Location);
 
         #endregion
 
@@ -323,6 +324,8 @@ public static class CustomActions
         // clean out whatever has been on the machine before
         UninstallDrivers(session);
 
+        session.Log($"--- BEGIN {nameof(InstallDrivers)} ---");
+
         DirectoryInfo installDir = new(session.Property("INSTALLDIR"));
         session.Log($"installDir = {installDir}");
         string driversDir = Path.Combine(installDir.FullName, "drivers");
@@ -371,7 +374,7 @@ public static class CustomActions
             session.Log(
                 $"Filter installer failed with exit code: {result?.ExitCode}, message: {Win32Exception.GetMessageFor(result?.ExitCode)}");
 
-            return ActionResult.Failure;
+            goto exitFailure;
         }
 
         #endregion
@@ -388,7 +391,7 @@ public static class CustomActions
         catch (Exception ex)
         {
             session.Log($"Adding lower filter failed with error {ex}");
-            return ActionResult.Failure;
+            goto exitFailure;
         }
 
         #endregion
@@ -418,7 +421,7 @@ public static class CustomActions
             if (!HostRadio.IsAvailable && !waitEvent.WaitOne(TimeSpan.FromSeconds(30)))
             {
                 session.Log("Timeout reached while waiting for radio to come online");
-                return ActionResult.Failure;
+                goto exitFailure;
             }
 
             session.Log("Radio device online");
@@ -444,7 +447,7 @@ public static class CustomActions
             session.Log(
                 $"Profile driver installation failed with win32 error: {error}, message: {Win32Exception.GetMessageFor(error)}");
 
-            return ActionResult.Failure;
+            goto exitFailure;
         }
 
         session.Log("Installed profile driver");
@@ -466,7 +469,7 @@ public static class CustomActions
             session.Log(
                 $"NULL driver installation failed with win32 error: {error}, message: {Win32Exception.GetMessageFor(error)}");
 
-            return ActionResult.Failure;
+            goto exitFailure;
         }
 
         session.Log("Installed NULL driver");
@@ -494,7 +497,7 @@ public static class CustomActions
             catch (Exception ex)
             {
                 session.Log($"Enabling service failed with error {ex}");
-                return ActionResult.Failure;
+                goto exitFailure;
             }
             finally
             {
@@ -504,7 +507,7 @@ public static class CustomActions
         catch (Exception ex)
         {
             session.Log($"Enabling radio failed with error {ex}");
-            return ActionResult.Failure;
+            goto exitFailure;
         }
 
         #endregion
@@ -513,13 +516,15 @@ public static class CustomActions
 
         try
         {
+            session.Log("Enabling PSM filter");
             // make sure patching is enabled, might not be in the registry
             FilterDriver.IsFilterEnabled = true;
+            session.Log("Enabled PSM filter");
         }
         catch (Exception ex)
         {
             session.Log($"Enabling filter failed with {ex}");
-            return ActionResult.Failure;
+            goto exitFailure;
         }
 
         #endregion
@@ -534,7 +539,13 @@ public static class CustomActions
                 record);
         }
 
+        session.Log($"--- END {nameof(InstallDrivers)} SUCCESS ---");
+
         return ActionResult.Success;
+
+        exitFailure:
+        session.Log($"--- END {nameof(InstallDrivers)} FAILURE ---");
+        return ActionResult.Failure;
     }
 
     /// <summary>
@@ -543,6 +554,8 @@ public static class CustomActions
     /// <remarks>Requires elevated permissions.</remarks>
     public static void UninstallDrivers(Session session)
     {
+        session.Log($"--- BEGIN {nameof(UninstallDrivers)} ---");
+
         try
         {
             // de-register filter
@@ -555,37 +568,59 @@ public static class CustomActions
             session.Log($"Removing lower filter failed with error {ex}");
         }
 
-        HostRadio radio = new();
-
         try
         {
-            session.Log("Disabling BthPS3 service");
-            // disabling service unloads PDO
-            radio.DisableService(InstallScript.BthPs3ServiceGuid, InstallScript.BthPs3ServiceName);
-            session.Log("Disabled BthPS3 service");
+            HostRadio radio = new();
 
-            session.Log("Disabling radio");
-            // unloads complete stack
-            radio.DisableRadio();
-            session.Log("Disabled radio");
+            try
+            {
+                session.Log("Disabling BthPS3 service");
+                // disabling service unloads PDO
+                radio.DisableService(InstallScript.BthPs3ServiceGuid, InstallScript.BthPs3ServiceName);
+                session.Log("Disabled BthPS3 service");
+
+                session.Log("Disabling radio");
+                // unloads complete stack
+                radio.DisableRadio();
+                session.Log("Disabled radio");
+            }
+            catch (Exception ex)
+            {
+                session.Log($"Disabling service or radio failed with error {ex}");
+            }
+            finally
+            {
+                radio.Dispose();
+            }
         }
         catch (Exception ex)
         {
-            session.Log($"Disabling service or radio failed with error {ex}");
+            session.Log($"FTL: radio access for disabling service failed with {ex}, ignoring");
         }
-        finally
-        {
-            radio.Dispose();
-        }
+
+        AutoResetEvent waitEvent = new(false);
+        DeviceNotificationListener listener = new();
 
         try
         {
+            listener.RegisterDeviceArrived(RadioDeviceArrived, HostRadio.DeviceInterface);
+
+            void RadioDeviceArrived(DeviceEventArgs obj)
+            {
+                session.Log("Radio arrival event, path: {0}", obj.SymLink);
+                waitEvent.Set();
+            }
+
             session.Log("Restarting radio device");
             // restart device, filter is unloaded afterward
             HostRadio.RestartRadioDevice();
             session.Log("Restarted radio device, waiting for it to get online");
-            // safety margin
-            Thread.Sleep(1000);
+
+            // wait until either event fired OR the timeout has been reached
+            if (!HostRadio.IsAvailable && !waitEvent.WaitOne(TimeSpan.FromSeconds(30)))
+            {
+                session.Log("Timeout reached while waiting for radio to come online");
+            }
 
             session.Log(!HostRadio.IsAvailable
                 ? "WARN: Radio not available after wait period"
@@ -649,7 +684,7 @@ public static class CustomActions
 
         try
         {
-            radio = new HostRadio();
+            HostRadio radio = new();
 
             try
             {
@@ -660,7 +695,7 @@ public static class CustomActions
             }
             catch (Exception ex)
             {
-                session.Log($"Disabling service or radio failed with error {ex}");
+                session.Log($"Enabling radio failed with error {ex}");
             }
             finally
             {
@@ -669,8 +704,10 @@ public static class CustomActions
         }
         catch (Exception ex)
         {
-            session.Log("FTL: Enabling radio failed, ignoring", ex);
+            session.Log("FTL: Radio access for enabling failed, ignoring", ex);
         }
+
+        session.Log($"--- END {nameof(UninstallDrivers)} ---");
     }
 
     #endregion

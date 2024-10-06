@@ -85,7 +85,10 @@ internal class InstallScript
                     Dirs = WixExt.GetSubDirectories(driversFeature, nefconDir).ToArray()
                 },
                 // driver binaries
-                new Dir(driversFeature, "drivers") { Dirs = WixExt.GetSubDirectories(driversFeature, DriversRoot).ToArray() },
+                new Dir(driversFeature, "drivers")
+                {
+                    Dirs = WixExt.GetSubDirectories(driversFeature, DriversRoot).ToArray()
+                },
                 // manifest files
                 new Dir(driversFeature, ManifestsDir,
                     new File(driversFeature, @"..\BthPS3\BthPS3.man"),
@@ -397,7 +400,6 @@ public static class CustomActions
 
         try
         {
-
             listener.RegisterDeviceArrived(RadioDeviceArrived, HostRadio.DeviceInterface);
 
             void RadioDeviceArrived(DeviceEventArgs obj)
@@ -581,9 +583,13 @@ public static class CustomActions
             session.Log("Restarting radio device");
             // restart device, filter is unloaded afterward
             HostRadio.RestartRadioDevice();
-            session.Log("Restarted radio device");
+            session.Log("Restarted radio device, waiting for it to get online");
             // safety margin
             Thread.Sleep(1000);
+
+            session.Log(!HostRadio.IsAvailable
+                ? "WARN: Radio not available after wait period"
+                : "Radio available after restart");
         }
         catch (Exception ex)
         {
@@ -641,22 +647,29 @@ public static class CustomActions
 
         #endregion
 
-        radio = new HostRadio();
-
         try
         {
-            session.Log("Enabling radio");
-            // starts vanilla radio operation
-            radio.EnableRadio();
-            session.Log("Enabled radio");
+            radio = new HostRadio();
+
+            try
+            {
+                session.Log("Enabling radio");
+                // starts vanilla radio operation
+                radio.EnableRadio();
+                session.Log("Enabled radio");
+            }
+            catch (Exception ex)
+            {
+                session.Log($"Disabling service or radio failed with error {ex}");
+            }
+            finally
+            {
+                radio.Dispose();
+            }
         }
         catch (Exception ex)
         {
-            session.Log($"Disabling service or radio failed with error {ex}");
-        }
-        finally
-        {
-            radio.Dispose();
+            session.Log("FTL: Enabling radio failed, ignoring", ex);
         }
     }
 

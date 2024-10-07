@@ -326,222 +326,232 @@ public static class CustomActions
 
         session.Log($"--- BEGIN {nameof(InstallDrivers)} ---");
 
-        DirectoryInfo installDir = new(session.Property("INSTALLDIR"));
-        session.Log($"installDir = {installDir}");
-        string driversDir = Path.Combine(installDir.FullName, "drivers");
-        session.Log($"driversDir = {driversDir}");
-        string nefconDir = Path.Combine(installDir.FullName, "nefcon");
-        session.Log($"nefconDir = {nefconDir}");
-        string archShortName = ArchitectureInfo.PlatformShortName;
-        session.Log($"archShortName = {archShortName}");
-
-        string nefconcPath = Path.Combine(nefconDir, archShortName, "nefconc.exe");
-        session.Log($"nefconcPath = {nefconcPath}");
-
-        string bthPs3DriverDir = Path.Combine(driversDir, $"BthPS3_{archShortName}");
-        session.Log($"bthPs3DriverDir = {bthPs3DriverDir}");
-        string bthPs3PsmDriverDir = Path.Combine(driversDir, $"BthPS3PSM_{archShortName}");
-        session.Log($"bthPs3PsmDriverDir = {bthPs3PsmDriverDir}");
-
-        string bthPs3InfPath = Path.Combine(bthPs3DriverDir, "BthPS3.inf");
-        session.Log($"bthPs3InfPath = {bthPs3InfPath}");
-        string bthPs3PsmInfPath = Path.Combine(bthPs3PsmDriverDir, "BthPS3PSM.inf");
-        session.Log($"bthPs3PsmInfPath = {bthPs3PsmInfPath}");
-        string bthPs3NullInfPath = Path.Combine(bthPs3DriverDir, "BthPS3_PDO_NULL_Device.inf");
-        session.Log($"bthPs3NullInfPath = {bthPs3NullInfPath}");
-
-        #region Filter install
-
-        // BthPS3PSM filter install
-        BufferedCommandResult? result = Cli.Wrap(nefconcPath)
-            .WithArguments(builder => builder
-                .Add("--inf-default-install")
-                .Add("--inf-path")
-                .Add(bthPs3PsmInfPath)
-            )
-            .WithValidation(CommandResultValidation.None)
-            .ExecuteBufferedAsync()
-            .GetAwaiter()
-            .GetResult();
-
-        session.Log($"BthPS3PSM command stdout: {result.StandardOutput}");
-        session.Log($"BthPS3PSM command stderr: {result.StandardError}");
-
-        bool rebootRequired = result?.ExitCode == 3010;
-
-        if (result?.ExitCode != 0 && result?.ExitCode != 3010)
-        {
-            session.Log(
-                $"Filter installer failed with exit code: {result?.ExitCode}, message: {Win32Exception.GetMessageFor(result?.ExitCode)}");
-
-            goto exitFailure;
-        }
-
-        #endregion
-
-        #region Register filter
-
         try
         {
-            // register filter
-            session.Log("Adding lower filter entry");
-            DeviceClassFilters.AddLower(DeviceClassIds.Bluetooth, FilterDriver.FilterServiceName);
-            session.Log("Added lower filter entry");
-        }
-        catch (Exception ex)
-        {
-            session.Log($"Adding lower filter failed with error {ex}");
-            goto exitFailure;
-        }
+            DirectoryInfo installDir = new(session.Property("INSTALLDIR"));
+            session.Log($"installDir = {installDir}");
+            string driversDir = Path.Combine(installDir.FullName, "drivers");
+            session.Log($"driversDir = {driversDir}");
+            string nefconDir = Path.Combine(installDir.FullName, "nefcon");
+            session.Log($"nefconDir = {nefconDir}");
+            string archShortName = ArchitectureInfo.PlatformShortName;
+            session.Log($"archShortName = {archShortName}");
 
-        #endregion
+            string nefconcPath = Path.Combine(nefconDir, archShortName, "nefconc.exe");
+            session.Log($"nefconcPath = {nefconcPath}");
 
-        #region Restart radio
+            string bthPs3DriverDir = Path.Combine(driversDir, $"BthPS3_{archShortName}");
+            session.Log($"bthPs3DriverDir = {bthPs3DriverDir}");
+            string bthPs3PsmDriverDir = Path.Combine(driversDir, $"BthPS3PSM_{archShortName}");
+            session.Log($"bthPs3PsmDriverDir = {bthPs3PsmDriverDir}");
 
-        AutoResetEvent waitEvent = new(false);
-        DeviceNotificationListener listener = new();
+            string bthPs3InfPath = Path.Combine(bthPs3DriverDir, "BthPS3.inf");
+            session.Log($"bthPs3InfPath = {bthPs3InfPath}");
+            string bthPs3PsmInfPath = Path.Combine(bthPs3PsmDriverDir, "BthPS3PSM.inf");
+            session.Log($"bthPs3PsmInfPath = {bthPs3PsmInfPath}");
+            string bthPs3NullInfPath = Path.Combine(bthPs3DriverDir, "BthPS3_PDO_NULL_Device.inf");
+            session.Log($"bthPs3NullInfPath = {bthPs3NullInfPath}");
 
-        try
-        {
-            listener.RegisterDeviceArrived(RadioDeviceArrived, HostRadio.DeviceInterface);
+            #region Filter install
 
-            void RadioDeviceArrived(DeviceEventArgs obj)
+            // BthPS3PSM filter install
+            BufferedCommandResult? result = Cli.Wrap(nefconcPath)
+                .WithArguments(builder => builder
+                    .Add("--inf-default-install")
+                    .Add("--inf-path")
+                    .Add(bthPs3PsmInfPath)
+                )
+                .WithValidation(CommandResultValidation.None)
+                .ExecuteBufferedAsync()
+                .GetAwaiter()
+                .GetResult();
+
+            session.Log($"BthPS3PSM command stdout: {result.StandardOutput}");
+            session.Log($"BthPS3PSM command stderr: {result.StandardError}");
+
+            bool rebootRequired = result?.ExitCode == 3010;
+
+            if (result?.ExitCode != 0 && result?.ExitCode != 3010)
             {
-                session.Log("Radio arrival event, path: {0}", obj.SymLink);
-                waitEvent.Set();
-            }
+                session.Log(
+                    $"Filter installer failed with exit code: {result?.ExitCode}, message: {Win32Exception.GetMessageFor(result?.ExitCode)}");
 
-            session.Log("Restarting radio device");
-            // restart device, filter is loaded afterward
-            HostRadio.RestartRadioDevice();
-            session.Log("Restarted radio device");
-            session.Log("Waiting for radio device to come online...");
-
-            // wait until either event fired OR the timeout has been reached
-            if (!HostRadio.IsAvailable && !waitEvent.WaitOne(TimeSpan.FromSeconds(30)))
-            {
-                session.Log("Timeout reached while waiting for radio to come online");
                 goto exitFailure;
             }
 
-            session.Log("Radio device online");
-        }
-        catch (Exception ex)
-        {
-            session.Log($"Restarting radio device failed with error {ex}");
-        }
-        finally
-        {
-            listener.Dispose();
-        }
+            #endregion
 
-        #endregion
-
-        #region Profile driver
-
-        session.Log("Installing profile driver");
-
-        if (!Devcon.Install(bthPs3InfPath, out bool profileRebootRequired))
-        {
-            int error = Marshal.GetLastWin32Error();
-            session.Log(
-                $"Profile driver installation failed with win32 error: {error}, message: {Win32Exception.GetMessageFor(error)}");
-
-            goto exitFailure;
-        }
-
-        session.Log("Installed profile driver");
-
-        if (profileRebootRequired)
-        {
-            rebootRequired = true;
-        }
-
-        #endregion
-
-        #region NULL driver
-
-        session.Log("Installing NULL driver");
-
-        if (!Devcon.Install(bthPs3NullInfPath, out bool nullRebootRequired))
-        {
-            int error = Marshal.GetLastWin32Error();
-            session.Log(
-                $"NULL driver installation failed with win32 error: {error}, message: {Win32Exception.GetMessageFor(error)}");
-
-            goto exitFailure;
-        }
-
-        session.Log("Installed NULL driver");
-
-        if (nullRebootRequired)
-        {
-            rebootRequired = true;
-        }
-
-        #endregion
-
-        #region Profile driver service
-
-        try
-        {
-            HostRadio radio = new();
+            #region Register filter
 
             try
             {
-                session.Log("Enabling BthPS3 service");
-                // enable service, spawns profile driver PDO
-                radio.EnableService(InstallScript.BthPs3ServiceGuid, InstallScript.BthPs3ServiceName);
-                session.Log("Enabled BthPS3 service");
+                // register filter
+                session.Log("Adding lower filter entry");
+                DeviceClassFilters.AddLower(DeviceClassIds.Bluetooth, FilterDriver.FilterServiceName);
+                session.Log("Added lower filter entry");
             }
             catch (Exception ex)
             {
-                session.Log($"Enabling service failed with error {ex}");
+                session.Log($"Adding lower filter failed with error {ex}");
                 goto exitFailure;
+            }
+
+            #endregion
+
+            #region Restart radio
+
+            AutoResetEvent waitEvent = new(false);
+            DeviceNotificationListener listener = new();
+
+            try
+            {
+                listener.RegisterDeviceArrived(RadioDeviceArrived, HostRadio.DeviceInterface);
+                listener.StartListen(HostRadio.DeviceInterface);
+
+                void RadioDeviceArrived(DeviceEventArgs obj)
+                {
+                    session.Log("Radio arrival event, path: {0}", obj.SymLink);
+                    listener.StopListen(HostRadio.DeviceInterface);
+                    waitEvent.Set();
+                }
+
+                session.Log("Restarting radio device");
+                // restart device, filter is loaded afterward
+                HostRadio.RestartRadioDevice();
+                session.Log("Restarted radio device");
+                session.Log("Waiting for radio device to come online...");
+
+                // wait until either event fired OR the timeout has been reached
+                if (!waitEvent.WaitOne(TimeSpan.FromSeconds(30)))
+                {
+                    session.Log("Timeout reached while waiting for radio to come online");
+                    goto exitFailure;
+                }
+
+                session.Log("Radio device online");
+            }
+            catch (Exception ex)
+            {
+                session.Log($"Restarting radio device failed with error {ex}");
             }
             finally
             {
-                radio.Dispose();
+                listener.Dispose();
+                waitEvent.Dispose();
             }
+
+            #endregion
+
+            #region Profile driver
+
+            session.Log("Installing profile driver");
+
+            if (!Devcon.Install(bthPs3InfPath, out bool profileRebootRequired))
+            {
+                int error = Marshal.GetLastWin32Error();
+                session.Log(
+                    $"Profile driver installation failed with win32 error: {error}, message: {Win32Exception.GetMessageFor(error)}");
+
+                goto exitFailure;
+            }
+
+            session.Log("Installed profile driver");
+
+            if (profileRebootRequired)
+            {
+                rebootRequired = true;
+            }
+
+            #endregion
+
+            #region NULL driver
+
+            session.Log("Installing NULL driver");
+
+            if (!Devcon.Install(bthPs3NullInfPath, out bool nullRebootRequired))
+            {
+                int error = Marshal.GetLastWin32Error();
+                session.Log(
+                    $"NULL driver installation failed with win32 error: {error}, message: {Win32Exception.GetMessageFor(error)}");
+
+                goto exitFailure;
+            }
+
+            session.Log("Installed NULL driver");
+
+            if (nullRebootRequired)
+            {
+                rebootRequired = true;
+            }
+
+            #endregion
+
+            #region Profile driver service
+
+            try
+            {
+                HostRadio radio = new();
+
+                try
+                {
+                    session.Log("Enabling BthPS3 service");
+                    // enable service, spawns profile driver PDO
+                    radio.EnableService(InstallScript.BthPs3ServiceGuid, InstallScript.BthPs3ServiceName);
+                    session.Log("Enabled BthPS3 service");
+                }
+                catch (Exception ex)
+                {
+                    session.Log($"Enabling service failed with error {ex}");
+                    goto exitFailure;
+                }
+                finally
+                {
+                    radio.Dispose();
+                }
+            }
+            catch (Exception ex)
+            {
+                session.Log($"Enabling radio failed with error {ex}");
+                goto exitFailure;
+            }
+
+            #endregion
+
+            #region Filter settings
+
+            try
+            {
+                session.Log("Enabling PSM filter");
+                // make sure patching is enabled, might not be in the registry
+                FilterDriver.IsFilterEnabled = true;
+                session.Log("Enabled PSM filter");
+            }
+            catch (Exception ex)
+            {
+                session.Log($"Enabling filter failed with {ex}");
+                goto exitFailure;
+            }
+
+            #endregion
+
+            if (rebootRequired)
+            {
+                Record record = new(1);
+                record[1] = "9000";
+
+                session.Message(
+                    InstallMessage.User | (InstallMessage)MessageButtons.OK | (InstallMessage)MessageIcon.Information,
+                    record);
+            }
+
+            session.Log($"--- END {nameof(InstallDrivers)} SUCCESS ---");
+
+            return ActionResult.Success;
         }
         catch (Exception ex)
         {
-            session.Log($"Enabling radio failed with error {ex}");
-            goto exitFailure;
+            session.Log($"FTL: {ex}");
         }
-
-        #endregion
-
-        #region Filter settings
-
-        try
-        {
-            session.Log("Enabling PSM filter");
-            // make sure patching is enabled, might not be in the registry
-            FilterDriver.IsFilterEnabled = true;
-            session.Log("Enabled PSM filter");
-        }
-        catch (Exception ex)
-        {
-            session.Log($"Enabling filter failed with {ex}");
-            goto exitFailure;
-        }
-
-        #endregion
-
-        if (rebootRequired)
-        {
-            Record record = new(1);
-            record[1] = "9000";
-
-            session.Message(
-                InstallMessage.User | (InstallMessage)MessageButtons.OK | (InstallMessage)MessageIcon.Information,
-                record);
-        }
-
-        session.Log($"--- END {nameof(InstallDrivers)} SUCCESS ---");
-
-        return ActionResult.Success;
 
         exitFailure:
         session.Log($"--- END {nameof(InstallDrivers)} FAILURE ---");
@@ -604,9 +614,11 @@ public static class CustomActions
         try
         {
             listener.RegisterDeviceArrived(RadioDeviceArrived, HostRadio.DeviceInterface);
+            listener.StartListen(HostRadio.DeviceInterface);
 
             void RadioDeviceArrived(DeviceEventArgs obj)
             {
+                listener.StopListen(HostRadio.DeviceInterface);
                 session.Log("Radio arrival event, path: {0}", obj.SymLink);
                 waitEvent.Set();
             }
@@ -617,7 +629,7 @@ public static class CustomActions
             session.Log("Restarted radio device, waiting for it to get online");
 
             // wait until either event fired OR the timeout has been reached
-            if (!HostRadio.IsAvailable && !waitEvent.WaitOne(TimeSpan.FromSeconds(30)))
+            if (!waitEvent.WaitOne(TimeSpan.FromSeconds(30)))
             {
                 session.Log("Timeout reached while waiting for radio to come online");
             }
@@ -629,6 +641,11 @@ public static class CustomActions
         catch (Exception ex)
         {
             session.Log($"Restarting radio device failed with error {ex}");
+        }
+        finally
+        {
+            listener.Dispose();
+            waitEvent.Dispose();
         }
 
         #region Driver store clean-up

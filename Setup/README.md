@@ -20,7 +20,6 @@
 - Download and extract the signed files into the directory `.\Setup\drivers`
 - Run `.\stage1.ps1`
   - This ensures all binaries are properly signed before getting packed by setup
-- Build the MSI for all platforms
 - Run `.\stage2.ps1 -SetupVersion "1.3.65"`
   - This will build and sign the MSI files
 - Craft new release for the previously created `setup-vX.X.X` tag

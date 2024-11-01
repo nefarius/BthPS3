@@ -136,44 +136,25 @@ public static class CustomActions
 
             #region Restart radio
 
-            AutoResetEvent waitEvent = new(false);
-            DeviceNotificationListener listener = new();
+            Record restartTimeoutRecord = new(1);
+            restartTimeoutRecord[1] = "9002";
+            MessageResult dialogResult = MessageResult.Abort;
+            bool restartSuccess = false;
 
-            try
+            do
             {
-                listener.RegisterDeviceArrived(RadioDeviceArrived, HostRadio.DeviceInterface);
-                listener.StartListen(HostRadio.DeviceInterface);
+                restartSuccess = RestartRadioAndAwait(session);
 
-                void RadioDeviceArrived(DeviceEventArgs obj)
-                {
-                    session.Log("Radio arrival event, path: {0}", obj.SymLink);
-                    listener.StopListen(HostRadio.DeviceInterface);
-                    waitEvent.Set();
-                }
+                dialogResult = session.Message(
+                    InstallMessage.User | (InstallMessage)MessageButtons.AbortRetryIgnore |
+                    (InstallMessage)MessageIcon.Warning,
+                    restartTimeoutRecord);
+            } while (!restartSuccess && dialogResult == MessageResult.Retry);
 
-                session.Log("Restarting radio device");
-                // restart device, filter is loaded afterward
-                HostRadio.RestartRadioDevice();
-                session.Log("Restarted radio device");
-                session.Log("Waiting for radio device to come online...");
-
-                // wait until either event fired OR the timeout has been reached
-                if (!waitEvent.WaitOne(TimeSpan.FromSeconds(30)))
-                {
-                    session.Log("Timeout reached while waiting for radio to come online");
-                    goto exitFailure;
-                }
-
-                session.Log("Radio device online");
-            }
-            catch (Exception ex)
+            if (dialogResult == MessageResult.Abort)
             {
-                session.Log($"Restarting radio device failed with error {ex}");
-            }
-            finally
-            {
-                listener.Dispose();
-                waitEvent.Dispose();
+                session.Log("User aborted operation");
+                return ActionResult.Failure;
             }
 
             #endregion
@@ -295,6 +276,61 @@ public static class CustomActions
     }
 
     /// <summary>
+    ///     Attempts to restart the radio and waits until the Bluetooth interface comes back online.
+    /// </summary>
+    /// <param name="session">The <see cref="Session"/>.</param>
+    /// <returns>True on success, false on timeout.</returns>
+    private static bool RestartRadioAndAwait(Session session)
+    {
+        AutoResetEvent waitEvent = new(false);
+        DeviceNotificationListener listener = new();
+
+        try
+        {
+            listener.RegisterDeviceArrived(RadioDeviceArrived, HostRadio.DeviceInterface);
+            listener.StartListen(HostRadio.DeviceInterface);
+
+            void RadioDeviceArrived(DeviceEventArgs obj)
+            {
+                session.Log("Radio arrival event, path: {0}", obj.SymLink);
+                // ReSharper disable once AccessToDisposedClosure
+                listener.StopListen(HostRadio.DeviceInterface);
+                // ReSharper disable once AccessToDisposedClosure
+                waitEvent.Set();
+            }
+
+            session.Log("Restarting radio device");
+            // restart device, filter is loaded afterward
+            HostRadio.RestartRadioDevice();
+            session.Log("Restarted radio device");
+            session.Log("Waiting for radio device to come online...");
+
+            // wait until either event fired OR the timeout has been reached
+            if (!waitEvent.WaitOne(TimeSpan.FromSeconds(30)))
+            {
+                return false;
+            }
+
+            session.Log(!HostRadio.IsAvailable
+                ? "WARN: Radio not available after wait period"
+                : "Radio available after restart");
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            session.Log($"Restarting radio device failed with error {ex}");
+        }
+        finally
+        {
+            listener.Dispose();
+            waitEvent.Dispose();
+        }
+
+        return false;
+    }
+
+    /// <summary>
     ///     Uninstalls and cleans all driver residue.
     /// </summary>
     /// <remarks>Requires elevated permissions.</remarks>
@@ -344,45 +380,8 @@ public static class CustomActions
             session.Log($"FTL: radio access for disabling service failed with {ex}, ignoring");
         }
 
-        AutoResetEvent waitEvent = new(false);
-        DeviceNotificationListener listener = new();
-
-        try
-        {
-            listener.RegisterDeviceArrived(RadioDeviceArrived, HostRadio.DeviceInterface);
-            listener.StartListen(HostRadio.DeviceInterface);
-
-            void RadioDeviceArrived(DeviceEventArgs obj)
-            {
-                listener.StopListen(HostRadio.DeviceInterface);
-                session.Log("Radio arrival event, path: {0}", obj.SymLink);
-                waitEvent.Set();
-            }
-
-            session.Log("Restarting radio device");
-            // restart device, filter is unloaded afterward
-            HostRadio.RestartRadioDevice();
-            session.Log("Restarted radio device, waiting for it to get online");
-
-            // wait until either event fired OR the timeout has been reached
-            if (!waitEvent.WaitOne(TimeSpan.FromSeconds(30)))
-            {
-                session.Log("Timeout reached while waiting for radio to come online");
-            }
-
-            session.Log(!HostRadio.IsAvailable
-                ? "WARN: Radio not available after wait period"
-                : "Radio available after restart");
-        }
-        catch (Exception ex)
-        {
-            session.Log($"Restarting radio device failed with error {ex}");
-        }
-        finally
-        {
-            listener.Dispose();
-            waitEvent.Dispose();
-        }
+        // ignore errors
+        RestartRadioAndAwait(session);
 
         #region Driver store clean-up
 

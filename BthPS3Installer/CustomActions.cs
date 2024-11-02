@@ -136,25 +136,36 @@ public static class CustomActions
 
             #region Restart radio
 
-            Record restartTimeoutRecord = new(1);
-            restartTimeoutRecord[1] = "9002";
-            MessageResult dialogResult = MessageResult.Abort;
-            bool restartSuccess = false;
-
-            do
+            try
             {
-                restartSuccess = RestartRadioAndAwait(session);
+                Record restartTimeoutRecord = new(1);
+                restartTimeoutRecord[1] = "9002";
+                MessageResult dialogResult = MessageResult.Abort;
+                bool restartSuccess = false;
 
-                dialogResult = session.Message(
-                    InstallMessage.User | (InstallMessage)MessageButtons.AbortRetryIgnore |
-                    (InstallMessage)MessageIcon.Warning,
-                    restartTimeoutRecord);
-            } while (!restartSuccess && dialogResult == MessageResult.Retry);
+                do
+                {
+                    restartSuccess = RestartRadioAndAwait(session);
 
-            if (dialogResult == MessageResult.Abort)
+                    dialogResult =
+                        restartSuccess
+                            ? MessageResult.OK
+                            : session.Message(
+                                InstallMessage.User | (InstallMessage)MessageButtons.AbortRetryIgnore |
+                                (InstallMessage)MessageIcon.Warning,
+                                restartTimeoutRecord);
+                } while (!restartSuccess && dialogResult == MessageResult.Retry);
+
+                if (dialogResult == MessageResult.Abort)
+                {
+                    session.Log("User aborted operation");
+                    return ActionResult.Failure;
+                }
+            }
+            catch (Exception ex)
             {
-                session.Log("User aborted operation");
-                return ActionResult.Failure;
+                session.Log($"Radio restart failed with error {ex}");
+                goto exitFailure;
             }
 
             #endregion
@@ -479,6 +490,7 @@ public static class CustomActions
             .WithArguments(builder => builder
                 .Add("--install")
                 .Add("--silent")
+                .Add("--override-success-code 0")
             )
             .WithValidation(CommandResultValidation.None)
             .ExecuteAsync()
@@ -506,6 +518,7 @@ public static class CustomActions
                 .WithArguments(builder => builder
                     .Add("--uninstall")
                     .Add("--silent")
+                    .Add("--override-success-code 0")
                 )
                 .WithValidation(CommandResultValidation.None)
                 .ExecuteAsync()

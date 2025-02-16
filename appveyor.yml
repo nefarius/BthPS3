@@ -37,8 +37,6 @@ before_build:
 - cmd: vpatch.exe --stamp-version "%APPVEYOR_BUILD_VERSION%" --target-file ".\BthPS3\BthPS3.rc" --resource.file-version --resource.product-version
 - cmd: vpatch.exe --stamp-version "%APPVEYOR_BUILD_VERSION%" --target-file ".\BthPS3PSM\BthPS3PSM.vcxproj" --vcxproj.inf-time-stamp
 - cmd: vpatch.exe --stamp-version "%APPVEYOR_BUILD_VERSION%" --target-file ".\BthPS3PSM\BthPS3PSM.rc" --resource.file-version --resource.product-version
-- cmd: vpatch.exe --stamp-version "%APPVEYOR_BUILD_VERSION%" --target-file ".\BthPS3Util\BthPS3Util.rc" --resource.file-version --resource.product-version
-- cmd: vpatch.exe --stamp-version "%APPVEYOR_BUILD_VERSION%" --target-file ".\Setup\BthPS3CA\BthPS3CA.rc" --resource.file-version --resource.product-version
 - cmd: vpatch.exe --stamp-version "%APPVEYOR_BUILD_VERSION%" --target-file ".\BthPS3CfgUI\Properties\AssemblyInfo.cs" --assembly.version --assembly.file-version
 build_script:
 - cmd: .\build.cmd

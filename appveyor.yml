@@ -31,8 +31,6 @@ install:
     cd "C:\projects\Domito"
     git pull > NUL
     cd %appveyor_build_folder%
-- cmd: vcpkg integrate install
-- cmd: vcpkg install detours:x86-windows-static detours:x64-windows-static
 before_build:
 - cmd: nuget restore
 - cmd: vpatch.exe --stamp-version "%APPVEYOR_BUILD_VERSION%" --target-file ".\BthPS3\BthPS3.vcxproj" --vcxproj.inf-time-stamp

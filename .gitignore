@@ -276,3 +276,4 @@ RC*
 *.g.wxs
 *.g.cs
 BthPS3Installer/BthPS3Installer.pdb.upload-error.txt
+*.wxs

@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Windows.Forms;
 
 using CliWrap;
 using CliWrap.Buffered;
@@ -59,9 +58,11 @@ public static class CustomActions
     [CustomAction]
     public static ActionResult InstallDriversLegacy(Session session)
     {
-        if (!bool.TryParse(session.Property(CustomProperties.UseModern), out bool useModern) || useModern)
+        session.Log($"{nameof(InstallDriversLegacy)} - USE_MODERN = {session.Property(CustomProperties.UseModern)}");
+
+        if (bool.Parse(session.Property(CustomProperties.UseModern)))
         {
-            session.Log("USE_MODERN not set or true, skipping action");
+            session.Log("USE_MODERN set to true, skipping action");
             return ActionResult.NotExecuted;
         }
 
@@ -221,9 +222,11 @@ public static class CustomActions
     [CustomAction]
     public static ActionResult InstallDrivers(Session session)
     {
-        if (!bool.TryParse(session.Property(CustomProperties.UseModern), out bool useModern) && !useModern)
+        session.Log($"{nameof(InstallDrivers)} - USE_MODERN = {session.Property(CustomProperties.UseModern)}");
+
+        if (!bool.Parse(session.Property(CustomProperties.UseModern)))
         {
-            session.Log("USE_MODERN not set or false, skipping action");
+            session.Log("USE_MODERN set to false, skipping action");
             return ActionResult.NotExecuted;
         }
 

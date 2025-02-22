@@ -107,7 +107,7 @@ internal class InstallScript
                 new RegValue("DriverVersion", driverVersion.ToString()) { Win64 = true },
                 new RegValue("FilterVersion", filterVersion.ToString()) { Win64 = true }
             ) { Win64 = true },
-            new Property(CustomProperties.UseModern, "0"),
+            new Property(CustomProperties.UseModern, bool.FalseString),
             // install drivers
             new ElevatedManagedAction(CustomActions.InstallDrivers, Return.check,
                 When.After,

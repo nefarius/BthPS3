@@ -10,6 +10,7 @@ using CliWrap;
 using Microsoft.Win32;
 using Microsoft.Win32.SafeHandles;
 
+using Nefarius.BthPS3.Setup.Dialogues;
 using Nefarius.BthPS3.Shared;
 using Nefarius.Utilities.Bluetooth;
 using Nefarius.Utilities.DeviceManagement.PnP;
@@ -204,6 +205,7 @@ internal class InstallScript
         project.ManagedUI.InstallDialogs.Add(Dialogs.Welcome)
             .Add(Dialogs.Licence)
             .Add(Dialogs.Features)
+            .Add(typeof(DriverSetupMethodSelector))
             .Add(Dialogs.Progress)
             .Add(Dialogs.Exit);
 

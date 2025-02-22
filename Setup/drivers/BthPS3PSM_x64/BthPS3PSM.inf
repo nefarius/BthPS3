@@ -2,7 +2,7 @@
 ; 
 ; BSD 3-Clause License
 ; 
-; Copyright (c) 2018-2024, Nefarius Software Solutions e.U.
+; Copyright (c) 2018-2025, Nefarius Software Solutions e.U.
 ; All rights reserved.
 ; 
 ; Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@ ClassGuid = {e0cbf06c-cd8b-4647-bb8a-263b43f0f974}
 DriverPackageType = ClassFilter
 Provider = %ManufacturerName%
 CatalogFile = BthPS3PSM.cat
-DriverVer = 09/18/2024,2.10.371.0
+DriverVer = 02/22/2025,2.10.470.0
 PnpLockdown = 1
  
 
@@ -55,20 +55,9 @@ BthPS3PSM.DriverFiles = 12
 [DefaultInstall.NTamd64]
 OptionDesc = %BthPS3PSMServiceDesc%
 CopyFiles = BthPS3PSM.DriverFiles
-AddReg = BthPS3PSM_AddReg
 
 [DefaultUninstall.NTamd64]
 LegacyUninstall = 1
-; DelFiles = @BthPS3PSM.sys
-DelReg = BthPS3PSM_DelReg
-
-[BthPS3PSM_AddReg]
-;Add BthPS3PSM to LowerFilters
-HKLM, System\CurrentControlSet\Control\Class\{e0cbf06c-cd8b-4647-bb8a-263b43f0f974}, LowerFilters, 0x00010008, BthPS3PSM
-
-[BthPS3PSM_DelReg]
-;Delete BthPS3PSM from LowerFilters
-HKLM, System\CurrentControlSet\Control\Class\{e0cbf06c-cd8b-4647-bb8a-263b43f0f974}, LowerFilters, 0x00018002, BthPS3PSM
 
 [BthPS3PSM.DriverFiles]
 BthPS3PSM.sys

@@ -240,8 +240,6 @@ internal class InstallScript
 
         project.EmbedCliWrap();
 
-        Console.WriteLine(typeof(ValueTask).Assembly.Location);
-
         project.DefaultRefAssemblies.Add(typeof(Devcon).Assembly.Location);
         project.DefaultRefAssemblies.Add(typeof(HostRadio).Assembly.Location);
         project.DefaultRefAssemblies.Add(typeof(Cli).Assembly.Location);

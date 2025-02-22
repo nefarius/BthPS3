@@ -4,12 +4,14 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 using CliWrap;
 
 using Microsoft.Win32;
 using Microsoft.Win32.SafeHandles;
 
+using Nefarius.BthPS3.Setup.Dialogues;
 using Nefarius.BthPS3.Shared;
 using Nefarius.Utilities.Bluetooth;
 using Nefarius.Utilities.DeviceManagement.PnP;
@@ -105,12 +107,25 @@ internal class InstallScript
                 new RegValue("DriverVersion", driverVersion.ToString()) { Win64 = true },
                 new RegValue("FilterVersion", filterVersion.ToString()) { Win64 = true }
             ) { Win64 = true },
+            new Property(CustomProperties.UseModern, bool.FalseString),
             // install drivers
             new ElevatedManagedAction(CustomActions.InstallDrivers, Return.check,
                 When.After,
                 Step.InstallFiles,
                 Condition.NOT_Installed
-            ),
+            )
+            {
+                UsesProperties = CustomProperties.UseModern
+            },
+            // install drivers via legacy method
+            new ElevatedManagedAction(CustomActions.InstallDriversLegacy, Return.check,
+                When.After,
+                Step.InstallFiles,
+                Condition.NOT_Installed
+            )
+            {
+                UsesProperties = CustomProperties.UseModern
+            },
             // install manifests
             new ElevatedManagedAction(CustomActions.InstallManifest, Return.check,
                 When.After,
@@ -156,6 +171,10 @@ internal class InstallScript
                 "You can ignore the detection error and setup might be able to finish successfully. " +
                 "You can retry the same operation again, which might fix it. " +
                 "If you choose to abort, setup will end with an error."
+            ),
+            new Error("9003",
+                "Legacy installation method was chosen. " +
+                "After the setup is finished, you MUST REBOOT THE SYSTEM before using the software."
             )
         )
         {
@@ -204,6 +223,7 @@ internal class InstallScript
         project.ManagedUI.InstallDialogs.Add(Dialogs.Welcome)
             .Add(Dialogs.Licence)
             .Add(Dialogs.Features)
+            .Add(typeof(DriverSetupMethodSelector))
             .Add(Dialogs.Progress)
             .Add(Dialogs.Exit);
 
@@ -214,7 +234,11 @@ internal class InstallScript
 
         project.AfterInstall += ProjectOnAfterInstall;
 
+        project.DefaultDeferredProperties += $",{CustomProperties.UseModern}";
+
         #region Embed types of dependencies
+
+        project.EmbedCliWrap();
 
         project.DefaultRefAssemblies.Add(typeof(Devcon).Assembly.Location);
         project.DefaultRefAssemblies.Add(typeof(HostRadio).Assembly.Location);
@@ -262,7 +286,7 @@ internal class InstallScript
             e.Result = ActionResult.Failure;
             return;
         }
-
+        
         Record record = new(1);
         record[1] = "9001";
 
@@ -282,6 +306,7 @@ internal class InstallScript
         if (e.IsUninstalling)
         {
             CustomActions.UninstallDrivers(e.Session);
+            CustomActions.UninstallDriversLegacy(e.Session);
         }
     }
 }

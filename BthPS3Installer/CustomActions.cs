@@ -8,6 +8,7 @@ using System.Threading;
 
 using CliWrap;
 using CliWrap.Buffered;
+using CliWrap.Builders;
 
 using Nefarius.BthPS3.Shared;
 using Nefarius.Utilities.Bluetooth;
@@ -51,19 +52,29 @@ public static class CustomActions
     #region Driver management
 
     /// <summary>
-    ///     Put install logic here.
+    ///     Put legacy/fallback install logic here.
     /// </summary>
     /// <remarks>Requires elevated permissions.</remarks>
     [CustomAction]
-    public static ActionResult InstallDrivers(Session session)
+    public static ActionResult InstallDriversLegacy(Session session)
     {
-        // clean out whatever has been on the machine before
-        UninstallDrivers(session);
+        session.Log($"{nameof(InstallDriversLegacy)} - USE_MODERN = {session.Property(CustomProperties.UseModern)}");
 
-        session.Log($"--- BEGIN {nameof(InstallDrivers)} ---");
+        if (bool.Parse(session.Property(CustomProperties.UseModern)))
+        {
+            session.Log("USE_MODERN set to true, skipping action");
+            return ActionResult.NotExecuted;
+        }
+
+        // clean out whatever has been on the machine before
+        UninstallDriversLegacy(session);
+
+        session.Log($"--- BEGIN {nameof(InstallDriversLegacy)} ---");
 
         try
         {
+            #region Paths
+
             DirectoryInfo installDir = new(session.Property("INSTALLDIR"));
             session.Log($"installDir = {installDir}");
             string driversDir = Path.Combine(installDir.FullName, "drivers");
@@ -87,6 +98,172 @@ public static class CustomActions
             session.Log($"bthPs3PsmInfPath = {bthPs3PsmInfPath}");
             string bthPs3NullInfPath = Path.Combine(bthPs3DriverDir, "BthPS3_PDO_NULL_Device.inf");
             session.Log($"bthPs3NullInfPath = {bthPs3NullInfPath}");
+
+            #endregion
+
+            session.Log("Installing BthPS3PSM filter driver.");
+
+            BufferedCommandResult? filterInstRet = RunCommand(nefconcPath, builder => builder
+                .Add("--inf-default-install")
+                .Add("--inf-path").Add(bthPs3PsmInfPath)
+            );
+
+            if (filterInstRet?.ExitCode != 0 && filterInstRet?.ExitCode != 3010)
+            {
+                session.Log(
+                    $"Filter installer failed with exit code: {filterInstRet?.ExitCode}, message: {Win32Exception.GetMessageFor(filterInstRet?.ExitCode)}");
+                goto exitFailure;
+            }
+
+            session.Log("BthPS3 filter driver installed.");
+
+            session.Log("Adding BthPS3PSM as Bluetooth class filters.");
+
+            BufferedCommandResult? cassFilterRet = RunCommand(nefconcPath, builder => builder
+                .Add("--add-class-filter")
+                .Add("--position").Add("lower")
+                .Add("--service-name").Add(FilterDriver.FilterServiceName)
+                .Add("--class-guid").Add(DeviceClassIds.Bluetooth)
+            );
+
+            if (cassFilterRet?.ExitCode != 0 && cassFilterRet?.ExitCode != 3010)
+            {
+                session.Log(
+                    $"Class filter modification failed with exit code: {cassFilterRet?.ExitCode}, message: {Win32Exception.GetMessageFor(cassFilterRet?.ExitCode)}");
+                goto exitFailure;
+            }
+
+            session.Log("BthPS3PSM added to Bluetooth class filters.");
+
+            session.Log("Installing BthPS3 driver in driver store.");
+
+            BufferedCommandResult? profileInstRet = RunCommand(nefconcPath, builder => builder
+                .Add("--install-driver")
+                .Add("--inf-path").Add(bthPs3InfPath)
+            );
+
+            if (profileInstRet?.ExitCode != 0 && profileInstRet?.ExitCode != 3010)
+            {
+                session.Log(
+                    $"Profile driver installation failed with exit code: {profileInstRet?.ExitCode}, message: {Win32Exception.GetMessageFor(profileInstRet?.ExitCode)}");
+                goto exitFailure;
+            }
+
+            session.Log("BthPS3 driver installed in driver store.");
+
+            session.Log("Installing PDO NULL driver.");
+
+            BufferedCommandResult? nullDrvInstRet = RunCommand(nefconcPath, builder => builder
+                .Add("--install-driver")
+                .Add("--inf-path").Add(bthPs3NullInfPath)
+            );
+
+            if (nullDrvInstRet?.ExitCode != 0 && nullDrvInstRet?.ExitCode != 3010)
+            {
+                session.Log(
+                    $"NULL driver installation failed with exit code: {nullDrvInstRet?.ExitCode}, message: {Win32Exception.GetMessageFor(nullDrvInstRet?.ExitCode)}");
+                goto exitFailure;
+            }
+
+            session.Log("PDO NULL driver installed.");
+
+            session.Log("Enabling profile service for BTHENUM.");
+
+            BufferedCommandResult? serviceEnableRet = RunCommand(nefconcPath, builder => builder
+                .Add("--enable-bluetooth-service")
+                .Add("--service-name").Add("BthPS3Service")
+                .Add("--service-guid").Add("{1cb831ea-79cd-4508-b0fc-85f7c85ae8e0}")
+            );
+
+            if (serviceEnableRet?.ExitCode != 0 && serviceEnableRet?.ExitCode != 3010)
+            {
+                session.Log(
+                    $"Enabling service failed with exit code: {serviceEnableRet?.ExitCode}, message: {Win32Exception.GetMessageFor(serviceEnableRet?.ExitCode)}");
+                goto exitFailure;
+            }
+
+            session.Log("Profile service for BTHENUM enabled.");
+
+            session.Log($"--- END {nameof(InstallDriversLegacy)} SUCCESS ---");
+
+            Record record = new(1);
+            record[1] = "9003";
+
+            session.Message(
+                InstallMessage.User | (InstallMessage)MessageButtons.OK | (InstallMessage)MessageIcon.Information,
+                record);
+
+            return ActionResult.Success;
+        }
+        catch (Exception ex)
+        {
+            session.Log($"FTL: {ex}");
+        }
+
+        exitFailure:
+        session.Log($"--- END {nameof(InstallDrivers)} FAILURE ---");
+        return ActionResult.Failure;
+    }
+
+    private static BufferedCommandResult? RunCommand(string executable, Action<ArgumentsBuilder> args)
+    {
+        return Cli.Wrap(executable)
+            .WithArguments(args)
+            .WithValidation(CommandResultValidation.None)
+            .ExecuteBufferedAsync()
+            .GetAwaiter()
+            .GetResult();
+    }
+
+    /// <summary>
+    ///     Put install logic here.
+    /// </summary>
+    /// <remarks>Requires elevated permissions.</remarks>
+    [CustomAction]
+    public static ActionResult InstallDrivers(Session session)
+    {
+        session.Log($"{nameof(InstallDrivers)} - USE_MODERN = {session.Property(CustomProperties.UseModern)}");
+
+        if (!bool.Parse(session.Property(CustomProperties.UseModern)))
+        {
+            session.Log("USE_MODERN set to false, skipping action");
+            return ActionResult.NotExecuted;
+        }
+
+        // clean out whatever has been on the machine before
+        UninstallDrivers(session);
+
+        session.Log($"--- BEGIN {nameof(InstallDrivers)} ---");
+
+        try
+        {
+            #region Paths
+
+            DirectoryInfo installDir = new(session.Property("INSTALLDIR"));
+            session.Log($"installDir = {installDir}");
+            string driversDir = Path.Combine(installDir.FullName, "drivers");
+            session.Log($"driversDir = {driversDir}");
+            string nefconDir = Path.Combine(installDir.FullName, "nefcon");
+            session.Log($"nefconDir = {nefconDir}");
+            string archShortName = ArchitectureInfo.PlatformShortName;
+            session.Log($"archShortName = {archShortName}");
+
+            string nefconcPath = Path.Combine(nefconDir, archShortName, "nefconc.exe");
+            session.Log($"nefconcPath = {nefconcPath}");
+
+            string bthPs3DriverDir = Path.Combine(driversDir, $"BthPS3_{archShortName}");
+            session.Log($"bthPs3DriverDir = {bthPs3DriverDir}");
+            string bthPs3PsmDriverDir = Path.Combine(driversDir, $"BthPS3PSM_{archShortName}");
+            session.Log($"bthPs3PsmDriverDir = {bthPs3PsmDriverDir}");
+
+            string bthPs3InfPath = Path.Combine(bthPs3DriverDir, "BthPS3.inf");
+            session.Log($"bthPs3InfPath = {bthPs3InfPath}");
+            string bthPs3PsmInfPath = Path.Combine(bthPs3PsmDriverDir, "BthPS3PSM.inf");
+            session.Log($"bthPs3PsmInfPath = {bthPs3PsmInfPath}");
+            string bthPs3NullInfPath = Path.Combine(bthPs3DriverDir, "BthPS3_PDO_NULL_Device.inf");
+            session.Log($"bthPs3NullInfPath = {bthPs3NullInfPath}");
+
+            #endregion
 
             #region Filter install
 
@@ -289,7 +466,7 @@ public static class CustomActions
     /// <summary>
     ///     Attempts to restart the radio and waits until the Bluetooth interface comes back online.
     /// </summary>
-    /// <param name="session">The <see cref="Session"/>.</param>
+    /// <param name="session">The <see cref="Session" />.</param>
     /// <returns>True on success, false on timeout.</returns>
     private static bool RestartRadioAndAwait(Session session)
     {
@@ -339,6 +516,59 @@ public static class CustomActions
         }
 
         return false;
+    }
+
+    /// <summary>
+    ///     Uninstalls and cleans all driver residue via old method.
+    /// </summary>
+    /// <remarks>Requires elevated permissions.</remarks>
+    public static void UninstallDriversLegacy(Session session)
+    {
+        session.Log($"--- BEGIN {nameof(UninstallDriversLegacy)} ---");
+
+        try
+        {
+            #region Paths
+
+            DirectoryInfo installDir = new(session.Property("INSTALLDIR"));
+            session.Log($"installDir = {installDir}");
+            string driversDir = Path.Combine(installDir.FullName, "drivers");
+            session.Log($"driversDir = {driversDir}");
+            string nefconDir = Path.Combine(installDir.FullName, "nefcon");
+            session.Log($"nefconDir = {nefconDir}");
+            string archShortName = ArchitectureInfo.PlatformShortName;
+            session.Log($"archShortName = {archShortName}");
+
+            string nefconcPath = Path.Combine(nefconDir, archShortName, "nefconc.exe");
+            session.Log($"nefconcPath = {nefconcPath}");
+
+            #endregion
+
+            RunCommand(nefconcPath, builder => builder
+                .Add("--remove-class-filter")
+                .Add("--position").Add("lower")
+                .Add("--service-name").Add(FilterDriver.FilterServiceName)
+                .Add("--class-guid").Add(DeviceClassIds.Bluetooth)
+            );
+
+            RunCommand(nefconcPath, builder => builder
+                .Add("--remove-device-node")
+                .Add("--hardware-id").Add("BTHENUM\\{1cb831ea-79cd-4508-b0fc-85f7c85ae8e0}")
+                .Add("--class-guid").Add(DeviceClassIds.Bluetooth)
+            );
+
+            RunCommand(nefconcPath, builder => builder
+                .Add("--disable-bluetooth-service")
+                .Add("--service-name").Add("BthPS3Service")
+                .Add("--service-guid").Add("{1cb831ea-79cd-4508-b0fc-85f7c85ae8e0}")
+            );
+        }
+        catch (Exception ex)
+        {
+            session.Log($"FTL: {ex}");
+        }
+
+        session.Log($"--- END {nameof(UninstallDriversLegacy)} ---");
     }
 
     /// <summary>

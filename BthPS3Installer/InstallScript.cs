@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 using CliWrap;
 
@@ -264,7 +265,7 @@ internal class InstallScript
             e.Result = ActionResult.Failure;
             return;
         }
-
+        
         Record record = new(1);
         record[1] = "9001";
 

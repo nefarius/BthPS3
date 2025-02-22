@@ -117,4 +117,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="label3.Text" xml:space="preserve">
+    <value>The modern method is selected by default, which works for the majority of devices and avoids having to reboot the system after installation.
+Some radios like Intel Wireless or TP-Link do not like to be power-cycled during operation for whatever reason.
+If you run into installation issues using the default, try running the setup again, but choose Legacy instead.</value>
+  </data>
 </root>

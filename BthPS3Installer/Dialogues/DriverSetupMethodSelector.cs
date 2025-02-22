@@ -30,6 +30,8 @@ public partial class DriverSetupMethodSelector : ManagedForm, IManagedDialog
 
     void next_Click(object sender, EventArgs e)
     {
+        Runtime.Session["USE_MODERN"] = rbModern.Checked.ToString();
+
         Shell.GoNext();
     }
 

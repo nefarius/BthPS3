@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Windows.Forms;
 
 using CliWrap;
 using CliWrap.Buffered;
@@ -58,6 +59,12 @@ public static class CustomActions
     [CustomAction]
     public static ActionResult InstallDriversLegacy(Session session)
     {
+        if (!bool.TryParse(session["USE_MODERN"], out bool useModern) || useModern)
+        {
+            session.Log("USE_MODERN not set or true, skipping action");
+            return ActionResult.NotExecuted;
+        }
+
         // clean out whatever has been on the machine before
         UninstallDriversLegacy(session);
 
@@ -207,6 +214,12 @@ public static class CustomActions
     [CustomAction]
     public static ActionResult InstallDrivers(Session session)
     {
+        if (!bool.TryParse(session["USE_MODERN"], out bool useModern) || !useModern)
+        {
+            session.Log("USE_MODERN not set or false, skipping action");
+            return ActionResult.NotExecuted;
+        }
+
         // clean out whatever has been on the machine before
         UninstallDrivers(session);
 

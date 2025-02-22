@@ -121,7 +121,7 @@ $files =    "`".\artifacts\bin\*.exe`" " +
 
 if ($NoSigning -eq $false) {
     # sign with only one certificate
-    Invoke-Expression "& `"$signTool`" sign /v /n `"$certName`" /tr $timestampUrl /fd sha256 /td sha256 $files"
+    Invoke-Expression "& `"$signTool`" sign /v /n `"$certName`" /a /tr $timestampUrl /fd sha256 /td sha256 $files"
 }
 
 # Print helper job names for sign portal

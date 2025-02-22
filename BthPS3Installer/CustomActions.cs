@@ -65,8 +65,6 @@ public static class CustomActions
             return ActionResult.NotExecuted;
         }
 
-        MessageBox.Show("Running LEGACY");
-
         // clean out whatever has been on the machine before
         UninstallDriversLegacy(session);
 

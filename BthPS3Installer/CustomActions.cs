@@ -59,7 +59,7 @@ public static class CustomActions
     [CustomAction]
     public static ActionResult InstallDriversLegacy(Session session)
     {
-        if (!bool.TryParse(session["USE_MODERN"], out bool useModern) || useModern)
+        if (!bool.TryParse(session.Property("USE_MODERN"), out bool useModern) || useModern)
         {
             session.Log("USE_MODERN not set or true, skipping action");
             return ActionResult.NotExecuted;
@@ -214,7 +214,7 @@ public static class CustomActions
     [CustomAction]
     public static ActionResult InstallDrivers(Session session)
     {
-        if (!bool.TryParse(session["USE_MODERN"], out bool useModern) || !useModern)
+        if (!bool.TryParse(session.Property("USE_MODERN"), out bool useModern) || !useModern)
         {
             session.Log("USE_MODERN not set or false, skipping action");
             return ActionResult.NotExecuted;

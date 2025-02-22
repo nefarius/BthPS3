@@ -223,6 +223,8 @@ internal class InstallScript
 
         project.AfterInstall += ProjectOnAfterInstall;
 
+        project.DefaultDeferredProperties += ",USE_MODERN";
+
         #region Embed types of dependencies
 
         project.DefaultRefAssemblies.Add(typeof(Devcon).Assembly.Location);

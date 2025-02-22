@@ -121,7 +121,7 @@ public static class CustomActions
             BufferedCommandResult? cassFilterRet = RunCommand(nefconcPath, builder => builder
                 .Add("--add-class-filter")
                 .Add("--position").Add("lower")
-                .Add("--service-name").Add("BthPS3PSM")
+                .Add("--service-name").Add(FilterDriver.FilterServiceName)
                 .Add("--class-guid").Add(DeviceClassIds.Bluetooth)
             );
 
@@ -514,6 +514,51 @@ public static class CustomActions
     /// <remarks>Requires elevated permissions.</remarks>
     public static void UninstallDriversLegacy(Session session)
     {
+        session.Log($"--- BEGIN {nameof(UninstallDriversLegacy)} ---");
+
+        try
+        {
+            #region Paths
+
+            DirectoryInfo installDir = new(session.Property("INSTALLDIR"));
+            session.Log($"installDir = {installDir}");
+            string driversDir = Path.Combine(installDir.FullName, "drivers");
+            session.Log($"driversDir = {driversDir}");
+            string nefconDir = Path.Combine(installDir.FullName, "nefcon");
+            session.Log($"nefconDir = {nefconDir}");
+            string archShortName = ArchitectureInfo.PlatformShortName;
+            session.Log($"archShortName = {archShortName}");
+
+            string nefconcPath = Path.Combine(nefconDir, archShortName, "nefconc.exe");
+            session.Log($"nefconcPath = {nefconcPath}");
+
+            #endregion
+
+            RunCommand(nefconcPath, builder => builder
+                .Add("--remove-class-filter")
+                .Add("--position").Add("lower")
+                .Add("--service-name").Add(FilterDriver.FilterServiceName)
+                .Add("--class-guid").Add(DeviceClassIds.Bluetooth)
+            );
+
+            RunCommand(nefconcPath, builder => builder
+                .Add("--remove-device-node")
+                .Add("--hardware-id").Add("BTHENUM\\{1cb831ea-79cd-4508-b0fc-85f7c85ae8e0}")
+                .Add("--class-guid").Add(DeviceClassIds.Bluetooth)
+            );
+
+            RunCommand(nefconcPath, builder => builder
+                .Add("--disable-bluetooth-service")
+                .Add("--service-name").Add("BthPS3Service")
+                .Add("--service-guid").Add("{1cb831ea-79cd-4508-b0fc-85f7c85ae8e0}")
+            );
+        }
+        catch (Exception ex)
+        {
+            session.Log($"FTL: {ex}");
+        }
+
+        session.Log($"--- END {nameof(UninstallDriversLegacy)} ---");
     }
 
     /// <summary>

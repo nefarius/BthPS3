@@ -160,7 +160,7 @@ partial class DriverSetupMethodSelector
             // 
             this.label3.Location = new System.Drawing.Point(29, 87);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(352, 101);
+            this.label3.Size = new System.Drawing.Size(448, 101);
             this.label3.TabIndex = 13;
             this.label3.Text = resources.GetString("label3.Text");
             // 

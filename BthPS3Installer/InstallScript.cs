@@ -113,6 +113,12 @@ internal class InstallScript
                 Step.InstallFiles,
                 Condition.NOT_Installed
             ),
+            // install drivers via legacy method
+            new ElevatedManagedAction(CustomActions.InstallDriversLegacy, Return.check,
+                When.After,
+                Step.InstallFiles,
+                Condition.NOT_Installed
+            ),
             // install manifests
             new ElevatedManagedAction(CustomActions.InstallManifest, Return.check,
                 When.After,
@@ -285,6 +291,7 @@ internal class InstallScript
         if (e.IsUninstalling)
         {
             CustomActions.UninstallDrivers(e.Session);
+            CustomActions.UninstallDriversLegacy(e.Session);
         }
     }
 }

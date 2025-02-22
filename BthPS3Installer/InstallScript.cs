@@ -171,6 +171,10 @@ internal class InstallScript
                 "You can ignore the detection error and setup might be able to finish successfully. " +
                 "You can retry the same operation again, which might fix it. " +
                 "If you choose to abort, setup will end with an error."
+            ),
+            new Error("9003",
+                "Legacy installation method was chosen. " +
+                "After the setup is finished, you MUST REBOOT THE SYSTEM before using the software."
             )
         )
         {

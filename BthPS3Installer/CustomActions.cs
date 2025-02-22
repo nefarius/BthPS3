@@ -185,6 +185,13 @@ public static class CustomActions
 
             session.Log($"--- END {nameof(InstallDriversLegacy)} SUCCESS ---");
 
+            Record record = new(1);
+            record[1] = "9003";
+
+            session.Message(
+                InstallMessage.User | (InstallMessage)MessageButtons.OK | (InstallMessage)MessageIcon.Information,
+                record);
+
             return ActionResult.Success;
         }
         catch (Exception ex)

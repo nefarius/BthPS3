@@ -107,18 +107,25 @@ internal class InstallScript
                 new RegValue("DriverVersion", driverVersion.ToString()) { Win64 = true },
                 new RegValue("FilterVersion", filterVersion.ToString()) { Win64 = true }
             ) { Win64 = true },
+            new Property(CustomProperties.UseModern, "0"),
             // install drivers
             new ElevatedManagedAction(CustomActions.InstallDrivers, Return.check,
                 When.After,
                 Step.InstallFiles,
                 Condition.NOT_Installed
-            ),
+            )
+            {
+                UsesProperties = CustomProperties.UseModern
+            },
             // install drivers via legacy method
             new ElevatedManagedAction(CustomActions.InstallDriversLegacy, Return.check,
                 When.After,
                 Step.InstallFiles,
                 Condition.NOT_Installed
-            ),
+            )
+            {
+                UsesProperties = CustomProperties.UseModern
+            },
             // install manifests
             new ElevatedManagedAction(CustomActions.InstallManifest, Return.check,
                 When.After,
@@ -223,9 +230,13 @@ internal class InstallScript
 
         project.AfterInstall += ProjectOnAfterInstall;
 
-        project.DefaultDeferredProperties += ",USE_MODERN";
+        project.DefaultDeferredProperties += $",{CustomProperties.UseModern}";
 
         #region Embed types of dependencies
+
+        project.EmbedCliWrap();
+
+        Console.WriteLine(typeof(ValueTask).Assembly.Location);
 
         project.DefaultRefAssemblies.Add(typeof(Devcon).Assembly.Location);
         project.DefaultRefAssemblies.Add(typeof(HostRadio).Assembly.Location);

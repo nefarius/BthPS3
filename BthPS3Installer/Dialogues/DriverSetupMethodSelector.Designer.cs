@@ -31,18 +31,18 @@ partial class DriverSetupMethodSelector
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DriverSetupMethodSelector));
             this.banner = new System.Windows.Forms.PictureBox();
             this.panel2 = new System.Windows.Forms.Panel();
-            this.label2 = new System.Windows.Forms.Label();
-            this.label1 = new System.Windows.Forms.Label();
-            this.panel1 = new System.Windows.Forms.Panel();
+            this.summaryLabel = new System.Windows.Forms.Label();
+            this.headingLabel = new System.Windows.Forms.Label();
+            this.bottomPanel = new System.Windows.Forms.Panel();
             this.back = new System.Windows.Forms.Button();
             this.next = new System.Windows.Forms.Button();
             this.cancel = new System.Windows.Forms.Button();
             this.rbModern = new System.Windows.Forms.RadioButton();
             this.rbLegacy = new System.Windows.Forms.RadioButton();
-            this.label3 = new System.Windows.Forms.Label();
+            this.infoLabel = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.banner)).BeginInit();
             this.panel2.SuspendLayout();
-            this.panel1.SuspendLayout();
+            this.bottomPanel.SuspendLayout();
             this.SuspendLayout();
             // 
             // banner
@@ -59,47 +59,47 @@ partial class DriverSetupMethodSelector
             // 
             this.panel2.BackColor = System.Drawing.SystemColors.Control;
             this.panel2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panel2.Controls.Add(this.label2);
-            this.panel2.Controls.Add(this.label1);
+            this.panel2.Controls.Add(this.summaryLabel);
+            this.panel2.Controls.Add(this.headingLabel);
             this.panel2.Controls.Add(this.banner);
             this.panel2.Location = new System.Drawing.Point(-5, -5);
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(503, 61);
             this.panel2.TabIndex = 10;
             // 
-            // label2
+            // summaryLabel
             // 
-            this.label2.AutoSize = true;
-            this.label2.BackColor = System.Drawing.Color.White;
-            this.label2.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(30, 31);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(324, 13);
-            this.label2.TabIndex = 1;
-            this.label2.Text = "Select the desired driver installation logic to fix compatibility issues";
+            this.summaryLabel.AutoSize = true;
+            this.summaryLabel.BackColor = System.Drawing.Color.White;
+            this.summaryLabel.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.summaryLabel.Location = new System.Drawing.Point(30, 31);
+            this.summaryLabel.Name = "summaryLabel";
+            this.summaryLabel.Size = new System.Drawing.Size(324, 13);
+            this.summaryLabel.TabIndex = 1;
+            this.summaryLabel.Text = "Select the desired driver installation logic to fix compatibility issues";
             // 
-            // label1
+            // headingLabel
             // 
-            this.label1.AutoSize = true;
-            this.label1.BackColor = System.Drawing.Color.White;
-            this.label1.Font = new System.Drawing.Font("Tahoma", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(16, 8);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(196, 14);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "Driver Setup Method Selection";
+            this.headingLabel.AutoSize = true;
+            this.headingLabel.BackColor = System.Drawing.Color.White;
+            this.headingLabel.Font = new System.Drawing.Font("Tahoma", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.headingLabel.Location = new System.Drawing.Point(16, 8);
+            this.headingLabel.Name = "headingLabel";
+            this.headingLabel.Size = new System.Drawing.Size(196, 14);
+            this.headingLabel.TabIndex = 1;
+            this.headingLabel.Text = "Driver Setup Method Selection";
             // 
-            // panel1
+            // bottomPanel
             // 
-            this.panel1.BackColor = System.Drawing.SystemColors.Control;
-            this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panel1.Controls.Add(this.back);
-            this.panel1.Controls.Add(this.next);
-            this.panel1.Controls.Add(this.cancel);
-            this.panel1.Location = new System.Drawing.Point(-3, 308);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(503, 57);
-            this.panel1.TabIndex = 9;
+            this.bottomPanel.BackColor = System.Drawing.SystemColors.Control;
+            this.bottomPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.bottomPanel.Controls.Add(this.back);
+            this.bottomPanel.Controls.Add(this.next);
+            this.bottomPanel.Controls.Add(this.cancel);
+            this.bottomPanel.Location = new System.Drawing.Point(-3, 308);
+            this.bottomPanel.Name = "bottomPanel";
+            this.bottomPanel.Size = new System.Drawing.Size(503, 57);
+            this.bottomPanel.TabIndex = 9;
             // 
             // back
             // 
@@ -156,22 +156,22 @@ partial class DriverSetupMethodSelector
             this.rbLegacy.Text = "Legacy sequential method (reboot required)";
             this.rbLegacy.UseVisualStyleBackColor = true;
             // 
-            // label3
+            // infoLabel
             // 
-            this.label3.Location = new System.Drawing.Point(29, 87);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(448, 101);
-            this.label3.TabIndex = 13;
-            this.label3.Text = resources.GetString("label3.Text");
+            this.infoLabel.Location = new System.Drawing.Point(29, 87);
+            this.infoLabel.Name = "infoLabel";
+            this.infoLabel.Size = new System.Drawing.Size(448, 101);
+            this.infoLabel.TabIndex = 13;
+            this.infoLabel.Text = resources.GetString("infoLabel.Text");
             // 
             // DriverSetupMethodSelector
             // 
             this.ClientSize = new System.Drawing.Size(494, 361);
-            this.Controls.Add(this.label3);
+            this.Controls.Add(this.infoLabel);
             this.Controls.Add(this.rbLegacy);
             this.Controls.Add(this.rbModern);
             this.Controls.Add(this.panel2);
-            this.Controls.Add(this.panel1);
+            this.Controls.Add(this.bottomPanel);
             this.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Name = "DriverSetupMethodSelector";
             this.Text = "[UserNameDlg_Title]";
@@ -179,7 +179,7 @@ partial class DriverSetupMethodSelector
             ((System.ComponentModel.ISupportInitialize)(this.banner)).EndInit();
             this.panel2.ResumeLayout(false);
             this.panel2.PerformLayout();
-            this.panel1.ResumeLayout(false);
+            this.bottomPanel.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -189,13 +189,13 @@ partial class DriverSetupMethodSelector
 
     private System.Windows.Forms.PictureBox banner;
     private System.Windows.Forms.Panel panel2;
-    private System.Windows.Forms.Label label2;
-    private System.Windows.Forms.Label label1;
-    private System.Windows.Forms.Panel panel1;
+    private System.Windows.Forms.Label summaryLabel;
+    private System.Windows.Forms.Label headingLabel;
+    private System.Windows.Forms.Panel bottomPanel;
     private System.Windows.Forms.Button back;
     private System.Windows.Forms.Button next;
     private System.Windows.Forms.Button cancel;
     private System.Windows.Forms.RadioButton rbModern;
     private System.Windows.Forms.RadioButton rbLegacy;
-    private System.Windows.Forms.Label label3;
+    private System.Windows.Forms.Label infoLabel;
 }

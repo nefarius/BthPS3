@@ -1,4 +1,5 @@
 using System;
+using System.Windows.Forms;
 
 using WixSharp;
 using WixSharp.UI.Forms;
@@ -12,6 +13,8 @@ public partial class DriverSetupMethodSelector : ManagedForm, IManagedDialog
         //The incompatibility is particularly possible for the Embedded UI scenarios. 
         //The safest way to avoid the problem is to compile the assembly for v3.5 Target Framework.WixSharp Setup
         InitializeComponent();
+
+        AutoScaleMode = AutoScaleMode.Dpi;
     }
 
     void dialog_Load(object sender, EventArgs e)

@@ -30,7 +30,7 @@ partial class DriverSetupMethodSelector
     {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DriverSetupMethodSelector));
             this.banner = new System.Windows.Forms.PictureBox();
-            this.panel2 = new System.Windows.Forms.Panel();
+            this.topPanel = new System.Windows.Forms.Panel();
             this.summaryLabel = new System.Windows.Forms.Label();
             this.headingLabel = new System.Windows.Forms.Label();
             this.bottomPanel = new System.Windows.Forms.Panel();
@@ -41,7 +41,7 @@ partial class DriverSetupMethodSelector
             this.rbLegacy = new System.Windows.Forms.RadioButton();
             this.infoLabel = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.banner)).BeginInit();
-            this.panel2.SuspendLayout();
+            this.topPanel.SuspendLayout();
             this.bottomPanel.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -55,17 +55,17 @@ partial class DriverSetupMethodSelector
             this.banner.TabIndex = 0;
             this.banner.TabStop = false;
             // 
-            // panel2
+            // topPanel
             // 
-            this.panel2.BackColor = System.Drawing.SystemColors.Control;
-            this.panel2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panel2.Controls.Add(this.summaryLabel);
-            this.panel2.Controls.Add(this.headingLabel);
-            this.panel2.Controls.Add(this.banner);
-            this.panel2.Location = new System.Drawing.Point(-5, -5);
-            this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(503, 61);
-            this.panel2.TabIndex = 10;
+            this.topPanel.BackColor = System.Drawing.SystemColors.Control;
+            this.topPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.topPanel.Controls.Add(this.summaryLabel);
+            this.topPanel.Controls.Add(this.headingLabel);
+            this.topPanel.Controls.Add(this.banner);
+            this.topPanel.Location = new System.Drawing.Point(-5, -5);
+            this.topPanel.Name = "topPanel";
+            this.topPanel.Size = new System.Drawing.Size(503, 61);
+            this.topPanel.TabIndex = 10;
             // 
             // summaryLabel
             // 
@@ -170,15 +170,15 @@ partial class DriverSetupMethodSelector
             this.Controls.Add(this.infoLabel);
             this.Controls.Add(this.rbLegacy);
             this.Controls.Add(this.rbModern);
-            this.Controls.Add(this.panel2);
+            this.Controls.Add(this.topPanel);
             this.Controls.Add(this.bottomPanel);
             this.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Name = "DriverSetupMethodSelector";
             this.Text = "[UserNameDlg_Title]";
             this.Load += new System.EventHandler(this.dialog_Load);
             ((System.ComponentModel.ISupportInitialize)(this.banner)).EndInit();
-            this.panel2.ResumeLayout(false);
-            this.panel2.PerformLayout();
+            this.topPanel.ResumeLayout(false);
+            this.topPanel.PerformLayout();
             this.bottomPanel.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -188,7 +188,7 @@ partial class DriverSetupMethodSelector
     #endregion
 
     private System.Windows.Forms.PictureBox banner;
-    private System.Windows.Forms.Panel panel2;
+    private System.Windows.Forms.Panel topPanel;
     private System.Windows.Forms.Label summaryLabel;
     private System.Windows.Forms.Label headingLabel;
     private System.Windows.Forms.Panel bottomPanel;

@@ -223,7 +223,7 @@ internal class InstallScript
         project.ManagedUI.InstallDialogs.Add(Dialogs.Welcome)
             .Add(Dialogs.Licence)
             .Add(Dialogs.Features)
-            .Add(typeof(DriverSetupMethodSelector))
+            .Add(typeof(InstallMethodDialog))
             .Add(Dialogs.Progress)
             .Add(Dialogs.Exit);
 

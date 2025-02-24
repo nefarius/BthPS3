@@ -4,10 +4,18 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net48</TargetFramework>
     <RootNamespace>Nefarius.BthPS3.Setup</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Configurations>Debug;Release</Configurations>
+    <NoWarn>1591</NoWarn>
+    <UseWPF>true</UseWPF>
+    <RollForward>Major</RollForward>
+    <!-- https://stackoverflow.com/questions/58844785/how-to-reference-system-windows-forms-in-net-core-3-0-for-wpf-apps -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
   </PropertyGroup>
 
   <PropertyGroup>
-    <SetupVersion Condition="'$(SetupVersion)' == ''">2.15.0</SetupVersion>
+    <SetupVersion Condition="'$(SetupVersion)' == ''">2.16.0</SetupVersion>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -16,12 +24,17 @@
   </Target>
 
   <ItemGroup>
+    <Compile Remove="Archive\**" />
+    <EmbeddedResource Remove="Archive\**" />
     <None Remove="*.msi" />
     <None Remove="*.exe" />
     <None Remove="*.wxs" />
     <None Remove="*.wixpdb" />
     <None Remove="*.wixobj" />
+    <None Remove="Archive\**" />
+    <None Remove="App.config" />
     <None Remove="*.g.cs" />
+    <None Include="wix\$(ProjectName).g.wxs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,8 +45,8 @@
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.0" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.0" />
     <PackageReference Include="Nefarius.Utilities.Bluetooth" Version="1.8.0" />
-    <PackageReference Include="Nefarius.Utilities.DeviceManagement" Version="5.0.0" />
-    <PackageReference Include="WixSharp_wix4" Version="2.6.0" />
+    <PackageReference Include="Nefarius.Utilities.DeviceManagement" Version="5.1.0" />
+    <PackageReference Include="WixSharp-wix4.WPF" Version="2.6.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -4,14 +4,13 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 
 using CliWrap;
 
 using Microsoft.Win32;
 using Microsoft.Win32.SafeHandles;
 
-using Nefarius.BthPS3.Setup.Dialogues;
+using Nefarius.BthPS3.Setup.Dialogs;
 using Nefarius.BthPS3.Shared;
 using Nefarius.Utilities.Bluetooth;
 using Nefarius.Utilities.DeviceManagement.PnP;
@@ -21,7 +20,6 @@ using PInvoke;
 
 using WixSharp;
 using WixSharp.CommonTasks;
-using WixSharp.Forms;
 
 using WixToolset.Dtf.WindowsInstaller;
 
@@ -208,29 +206,20 @@ internal class InstallScript
             Schedule = UpgradeSchedule.afterInstallInitialize,
             DowngradeErrorMessage = "A later version of [ProductName] is already installed. Setup will now exit."
         };
-
-        /*
-        project.Load +=
-            e =>
-            {
-                MessageBox.Show(e.Session.GetMainWindow(), e.ToString(),
-                    "Before (Install/Uninstall) - " + new Version(e.Session["FOUNDPREVIOUSVERSION"]));
-            };
-        */
-
+        
         project.Load += ProjectOnLoad;
 
-        project.ManagedUI.InstallDialogs.Add(Dialogs.Welcome)
-            .Add(Dialogs.Licence)
-            .Add(Dialogs.Features)
-            .Add(typeof(DriverSetupMethodSelector))
-            .Add(Dialogs.Progress)
-            .Add(Dialogs.Exit);
+        project.ManagedUI.InstallDialogs.Add<WelcomeDialog>()
+            .Add<LicenceDialog>()
+            .Add<FeaturesDialog>()
+            .Add<DriverSetupMethodSelectorDialog>()
+            .Add<ProgressDialog>()
+            .Add<ExitDialog>();
 
-        project.ManagedUI.ModifyDialogs.Add(Dialogs.MaintenanceType)
-            .Add(Dialogs.Features)
-            .Add(Dialogs.Progress)
-            .Add(Dialogs.Exit);
+        project.ManagedUI.ModifyDialogs.Add<MaintenanceTypeDialog>()
+            .Add<FeaturesDialog>()
+            .Add<ProgressDialog>()
+            .Add<ExitDialog>();
 
         project.AfterInstall += ProjectOnAfterInstall;
 

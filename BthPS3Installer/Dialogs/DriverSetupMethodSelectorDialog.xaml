@@ -1,0 +1,114 @@
+<wixsharp:WpfDialog
+    x:Class="Nefarius.BthPS3.Setup.Dialogs.DriverSetupMethodSelectorDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:wixsharp="clr-namespace:WixSharp.UI.WPF;assembly=WixSharp.UI.WPF"
+    d:DesignHeight="408"
+    d:DesignWidth="512"
+    DialogTitle="[ProductName] Setup"
+    mc:Ignorable="d">
+    <Grid x:Name="Root">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="60" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="53" />
+        </Grid.RowDefinitions>
+        <Border
+            Margin="-1,-1,-1,0"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            BorderBrush="Gray"
+            BorderThickness="1">
+            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="80" />
+                </Grid.ColumnDefinitions>
+
+                <Image
+                    x:Name="Banner"
+                    Grid.Row="1"
+                    Grid.ColumnSpan="2"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Source="{Binding Banner}" />
+                <StackPanel Margin="9">
+                    <TextBlock
+                        FontSize="12"
+                        FontWeight="Bold">
+                        Driver Setup Method Selection
+                    </TextBlock>
+                    <TextBlock
+                        x:Name="DialogDescription"
+                        Margin="17,5"
+                        VerticalAlignment="Stretch"
+                        TextWrapping="WrapWithOverflow">
+                        Select the desired driver installation logic to fix compatibility issues
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <StackPanel Grid.Row="1" Margin="9">
+            <TextBlock TextWrapping="WrapWithOverflow">
+                The modern method is selected by default, which works for the majority of devices and avoids having to reboot the system after installation.<LineBreak/>
+                Some radios like Intel Wireless or TP-Link do not like to be power-cycled during operation for whatever reason.<LineBreak/>
+                If you run into installation issues using the default, try running the setup again, but choose Legacy instead.
+            </TextBlock>
+
+            <StackPanel Margin="0, 40, 0, 10">
+                <RadioButton 
+                    IsChecked="{Binding UseModern}"
+                    GroupName="Method" Margin="0, 5, 0, 5">
+                    Modern hot-plug method (no reboot required)
+                </RadioButton>
+                <RadioButton 
+                    GroupName="Method" Margin="0, 5, 0, 5">
+                    Legacy sequential method (reboot required)
+                </RadioButton>
+            </StackPanel>
+        </StackPanel>
+
+        <Border
+            Grid.Row="2"
+            Margin="-1,0,-1,-1"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            BorderBrush="Gray"
+            BorderThickness="1">
+            <StackPanel
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"
+                Orientation="Horizontal">
+
+                <Separator Width="10" Opacity="0" />
+                <Button
+                    x:Name="GoPrev"
+                    Height="23"
+                    MinWidth="73"
+                    Click="GoPrev_Click">
+                    [WixUIBack]
+                </Button>
+                <Separator Width="10" Opacity="0" />
+                <Button
+                    x:Name="GoNext"
+                    Height="23"
+                    MinWidth="73"
+                    Click="GoNext_Click">
+                    [WixUINext]
+                </Button>
+                <Separator Width="20" Opacity="0" />
+                <Button
+                    x:Name="Cancel"
+                    Height="23"
+                    MinWidth="73"
+                    IsEnabled="False">
+                    [WixUICancel]
+                </Button>
+                <Separator Width="10" Opacity="0" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</wixsharp:WpfDialog>

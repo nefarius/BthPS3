@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Windows.Forms;
 
 using CliWrap;
 using CliWrap.Buffered;
@@ -20,6 +21,8 @@ using Nefarius.Utilities.WixSharp.Util;
 using WixSharp;
 
 using WixToolset.Dtf.WindowsInstaller;
+
+using File = System.IO.File;
 
 namespace Nefarius.BthPS3.Setup;
 
@@ -264,6 +267,9 @@ public static class CustomActions
             session.Log($"bthPs3NullInfPath = {bthPs3NullInfPath}");
 
             #endregion
+
+            MessageBox.Show(Directory.Exists(installDir.FullName).ToString());
+            MessageBox.Show(File.Exists(nefconcPath).ToString());
 
             #region Filter install
 

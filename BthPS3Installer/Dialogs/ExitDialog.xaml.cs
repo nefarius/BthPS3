@@ -106,7 +106,7 @@ namespace Nefarius.BthPS3.Setup.Dialogs
                         logFile = wixSharpDir.PathCombine(Host.Runtime.ProductName + ".log");
                         IO.File.WriteAllText(logFile, shell.Log);
                     }
-                    Process.Start("notepad.exe", logFile);
+                    Process.Start(logFile);
                 }
                 catch
                 {

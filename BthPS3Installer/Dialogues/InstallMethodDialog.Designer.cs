@@ -32,7 +32,7 @@ namespace Nefarius.BthPS3.Setup.Dialogues
             this.middlePanel = new System.Windows.Forms.Panel();
             this.rbLegacy = new System.Windows.Forms.RadioButton();
             this.rbModern = new System.Windows.Forms.RadioButton();
-            this.label3 = new System.Windows.Forms.Label();
+            this.infoLabel = new System.Windows.Forms.Label();
             this.topBorder = new System.Windows.Forms.Panel();
             this.topPanel = new System.Windows.Forms.Panel();
             this.label2 = new System.Windows.Forms.Label();
@@ -58,11 +58,11 @@ namespace Nefarius.BthPS3.Setup.Dialogues
             | System.Windows.Forms.AnchorStyles.Right)));
             this.middlePanel.Controls.Add(this.rbLegacy);
             this.middlePanel.Controls.Add(this.rbModern);
-            this.middlePanel.Controls.Add(this.label3);
+            this.middlePanel.Controls.Add(this.infoLabel);
             this.middlePanel.Location = new System.Drawing.Point(22, 75);
-            this.middlePanel.MinimumSize = new System.Drawing.Size(449, 181);
+            this.middlePanel.MinimumSize = new System.Drawing.Size(449, 160);
             this.middlePanel.Name = "middlePanel";
-            this.middlePanel.Size = new System.Drawing.Size(449, 181);
+            this.middlePanel.Size = new System.Drawing.Size(449, 160);
             this.middlePanel.TabIndex = 16;
             // 
             // rbLegacy
@@ -87,15 +87,15 @@ namespace Nefarius.BthPS3.Setup.Dialogues
             this.rbModern.Text = "Modern hot-plug method (no reboot required)";
             this.rbModern.UseVisualStyleBackColor = true;
             // 
-            // label3
+            // infoLabel
             // 
-            this.label3.AutoSize = true;
-            this.label3.BackColor = System.Drawing.Color.Transparent;
-            this.label3.Location = new System.Drawing.Point(0, 3);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(447, 52);
-            this.label3.TabIndex = 11;
-            this.label3.Text = resources.GetString("label3.Text");
+            this.infoLabel.AutoSize = true;
+            this.infoLabel.BackColor = System.Drawing.Color.Transparent;
+            this.infoLabel.Location = new System.Drawing.Point(0, 3);
+            this.infoLabel.Name = "infoLabel";
+            this.infoLabel.Size = new System.Drawing.Size(447, 52);
+            this.infoLabel.TabIndex = 11;
+            this.infoLabel.Text = resources.GetString("infoLabel.Text");
             // 
             // topBorder
             // 
@@ -262,7 +262,7 @@ namespace Nefarius.BthPS3.Setup.Dialogues
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Panel bottomPanel;
-        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Label infoLabel;
         private System.Windows.Forms.Panel border1;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
         private System.Windows.Forms.Button back;

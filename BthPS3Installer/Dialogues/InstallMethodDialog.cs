@@ -1,4 +1,5 @@
 using System;
+using System.Windows.Forms;
 
 using WixSharp;
 using WixSharp.UI.Forms;
@@ -18,6 +19,8 @@ namespace Nefarius.BthPS3.Setup.Dialogues
             InitializeComponent();
             label1.MakeTransparentOn(banner);
             label2.MakeTransparentOn(banner);
+
+            AutoScaleMode = AutoScaleMode.Dpi;
         }
 
         void InstallDirDialog_Load(object sender, EventArgs e)
@@ -43,6 +46,21 @@ namespace Nefarius.BthPS3.Setup.Dialogues
             var upShift = (int)(next.Height * 2.3) - bottomPanel.Height;
             bottomPanel.Top -= upShift;
             bottomPanel.Height += upShift;
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+
+            float scaleFactor = this.CurrentAutoScaleDimensions.Height / 96f;
+
+            if (scaleFactor <= 1)
+                return;
+
+            middlePanel.Height = (int)(middlePanel.MinimumSize.Height * scaleFactor);
+
+            rbModern.Top = (int)(infoLabel.Bottom + (10 * scaleFactor));
+            rbLegacy.Top = (int)(rbModern.Bottom + (10 * scaleFactor));
         }
 
         void back_Click(object sender, EventArgs e)

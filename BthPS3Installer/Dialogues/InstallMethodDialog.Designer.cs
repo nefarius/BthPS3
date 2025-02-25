@@ -28,10 +28,7 @@ namespace Nefarius.BthPS3.Setup.Dialogues
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(InstallMethodDialog));
-            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.copyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.middlePanel = new System.Windows.Forms.Panel();
             this.rbLegacy = new System.Windows.Forms.RadioButton();
             this.rbModern = new System.Windows.Forms.RadioButton();
@@ -47,26 +44,12 @@ namespace Nefarius.BthPS3.Setup.Dialogues
             this.next = new System.Windows.Forms.Button();
             this.cancel = new System.Windows.Forms.Button();
             this.border1 = new System.Windows.Forms.Panel();
-            this.contextMenuStrip1.SuspendLayout();
             this.middlePanel.SuspendLayout();
             this.topPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.banner)).BeginInit();
             this.bottomPanel.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // contextMenuStrip1
-            // 
-            this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.copyToolStripMenuItem});
-            this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(111, 26);
-            // 
-            // copyToolStripMenuItem
-            // 
-            this.copyToolStripMenuItem.Name = "copyToolStripMenuItem";
-            this.copyToolStripMenuItem.Size = new System.Drawing.Size(110, 22);
-            this.copyToolStripMenuItem.Text = "[Copy]";
             // 
             // middlePanel
             // 
@@ -78,7 +61,7 @@ namespace Nefarius.BthPS3.Setup.Dialogues
             this.middlePanel.Controls.Add(this.label3);
             this.middlePanel.Location = new System.Drawing.Point(22, 75);
             this.middlePanel.Name = "middlePanel";
-            this.middlePanel.Size = new System.Drawing.Size(449, 159);
+            this.middlePanel.Size = new System.Drawing.Size(449, 181);
             this.middlePanel.TabIndex = 16;
             // 
             // rbLegacy
@@ -259,7 +242,6 @@ namespace Nefarius.BthPS3.Setup.Dialogues
             this.Name = "InstallMethodDialog";
             this.Text = "[ProductName] Setup";
             this.Load += new System.EventHandler(this.InstallDirDialog_Load);
-            this.contextMenuStrip1.ResumeLayout(false);
             this.middlePanel.ResumeLayout(false);
             this.middlePanel.PerformLayout();
             this.topPanel.ResumeLayout(false);
@@ -275,8 +257,6 @@ namespace Nefarius.BthPS3.Setup.Dialogues
         #endregion
 
         private System.Windows.Forms.PictureBox banner;
-        private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
-        private System.Windows.Forms.ToolStripMenuItem copyToolStripMenuItem;
         private System.Windows.Forms.Panel topPanel;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label1;

@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <SetupVersion Condition="'$(SetupVersion)' == ''">2.15.0</SetupVersion>
+    <SetupVersion Condition="'$(SetupVersion)' == ''">2.17.0</SetupVersion>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
   </PropertyGroup>

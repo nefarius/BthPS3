@@ -78,7 +78,7 @@ namespace Nefarius.BthPS3.Setup.Dialogues
             this.middlePanel.Controls.Add(this.label3);
             this.middlePanel.Location = new System.Drawing.Point(22, 75);
             this.middlePanel.Name = "middlePanel";
-            this.middlePanel.Size = new System.Drawing.Size(449, 203);
+            this.middlePanel.Size = new System.Drawing.Size(449, 159);
             this.middlePanel.TabIndex = 16;
             // 
             // rbLegacy

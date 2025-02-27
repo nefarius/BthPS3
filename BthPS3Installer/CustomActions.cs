@@ -171,8 +171,8 @@ public static class CustomActions
 
             BufferedCommandResult? serviceEnableRet = RunCommand(nefconcPath, builder => builder
                 .Add("--enable-bluetooth-service")
-                .Add("--service-name").Add("BthPS3Service")
-                .Add("--service-guid").Add("{1cb831ea-79cd-4508-b0fc-85f7c85ae8e0}")
+                .Add("--service-name").Add(InstallScript.BthPs3ServiceName)
+                .Add("--service-guid").Add(InstallScript.BthPs3ServiceGuid)
             );
 
             if (serviceEnableRet?.ExitCode != 0 && serviceEnableRet?.ExitCode != 3010)
@@ -559,8 +559,8 @@ public static class CustomActions
 
             RunCommand(nefconcPath, builder => builder
                 .Add("--disable-bluetooth-service")
-                .Add("--service-name").Add("BthPS3Service")
-                .Add("--service-guid").Add("{1cb831ea-79cd-4508-b0fc-85f7c85ae8e0}")
+                .Add("--service-name").Add(InstallScript.BthPs3ServiceName)
+                .Add("--service-guid").Add(InstallScript.BthPs3ServiceGuid)
             );
         }
         catch (Exception ex)

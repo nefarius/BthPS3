@@ -274,7 +274,7 @@ int main(int, char* argv[])
 
         BTHPS3PSM_GET_PSM_PATCHING req;
 
-        if (!get_psm_patch(&req))
+        if (!get_psm_patch(&req, deviceIndex))
         {
             std::cout << color(red) <<
                 "Couldn't fetch PSM patch state, error: "

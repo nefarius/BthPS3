@@ -23,6 +23,7 @@ The solution consists of the following individual projects:
 - [`BthPS3`](/BthPS3) - Multi-purpose kernel-mode driver. Function driver for service PDO exposed by `BTHENUM` (Microsoft), Bluetooth profile (L2CAP server service) and bus driver for PS3 wireless peripherals.
 - [`BthPS3PSM`](/BthPS3PSM) - Lower filter driver for `BTHUSB`, patching L2CAP packets. Reroutes L2CAP traffic to profile driver.
 - [`BthPS3CfgUI`](/BthPS3CfgUI) - User-land GUI utility to safely edit driver settings.
+- [`BthPS3Util`](/BthPS3Util) - User-land CLI utility to modify filter driver settings.
 - [`BthPS3Installer`](/BthPS3Installer) - [WiXSharp](https://github.com/oleg-shilo/wixsharp)-based setup for driver installation and removal.
 
 ## Licensing

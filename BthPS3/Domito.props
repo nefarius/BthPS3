@@ -4,7 +4,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_PropertySheetDisplayName>Domito Kernel Library</_PropertySheetDisplayName>
-    <DomitoRootPath>$(ProjectDir)..\Domito</DomitoRootPath>
+    <DomitoRootPath Condition="'$(DomitoRootPath)' == ''">$(ProjectDir)..\Domito</DomitoRootPath>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>

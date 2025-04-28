@@ -3,8 +3,7 @@ build_cloud: WIN-LKR467JS4GL
 image: Windows
 environment:
   DmfRootPath: C:\projects\DMF
-  DOMITO_INC_PATH: C:\projects\Domito\include
-  DOMITO_LIB_PATH: C:\projects\Domito\lib
+  DomitoRootPath: C:\projects\Domito
 platform:
 - x64
 - ARM64

@@ -104,6 +104,7 @@
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="DMF.props" />
+    <Import Project="Domito.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup />
@@ -233,7 +234,7 @@
   <Target Name="RemoveWppRecorder" AfterTargets="SetLinkLibraryPaths">
     <ItemGroup>
       <Link>
-        <AdditionalDependencies>$(DOMITO_LIB_PATH)\$(DDKPlatform)\$(Configuration)\Domito.lib;$(ProjectDir)libs\$(PlatformName)\WppRecorder.lib;$(DmfRootPath)\$(Configuration)\$(PlatformName)\lib\DmfK\DmfK.lib;$(DmfRootPath)\$(Configuration)\$(PlatformName)\individual_libs\DmfKModules.Template\DmfKModules.Template.lib;$(DDK_LIB_PATH)\wdmsec.lib;$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib;$(KMDF_LIB_PATH)$(KMDF_VER_PATH)\WdfLdr.lib;$(KMDF_LIB_PATH)$(KMDF_VER_PATH)\WdfDriverEntry.lib</AdditionalDependencies>
+        <AdditionalDependencies>$(DomitoRootPath)\lib\$(DDKPlatform)\$(Configuration)\Domito.lib;$(ProjectDir)libs\$(PlatformName)\WppRecorder.lib;$(DmfRootPath)\$(Configuration)\$(PlatformName)\lib\DmfK\DmfK.lib;$(DmfRootPath)\$(Configuration)\$(PlatformName)\individual_libs\DmfKModules.Template\DmfKModules.Template.lib;$(DDK_LIB_PATH)\wdmsec.lib;$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib;$(KMDF_LIB_PATH)$(KMDF_VER_PATH)\WdfLdr.lib;$(KMDF_LIB_PATH)$(KMDF_VER_PATH)\WdfDriverEntry.lib</AdditionalDependencies>
         <AdditionalDependencies Condition="'$(Platform)'=='ARM64'">
 		%(AdditionalDependencies);arm64rt.lib
 		</AdditionalDependencies>

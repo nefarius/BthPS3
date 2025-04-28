@@ -1,0 +1,6 @@
+[submodule "DMF"]
+	path = DMF
+	url = https://github.com/microsoft/DMF.git
+[submodule "Domito"]
+	path = Domito
+	url = https://git.nefarius.at/nefarius/Domito.git

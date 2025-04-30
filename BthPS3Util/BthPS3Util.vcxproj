@@ -263,11 +263,6 @@
   <ItemGroup>
     <Image Include="favicon.ico" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\BthPS3SetupHelper\BthPS3SetupHelper.vcxproj">
-      <Project>{93a044c1-9491-4a17-b410-d144dbbd8f44}</Project>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

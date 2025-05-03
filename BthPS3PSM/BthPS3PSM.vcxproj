@@ -93,24 +93,24 @@
   <PropertyGroup />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
-    <IncludePath>$(SolutionDir)\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
+    <IncludePath>$(ProjectDir)..\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
-    <IncludePath>$(SolutionDir)\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
+    <IncludePath>$(ProjectDir)..\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <OutDir>$(SolutionDir)bin\$(PlatformShortName)\</OutDir>
     <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
-    <IncludePath>$(SolutionDir)\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
+    <IncludePath>$(ProjectDir)..\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
-    <IncludePath>$(SolutionDir)\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
+    <IncludePath>$(ProjectDir)..\common\include;$(IncludePath);$(KMDF_INC_PATH)$(KMDF_VER_PATH)</IncludePath>
     <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
     <OutDir>$(SolutionDir)bin\$(PlatformShortName)\</OutDir>
     <RunCodeAnalysis>true</RunCodeAnalysis>

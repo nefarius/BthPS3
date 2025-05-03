@@ -124,6 +124,8 @@ Tagged CI builds get mirrored [to the buildbot web server](https://buildbot.nefa
 
 Everything you need to know is documented [on the project page](https://docs.nefarius.at/projects/BthPS3/), read carefully before considering filing an issue.
 
+You not being able to connect your controller is *not* a bug report. Read the [FAQ](https://docs.nefarius.at/projects/BthPS3/Frequently-Asked-Questions/) and **accept** what's written there.
+
 <details>
 
 <summary>Architecture overview</summary>

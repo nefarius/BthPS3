@@ -324,6 +324,7 @@ BthPS3_PDO_EvtPostCreate(
 
 //
 // Intercepts IRP_MJ_POWER / IRP_MN_SET_POWER IRPs
+//   TODO: this is not in use, what was I thinking here??
 // 
 NTSTATUS
 BthPS3_PDO_SetPowerIrpPreprocess(

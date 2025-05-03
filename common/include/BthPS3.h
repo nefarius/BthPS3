@@ -72,7 +72,7 @@ DEFINE_GUID(GUID_DEVINTERFACE_BTHPS3PSM,
 // {1e1f8b68-eaa2-4d19-8b02-e8b0916c77db}
 
 //
-// Hardware ID of virtual filter device
+// Hardware ID of virtual filter device (NOTE: no longer in use)
 // 
 #define BTHPS3PSM_FILTER_HARDWARE_ID        L"Nefarius\\{a3dc6d41-9e10-46d9-8be2-9b4a279841df}"
 

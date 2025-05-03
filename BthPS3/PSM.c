@@ -126,7 +126,8 @@ BthPS3PSM_EnablePatchAsync(
 	// 
 	if (!NT_SUCCESS(status = WdfRequestCreate(&attribs,
 		IoTarget,
-		&request)))
+		&request
+    )))
 	{
 		return status;
 	}
@@ -145,7 +146,8 @@ BthPS3PSM_EnablePatchAsync(
 		POOLTAG_BTHPS3,
 		sizeof(BTHPS3PSM_ENABLE_PSM_PATCHING),
 		&memory,
-		(PVOID)&pPayload)))
+		(PVOID)&pPayload
+    )))
 	{
 		return status;
 	}

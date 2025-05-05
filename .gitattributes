@@ -64,4 +64,6 @@
 *.cab filter=lfs diff=lfs merge=lfs -text
 *.cat filter=lfs diff=lfs merge=lfs -text
 
+# exclude from GitHub used languages calculation
 Research/** linguist-vendored
+Setup/BthPS3_EULA.rtf linguist-vendored

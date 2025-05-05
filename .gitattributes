@@ -63,3 +63,5 @@
 *.zip filter=lfs diff=lfs merge=lfs -text
 *.cab filter=lfs diff=lfs merge=lfs -text
 *.cat filter=lfs diff=lfs merge=lfs -text
+
+Research/** linguist-vendored

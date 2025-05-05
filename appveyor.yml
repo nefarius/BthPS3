@@ -18,6 +18,8 @@ skip_commits:
     - '**/*.jpg'
     - '**/*.aip'
     - '**/*.DotSettings'
+    - '**/*.html'
+    - '**/*.pdf'
 install:
 - cmd: git submodule -q update --init
 - cmd: git clone -q https://github.com/microsoft/DMF.git C:\projects\DMF 2> nul || set ERRORLEVEL=0

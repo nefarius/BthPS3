@@ -18,7 +18,7 @@ Windows kernel‑mode Bluetooth profile and filter drivers for PS3 peripherals.
    - **Controller**: PlayStation(R) 3 peripherals (SIXAXIS/DualShock 3, PS Move Navigation & Motion Controllers).
 2. **Download the installer**
    - Go to the [latest release page](https://github.com/nefarius/BthPS3/releases/latest).  
-   - Download the current **BthPS3 installer** (`.exe`).
+   - Download the current **BthPS3 installer** (`.msi`).
 3. **Install the drivers**
    - Close any applications using your Bluetooth adapter or controller.  
    - Run the downloaded installer as an administrator and follow the on‑screen instructions.  

@@ -20,8 +20,13 @@ class Build : NukeBuild
     [Solution]
     readonly Solution Solution;
 
-    AbsolutePath DmfSolution => "C:/projects/DMF/Dmf.sln";
-    AbsolutePath DomitoSolution => "C:/projects/Domito/Domito.sln";
+    AbsolutePath DmfSolution => IsLocalBuild
+        ? RootDirectory / "DMF" / "Dmf.sln"
+        : (AbsolutePath)"C:/projects/DMF/Dmf.sln";
+
+    AbsolutePath DomitoSolution => IsLocalBuild
+        ? RootDirectory / "Domito" / "Domito.sln"
+        : (AbsolutePath)"C:/projects/Domito/Domito.sln";
 
     Target Clean => _ => _
         .Before(Restore)
@@ -40,57 +45,95 @@ class Build : NukeBuild
     Target BuildDmf => _ => _
         .Executes(() =>
         {
-            if (IsLocalBuild)
-            {
-                return;
-            }
-
             Console.WriteLine($"DMF solution path: {DmfSolution}");
 
-            MSBuildTargetPlatform platform = AppVeyor.Instance.Platform switch
+            if (IsLocalBuild)
             {
-                "x86" => MSBuildTargetPlatform.Win32,
-                "ARM64" => "ARM64",
-                _ => MSBuildTargetPlatform.x64
-            };
+                var configurations = new[] { "Debug", "Release" };
+                var platforms = new[] { MSBuildTargetPlatform.x64, (MSBuildTargetPlatform)"ARM64" };
 
-            MSBuild(s => s
-                .SetTargetPath(DmfSolution)
-                .SetTargets("Build")
-                .SetConfiguration(Configuration)
-                .SetTargetPlatform(platform)
-                .SetMaxCpuCount(Environment.ProcessorCount)
-                .SetNodeReuse(IsLocalBuild)
-                .SetVerbosity(MSBuildVerbosity.Minimal)
-            );
+                foreach (var configuration in configurations)
+                foreach (var platform in platforms)
+                {
+                    Console.WriteLine($"Building DMF {configuration} {platform}...");
+
+                    MSBuild(s => s
+                        .SetTargetPath(DmfSolution)
+                        .SetTargets("Build")
+                        .SetConfiguration(configuration)
+                        .SetTargetPlatform(platform)
+                        .SetMaxCpuCount(Environment.ProcessorCount)
+                        .SetNodeReuse(IsLocalBuild)
+                        .SetVerbosity(MSBuildVerbosity.Minimal)
+                    );
+                }
+            }
+            else
+            {
+                MSBuildTargetPlatform platform = AppVeyor.Instance.Platform switch
+                {
+                    "x86" => MSBuildTargetPlatform.Win32,
+                    "ARM64" => "ARM64",
+                    _ => MSBuildTargetPlatform.x64
+                };
+
+                MSBuild(s => s
+                    .SetTargetPath(DmfSolution)
+                    .SetTargets("Build")
+                    .SetConfiguration(Configuration)
+                    .SetTargetPlatform(platform)
+                    .SetMaxCpuCount(Environment.ProcessorCount)
+                    .SetNodeReuse(IsLocalBuild)
+                    .SetVerbosity(MSBuildVerbosity.Minimal)
+                );
+            }
         });
 
     Target BuildDomito => _ => _
         .Executes(() =>
         {
-            if (IsLocalBuild)
-            {
-                return;
-            }
-
             Console.WriteLine($"Domito solution path: {DomitoSolution}");
 
-            MSBuildTargetPlatform platform = AppVeyor.Instance.Platform switch
+            if (IsLocalBuild)
             {
-                "x86" => MSBuildTargetPlatform.Win32,
-                "ARM64" => "ARM64",
-                _ => MSBuildTargetPlatform.x64
-            };
+                var configurations = new[] { "Debug", "Release" };
+                var platforms = new[] { MSBuildTargetPlatform.x64, (MSBuildTargetPlatform)"ARM64" };
 
-            MSBuild(s => s
-                .SetTargetPath(DomitoSolution)
-                .SetTargets("Build")
-                .SetConfiguration(Configuration)
-                .SetTargetPlatform(platform)
-                .SetMaxCpuCount(Environment.ProcessorCount)
-                .SetNodeReuse(IsLocalBuild)
-                .SetVerbosity(MSBuildVerbosity.Minimal)
-            );
+                foreach (var configuration in configurations)
+                foreach (var platform in platforms)
+                {
+                    Console.WriteLine($"Building Domito {configuration} {platform}...");
+
+                    MSBuild(s => s
+                        .SetTargetPath(DomitoSolution)
+                        .SetTargets("Build")
+                        .SetConfiguration(configuration)
+                        .SetTargetPlatform(platform)
+                        .SetMaxCpuCount(Environment.ProcessorCount)
+                        .SetNodeReuse(IsLocalBuild)
+                        .SetVerbosity(MSBuildVerbosity.Minimal)
+                    );
+                }
+            }
+            else
+            {
+                MSBuildTargetPlatform platform = AppVeyor.Instance.Platform switch
+                {
+                    "x86" => MSBuildTargetPlatform.Win32,
+                    "ARM64" => "ARM64",
+                    _ => MSBuildTargetPlatform.x64
+                };
+
+                MSBuild(s => s
+                    .SetTargetPath(DomitoSolution)
+                    .SetTargets("Build")
+                    .SetConfiguration(Configuration)
+                    .SetTargetPlatform(platform)
+                    .SetMaxCpuCount(Environment.ProcessorCount)
+                    .SetNodeReuse(IsLocalBuild)
+                    .SetVerbosity(MSBuildVerbosity.Minimal)
+                );
+            }
         });
 
     Target Compile => _ => _
@@ -99,14 +142,38 @@ class Build : NukeBuild
         .DependsOn(BuildDomito)
         .Executes(() =>
         {
-            MSBuild(s => s
-                .SetTargetPath(Solution)
-                .SetTargets("Rebuild")
-                .SetConfiguration(Configuration)
-                .SetMaxCpuCount(Environment.ProcessorCount)
-                .SetNodeReuse(IsLocalBuild)
-                .SetVerbosity(MSBuildVerbosity.Minimal)
-            );
+            if (IsLocalBuild)
+            {
+                var configurations = new[] { "Debug", "Release" };
+                var platforms = new[] { MSBuildTargetPlatform.x64, (MSBuildTargetPlatform)"ARM64" };
+
+                foreach (var configuration in configurations)
+                foreach (var platform in platforms)
+                {
+                    Console.WriteLine($"Compiling main solution {configuration} {platform}...");
+
+                    MSBuild(s => s
+                        .SetTargetPath(Solution)
+                        .SetTargets("Rebuild")
+                        .SetConfiguration(configuration)
+                        .SetTargetPlatform(platform)
+                        .SetMaxCpuCount(Environment.ProcessorCount)
+                        .SetNodeReuse(IsLocalBuild)
+                        .SetVerbosity(MSBuildVerbosity.Minimal)
+                    );
+                }
+            }
+            else
+            {
+                MSBuild(s => s
+                    .SetTargetPath(Solution)
+                    .SetTargets("Rebuild")
+                    .SetConfiguration(Configuration)
+                    .SetMaxCpuCount(Environment.ProcessorCount)
+                    .SetNodeReuse(IsLocalBuild)
+                    .SetVerbosity(MSBuildVerbosity.Minimal)
+                );
+            }
         });
 
     /// Support plugins are available for:

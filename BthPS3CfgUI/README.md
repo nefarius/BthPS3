@@ -9,7 +9,7 @@ It is intended for **end users** and **power users** who want to adjust driver b
 
 Typical use cases include:
 
-- **Tuning timeouts and power behaviour** for wireless controllers.
+- **Tuning timeouts and power behavior** for wireless controllers.
 - **Enabling or disabling features** exposed by the BthPS3 driver.
 - **Resetting configuration** back to sane defaults when experimentation went wrong.
 

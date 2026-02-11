@@ -5,7 +5,7 @@ Graphical configuration utility for the BthPS3 driver.
 ## About
 
 `BthPS3CfgUI` is a .NET WPF application that lets you view and change BthPS3 driver registry settings in a safe, controlled way.  
-It is intended for **end users** and **power users** who want to adjust driver behaviour without manually editing the registry.
+It is intended for **end users** and **power users** who want to adjust driver behavior without manually editing the registry.
 
 Typical use cases include:
 

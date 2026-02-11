@@ -114,7 +114,7 @@ HKR,Parameters,NAVIGATIONSupportedNames,0x00010002,"Navigation Controller"
 ; Collection of supported remote names for MOTION device
 HKR,Parameters,MOTIONSupportedNames,0x00010002,"Motion Controller"
 ; Collection of supported remote names for WIRELESS device
-HKR,Parameters,WIRELESSSupportedNames,0x00010002,"Wireless Controller"
+HKR,Parameters,WIRELESSSupportedNames,0x00010002,"Wireless Controller","DualSense Wireless Controller","DualSense Edge Wireless Controller"
 ; Sub-key to store occupied slot information
 HKR,"Parameters\Devices",,0x00000010,
 

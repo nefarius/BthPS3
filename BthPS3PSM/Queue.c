@@ -82,7 +82,7 @@ BthPS3PSM_QueueInitialize(
             "WdfIoQueueCreate failed with %!STATUS!",
             status
         );
-        EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfDeviceOpenRegistryKey", status);
+        EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfIoQueueCreate", status);
 
         return status;
     }

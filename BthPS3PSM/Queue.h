@@ -49,6 +49,7 @@ BthPS3PSM_QueueInitialize(
 //
 // Events from the IoQueue object
 //
+EVT_WDF_IO_QUEUE_IO_STOP BthPS3PSM_EvtIoStop;
 EVT_WDF_IO_QUEUE_IO_INTERNAL_DEVICE_CONTROL BthPS3PSMEvtIoInternalDeviceControl;
 EVT_WDF_REQUEST_COMPLETION_ROUTINE UrbFunctionSelectConfigurationCompleted;
 

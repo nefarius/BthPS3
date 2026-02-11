@@ -65,8 +65,9 @@ BthPS3PSM_QueueInitialize(
     );
 
     //
-    // This is the only callback we're intercepting
-    // 
+    // Required for device removal: cancel forwarded requests so queue can drain
+    //
+    queueConfig.EvtIoStop = BthPS3PSM_EvtIoStop;
     queueConfig.EvtIoInternalDeviceControl = BthPS3PSMEvtIoInternalDeviceControl;
 
     if (!NT_SUCCESS(status = WdfIoQueueCreate(
@@ -87,6 +88,70 @@ BthPS3PSM_QueueInitialize(
     }
 
     return status;
+}
+
+//
+// Called when device is suspended or removed; allows queue to drain by
+// cancelling forwarded requests that may otherwise hang during teardown
+//
+_Use_decl_annotations_
+VOID
+BthPS3PSM_EvtIoStop(
+    _In_ WDFQUEUE Queue,
+    _In_ WDFREQUEST Request,
+    _In_ ULONG ActionFlags
+)
+{
+    NTSTATUS status;
+
+    UNREFERENCED_PARAMETER(Queue);
+
+    FuncEntry(TRACE_QUEUE);
+
+    if (ActionFlags & WdfRequestStopRequestCancelable)
+    {
+        status = WdfRequestUnmarkCancelable(Request);
+        if (status == STATUS_CANCELLED)
+        {
+            TraceVerbose(
+                TRACE_QUEUE,
+                "Request=0x%p already cancelled, returning",
+                Request
+            );
+            FuncExitNoReturn(TRACE_QUEUE);
+            return;
+        }
+    }
+
+    if (ActionFlags & WdfRequestStopActionSuspend)
+    {
+        TraceVerbose(
+            TRACE_QUEUE,
+            "StopAcknowledge Request=0x%p (Suspend)",
+            Request
+        );
+        WdfRequestStopAcknowledge(Request, FALSE);
+    }
+    else if (ActionFlags & WdfRequestStopActionPurge)
+    {
+        TraceVerbose(
+            TRACE_QUEUE,
+            "CancelSentRequest Request=0x%p (Purge)",
+            Request
+        );
+        WdfRequestCancelSentRequest(Request);
+    }
+    else
+    {
+        TraceVerbose(
+            TRACE_QUEUE,
+            "CancelSentRequest Request=0x%p (fallback)",
+            Request
+        );
+        WdfRequestCancelSentRequest(Request);
+    }
+
+    FuncExitNoReturn(TRACE_QUEUE);
 }
 
 //

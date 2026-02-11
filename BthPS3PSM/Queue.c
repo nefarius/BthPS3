@@ -102,9 +102,26 @@ BthPS3PSM_EvtIoStop(
     _In_ ULONG ActionFlags
 )
 {
+    NTSTATUS status;
+
     UNREFERENCED_PARAMETER(Queue);
 
     FuncEntry(TRACE_QUEUE);
+
+    if (ActionFlags & WdfRequestStopRequestCancelable)
+    {
+        status = WdfRequestUnmarkCancelable(Request);
+        if (status == STATUS_CANCELLED)
+        {
+            TraceVerbose(
+                TRACE_QUEUE,
+                "Request=0x%p already cancelled, returning",
+                Request
+            );
+            FuncExitNoReturn(TRACE_QUEUE);
+            return;
+        }
+    }
 
     if (ActionFlags & WdfRequestStopActionSuspend)
     {
@@ -120,6 +137,15 @@ BthPS3PSM_EvtIoStop(
         TraceVerbose(
             TRACE_QUEUE,
             "CancelSentRequest Request=0x%p (Purge)",
+            Request
+        );
+        WdfRequestCancelSentRequest(Request);
+    }
+    else
+    {
+        TraceVerbose(
+            TRACE_QUEUE,
+            "CancelSentRequest Request=0x%p (fallback)",
             Request
         );
         WdfRequestCancelSentRequest(Request);

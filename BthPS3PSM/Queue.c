@@ -104,14 +104,28 @@ BthPS3PSM_EvtIoStop(
 {
     UNREFERENCED_PARAMETER(Queue);
 
+    FuncEntry(TRACE_QUEUE);
+
     if (ActionFlags & WdfRequestStopActionSuspend)
     {
+        TraceVerbose(
+            TRACE_QUEUE,
+            "StopAcknowledge Request=0x%p (Suspend)",
+            Request
+        );
         WdfRequestStopAcknowledge(Request, FALSE);
     }
     else if (ActionFlags & WdfRequestStopActionPurge)
     {
+        TraceVerbose(
+            TRACE_QUEUE,
+            "CancelSentRequest Request=0x%p (Purge)",
+            Request
+        );
         WdfRequestCancelSentRequest(Request);
     }
+
+    FuncExitNoReturn(TRACE_QUEUE);
 }
 
 //

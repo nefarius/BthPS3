@@ -1,3 +1,10 @@
+> [!WARNING]
+> **No other official website exists** for this project besides this GitHub repository (github.com/nefarius/BthPS3) and sites hosted on `*.nefarius.at` (e.g. docs.nefarius.at, discord.nefarius.at).
+>
+> **Anyone claiming otherwise is a scammer and a fraud.** Do not trust other websites, download links, or people claiming to represent this project. Please be wary and only use the sources listed above.
+
+---
+
 # <img src="icon.png" align="left" />BthPS3
 
 [![Build status](https://ci.appveyor.com/api/projects/status/lna6ewnbck5diu6l/branch/master?svg=true)](https://ci.appveyor.com/project/nefarius/bthps3/branch/master)

@@ -1,0 +1,535 @@
+name: 'Build'
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*'
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.aip'
+      - '.vscode/**'
+      - '**/*.json'
+      - 'Setup/**'
+  pull_request:
+    branches:
+      - master
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Offset chosen to stay well above the last AppVeyor build counter (2.11.555.0).
+  BUILD_VERSION_OFFSET: 2000
+  DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+  DOTNET_NOLOGO: 'true'
+
+jobs:
+  version:
+    name: 'Resolve version'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      is-release: ${{ steps.resolve.outputs.is-release }}
+      tag: ${{ steps.resolve.outputs.tag }}
+      setup-version: ${{ steps.resolve.outputs.setup-version }}
+      driver-version: ${{ steps.resolve.outputs.driver-version }}
+      revision: ${{ steps.resolve.outputs.revision }}
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            build
+
+      - name: 'Resolve driver and setup versions'
+        id: resolve
+        shell: pwsh
+        env:
+          RELEASE_REF: ${{ github.ref }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          . ./build/ReleaseVersion.ps1
+          $version = ConvertTo-BthPS3ReleaseVersion `
+            -Ref $env:RELEASE_REF `
+            -RunNumber ${{ github.run_number }} `
+            -BuildVersionOffset ([int]$env:BUILD_VERSION_OFFSET)
+          Write-BthPS3ReleaseVersionOutputs -Version $version -GitHubOutput $env:GITHUB_OUTPUT
+          Write-Output "is-release=$($version.IsRelease) tag=$($version.Tag) setup=$($version.SetupVersion) driver=$($version.DriverVersion)"
+
+  build:
+    name: 'Platform: ${{ matrix.platform }}'
+    needs: version
+    runs-on: windows-2025-vs2026
+    permissions:
+      contents: read
+    env:
+      BUILD_VERSION: ${{ needs.version.outputs.driver-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [x64, ARM64]
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          persist-credentials: false
+
+      - name: 'Setup .NET'
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: 'Cache Windows kit installer layouts'
+        id: kits-layout
+        uses: actions/cache@v6
+        with:
+          path: |
+            sdk-layout
+            wdk-layout
+          key: windows-kits-28000-v1
+
+      - name: 'Download SDK and WDK installer layouts'
+        if: steps.kits-layout.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          function Invoke-KitLayout([string]$Uri, [string]$Name, [string]$Layout) {
+            $bootstrapper = Join-Path $env:RUNNER_TEMP $Name
+            Write-Output "Downloading $Name ..."
+            Invoke-WebRequest -Uri $Uri -OutFile $bootstrapper -UseBasicParsing
+            New-Item -ItemType Directory -Force -Path $Layout | Out-Null
+            $proc = Start-Process -FilePath $bootstrapper -ArgumentList '/layout', $Layout, '/quiet', '/ceip', 'off' -Wait -PassThru
+            if ($proc.ExitCode -notin 0, 3010) {
+              throw "$Name /layout failed with exit $($proc.ExitCode)"
+            }
+          }
+          Invoke-KitLayout 'https://go.microsoft.com/fwlink/?linkid=2366211' 'winsdksetup.exe' (Join-Path $env:GITHUB_WORKSPACE 'sdk-layout')
+          Invoke-KitLayout 'https://go.microsoft.com/fwlink/?LinkId=2371554' 'wdksetup.exe' (Join-Path $env:GITHUB_WORKSPACE 'wdk-layout')
+
+      - name: 'Install SDK 28000 and WDK 28000'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $inc = 'C:\Program Files (x86)\Windows Kits\10\Include'
+          function Test-WdkHeaders {
+            Get-ChildItem $inc -Directory -ErrorAction SilentlyContinue |
+              Where-Object {
+                (Test-Path (Join-Path $_.FullName 'km\ntifs.h'))
+              } |
+              Select-Object -First 1
+          }
+          $present = Test-WdkHeaders
+          if ($present) {
+            Write-Output "WDK already present ($($present.Name))."
+            return
+          }
+
+          $sdkSetup = Join-Path $env:GITHUB_WORKSPACE 'sdk-layout\winsdksetup.exe'
+          $wdkSetup = Join-Path $env:GITHUB_WORKSPACE 'wdk-layout\wdksetup.exe'
+          if (-not (Test-Path -LiteralPath $sdkSetup)) { throw "SDK layout missing: $sdkSetup" }
+          if (-not (Test-Path -LiteralPath $wdkSetup)) { throw "WDK layout missing: $wdkSetup" }
+
+          Write-Output 'Installing Windows SDK 28000...'
+          $sdkArgs = @(
+            '/features',
+            'OptionId.DesktopCPPx86', 'OptionId.DesktopCPPx64', 'OptionId.DesktopCPParm64',
+            'OptionId.UWPCPP',
+            '/quiet', '/norestart', '/ceip', 'off'
+          )
+          $proc = Start-Process -FilePath $sdkSetup -ArgumentList $sdkArgs -Wait -PassThru
+          Write-Output "SDK installer exit $($proc.ExitCode)"
+          if ($proc.ExitCode -notin 0, 3010) { throw "SDK install failed with exit $($proc.ExitCode)" }
+
+          Write-Output 'Installing WDK 28000...'
+          $proc = Start-Process -FilePath $wdkSetup -ArgumentList '/features', '+', '/quiet', '/norestart', '/ceip', 'off' -Wait -PassThru
+          Write-Output "WDK installer exit $($proc.ExitCode)"
+          if ($proc.ExitCode -notin 0, 3010) { throw "WDK install failed with exit $($proc.ExitCode)" }
+
+          $present = Test-WdkHeaders
+          if (-not $present) {
+            throw 'Kit installers finished but km headers were not found.'
+          }
+          Write-Output "WDK installed ($($present.Name))."
+
+      - name: 'Resolve cache keys'
+        id: cache-keys
+        shell: pwsh
+        run: |
+          $dmfSha = git rev-parse HEAD:DMF
+          $domitoSha = git rev-parse HEAD:Domito
+          $imageVersion = $env:ImageVersion
+          echo "dmf-sha=$dmfSha" >> $env:GITHUB_OUTPUT
+          echo "domito-sha=$domitoSha" >> $env:GITHUB_OUTPUT
+          echo "image-version=$imageVersion" >> $env:GITHUB_OUTPUT
+          Write-Output "DMF $dmfSha / Domito $domitoSha (ImageVersion=$imageVersion)"
+
+      - name: 'Cache NuGet packages'
+        uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('BthPS3CfgUI/BthPS3CfgUI.csproj', 'BthPS3Installer/BthPS3Installer.csproj', 'shared/Nefarius.BthPS3.Shared.csproj', 'build/_build.csproj', '.config/dotnet-tools.json') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: 'Restore local .NET tools'
+        run: dotnet tool restore
+
+      - name: 'Cache DMF libraries'
+        id: dmf-cache
+        uses: actions/cache@v6
+        with:
+          path: DMF/Release/${{ matrix.platform }}
+          key: dmf-v1-${{ matrix.platform }}-${{ steps.cache-keys.outputs.dmf-sha }}-${{ steps.cache-keys.outputs.image-version }}
+
+      - name: 'Cache Domito libraries'
+        id: domito-cache
+        uses: actions/cache@v6
+        with:
+          path: Domito/lib/${{ matrix.platform }}/Release
+          key: domito-v1-${{ matrix.platform }}-${{ steps.cache-keys.outputs.domito-sha }}-${{ steps.cache-keys.outputs.image-version }}
+
+      - name: 'Stamp versions'
+        shell: cmd
+        run: |
+          dotnet vpatch --stamp-version "%BUILD_VERSION%" --target-file ".\BthPS3\BthPS3.vcxproj" --vcxproj.inf-time-stamp
+          dotnet vpatch --stamp-version "%BUILD_VERSION%" --target-file ".\BthPS3\BthPS3.rc" --resource.file-version --resource.product-version
+          dotnet vpatch --stamp-version "%BUILD_VERSION%" --target-file ".\BthPS3PSM\BthPS3PSM.vcxproj" --vcxproj.inf-time-stamp
+          dotnet vpatch --stamp-version "%BUILD_VERSION%" --target-file ".\BthPS3PSM\BthPS3PSM.rc" --resource.file-version --resource.product-version
+          dotnet vpatch --stamp-version "%BUILD_VERSION%" --target-file ".\BthPS3Util\BthPS3Util.rc" --resource.file-version --resource.product-version
+
+      - name: 'Test release pipeline'
+        if: matrix.platform == 'x64'
+        shell: cmd
+        run: .\build.cmd TestReleasePipeline
+
+      - name: 'Build'
+        shell: cmd
+        run: .\build.cmd Compile --target-platform ${{ matrix.platform }} ${{ steps.dmf-cache.outputs.cache-hit == 'true' && '--skip BuildDmf' || '' }} ${{ steps.domito-cache.outputs.cache-hit == 'true' && '--skip BuildDomito' || '' }}
+
+      - name: 'Upload artifacts'
+        uses: actions/upload-artifact@v7
+        with:
+          name: bthps3-${{ matrix.platform }}
+          if-no-files-found: error
+          path: |
+            bin/**/BthPS3/*.inf
+            bin/**/BthPS3/*.sys
+            bin/**/BthPS3PSM/*.inf
+            bin/**/BthPS3PSM/*.sys
+            bin/**/*.pdb
+            bin/**/*.exe
+            bin/*.exe
+
+  tools:
+    name: 'Sign and mirror tools'
+    needs: [version, build]
+    if: needs.version.outputs.is-release == 'true'
+    runs-on: windows-2022
+    permissions:
+      contents: read
+      actions: read
+    env:
+      SIGN_RELAY_SERVER: ${{ vars.SIGN_RELAY_SERVER }}
+      SIGN_RELAY_CI_TOKEN: ${{ secrets.SIGN_RELAY_CI_TOKEN }}
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: 'Require signing configuration'
+        shell: pwsh
+        run: |
+          if (-not $env:SIGN_RELAY_SERVER) { throw 'Repository variable SIGN_RELAY_SERVER is not set.' }
+          if (-not $env:SIGN_RELAY_CI_TOKEN) { throw 'Repository secret SIGN_RELAY_CI_TOKEN is not set.' }
+
+      - name: 'Download x64 artifacts'
+        uses: ./.github/actions/download-artifact-with-retry
+        with:
+          name: bthps3-x64
+          path: .
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 'Download ARM64 artifacts'
+        uses: ./.github/actions/download-artifact-with-retry
+        with:
+          name: bthps3-ARM64
+          path: .
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 'Assert tools are unsigned'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $files = @(
+            'bin\BthPS3CfgUI.exe'
+            'bin\x64\BthPS3Util.exe'
+            'bin\ARM64\BthPS3Util.exe'
+          )
+          foreach ($file in $files) {
+            if (-not (Test-Path -LiteralPath $file)) { throw "File not found: $file" }
+            $sig = Get-AuthenticodeSignature -LiteralPath $file
+            if ($sig.Status -ne 'NotSigned') {
+              throw "Expected unsigned $file but Get-AuthenticodeSignature returned $($sig.Status)."
+            }
+            Write-Output "Unsigned as required: $file"
+          }
+
+      - name: 'Setup .NET'
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: 'Sign tools'
+        uses: nefarius/SignRelay@39ccbe0cef16a383237130380a5aef8db040d5d0
+        with:
+          server: ${{ env.SIGN_RELAY_SERVER }}
+          token: ${{ env.SIGN_RELAY_CI_TOKEN }}
+          in-place: true
+          files: |
+            bin/BthPS3CfgUI.exe
+            bin/x64/BthPS3Util.exe
+            bin/ARM64/BthPS3Util.exe
+
+      - name: 'Verify signed tools'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $files = @(
+            'bin\BthPS3CfgUI.exe'
+            'bin\x64\BthPS3Util.exe'
+            'bin\ARM64\BthPS3Util.exe'
+          )
+          foreach ($file in $files) {
+            $sig = Get-AuthenticodeSignature -LiteralPath $file
+            if ($sig.Status -ne 'Valid' -or -not $sig.SignerCertificate) {
+              throw "File is not validly signed: $file (Status=$($sig.Status))."
+            }
+            Write-Output "Signed: $file (Subject=$($sig.SignerCertificate.Subject))"
+          }
+
+      - name: 'Stage tools'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = 'tools-artifact'
+          New-Item -ItemType Directory -Force -Path "$root\bin\x64", "$root\bin\ARM64" | Out-Null
+          Copy-Item -LiteralPath 'bin\BthPS3CfgUI.exe' -Destination "$root\bin\BthPS3CfgUI.exe"
+          Copy-Item -LiteralPath 'bin\x64\BthPS3Util.exe' -Destination "$root\bin\x64\BthPS3Util.exe"
+          Copy-Item -LiteralPath 'bin\ARM64\BthPS3Util.exe' -Destination "$root\bin\ARM64\BthPS3Util.exe"
+
+      - name: 'Upload tools'
+        uses: actions/upload-artifact@v7
+        with:
+          name: bthps3-tools
+          if-no-files-found: error
+          path: tools-artifact
+
+      - name: 'Mirror tools'
+        uses: nefarius/AppVeyorArtifactsReceiver@master
+        with:
+          webhook-url: ${{ secrets.WEBHOOK_URL }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          artifact-name: bthps3-tools
+
+  partner-cab:
+    name: 'Partner Portal CAB'
+    needs: [version, build]
+    if: needs.version.outputs.is-release == 'true'
+    runs-on: windows-2022
+    permissions:
+      contents: read
+      actions: read
+    env:
+      BUILD_VERSION: ${{ needs.version.outputs.driver-version }}
+      SETUP_VERSION: ${{ needs.version.outputs.setup-version }}
+      RELEASE_TAG: ${{ needs.version.outputs.tag }}
+      SIGN_RELAY_SERVER: ${{ vars.SIGN_RELAY_SERVER }}
+      SIGN_RELAY_CI_TOKEN: ${{ secrets.SIGN_RELAY_CI_TOKEN }}
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: 'Require signing configuration'
+        shell: pwsh
+        run: |
+          if (-not $env:SIGN_RELAY_SERVER) { throw 'Repository variable SIGN_RELAY_SERVER is not set.' }
+          if (-not $env:SIGN_RELAY_CI_TOKEN) { throw 'Repository secret SIGN_RELAY_CI_TOKEN is not set.' }
+
+      - name: 'Download x64 artifacts'
+        uses: ./.github/actions/download-artifact-with-retry
+        with:
+          name: bthps3-x64
+          path: .
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 'Download ARM64 artifacts'
+        uses: ./.github/actions/download-artifact-with-retry
+        with:
+          name: bthps3-ARM64
+          path: .
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 'Assert driver binaries are unsigned'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $files = @(
+            'bin\x64\BthPS3\BthPS3.sys'
+            'bin\ARM64\BthPS3\BthPS3.sys'
+            'bin\x64\BthPS3PSM\BthPS3PSM.sys'
+            'bin\ARM64\BthPS3PSM\BthPS3PSM.sys'
+          )
+          foreach ($file in $files) {
+            if (-not (Test-Path -LiteralPath $file)) { throw "File not found: $file" }
+            $sig = Get-AuthenticodeSignature -LiteralPath $file
+            if ($sig.Status -ne 'NotSigned') {
+              throw "Expected unsigned $file but Get-AuthenticodeSignature returned $($sig.Status)."
+            }
+            Write-Output "Unsigned as required: $file"
+          }
+
+      - name: 'Setup .NET'
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: 'Sign driver binaries'
+        uses: nefarius/SignRelay@39ccbe0cef16a383237130380a5aef8db040d5d0
+        with:
+          server: ${{ env.SIGN_RELAY_SERVER }}
+          token: ${{ env.SIGN_RELAY_CI_TOKEN }}
+          in-place: true
+          files: |
+            bin/x64/BthPS3/BthPS3.sys
+            bin/ARM64/BthPS3/BthPS3.sys
+            bin/x64/BthPS3PSM/BthPS3PSM.sys
+            bin/ARM64/BthPS3PSM/BthPS3PSM.sys
+
+      - name: 'Verify signed driver binaries'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $files = @(
+            'bin\x64\BthPS3\BthPS3.sys'
+            'bin\ARM64\BthPS3\BthPS3.sys'
+            'bin\x64\BthPS3PSM\BthPS3PSM.sys'
+            'bin\ARM64\BthPS3PSM\BthPS3PSM.sys'
+          )
+          foreach ($file in $files) {
+            $sig = Get-AuthenticodeSignature -LiteralPath $file
+            if ($sig.Status -ne 'Valid' -or -not $sig.SignerCertificate) {
+              throw "File is not validly signed: $file (Status=$($sig.Status))."
+            }
+            Write-Output "Signed: $file (Subject=$($sig.SignerCertificate.Subject))"
+          }
+
+      - name: 'Pack combined driver CAB'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path bin\partner | Out-Null
+          & .\build\New-PartnerSubmissionInf.ps1 -InputInf bin\x64\BthPS3\BthPS3.inf -OutputInf bin\partner\BthPS3.inf
+          & .\build\New-PartnerSubmissionInf.ps1 -InputInf bin\x64\BthPS3\BthPS3_PDO_NULL_Device.inf -OutputInf bin\partner\BthPS3_PDO_NULL_Device.inf
+          & .\build\New-PartnerSubmissionInf.ps1 -InputInf bin\x64\BthPS3PSM\BthPS3PSM.inf -OutputInf bin\partner\BthPS3PSM.inf
+          & makecab.exe /f .\Setup\BthPS3_combined.ddf
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $cabName = "BthPS3_$env:BUILD_VERSION.cab"
+          Rename-Item -LiteralPath 'disk1\BthPS3.cab' -NewName $cabName
+          echo "PARTNER_CAB=disk1\$cabName" >> $env:GITHUB_ENV
+          Write-Output "Created disk1\$cabName"
+
+      - name: 'Sign partner CAB'
+        uses: nefarius/SignRelay@39ccbe0cef16a383237130380a5aef8db040d5d0
+        with:
+          server: ${{ env.SIGN_RELAY_SERVER }}
+          token: ${{ env.SIGN_RELAY_CI_TOKEN }}
+          in-place: true
+          skip-tool-install: true
+          files: ${{ env.PARTNER_CAB }}
+
+      - name: 'Verify signed partner CAB'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $cab = $env:PARTNER_CAB
+          $sig = Get-AuthenticodeSignature -LiteralPath $cab
+          if ($sig.Status -ne 'Valid' -or -not $sig.SignerCertificate) {
+            throw "Partner CAB is not validly signed: $cab (Status=$($sig.Status))."
+          }
+          Write-Output "Signed: $cab (Subject=$($sig.SignerCertificate.Subject))"
+
+      - name: 'Write release metadata'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $cab = $env:PARTNER_CAB
+          $sha = (Get-FileHash -LiteralPath $cab -Algorithm SHA256).Hash.ToLowerInvariant()
+          $metadata = [ordered]@{
+            schemaVersion = 1
+            tag = $env:RELEASE_TAG
+            setupVersion = $env:SETUP_VERSION
+            driverVersion = $env:BUILD_VERSION
+            commit = '${{ github.sha }}'
+            runId = [int64]'${{ github.run_id }}'
+            repository = '${{ github.repository }}'
+            publisherSubject = 'Nefarius Software Solutions e.U.'
+            artifacts = [ordered]@{
+              partnerSubmission = 'bthps3-partner-submission'
+              tools = 'bthps3-tools'
+              platforms = @('bthps3-x64', 'bthps3-ARM64')
+              metadata = 'release-metadata'
+            }
+            files = [ordered]@{
+              partnerCab = [ordered]@{
+                name = [IO.Path]::GetFileName($cab)
+                sha256 = $sha
+              }
+            }
+          }
+          $json = $metadata | ConvertTo-Json -Depth 6
+          $out = 'release-metadata.json'
+          [IO.File]::WriteAllText((Join-Path $pwd $out), $json, [Text.UTF8Encoding]::new($false))
+          echo "RELEASE_METADATA=$out" >> $env:GITHUB_ENV
+          Write-Output $json
+
+      - name: 'Upload partner submission CAB'
+        uses: actions/upload-artifact@v7
+        with:
+          name: bthps3-partner-submission
+          if-no-files-found: error
+          path: ${{ env.PARTNER_CAB }}
+
+      - name: 'Upload release metadata'
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-metadata
+          if-no-files-found: error
+          path: ${{ env.RELEASE_METADATA }}
+
+      - name: 'Mirror partner submission CAB'
+        uses: nefarius/AppVeyorArtifactsReceiver@master
+        with:
+          webhook-url: ${{ secrets.WEBHOOK_URL }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          artifact-name: bthps3-partner-submission
+
+  partner-signing:
+    name: 'Partner Center signing'
+    needs: [version, partner-cab]
+    if: needs.version.outputs.is-release == 'true'
+    permissions:
+      contents: read
+      actions: read
+    secrets: inherit
+    uses: ./.github/workflows/partner-signing.yml
+    with:
+      source-run-id: ${{ github.run_id }}

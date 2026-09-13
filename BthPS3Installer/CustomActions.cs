@@ -87,9 +87,9 @@ public static class CustomActions
             string nefconcPath = Path.Combine(nefconDir, archShortName, "nefconc.exe");
             session.Log($"nefconcPath = {nefconcPath}");
 
-            string bthPs3DriverDir = Path.Combine(driversDir, $"BthPS3_{archShortName}");
+            string bthPs3DriverDir = Path.Combine(driversDir, "BthPS3");
             session.Log($"bthPs3DriverDir = {bthPs3DriverDir}");
-            string bthPs3PsmDriverDir = Path.Combine(driversDir, $"BthPS3PSM_{archShortName}");
+            string bthPs3PsmDriverDir = Path.Combine(driversDir, "BthPS3PSM");
             session.Log($"bthPs3PsmDriverDir = {bthPs3PsmDriverDir}");
 
             string bthPs3InfPath = Path.Combine(bthPs3DriverDir, "BthPS3.inf");
@@ -251,9 +251,9 @@ public static class CustomActions
             string nefconcPath = Path.Combine(nefconDir, archShortName, "nefconc.exe");
             session.Log($"nefconcPath = {nefconcPath}");
 
-            string bthPs3DriverDir = Path.Combine(driversDir, $"BthPS3_{archShortName}");
+            string bthPs3DriverDir = Path.Combine(driversDir, "BthPS3");
             session.Log($"bthPs3DriverDir = {bthPs3DriverDir}");
-            string bthPs3PsmDriverDir = Path.Combine(driversDir, $"BthPS3PSM_{archShortName}");
+            string bthPs3PsmDriverDir = Path.Combine(driversDir, "BthPS3PSM");
             session.Log($"bthPs3PsmDriverDir = {bthPs3PsmDriverDir}");
 
             string bthPs3InfPath = Path.Combine(bthPs3DriverDir, "BthPS3.inf");

@@ -7,7 +7,7 @@
 
 # <img src="icon.png" align="left" />BthPS3
 
-[![Build status](https://ci.appveyor.com/api/projects/status/lna6ewnbck5diu6l/branch/master?svg=true)](https://ci.appveyor.com/project/nefarius/bthps3/branch/master)
+[![Build](https://github.com/nefarius/BthPS3/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/nefarius/BthPS3/actions/workflows/build.yml)
 [![GitHub All Releases](https://img.shields.io/github/downloads/ViGEm/BthPS3/total)](https://somsubhra.github.io/github-release-stats/?username=ViGEm&repository=BthPS3)
 [![Discord](https://img.shields.io/discord/346756263763378176.svg)](https://discord.nefarius.at)
 [![GitHub followers](https://img.shields.io/github/followers/nefarius.svg?style=social&label=Follow)](https://github.com/nefarius)

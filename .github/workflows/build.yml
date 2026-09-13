@@ -332,7 +332,8 @@ jobs:
           path: tools-artifact
 
       - name: 'Mirror tools'
-        uses: nefarius/AppVeyorArtifactsReceiver@master
+        # nefarius/AppVeyorArtifactsReceiver@18a32a353900635575675e59d7659781913c8e4b (master as of 2026-09-12, PR #128)
+        uses: nefarius/AppVeyorArtifactsReceiver@18a32a353900635575675e59d7659781913c8e4b
         with:
           webhook-url: ${{ secrets.WEBHOOK_URL }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -516,7 +517,8 @@ jobs:
           path: ${{ env.RELEASE_METADATA }}
 
       - name: 'Mirror partner submission CAB'
-        uses: nefarius/AppVeyorArtifactsReceiver@master
+        # nefarius/AppVeyorArtifactsReceiver@18a32a353900635575675e59d7659781913c8e4b (master as of 2026-09-12, PR #128)
+        uses: nefarius/AppVeyorArtifactsReceiver@18a32a353900635575675e59d7659781913c8e4b
         with:
           webhook-url: ${{ secrets.WEBHOOK_URL }}
           github-token: ${{ secrets.GITHUB_TOKEN }}

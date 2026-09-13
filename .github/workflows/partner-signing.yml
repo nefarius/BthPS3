@@ -363,7 +363,8 @@ jobs:
           path: partner-signing-result.json
 
       - name: 'Mirror signed Partner files'
-        uses: nefarius/AppVeyorArtifactsReceiver@master
+        # nefarius/AppVeyorArtifactsReceiver@18a32a353900635575675e59d7659781913c8e4b (master as of 2026-09-12, PR #128)
+        uses: nefarius/AppVeyorArtifactsReceiver@18a32a353900635575675e59d7659781913c8e4b
         with:
           webhook-url: ${{ secrets.WEBHOOK_URL }}
           github-token: ${{ secrets.GITHUB_TOKEN }}

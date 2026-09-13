@@ -1,6 +1,6 @@
 ---
 description: BthPS3CfgUI WPF hover tooltips use a 200 ms delay
-globs: BthPS3CfgUI/**/*.{xaml,cs}
+globs: BthPS3CfgUI/**/*.xaml, BthPS3CfgUI/**/*.cs
 alwaysApply: false
 ---
 

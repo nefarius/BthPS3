@@ -11,4 +11,7 @@ branch already is the requested work.
 - If it is, continue on that branch.
 - Otherwise, create a new branch from current `master` first (`feat/…` or `fix/…`), then make
   changes there.
+- Before creating or switching to that branch, check for uncommitted changes. If the worktree
+  is dirty, stop and ask the user what to do; do not switch or stash. Proceed only when it is
+  clean.
 - Do not merge or push to `master` unless the user explicitly asks.

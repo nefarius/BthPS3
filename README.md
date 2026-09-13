@@ -126,13 +126,13 @@ Knowledge of how to build and (test-)sign Windows drivers is required for creati
 
 ### Prerequisites
 
-- [Step 1: Install Visual Studio 2022](https://learn.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk#download-icon-step-1-install-visual-studio-2022)
+- [Step 1: Install Visual Studio 2026](https://learn.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk#download-icon-step-1-install-visual-studio-2026)
   - On the `Workloads` tab under `Desktop & Mobile`, select *at least* `.NET desktop development` and `Desktop development with C++`.  
     ![workloads.png](assets/workloads.png)
-  - On the `Individual components` tab, search for and select the `Spectre-mitigate libs (Latest)` for all architectures you wish to build for.  
+  - On the `Individual components` tab, search for and select the `Spectre-mitigate libs (Latest)` for all architectures you wish to build for, plus `Windows Driver Kit`.  
     ![components.png](assets/components.png)
-- [Step 2: Install Windows 11, version 22H2 SDK](https://learn.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk#download-icon-step-2-install-windows-11-version-22h2-sdk)
-- [Step 3: Install Windows 11, version 22H2 WDK](https://learn.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk#download-icon-step-3-install-windows-11-version-22h2-wdk)
+- [Step 2: Install Windows SDK 10.0.28000](https://learn.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk#download-icon-step-2-install-the-sdk)
+- [Step 3: Install WDK 10.0.28000](https://learn.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk#download-icon-step-3-install-the-wdk)
 - [Step 4: Install the WiX Toolset **v3.14.0.6526**](https://wixtoolset.org/releases/v3-14-0-6526/) (or newer)
 - [Step 5: Set up and build Microsoft DMF](https://github.com/Microsoft/DMF/blob/master/Dmf/Documentation/Driver%20Module%20Framework.md#simplifying-compilation-and-linking-with-dmf)
 - [Step 6: Set up and build Domito](https://git.nefarius.at/nefarius/Domito#how-to-use)

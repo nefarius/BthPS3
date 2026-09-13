@@ -44,10 +44,10 @@ internal class InstallScript
     {
         Version version = Version.Parse(BuildVariables.SetupVersion);
 
-        string driverPath = Path.Combine(DriversRoot, @"BthPS3_x64\BthPS3.sys");
+        string driverPath = Path.Combine(DriversRoot, @"BthPS3\x64\BthPS3.sys");
         Version driverVersion = Version.Parse(FileVersionInfo.GetVersionInfo(driverPath).FileVersion);
 
-        string filterPath = Path.Combine(DriversRoot, @"BthPS3PSM_x64\BthPS3PSM.sys");
+        string filterPath = Path.Combine(DriversRoot, @"BthPS3PSM\x64\BthPS3PSM.sys");
         Version filterVersion = Version.Parse(FileVersionInfo.GetVersionInfo(filterPath).FileVersion);
 
         const string nefconDir = @".\nefcon";

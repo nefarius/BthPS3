@@ -1,0 +1,33 @@
+; Combined BthPS3 + BthPS3PSM cab for a single Partner Center submission
+.OPTION EXPLICIT
+.Set CabinetFileCountThreshold=0
+.Set FolderFileCountThreshold=0
+.Set FolderSizeThreshold=0
+.Set MaxCabinetSize=0
+.Set MaxDiskFileCount=0
+.Set MaxDiskSize=0
+.Set CompressionType=MSZIP
+.Set Cabinet=on
+.Set Compress=on
+.Set CabinetNameTemplate=BthPS3.cab
+; Dual-arch profile driver package
+.Set DestinationDir=BthPS3
+LICENSE
+bin\partner\BthPS3.inf
+bin\partner\BthPS3_PDO_NULL_Device.inf
+.Set DestinationDir=BthPS3\x64
+bin\x64\BthPS3.pdb
+bin\x64\BthPS3\BthPS3.sys
+.Set DestinationDir=BthPS3\ARM64
+bin\ARM64\BthPS3.pdb
+bin\ARM64\BthPS3\BthPS3.sys
+; Dual-arch filter driver package
+.Set DestinationDir=BthPS3PSM
+LICENSE
+bin\partner\BthPS3PSM.inf
+.Set DestinationDir=BthPS3PSM\x64
+bin\x64\BthPS3PSM.pdb
+bin\x64\BthPS3PSM\BthPS3PSM.sys
+.Set DestinationDir=BthPS3PSM\ARM64
+bin\ARM64\BthPS3PSM.pdb
+bin\ARM64\BthPS3PSM\BthPS3PSM.sys

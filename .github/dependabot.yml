@@ -1,0 +1,33 @@
+version: 2
+
+updates:
+  - package-ecosystem: nuget
+    directories:
+      - /build
+      - /BthPS3CfgUI
+      - /BthPS3Installer
+      - /shared
+    schedule:
+      interval: weekly
+    groups:
+      nuget-minor-and-patch:
+        group-by: dependency-name
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directories:
+      - /
+      - /.github/actions/*
+    schedule:
+      interval: weekly
+    groups:
+      github-actions-minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch

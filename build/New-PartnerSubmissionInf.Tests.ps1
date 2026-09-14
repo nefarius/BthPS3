@@ -64,6 +64,37 @@ BthPS3.DeviceDesc = "Nefarius Bluetooth PS Enumerator"
     Assert-True ($text -match '(?im)^BthPS3\.sys\s*=\s*1,x64') 'profile x64 sys path'
     Assert-True ($text -match '(?im)^BthPS3\.sys\s*=\s*1,ARM64') 'profile ARM64 sys path'
 
+    $mixed = @'
+[Version]
+Signature="$WINDOWS NT$"
+DriverVer=09/14/2026,2.12.0.2012
+
+[Manufacturer]
+%ManufacturerName%=BthPS3,NTAMD64,NTARM64
+%OtherName%=Other,NTAMD64
+
+[BthPS3.NTAMD64]
+%BthPS3.DeviceDesc%=BthPS3_Device, BTHENUM\{1cb831ea-79cd-4508-b0fc-85f7c85ae8e0}
+
+[Other.NTAMD64]
+%Other.DeviceDesc%=Other_Device, BTHENUM\{00000000-0000-0000-0000-000000000000}
+
+[Strings]
+ManufacturerName="Nefarius Software Solutions e.U."
+OtherName="Other"
+BthPS3.DeviceDesc = "Nefarius Bluetooth PS Enumerator"
+Other.DeviceDesc = "Other"
+'@
+
+    $mixedIn = Join-Path $temp 'mixed.inf'
+    $mixedOut = Join-Path $temp 'partner-mixed.inf'
+    [IO.File]::WriteAllText($mixedIn, $mixed)
+    & $script -InputInf $mixedIn -OutputInf $mixedOut
+    $mixedText = [IO.File]::ReadAllText($mixedOut)
+    Assert-True ($mixedText -match '(?m)^%ManufacturerName%=BthPS3,NTAMD64,NTARM64\s*$') 'mixed keeps existing dual-arch entry'
+    Assert-True ($mixedText -match '(?m)^%OtherName%=Other,NTAMD64,NTARM64\s*$') 'mixed appends ARM64 to x64-only entry'
+    Assert-True ($mixedText -match '(?m)^\[Other\.NTARM64\]') 'mixed clones x64-only model section'
+
     $filter = @'
 [Version]
 Signature = "$WINDOWS NT$"

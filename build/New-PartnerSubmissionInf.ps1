@@ -70,20 +70,21 @@ foreach ($section in $sections) {
         if ($section.Body -notmatch 'NTAMD64' -and $section.Body -notmatch 'NTamd64') {
             throw "[Manufacturer] does not contain NTAMD64 decorations; expected a stamped x64 INF."
         }
-        if ($section.Body -notmatch 'NTARM64' -and $section.Body -notmatch 'NTarm64') {
-            # %ManufacturerName%=ModelsName,NTamd64[,NTamd64.10.0...]
-            # becomes ModelsName,NTamd64,NTarm64 — not ModelsName,NTamd64,ModelsName,NTarm64.
-            $section.Body = [regex]::Replace($section.Body, '(?m)^(.+?=)([^,\r\n]+)(,.*)?$', {
-                    param($match)
-                    $prefix = $match.Groups[1].Value
-                    $models = $match.Groups[2].Value
-                    $osVersions = if ($match.Groups[3].Success) { $match.Groups[3].Value.TrimEnd() } else { '' }
-                    if ([string]::IsNullOrWhiteSpace($osVersions)) {
-                        throw '[Manufacturer] line is missing NTAMD64 decorations.'
-                    }
-                    $prefix + $models + $osVersions + (ConvertTo-Arm64Decoration $osVersions)
-                })
-        }
+        # %ManufacturerName%=ModelsName,NTamd64[,NTamd64.10.0...]
+        # becomes ModelsName,NTamd64,NTarm64 — not ModelsName,NTamd64,ModelsName,NTarm64.
+        $section.Body = [regex]::Replace($section.Body, '(?m)^(.+?=)([^,\r\n]+)(,.*)?$', {
+                param($match)
+                $prefix = $match.Groups[1].Value
+                $models = $match.Groups[2].Value
+                $osVersions = if ($match.Groups[3].Success) { $match.Groups[3].Value.TrimEnd() } else { '' }
+                if ($osVersions -match 'NTARM64' -or $osVersions -match 'NTarm64') {
+                    return $match.Value
+                }
+                if ($osVersions -notmatch 'NTAMD64' -and $osVersions -notmatch 'NTamd64') {
+                    return $match.Value
+                }
+                $prefix + $models + $osVersions + (ConvertTo-Arm64Decoration $osVersions)
+            })
         $outSections.Add($section)
         continue
     }

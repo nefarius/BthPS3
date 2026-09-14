@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
   <PropertyGroup>
     <ProjectGuid>{C9562844-10FC-484D-82BD-A2D0EDC7E2F1}</ProjectGuid>
     <OutputType>WinExe</OutputType>
@@ -12,7 +12,7 @@
     <Product>BthPS3CfgUI</Product>
     <NeutralLanguage>en</NeutralLanguage>
     <Description>BthPS3 Driver Configuration Tool</Description>
-    <Copyright>Copyright © Nefarius Software Solutions e.U. 2020-2022</Copyright>
+    <Copyright>Copyright © Nefarius Software Solutions e.U. 2020-2026</Copyright>
     <OutputPath>$(SolutionDir)bin\</OutputPath>
     <UseWPF>true</UseWPF>
     <Version>2.2.0.0</Version>

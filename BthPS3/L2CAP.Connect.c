@@ -58,7 +58,7 @@ L2CAP_PS3_HandleRemoteConnect(
     WDFREQUEST brbAsyncRequest = NULL;
     CHAR remoteName[BTH_MAX_NAME_SIZE];
     DS_DEVICE_TYPE deviceType = DS_DEVICE_TYPE_UNKNOWN;
-    BOOLEAN lookupRundownHeld = FALSE;
+    BOOLEAN pdoRundownHeld = FALSE;
 
 
     FuncEntry(TRACE_L2CAP);
@@ -79,7 +79,7 @@ L2CAP_PS3_HandleRemoteConnect(
 
     if (NT_SUCCESS(status))
     {
-        lookupRundownHeld = TRUE;
+        pdoRundownHeld = TRUE;
     }
 
     //
@@ -288,6 +288,8 @@ L2CAP_PS3_HandleRemoteConnect(
             );
             goto exit;
         }
+
+        pdoRundownHeld = TRUE;
     }
 
     if (pPdoCtx == NULL)
@@ -422,7 +424,7 @@ exit:
         BthPS3_PDO_Destroy(&DevCtx->Header, pPdoCtx);
     }
 
-    if (lookupRundownHeld)
+    if (pdoRundownHeld)
     {
         BthPS3_PDO_RundownRelease(pPdoCtx);
     }

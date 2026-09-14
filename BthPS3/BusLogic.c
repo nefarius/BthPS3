@@ -505,6 +505,24 @@ BthPS3_PDO_Create(
 
 		pdoPlugged = TRUE;
 
+		{
+			const PBTHPS3_PDO_CONTEXT pPdoCtxEarly = GetPdoContext(device);
+
+			//
+			// Initialize both events right after the plug succeeds so any
+			// rollback below can safely wait on them (KeWaitForSingleObject
+			// requires an initialized KEVENT).
+			// 
+			KeInitializeEvent(&pPdoCtxEarly->HidControlChannel.DisconnectEvent,
+				NotificationEvent,
+				TRUE
+			);
+			KeInitializeEvent(&pPdoCtxEarly->HidInterruptChannel.DisconnectEvent,
+				NotificationEvent,
+				TRUE
+			);
+		}
+
 		//
 		// Insert PDO in connection collection
 		// 
@@ -613,14 +631,6 @@ BthPS3_PDO_Create(
 			break;
 		}
 
-		//
-		// Initialize signaled, will be cleared once a connection is established
-		// 
-		KeInitializeEvent(&pPdoCtx->HidControlChannel.DisconnectEvent,
-			NotificationEvent,
-			TRUE
-		);
-
 		WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
 		attributes.ParentObject = device;
 
@@ -658,14 +668,6 @@ BthPS3_PDO_Create(
 			break;
 		}
 
-		//
-		// Initialize signaled, will be cleared once a connection is established
-		// 
-		KeInitializeEvent(&pPdoCtx->HidInterruptChannel.DisconnectEvent,
-			NotificationEvent,
-			TRUE
-		);
-
 		WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
 		attributes.ParentObject = device;
 
@@ -691,11 +693,33 @@ BthPS3_PDO_Create(
 			DMF_Rundown_Start(pPdoCtx->DmfModuleRundown);
 
 			//
+			// Acquire a rundown reference on behalf of the caller. Ownership
+			// transfers with *PdoContext; the caller releases it via
+			// BthPS3_PDO_RundownRelease, same contract as
+			// BthPS3_PDO_RetrieveByBthAddr.
+			// 
+			if (!NT_SUCCESS(status = BthPS3_PDO_RundownAcquire(pPdoCtx)))
+			{
+				TraceError(
+					TRACE_BUSLOGIC,
+					"BthPS3_PDO_RundownAcquire failed with status %!STATUS!",
+					status
+				);
+				break;
+			}
+
+			//
+			// Flip to Active before exposing the IOCTL interface so a
+			// disconnect request arriving immediately after can transition
+			// this PDO into Draining.
+			// 
+			InterlockedExchange(&pPdoCtx->Lifecycle, BthPS3PdoLifecycleActive);
+
+			//
 			// We're ready, expose interface
 			// 
 			DMF_IoctlHandler_IoctlStateSet(pPdoCtx->DmfModuleIoctlHandler, TRUE);
 
-			InterlockedExchange(&pPdoCtx->Lifecycle, BthPS3PdoLifecycleActive);
 			*PdoContext = pPdoCtx;
 
 	} while (FALSE);
@@ -725,7 +749,7 @@ BthPS3_PDO_Create(
 		WdfWaitLockRelease(Context->Header.ClientsLock);
 
 		(void)DMF_Pdo_DeviceUnplug(Context->Header.PdoModule, device);
-		BthPS3_PDO_ReleaseSlot(&Context->Header, record.SerialNumber);
+		BthPS3_PDO_ReleaseSlot(&Context->Header, RemoteAddress, record.SerialNumber);
 	}
 
 	if (NT_SUCCESS(status))

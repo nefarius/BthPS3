@@ -153,6 +153,10 @@ CLIENT_CONNECTION_REQUEST_REUSE(
 // PDO lifecycle
 // 
 
+//
+// On STATUS_SUCCESS, *PdoContext holds a rundown reference that the
+// caller must release with BthPS3_PDO_RundownRelease.
+//
 _IRQL_requires_max_(PASSIVE_LEVEL)
 _Must_inspect_result_
 _Success_(return == STATUS_SUCCESS)
@@ -283,5 +287,6 @@ _IRQL_requires_max_(PASSIVE_LEVEL)
 VOID
 BthPS3_PDO_ReleaseSlot(
 	PBTHPS3_DEVICE_CONTEXT_HEADER Header,
+	BTH_ADDR RemoteAddress,
 	ULONG Slot
 );

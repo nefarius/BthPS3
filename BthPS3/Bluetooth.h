@@ -128,14 +128,34 @@ typedef struct _BTHPS3_SERVER_CONTEXT
 	USHORT PsmHidControl;
 
 	//
+	// TRUE if this instance successfully registered PsmHidControl
+	// 
+	BOOLEAN PsmHidControlOwned;
+
+	//
 	// Artificial HID Interrupt PSM
 	// 
 	USHORT PsmHidInterrupt;
 
 	//
+	// TRUE if this instance successfully registered PsmHidInterrupt
+	// 
+	BOOLEAN PsmHidInterruptOwned;
+
+	//
 	// Handle obtained by registering L2CAP server
 	//
 	L2CAP_SERVER_HANDLE L2CAPServerHandle;
+
+	//
+	// Periodic retry of PSM/L2CAP registration after STATUS_ALREADY_COMMITTED
+	// 
+	WDFTIMER PsmRetryTimer;
+
+	//
+	// Number of completed PSM registration retry attempts
+	// 
+	ULONG PsmRetryAttempt;
 
 	//
 	// BRB used for server and PSM register and unregister
@@ -172,6 +192,10 @@ typedef struct _BTHPS3_SERVER_CONTEXT
 		ULONG AutoDisableFilter;
 
 		ULONG AutoEnableFilterDelay;
+
+		ULONG PsmRegistrationRetryDelay;
+
+		ULONG PsmRegistrationRetryLimit;
 
 		ULONG IsSIXAXISSupported;
 
@@ -222,6 +246,8 @@ WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_QWI_CONTEXT, GetQWIContext)
 EVT_DMF_QueuedWorkItem_Callback BthPS3_EvtQueuedWorkItemHandler;
 
 EVT_WDF_TIMER BthPS3_EnablePatchEvtWdfTimer;
+
+EVT_WDF_TIMER BthPS3_PsmRegistrationRetryEvtWdfTimer;
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS

@@ -197,6 +197,21 @@ BthPS3_ServerContextInit(
 
 		WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
 		attributes.ParentObject = Device;
+		attributes.ExecutionLevel = WdfExecutionLevelPassive;
+
+		WDF_TIMER_CONFIG_INIT(&timerCfg, BthPS3_PsmRegistrationRetryEvtWdfTimer);
+
+		if (!NT_SUCCESS(status = WdfTimerCreate(
+			&timerCfg,
+			&attributes,
+			&Context->PsmRetryTimer
+		)))
+		{
+			break;
+		}
+
+		WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+		attributes.ParentObject = Device;
 
 		if (!NT_SUCCESS(status = WdfCollectionCreate(
 			&attributes,
@@ -262,6 +277,8 @@ BthPS3_SettingsContextInit(
 	DECLARE_CONST_UNICODE_STRING(autoEnableFilter, BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER);
 	DECLARE_CONST_UNICODE_STRING(autoDisableFilter, BTHPS3_REG_VALUE_AUTO_DISABLE_FILTER);
 	DECLARE_CONST_UNICODE_STRING(autoEnableFilterDelay, BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER_DELAY);
+	DECLARE_CONST_UNICODE_STRING(psmRegistrationRetryDelay, BTHPS3_REG_VALUE_PSM_REGISTRATION_RETRY_DELAY);
+	DECLARE_CONST_UNICODE_STRING(psmRegistrationRetryLimit, BTHPS3_REG_VALUE_PSM_REGISTRATION_RETRY_LIMIT);
 
 	DECLARE_CONST_UNICODE_STRING(isSIXAXISSupported, BTHPS3_REG_VALUE_IS_SIXAXIS_SUPPORTED);
 	DECLARE_CONST_UNICODE_STRING(isNAVIGATIONSupported, BTHPS3_REG_VALUE_IS_NAVIGATION_SUPPORTED);
@@ -279,6 +296,8 @@ BthPS3_SettingsContextInit(
 	Context->Settings.AutoEnableFilter = TRUE;
 	Context->Settings.AutoDisableFilter = TRUE;
 	Context->Settings.AutoEnableFilterDelay = 10; // Seconds
+	Context->Settings.PsmRegistrationRetryDelay = 5; // Seconds
+	Context->Settings.PsmRegistrationRetryLimit = 60;
 
 	Context->Settings.IsSIXAXISSupported = TRUE;
 	Context->Settings.IsNAVIGATIONSupported = TRUE;
@@ -321,6 +340,18 @@ BthPS3_SettingsContextInit(
 			hKey,
 			&autoEnableFilterDelay,
 			&Context->Settings.AutoEnableFilterDelay
+		);
+
+		(void)WdfRegistryQueryULong(
+			hKey,
+			&psmRegistrationRetryDelay,
+			&Context->Settings.PsmRegistrationRetryDelay
+		);
+
+		(void)WdfRegistryQueryULong(
+			hKey,
+			&psmRegistrationRetryLimit,
+			&Context->Settings.PsmRegistrationRetryLimit
 		);
 
 		(void)WdfRegistryQueryULong(

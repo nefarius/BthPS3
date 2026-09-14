@@ -89,6 +89,9 @@
 					<event value="21" channel="SYSTEM" level="win:Informational" message="$(string.RemoteDeviceOnline.EventMessage)" opcode="win:Info" symbol="RemoteDeviceOnline" template="tid_remote_device_online"/>
 					<event value="22" channel="SYSTEM" level="win:Error" message="$(string.FailedWithNTStatus.EventMessage)" opcode="win:Info" symbol="FailedWithNTStatus" template="tid_failed_with_ntstatus"/>
 					<event value="23" channel="SYSTEM" level="win:Informational" message="$(string.RemoteDisconnectCompleted.EventMessage)" opcode="win:Info" symbol="RemoteDisconnectCompleted" template="tid_remote_device_disconnected"/>
+					<event value="24" channel="SYSTEM" level="win:Warning" message="$(string.PsmRegistrationStale.EventMessage)" opcode="win:Info" symbol="PsmRegistrationStale" template="tid_l2cap_remote_connect"/>
+					<event value="25" channel="SYSTEM" level="win:Warning" message="$(string.PsmRegistrationDeferred.EventMessage)" opcode="win:Info" symbol="PsmRegistrationDeferred" template="tid_filter_auto_enable"/>
+					<event value="26" channel="SYSTEM" level="win:Informational" message="$(string.PsmRegistrationRecovered.EventMessage)" opcode="win:Info" symbol="PsmRegistrationRecovered" template="tid_hci_version_template"/>
 				</events>
 			</provider>
 		</events>
@@ -119,6 +122,9 @@
 				<string id="RemoteDeviceOnline.EventMessage" value="Device %1 has both L2CAP channels connected and is ready to operate"/>
 				<string id="FailedWithNTStatus.EventMessage" value="[%1] %2 failed with NTSTATUS %3"/>
 				<string id="RemoteDisconnectCompleted.EventMessage" value="Device %1 disconnected with NTSTATUS %2"/>
+				<string id="PsmRegistrationStale.EventMessage" value="PSM %1 already committed (status %2), attempting reclaim"/>
+				<string id="PsmRegistrationDeferred.EventMessage" value="PSM registration still stale, retrying device start in %1 seconds"/>
+				<string id="PsmRegistrationRecovered.EventMessage" value="PSM registration recovered after %1 attempt(s)"/>
 			</stringTable>
 		</resources>
 	</localization>

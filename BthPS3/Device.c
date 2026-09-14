@@ -314,6 +314,118 @@ void BthPS3_EnablePatchEvtWdfTimer(
 }
 
 //
+// Register PSMs and L2CAP server, then optionally enable the filter patch
+// 
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS
+BthPS3_StartL2CAPServices(
+    _In_ PBTHPS3_SERVER_CONTEXT DevCtx
+)
+{
+    NTSTATUS status;
+
+    FuncEntry(TRACE_DEVICE);
+
+    do
+    {
+        if (!NT_SUCCESS(status = BthPS3_RegisterPSM(DevCtx)))
+        {
+            if (status != STATUS_ALREADY_COMMITTED)
+            {
+                EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_RegisterPSM", status);
+            }
+            break;
+        }
+
+        if (NULL == DevCtx->L2CAPServerHandle)
+        {
+            if (!NT_SUCCESS(status = BthPS3_RegisterL2CAPServer(DevCtx)))
+            {
+                EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_RegisterL2CAPServer", status);
+                break;
+            }
+        }
+
+        //
+        // Attempt to enable, but ignore failure
+        //
+        if (DevCtx->Settings.AutoEnableFilter)
+        {
+            (void)BthPS3PSM_EnablePatchSync(
+                DevCtx->PsmFilter.IoTarget,
+                0
+            );
+        }
+
+    } while (FALSE);
+
+    FuncExit(TRACE_DEVICE, "status=%!STATUS!", status);
+
+    return status;
+}
+
+//
+// Retry stale PSM registration after a degraded device start
+// 
+void
+BthPS3_PsmRegistrationRetryEvtWdfTimer(
+    WDFTIMER Timer
+)
+{
+    NTSTATUS status;
+    PBTHPS3_SERVER_CONTEXT devCtx = GetServerDeviceContext(WdfTimerGetParentObject(Timer));
+
+    FuncEntry(TRACE_DEVICE);
+
+    devCtx->PsmRetryAttempt++;
+
+    TraceInformation(
+        TRACE_DEVICE,
+        "PSM registration retry attempt %lu of %lu",
+        devCtx->PsmRetryAttempt,
+        devCtx->Settings.PsmRegistrationRetryLimit
+    );
+
+    status = BthPS3_StartL2CAPServices(devCtx);
+
+    if (NT_SUCCESS(status))
+    {
+        TraceInformation(
+            TRACE_DEVICE,
+            "PSM registration recovered after %lu attempt(s)",
+            devCtx->PsmRetryAttempt
+        );
+        EventWritePsmRegistrationRecovered(NULL, devCtx->PsmRetryAttempt);
+    }
+    else if (status == STATUS_ALREADY_COMMITTED &&
+        devCtx->PsmRetryAttempt < devCtx->Settings.PsmRegistrationRetryLimit)
+    {
+        TraceWarning(
+            TRACE_DEVICE,
+            "PSM registration still stale, retrying in %lu seconds",
+            devCtx->Settings.PsmRegistrationRetryDelay
+        );
+
+        (void)WdfTimerStart(
+            devCtx->PsmRetryTimer,
+            WDF_REL_TIMEOUT_IN_SEC(devCtx->Settings.PsmRegistrationRetryDelay)
+        );
+    }
+    else
+    {
+        TraceError(
+            TRACE_DEVICE,
+            "Giving up PSM registration after %lu attempt(s), status %!STATUS!",
+            devCtx->PsmRetryAttempt,
+            status
+        );
+        EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_StartL2CAPServices", status);
+    }
+
+    FuncExit(TRACE_DEVICE, "status=%!STATUS!", status);
+}
+
+//
 // Gets invoked on device power-up
 // 
 _Use_decl_annotations_
@@ -335,27 +447,32 @@ BthPS3_EvtWdfDeviceSelfManagedIoInit(
             break;
         }
 
-        if (!NT_SUCCESS(status = BthPS3_RegisterPSM(devCtx)))
-        {
-            EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_RegisterPSM", status);
-            break;
-        }
+        status = BthPS3_StartL2CAPServices(devCtx);
 
-        if (!NT_SUCCESS(status = BthPS3_RegisterL2CAPServer(devCtx)))
+        if (status == STATUS_ALREADY_COMMITTED)
         {
-            EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"BthPS3_RegisterL2CAPServer", status);
-            break;
-        }
-
-        //
-        // Attempt to enable, but ignore failure
-        //
-        if (devCtx->Settings.AutoEnableFilter)
-        {
-            (void)BthPS3PSM_EnablePatchSync(
-                devCtx->PsmFilter.IoTarget,
-                0
+            TraceWarning(
+                TRACE_DEVICE,
+                "PSM registration stale, starting device and retrying in %lu seconds",
+                devCtx->Settings.PsmRegistrationRetryDelay
             );
+            EventWritePsmRegistrationDeferred(
+                NULL,
+                devCtx->Settings.PsmRegistrationRetryDelay
+            );
+
+            (void)WdfTimerStart(
+                devCtx->PsmRetryTimer,
+                WDF_REL_TIMEOUT_IN_SEC(devCtx->Settings.PsmRegistrationRetryDelay)
+            );
+
+            status = STATUS_SUCCESS;
+            break;
+        }
+
+        if (!NT_SUCCESS(status))
+        {
+            break;
         }
 
     } while (FALSE);
@@ -381,6 +498,11 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
 
     FuncEntry(TRACE_DEVICE);
 
+    if (devCtx->PsmRetryTimer != NULL)
+    {
+        (void)WdfTimerStop(devCtx->PsmRetryTimer, TRUE);
+    }
+
     if (devCtx->PsmFilter.IoTarget != NULL)
     {
         WdfIoTargetClose(devCtx->PsmFilter.IoTarget);
@@ -392,7 +514,7 @@ BthPS3_EvtWdfDeviceSelfManagedIoCleanup(
         BthPS3_UnregisterL2CAPServer(devCtx);
     }
 
-    if (0 != devCtx->PsmHidControl)
+    if (devCtx->PsmHidControlOwned || devCtx->PsmHidInterruptOwned)
     {
         BthPS3_UnregisterPSM(devCtx);
     }

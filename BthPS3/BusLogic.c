@@ -131,7 +131,8 @@ BthPS3_PDO_Create(
 	NTSTATUS status = STATUS_SUCCESS;
 	WDF_OBJECT_ATTRIBUTES attributes;
 	PDO_RECORD record;
-	WDFDEVICE device;
+	WDFDEVICE device = NULL;
+	BOOLEAN pdoPlugged = FALSE;
 	UNICODE_STRING guidString = { 0 };
 	WCHAR devAddr[BTHPS3_BTH_ADDR_MAX_CHARS]; // MAC address in hex format including NULL terminator
 	PWSTR manufacturer = L"Nefarius Software Solutions e.U.";
@@ -502,6 +503,8 @@ BthPS3_PDO_Create(
 			break;
 		}
 
+		pdoPlugged = TRUE;
+
 		//
 		// Insert PDO in connection collection
 		// 
@@ -535,14 +538,14 @@ BthPS3_PDO_Create(
 			break;
 		}
 
-			const PBTHPS3_PDO_CONTEXT pPdoCtx = *PdoContext = GetPdoContext(device);
+			const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
 
 			pPdoCtx->RemoteAddress = RemoteAddress;
 			pPdoCtx->DevCtxHdr = &Context->Header;
 			pPdoCtx->DeviceType = DeviceType;
 			pPdoCtx->SerialNumber = record.SerialNumber;
 			pPdoCtx->TeardownWorkItem = NULL;
-			pPdoCtx->Lifecycle = BthPS3PdoLifecycleActive;
+			pPdoCtx->Lifecycle = BthPS3PdoLifecycleDraining;
 
 			WDF_WORKITEM_CONFIG workItemConfig;
 			WDF_WORKITEM_CONFIG_INIT(&workItemConfig, BthPS3_PDO_EvtTeardownWorkItem);
@@ -692,11 +695,37 @@ BthPS3_PDO_Create(
 			// 
 			DMF_IoctlHandler_IoctlStateSet(pPdoCtx->DmfModuleIoctlHandler, TRUE);
 
+			InterlockedExchange(&pPdoCtx->Lifecycle, BthPS3PdoLifecycleActive);
+			*PdoContext = pPdoCtx;
+
 	} while (FALSE);
 
 	if (hKey)
 	{
 		WdfRegistryClose(hKey);
+	}
+
+	if (!NT_SUCCESS(status) && pdoPlugged)
+	{
+		*PdoContext = NULL;
+
+		WdfWaitLockAcquire(Context->Header.ClientsLock, NULL);
+
+		const ULONG itemCount = WdfCollectionGetCount(Context->Header.Clients);
+
+		for (ULONG index = 0; index < itemCount; index++)
+		{
+			if (WdfCollectionGetItem(Context->Header.Clients, index) == device)
+			{
+				WdfCollectionRemoveItem(Context->Header.Clients, index);
+				break;
+			}
+		}
+
+		WdfWaitLockRelease(Context->Header.ClientsLock);
+
+		(void)DMF_Pdo_DeviceUnplug(Context->Header.PdoModule, device);
+		BthPS3_PDO_ReleaseSlot(&Context->Header, record.SerialNumber);
 	}
 
 	if (NT_SUCCESS(status))
@@ -726,7 +755,8 @@ BthPS3_PDO_Create(
 }
 
 //
-// Retrieves an existing connection from connection list identified by BTH_ADDR
+// Retrieves an existing Active PDO for BTH_ADDR. Success returns a rundown
+// reference that the caller must release with BthPS3_PDO_RundownRelease.
 // 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 _Must_inspect_result_
@@ -760,6 +790,16 @@ BthPS3_PDO_RetrieveByBthAddr(
 		if (pPdoCtx->RemoteAddress == RemoteAddress &&
 			pPdoCtx->Lifecycle == BthPS3PdoLifecycleActive)
 		{
+			if (!NT_SUCCESS(BthPS3_PDO_RundownAcquire(pPdoCtx)))
+			{
+				TraceVerbose(
+					TRACE_BUSLOGIC,
+					"Skipping PDO 0x%p: rundown acquire failed",
+					pPdoCtx
+				);
+				continue;
+			}
+
 			TraceVerbose(
 				TRACE_BUSLOGIC,
 				"Found desired connection item in connection list"
@@ -866,21 +906,6 @@ BthPS3_PDO_UnplugNow(
 		);
 	}
 
-	WdfWaitLockAcquire(Context->ClientsLock, NULL);
-
-	const ULONG itemCount = WdfCollectionGetCount(Context->Clients);
-
-	for (ULONG index = 0; index < itemCount; index++)
-	{
-		if (WdfCollectionGetItem(Context->Clients, index) == device)
-		{
-			WdfCollectionRemoveItem(Context->Clients, index);
-			break;
-		}
-	}
-
-	InterlockedExchange(&PdoContext->Lifecycle, BthPS3PdoLifecycleUnplugged);
-
 	NTSTATUS status = DMF_Pdo_DeviceUnplug(Context->PdoModule, device);
 
 	if (!NT_SUCCESS(status))
@@ -897,18 +922,38 @@ BthPS3_PDO_UnplugNow(
 			hardwareId,
 			status
 		);
-	}
-	else
-	{
-		EventWriteChildDeviceDestructionSuccessful(
-			NULL,
-			serial,
-			hardwareId,
-			status
-		);
+
+		if (PdoContext->TeardownWorkItem != NULL)
+		{
+			WdfWorkItemEnqueue(PdoContext->TeardownWorkItem);
+		}
+
+		return;
 	}
 
+	WdfWaitLockAcquire(Context->ClientsLock, NULL);
+
+	const ULONG itemCount = WdfCollectionGetCount(Context->Clients);
+
+	for (ULONG index = 0; index < itemCount; index++)
+	{
+		if (WdfCollectionGetItem(Context->Clients, index) == device)
+		{
+			WdfCollectionRemoveItem(Context->Clients, index);
+			break;
+		}
+	}
+
+	InterlockedExchange(&PdoContext->Lifecycle, BthPS3PdoLifecycleUnplugged);
+
 	WdfWaitLockRelease(Context->ClientsLock);
+
+	EventWriteChildDeviceDestructionSuccessful(
+		NULL,
+		serial,
+		hardwareId,
+		status
+	);
 }
 
 //

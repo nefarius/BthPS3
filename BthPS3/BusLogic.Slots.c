@@ -303,3 +303,27 @@ BthPS3_PDO_AssignSlot(
 	return status;
 }
 #pragma code_seg()
+
+//
+// Drops an in-memory slot reservation so a failed PDO create can reuse it.
+//
+#pragma code_seg("PAGE")
+_IRQL_requires_max_(PASSIVE_LEVEL)
+VOID
+BthPS3_PDO_ReleaseSlot(
+	PBTHPS3_DEVICE_CONTEXT_HEADER Header,
+	ULONG Slot
+)
+{
+	PAGED_CODE();
+
+	if (Slot == 0 || Slot > BTHPS3_MAX_NUM_DEVICES)
+	{
+		return;
+	}
+
+	WdfWaitLockAcquire(Header->SlotsLock, NULL);
+	ClearBit(Header->Slots, Slot);
+	WdfWaitLockRelease(Header->SlotsLock);
+}
+#pragma code_seg()

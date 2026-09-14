@@ -58,6 +58,7 @@ L2CAP_PS3_HandleRemoteConnect(
     WDFREQUEST brbAsyncRequest = NULL;
     CHAR remoteName[BTH_MAX_NAME_SIZE];
     DS_DEVICE_TYPE deviceType = DS_DEVICE_TYPE_UNKNOWN;
+    BOOLEAN lookupRundownHeld = FALSE;
 
 
     FuncEntry(TRACE_L2CAP);
@@ -75,6 +76,11 @@ L2CAP_PS3_HandleRemoteConnect(
         ConnectParams->BtAddress,
         &pPdoCtx
     );
+
+    if (NT_SUCCESS(status))
+    {
+        lookupRundownHeld = TRUE;
+    }
 
     //
     // This device apparently isn't connected, allocate new object
@@ -414,6 +420,11 @@ exit:
     if (!NT_SUCCESS(status) && pPdoCtx)
     {
         BthPS3_PDO_Destroy(&DevCtx->Header, pPdoCtx);
+    }
+
+    if (lookupRundownHeld)
+    {
+        BthPS3_PDO_RundownRelease(pPdoCtx);
     }
 
     if (!NT_SUCCESS(status))

@@ -59,8 +59,8 @@ typedef enum _BTHPS3_CONNECTION_STATE {
 } BTHPS3_CONNECTION_STATE, *PBTHPS3_CONNECTION_STATE;
 
 //
-// PDO teardown lifecycle. Destroy requests CAS Active -> Draining;
-// only the teardown coordinator advances Draining -> Unplugged.
+// PDO teardown lifecycle. Destroy requests CAS Active -> Draining.
+// Unplugged is assigned only after DMF_Pdo_DeviceUnplug succeeds.
 //
 typedef enum _BTHPS3_PDO_LIFECYCLE {
     BthPS3PdoLifecycleActive = 0,
@@ -165,6 +165,10 @@ BthPS3_PDO_Create(
 	_Outptr_result_maybenull_ BTHPS3_PDO_CONTEXT** PdoContext
 );
 
+//
+// On STATUS_SUCCESS, *PdoContext holds a rundown reference that the
+// caller must release with BthPS3_PDO_RundownRelease.
+//
 _IRQL_requires_max_(PASSIVE_LEVEL)
 _Must_inspect_result_
 _Success_(return == STATUS_SUCCESS)
@@ -272,5 +276,12 @@ NTSTATUS
 BthPS3_PDO_AssignSlot(
 	PBTHPS3_DEVICE_CONTEXT_HEADER Header,
 	BTH_ADDR RemoteAddress,
+	ULONG Slot
+);
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+VOID
+BthPS3_PDO_ReleaseSlot(
+	PBTHPS3_DEVICE_CONTEXT_HEADER Header,
 	ULONG Slot
 );

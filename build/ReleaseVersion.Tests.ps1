@@ -38,6 +38,11 @@ Assert-Equal $release.Revision 2012 'revision'
 $bare = ConvertTo-BthPS3ReleaseVersion -Ref 'v2.12.0' -RunNumber 1 -BuildVersionOffset 2000
 Assert-Equal $bare.DriverVersion '2.12.0.2001' 'bare tag ref'
 
+$resumed = ConvertTo-BthPS3ReleaseVersion -Ref 'refs/tags/v2.11.0' -RunNumber 23 -BuildVersionOffset 2000
+Assert-Equal $resumed.IsRelease $true 'resumed tag is release'
+Assert-Equal $resumed.SetupVersion '2.11.0' 'resumed setup version'
+Assert-Equal $resumed.DriverVersion '2.11.0.2023' 'resumed driver version uses source run number'
+
 $ci = ConvertTo-BthPS3ReleaseVersion -Ref 'refs/heads/master' -RunNumber 12 -BuildVersionOffset 2000
 Assert-Equal $ci.IsRelease $false 'master is not a release'
 Assert-Equal $ci.SetupVersion '' 'master has no setup version'

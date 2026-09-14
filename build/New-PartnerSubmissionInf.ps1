@@ -71,12 +71,17 @@ foreach ($section in $sections) {
             throw "[Manufacturer] does not contain NTAMD64 decorations; expected a stamped x64 INF."
         }
         if ($section.Body -notmatch 'NTARM64' -and $section.Body -notmatch 'NTarm64') {
-            $section.Body = [regex]::Replace($section.Body, '(?m)^(.+?=)(.+)$', {
+            # %ManufacturerName%=ModelsName,NTamd64[,NTamd64.10.0...]
+            # becomes ModelsName,NTamd64,NTarm64 — not ModelsName,NTamd64,ModelsName,NTarm64.
+            $section.Body = [regex]::Replace($section.Body, '(?m)^(.+?=)([^,\r\n]+)(,.*)?$', {
                     param($match)
                     $prefix = $match.Groups[1].Value
-                    $decorations = $match.Groups[2].Value.TrimEnd()
-                    $armDecorations = ConvertTo-Arm64Decoration $decorations
-                    $prefix + $decorations + ',' + $armDecorations
+                    $models = $match.Groups[2].Value
+                    $osVersions = if ($match.Groups[3].Success) { $match.Groups[3].Value.TrimEnd() } else { '' }
+                    if ([string]::IsNullOrWhiteSpace($osVersions)) {
+                        throw '[Manufacturer] line is missing NTAMD64 decorations.'
+                    }
+                    $prefix + $models + $osVersions + (ConvertTo-Arm64Decoration $osVersions)
                 })
         }
         $outSections.Add($section)

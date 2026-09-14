@@ -96,6 +96,18 @@ BthPS3_PDO_EvtDmfModulesAdd(
 		&pPdoCtx->DmfModuleIoctlHandler
 	);
 
+	//
+	// Per-PDO rundown: callbacks and BRB completions acquire this before
+	// touching connection state. Teardown ends it before the PDO is unplugged.
+	//
+	DMF_Rundown_ATTRIBUTES_INIT(&moduleAttributes);
+	DMF_DmfModuleAdd(
+		DmfModuleInit,
+		&moduleAttributes,
+		WDF_NO_OBJECT_ATTRIBUTES,
+		&pPdoCtx->DmfModuleRundown
+	);
+
 	FuncExitNoReturn(TRACE_BUSLOGIC);
 }
 
@@ -523,12 +535,34 @@ BthPS3_PDO_Create(
 			break;
 		}
 
-		const PBTHPS3_PDO_CONTEXT pPdoCtx = *PdoContext = GetPdoContext(device);
+			const PBTHPS3_PDO_CONTEXT pPdoCtx = *PdoContext = GetPdoContext(device);
 
-		pPdoCtx->RemoteAddress = RemoteAddress;
-		pPdoCtx->DevCtxHdr = &Context->Header;
-		pPdoCtx->DeviceType = DeviceType;
-		pPdoCtx->SerialNumber = record.SerialNumber;
+			pPdoCtx->RemoteAddress = RemoteAddress;
+			pPdoCtx->DevCtxHdr = &Context->Header;
+			pPdoCtx->DeviceType = DeviceType;
+			pPdoCtx->SerialNumber = record.SerialNumber;
+			pPdoCtx->TeardownWorkItem = NULL;
+			pPdoCtx->Lifecycle = BthPS3PdoLifecycleActive;
+
+			WDF_WORKITEM_CONFIG workItemConfig;
+			WDF_WORKITEM_CONFIG_INIT(&workItemConfig, BthPS3_PDO_EvtTeardownWorkItem);
+
+			WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+			attributes.ParentObject = device;
+
+			if (!NT_SUCCESS(status = WdfWorkItemCreate(
+				&workItemConfig,
+				&attributes,
+				&pPdoCtx->TeardownWorkItem
+			)))
+			{
+				TraceError(
+					TRACE_BUSLOGIC,
+					"WdfWorkItemCreate for PDO teardown failed with status %!STATUS!",
+					status
+				);
+				break;
+			}
 
 		WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
 		attributes.ParentObject = device;
@@ -600,7 +634,8 @@ BthPS3_PDO_Create(
 			break;
 		}
 
-		pPdoCtx->HidControlChannel.ConnectionState = ConnectionStateInitialized;
+			pPdoCtx->HidControlChannel.ConnectionState = ConnectionStateInitialized;
+			pPdoCtx->HidControlChannel.PdoContext = pPdoCtx;
 
 		//
 		// Initialize HidInterruptChannel properties
@@ -644,12 +679,18 @@ BthPS3_PDO_Create(
 			break;
 		}
 
-		pPdoCtx->HidInterruptChannel.ConnectionState = ConnectionStateInitialized;
+			pPdoCtx->HidInterruptChannel.ConnectionState = ConnectionStateInitialized;
+			pPdoCtx->HidInterruptChannel.PdoContext = pPdoCtx;
 
-		//
-		// We're ready, expose interface
-		// 
-		DMF_IoctlHandler_IoctlStateSet(pPdoCtx->DmfModuleIoctlHandler, TRUE);
+			//
+			// Allow callbacks and BRB completions to acquire the PDO
+			//
+			DMF_Rundown_Start(pPdoCtx->DmfModuleRundown);
+
+			//
+			// We're ready, expose interface
+			// 
+			DMF_IoctlHandler_IoctlStateSet(pPdoCtx->DmfModuleIoctlHandler, TRUE);
 
 	} while (FALSE);
 
@@ -716,7 +757,8 @@ BthPS3_PDO_RetrieveByBthAddr(
 		const WDFDEVICE currentPdo = WdfCollectionGetItem(Context->Header.Clients, index);
 		const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(currentPdo);
 
-		if (pPdoCtx->RemoteAddress == RemoteAddress)
+		if (pPdoCtx->RemoteAddress == RemoteAddress &&
+			pPdoCtx->Lifecycle == BthPS3PdoLifecycleActive)
 		{
 			TraceVerbose(
 				TRACE_BUSLOGIC,
@@ -736,101 +778,254 @@ BthPS3_PDO_RetrieveByBthAddr(
 	return status;
 }
 
-//
-// Unplugs the child device, frees context memory, frees allocated slot (serial number)
-// 
+_IRQL_requires_max_(DISPATCH_LEVEL)
+_Must_inspect_result_
+NTSTATUS
+BthPS3_PDO_RundownAcquire(
+	_In_ PBTHPS3_PDO_CONTEXT PdoContext
+)
+{
+	if (PdoContext == NULL || PdoContext->DmfModuleRundown == NULL)
+	{
+		return STATUS_INVALID_DEVICE_STATE;
+	}
+
+	return DMF_Rundown_Reference(PdoContext->DmfModuleRundown);
+}
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+BthPS3_PDO_RundownRelease(
+	_In_ PBTHPS3_PDO_CONTEXT PdoContext
+)
+{
+	if (PdoContext == NULL || PdoContext->DmfModuleRundown == NULL)
+	{
+		return;
+	}
+
+	DMF_Rundown_Dereference(PdoContext->DmfModuleRundown);
+}
+
+static
+VOID
+BthPS3_PDO_WaitDisconnectEventDiagnostic(
+	_In_ PKEVENT Event,
+	_In_ PCSTR ChannelName
+)
+{
+	LARGE_INTEGER timeout;
+	NTSTATUS status;
+
+	timeout.QuadPart = WDF_REL_TIMEOUT_IN_SEC(5);
+	status = KeWaitForSingleObject(
+		Event,
+		Executive,
+		KernelMode,
+		FALSE,
+		&timeout
+	);
+
+	if (status == STATUS_WAIT_0)
+	{
+		TraceVerbose(
+			TRACE_BUSLOGIC,
+			"%s channel event signalled",
+			ChannelName
+		);
+	}
+	else
+	{
+		TraceError(
+			TRACE_BUSLOGIC,
+			"%s channel wait completed with status %!STATUS! (timeout is not success)",
+			ChannelName,
+			status
+		);
+	}
+}
+
 _IRQL_requires_max_(PASSIVE_LEVEL)
+static
+VOID
+BthPS3_PDO_UnplugNow(
+	_In_ PBTHPS3_DEVICE_CONTEXT_HEADER Context,
+	_In_ PBTHPS3_PDO_CONTEXT PdoContext
+)
+{
+	const WDFDEVICE device = WdfObjectContextGetObject(PdoContext);
+	const ULONG serial = PdoContext->SerialNumber;
+	WCHAR hardwareId[BTHPS3_MAX_DEVICE_ID_LEN] = { 0 };
+
+	if (PdoContext->HardwareId != NULL)
+	{
+		wcscpy_s(
+			hardwareId,
+			sizeof(hardwareId) / sizeof(WCHAR),
+			(PWSTR)WdfMemoryGetBuffer(PdoContext->HardwareId, NULL)
+		);
+	}
+
+	WdfWaitLockAcquire(Context->ClientsLock, NULL);
+
+	const ULONG itemCount = WdfCollectionGetCount(Context->Clients);
+
+	for (ULONG index = 0; index < itemCount; index++)
+	{
+		if (WdfCollectionGetItem(Context->Clients, index) == device)
+		{
+			WdfCollectionRemoveItem(Context->Clients, index);
+			break;
+		}
+	}
+
+	InterlockedExchange(&PdoContext->Lifecycle, BthPS3PdoLifecycleUnplugged);
+
+	NTSTATUS status = DMF_Pdo_DeviceUnplug(Context->PdoModule, device);
+
+	if (!NT_SUCCESS(status))
+	{
+		TraceError(
+			TRACE_BUSLOGIC,
+			"DMF_Pdo_DeviceUnplug failed with status %!STATUS!",
+			status
+		);
+
+		EventWriteChildDeviceDestructionFailed(
+			NULL,
+			serial,
+			hardwareId,
+			status
+		);
+	}
+	else
+	{
+		EventWriteChildDeviceDestructionSuccessful(
+			NULL,
+			serial,
+			hardwareId,
+			status
+		);
+	}
+
+	WdfWaitLockRelease(Context->ClientsLock);
+}
+
+//
+// Requests two-phase PDO teardown. Safe at DISPATCH_LEVEL: only CAS to
+// Draining and enqueue the passive coordinator. Idempotent.
+//
+_IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 BthPS3_PDO_Destroy(
 	_In_ PBTHPS3_DEVICE_CONTEXT_HEADER Context,
 	_In_ PBTHPS3_PDO_CONTEXT PdoContext
 )
 {
+	UNREFERENCED_PARAMETER(Context);
+
 	FuncEntryArguments(
 		TRACE_BUSLOGIC,
 		"PdoContext=0x%p",
 		PdoContext
 	);
 
-	WdfWaitLockAcquire(Context->ClientsLock, NULL);
+	const LONG previous = InterlockedCompareExchange(
+		&PdoContext->Lifecycle,
+		BthPS3PdoLifecycleDraining,
+		BthPS3PdoLifecycleActive
+	);
 
-	const WDFDEVICE device = WdfObjectContextGetObject(PdoContext);
-	const ULONG itemCount = WdfCollectionGetCount(Context->Clients);
-
-	for (ULONG index = 0; index < itemCount; index++)
+	if (previous != BthPS3PdoLifecycleActive)
 	{
-		const WDFDEVICE currentPdo = WdfCollectionGetItem(Context->Clients, index);
-
-		if (currentPdo == device)
-		{
-			const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(currentPdo);
-			const ULONG serial = pPdoCtx->SerialNumber;
-			WCHAR hardwareId[BTHPS3_MAX_DEVICE_ID_LEN];
-
-			//
-			// Make a copy for logging since the context memory gets destroyed on unplug
-			// 
-			wcscpy_s(
-				hardwareId,
-				sizeof(hardwareId) / sizeof(WCHAR),
-				(PWSTR)WdfMemoryGetBuffer(pPdoCtx->HardwareId, NULL)
-			);
-
-			TraceVerbose(
-				TRACE_BUSLOGIC,
-				"Found desired connection item in connection list (serial: %d)",
-				serial
-			);
-
-			//
-			// Do NOT use PBTHPS3_PDO_CONTEXT after this call as it gets destroyed!
-			// 
-
-			NTSTATUS status = DMF_Pdo_DeviceUnPlugEx(
-				Context->PdoModule,
-				hardwareId,
-				serial
-			);
-
-			if (!NT_SUCCESS(status))
-			{
-				TraceError(
-					TRACE_BUSLOGIC,
-					"DMF_Pdo_DeviceUnPlugEx failed with status %!STATUS!",
-					status
-				);
-
-				EventWriteChildDeviceDestructionFailed(
-					NULL,
-					serial,
-					hardwareId,
-					status
-				);
-			}
-			else
-			{
-				EventWriteChildDeviceDestructionSuccessful(
-					NULL,
-					serial,
-					hardwareId,
-					status
-				);
-			}
-
-			WdfCollectionRemoveItem(Context->Clients, index);
-
-			break;
-		}
+		TraceVerbose(
+			TRACE_BUSLOGIC,
+			"PDO 0x%p already leaving Active (lifecycle=%d), ignoring destroy",
+			PdoContext,
+			previous
+		);
+		FuncExitNoReturn(TRACE_BUSLOGIC);
+		return;
 	}
 
-	WdfWaitLockRelease(Context->ClientsLock);
+	TraceInformation(
+		TRACE_BUSLOGIC,
+		"PDO 0x%p transitioning Active -> Draining",
+		PdoContext
+	);
+
+	if (PdoContext->TeardownWorkItem != NULL)
+	{
+		WdfWorkItemEnqueue(PdoContext->TeardownWorkItem);
+	}
+	else if (KeGetCurrentIrql() <= PASSIVE_LEVEL)
+	{
+		if (PdoContext->DmfModuleRundown != NULL)
+		{
+			DMF_Rundown_EndAndWait(PdoContext->DmfModuleRundown);
+		}
+
+		BthPS3_PDO_UnplugNow(PdoContext->DevCtxHdr, PdoContext);
+	}
+	else
+	{
+		TraceError(
+			TRACE_BUSLOGIC,
+			"PDO 0x%p has no teardown work item at DISPATCH_LEVEL",
+			PdoContext
+		);
+	}
+
+	FuncExitNoReturn(TRACE_BUSLOGIC);
+}
+
+VOID
+BthPS3_PDO_EvtTeardownWorkItem(
+	_In_ WDFWORKITEM WorkItem
+)
+{
+	const WDFDEVICE device = (WDFDEVICE)WdfWorkItemGetParentObject(WorkItem);
+	const PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(device);
+
+	FuncEntryArguments(TRACE_BUSLOGIC, "PdoContext=0x%p", pPdoCtx);
+
+	NT_ASSERT(pPdoCtx->Lifecycle == BthPS3PdoLifecycleDraining);
+
+	L2CAP_PS3_RemoteDisconnect(
+		pPdoCtx->DevCtxHdr,
+		pPdoCtx->RemoteAddress,
+		&pPdoCtx->HidControlChannel
+	);
+	L2CAP_PS3_RemoteDisconnect(
+		pPdoCtx->DevCtxHdr,
+		pPdoCtx->RemoteAddress,
+		&pPdoCtx->HidInterruptChannel
+	);
+
+	//
+	// Let in-flight OPEN completions send CLOSE before rundown ends.
+	// Timeout is logged; remaining BRBs are still waited for by rundown.
+	//
+	BthPS3_PDO_WaitDisconnectEventDiagnostic(
+		&pPdoCtx->HidControlChannel.DisconnectEvent,
+		"HID Control"
+	);
+	BthPS3_PDO_WaitDisconnectEventDiagnostic(
+		&pPdoCtx->HidInterruptChannel.DisconnectEvent,
+		"HID Interrupt"
+	);
+
+	DMF_Rundown_EndAndWait(pPdoCtx->DmfModuleRundown);
+
+	BthPS3_PDO_UnplugNow(pPdoCtx->DevCtxHdr, pPdoCtx);
 
 	FuncExitNoReturn(TRACE_BUSLOGIC);
 }
 
 //
-// Will be called before the PDO device object gets destroyed
-// 
+// Diagnostic only. Rundown + the teardown coordinator are the lifetime barrier.
+// STATUS_TIMEOUT must not be treated as a signaled event.
+//
 VOID
 BthPS3_PDO_EvtContextCleanup(
 	_In_
@@ -839,59 +1034,23 @@ BthPS3_PDO_EvtContextCleanup(
 {
 	FuncEntry(TRACE_BUSLOGIC);
 
-	NTSTATUS status;
 	PBTHPS3_PDO_CONTEXT pPdoCtx = GetPdoContext(Object);
-	LARGE_INTEGER timeout;
-	timeout.QuadPart = WDF_REL_TIMEOUT_IN_SEC(5);
 
-	if (!NT_SUCCESS(status = KeWaitForSingleObject(
+	BthPS3_PDO_WaitDisconnectEventDiagnostic(
 		&pPdoCtx->HidControlChannel.DisconnectEvent,
-		Executive,
-		KernelMode,
-		FALSE,
-		&timeout
-	)))
-	{
-		TraceError(
-			TRACE_BUSLOGIC,
-			"HID Control - KeWaitForSingleObject failed with status %!STATUS!",
-			status
-		);
-	}
-	else
-	{
-		TraceVerbose(
-			TRACE_BUSLOGIC,
-			"HID Control channel event signalled"
-		);
-	}
-
-	if (!NT_SUCCESS(status = KeWaitForSingleObject(
+		"HID Control"
+	);
+	BthPS3_PDO_WaitDisconnectEventDiagnostic(
 		&pPdoCtx->HidInterruptChannel.DisconnectEvent,
-		Executive,
-		KernelMode,
-		FALSE,
-		&timeout
-	)))
-	{
-		TraceError(
-			TRACE_BUSLOGIC,
-			"HID Interrupt - KeWaitForSingleObject failed with status %!STATUS!",
-			status
-		);
-	}
-	else
-	{
-		TraceVerbose(
-			TRACE_BUSLOGIC,
-			"HID Interrupt channel event signalled"
-		);
-	}
+		"HID Interrupt"
+	);
 
 	TraceInformation(
 		TRACE_BUSLOGIC,
-		"Cleaning up context 0x%p of device object 0x%p",
-		pPdoCtx, Object
+		"Cleaning up context 0x%p of device object 0x%p (lifecycle=%d)",
+		pPdoCtx,
+		Object,
+		pPdoCtx->Lifecycle
 	);
 
 	FuncExitNoReturn(TRACE_BUSLOGIC);

@@ -55,6 +55,12 @@ L2CAP_PS3_SendControlTransferAsync(
     NTSTATUS status;
     struct _BRB_L2CA_ACL_TRANSFER* brb = NULL;
 
+    status = BthPS3_PDO_RundownAcquire(ClientConnection);
+    if (!NT_SUCCESS(status))
+    {
+        return status;
+    }
+
     //
     // Allocate BRB
     // 
@@ -66,13 +72,14 @@ L2CAP_PS3_SendControlTransferAsync(
 
     if (brb == NULL)
     {
+        BthPS3_PDO_RundownRelease(ClientConnection);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     //
-    // Used in completion routine to free BRB
+    // Used in completion routine to free BRB and release rundown
     // 
-    brb->Hdr.ClientContext[0] = ClientConnection->DevCtxHdr;
+    brb->Hdr.ClientContext[0] = ClientConnection;
 
     //
     // Set channel properties
@@ -105,6 +112,7 @@ L2CAP_PS3_SendControlTransferAsync(
         );
 
         ClientConnection->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+        BthPS3_PDO_RundownRelease(ClientConnection);
     }
 
     return status;
@@ -126,6 +134,12 @@ L2CAP_PS3_ReadControlTransferAsync(
     NTSTATUS status;
     struct _BRB_L2CA_ACL_TRANSFER* brb = NULL;
 
+    status = BthPS3_PDO_RundownAcquire(ClientConnection);
+    if (!NT_SUCCESS(status))
+    {
+        return status;
+    }
+
     //
     // Allocate BRB
     // 
@@ -137,13 +151,14 @@ L2CAP_PS3_ReadControlTransferAsync(
 
     if (brb == NULL)
     {
+        BthPS3_PDO_RundownRelease(ClientConnection);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     //
-    // Used in completion routine to free BRB
+    // Used in completion routine to free BRB and release rundown
     // 
-    brb->Hdr.ClientContext[0] = ClientConnection->DevCtxHdr;
+    brb->Hdr.ClientContext[0] = ClientConnection;
 
     //
     // Set channel properties
@@ -176,6 +191,7 @@ L2CAP_PS3_ReadControlTransferAsync(
         );
 
         ClientConnection->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+        BthPS3_PDO_RundownRelease(ClientConnection);
     }
 
     return status;
@@ -197,6 +213,12 @@ L2CAP_PS3_ReadInterruptTransferAsync(
     NTSTATUS status;
     struct _BRB_L2CA_ACL_TRANSFER* brb = NULL;
 
+    status = BthPS3_PDO_RundownAcquire(ClientConnection);
+    if (!NT_SUCCESS(status))
+    {
+        return status;
+    }
+
     //
     // Allocate BRB
     // 
@@ -208,13 +230,14 @@ L2CAP_PS3_ReadInterruptTransferAsync(
 
     if (brb == NULL)
     {
+        BthPS3_PDO_RundownRelease(ClientConnection);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     //
-    // Used in completion routine to free BRB
+    // Used in completion routine to free BRB and release rundown
     // 
-    brb->Hdr.ClientContext[0] = ClientConnection->DevCtxHdr;
+    brb->Hdr.ClientContext[0] = ClientConnection;
 
     //
     // Set channel properties
@@ -247,6 +270,7 @@ L2CAP_PS3_ReadInterruptTransferAsync(
         );
 
         ClientConnection->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+        BthPS3_PDO_RundownRelease(ClientConnection);
     }
 
     return status;
@@ -268,6 +292,12 @@ L2CAP_PS3_SendInterruptTransferAsync(
     NTSTATUS status;
     struct _BRB_L2CA_ACL_TRANSFER* brb = NULL;
 
+    status = BthPS3_PDO_RundownAcquire(ClientConnection);
+    if (!NT_SUCCESS(status))
+    {
+        return status;
+    }
+
     //
     // Allocate BRB
     // 
@@ -279,13 +309,14 @@ L2CAP_PS3_SendInterruptTransferAsync(
 
     if (brb == NULL)
     {
+        BthPS3_PDO_RundownRelease(ClientConnection);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     //
-    // Used in completion routine to free BRB
+    // Used in completion routine to free BRB and release rundown
     // 
-    brb->Hdr.ClientContext[0] = ClientConnection->DevCtxHdr;
+    brb->Hdr.ClientContext[0] = ClientConnection;
 
     //
     // Set channel properties
@@ -320,6 +351,7 @@ L2CAP_PS3_SendInterruptTransferAsync(
         );
 
         ClientConnection->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+        BthPS3_PDO_RundownRelease(ClientConnection);
     }
 
     return status;
@@ -338,8 +370,8 @@ L2CAP_PS3_AsyncSendControlTransferCompleted(
 {
     struct _BRB_L2CA_ACL_TRANSFER* brb =
         (struct _BRB_L2CA_ACL_TRANSFER*)Context;
-    PBTHPS3_DEVICE_CONTEXT_HEADER deviceCtxHdr =
-        (PBTHPS3_DEVICE_CONTEXT_HEADER)brb->Hdr.ClientContext[0];
+    PBTHPS3_PDO_CONTEXT pPdoCtx =
+        (PBTHPS3_PDO_CONTEXT)brb->Hdr.ClientContext[0];
 
     UNREFERENCED_PARAMETER(Target);
 
@@ -349,7 +381,8 @@ L2CAP_PS3_AsyncSendControlTransferCompleted(
         Params->IoStatus.Status
     );
 
-    deviceCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+    pPdoCtx->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+    BthPS3_PDO_RundownRelease(pPdoCtx);
     WdfRequestComplete(Request, Params->IoStatus.Status);
 }
 
@@ -367,8 +400,8 @@ L2CAP_PS3_AsyncReadControlTransferCompleted(
     size_t length = 0;
     struct _BRB_L2CA_ACL_TRANSFER* brb =
         (struct _BRB_L2CA_ACL_TRANSFER*)Context;
-    PBTHPS3_DEVICE_CONTEXT_HEADER deviceCtxHdr =
-        (PBTHPS3_DEVICE_CONTEXT_HEADER)brb->Hdr.ClientContext[0];
+    PBTHPS3_PDO_CONTEXT pPdoCtx =
+        (PBTHPS3_PDO_CONTEXT)brb->Hdr.ClientContext[0];
 
     UNREFERENCED_PARAMETER(Target);
 
@@ -379,7 +412,8 @@ L2CAP_PS3_AsyncReadControlTransferCompleted(
     );
 
     length = brb->BufferSize;
-    deviceCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+    pPdoCtx->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+    BthPS3_PDO_RundownRelease(pPdoCtx);
     WdfRequestCompleteWithInformation(
         Request,
         Params->IoStatus.Status,
@@ -401,8 +435,8 @@ L2CAP_PS3_AsyncReadInterruptTransferCompleted(
     size_t length = 0;
     struct _BRB_L2CA_ACL_TRANSFER* brb =
         (struct _BRB_L2CA_ACL_TRANSFER*)Context;
-    PBTHPS3_DEVICE_CONTEXT_HEADER deviceCtxHdr =
-        (PBTHPS3_DEVICE_CONTEXT_HEADER)brb->Hdr.ClientContext[0];
+    PBTHPS3_PDO_CONTEXT pPdoCtx =
+        (PBTHPS3_PDO_CONTEXT)brb->Hdr.ClientContext[0];
 
     UNREFERENCED_PARAMETER(Target);
 
@@ -414,7 +448,8 @@ L2CAP_PS3_AsyncReadInterruptTransferCompleted(
     );
 
     length = brb->BufferSize;
-    deviceCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+    pPdoCtx->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+    BthPS3_PDO_RundownRelease(pPdoCtx);
     WdfRequestCompleteWithInformation(
         Request,
         Params->IoStatus.Status,
@@ -435,8 +470,8 @@ L2CAP_PS3_AsyncSendInterruptTransferCompleted(
 {
     struct _BRB_L2CA_ACL_TRANSFER* brb =
         (struct _BRB_L2CA_ACL_TRANSFER*)Context;
-    PBTHPS3_DEVICE_CONTEXT_HEADER deviceCtxHdr =
-        (PBTHPS3_DEVICE_CONTEXT_HEADER)brb->Hdr.ClientContext[0];
+    PBTHPS3_PDO_CONTEXT pPdoCtx =
+        (PBTHPS3_PDO_CONTEXT)brb->Hdr.ClientContext[0];
 
     UNREFERENCED_PARAMETER(Target);
 
@@ -446,6 +481,7 @@ L2CAP_PS3_AsyncSendInterruptTransferCompleted(
         Params->IoStatus.Status
     );
 
-    deviceCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+    pPdoCtx->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
+    BthPS3_PDO_RundownRelease(pPdoCtx);
     WdfRequestComplete(Request, Params->IoStatus.Status);
 }

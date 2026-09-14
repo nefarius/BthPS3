@@ -68,22 +68,12 @@ L2CAP_PS3_ControlConnectResponseCompleted(
 	brb = (struct _BRB_L2CA_OPEN_CHANNEL*)Context;
 	pPdoCtx = brb->Hdr.ClientContext[0];
 
-	//
-	// Connection acceptance successful, channel ready to operate
-	// 
-	if (NT_SUCCESS(status))
+	if (L2CAP_PS3_ApplyConnectCompletion(
+		pPdoCtx,
+		&pPdoCtx->HidControlChannel,
+		status
+	))
 	{
-		WdfSpinLockAcquire(pPdoCtx->HidControlChannel.ConnectionStateLock);
-
-		pPdoCtx->HidControlChannel.ConnectionState = ConnectionStateConnected;
-
-		//
-		// This will be set again once disconnect has occurred
-		// 
-		KeClearEvent(&pPdoCtx->HidControlChannel.DisconnectEvent);
-
-		WdfSpinLockRelease(pPdoCtx->HidControlChannel.ConnectionStateLock);
-
 		TraceInformation(
 			TRACE_L2CAP,
 			"HID Control Channel connection established"
@@ -125,18 +115,18 @@ L2CAP_PS3_ControlConnectResponseCompleted(
 			EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfIoQueueReadyNotify (HidControlWriteRequests)", status);
 		}
 	}
-	else
+	else if (!NT_SUCCESS(Params->IoStatus.Status))
 	{
 		TraceError(
 			TRACE_L2CAP,
 			"HID Control Channel connection failed with status %!STATUS!",
-			status
+			Params->IoStatus.Status
 		);
 
 		EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"", Params->IoStatus.Status);
-
-		BthPS3_PDO_Destroy(pPdoCtx->DevCtxHdr, pPdoCtx);
 	}
+
+	BthPS3_PDO_RundownRelease(pPdoCtx);
 
 	FuncExitNoReturn(TRACE_L2CAP);
 }
@@ -156,6 +146,7 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
 	struct _BRB_L2CA_OPEN_CHANNEL* brb = NULL;
 	PBTHPS3_PDO_CONTEXT pPdoCtx = NULL;
 	BTHPS3_CONNECTION_STATE controlState;
+	BOOLEAN enableIo = FALSE;
 
 	UNREFERENCED_PARAMETER(Request);
 	UNREFERENCED_PARAMETER(Target);
@@ -168,22 +159,14 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
 	brb = (struct _BRB_L2CA_OPEN_CHANNEL*)Context;
 	pPdoCtx = brb->Hdr.ClientContext[0];
 
-	//
-	// Connection acceptance successful, channel ready to operate
-	// 
-	if (NT_SUCCESS(status))
+	enableIo = L2CAP_PS3_ApplyConnectCompletion(
+		pPdoCtx,
+		&pPdoCtx->HidInterruptChannel,
+		status
+	);
+
+	if (enableIo)
 	{
-		WdfSpinLockAcquire(pPdoCtx->HidInterruptChannel.ConnectionStateLock);
-
-		pPdoCtx->HidInterruptChannel.ConnectionState = ConnectionStateConnected;
-
-		//
-		// This will be set again once disconnect has occurred
-		// 
-		KeClearEvent(&pPdoCtx->HidInterruptChannel.DisconnectEvent);
-
-		WdfSpinLockRelease(pPdoCtx->HidInterruptChannel.ConnectionStateLock);
-
 		TraceInformation(
 			TRACE_L2CAP,
 			"HID Interrupt Channel connection established"
@@ -195,7 +178,7 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
 		// Control channel is expected to be established by now
 		// 
 		WdfSpinLockAcquire(pPdoCtx->HidControlChannel.ConnectionStateLock);
-		controlState = pPdoCtx->HidInterruptChannel.ConnectionState;
+		controlState = pPdoCtx->HidControlChannel.ConnectionState;
 		WdfSpinLockRelease(pPdoCtx->HidControlChannel.ConnectionStateLock);
 
 		if (controlState != ConnectionStateConnected)
@@ -206,9 +189,13 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
 				controlState
 			);
 
-			goto failedDrop;
+			BthPS3_PDO_Destroy(pPdoCtx->DevCtxHdr, pPdoCtx);
+			enableIo = FALSE;
 		}
+	}
 
+	if (enableIo)
+	{
 		//
 		// Channel connected, queues ready to start processing
 		// 
@@ -245,26 +232,18 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
 
 		EventWriteRemoteDeviceOnline(NULL, pPdoCtx->RemoteAddress);
 	}
-	else
+	else if (!NT_SUCCESS(Params->IoStatus.Status))
 	{
-		goto failedDrop;
+		TraceError(
+			TRACE_L2CAP,
+			"Connection failed with status %!STATUS!",
+			Params->IoStatus.Status
+		);
+
+		EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"", Params->IoStatus.Status);
 	}
 
-	FuncExitNoReturn(TRACE_L2CAP);
-
-	return;
-
-failedDrop:
-
-	TraceError(
-		TRACE_L2CAP,
-		"Connection failed with status %!STATUS!",
-		status
-	);
-
-	EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"", Params->IoStatus.Status);
-
-	BthPS3_PDO_Destroy(pPdoCtx->DevCtxHdr, pPdoCtx);
+	BthPS3_PDO_RundownRelease(pPdoCtx);
 
 	FuncExitNoReturn(TRACE_L2CAP);
 }

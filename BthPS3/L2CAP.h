@@ -48,7 +48,7 @@ L2CAP_PS3_HandleRemoteConnect(
     _In_ PINDICATION_PARAMETERS ConnectParams
 );
 
-_IRQL_requires_max_(PASSIVE_LEVEL)
+_IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 L2CAP_PS3_HandleRemoteDisconnect(
     _In_ PBTHPS3_PDO_CONTEXT Context,
@@ -123,6 +123,14 @@ L2CAP_PS3_RemoteDisconnect(
     _In_ PBTHPS3_DEVICE_CONTEXT_HEADER CtxHdr,
     _In_ BTH_ADDR RemoteAddress,
     _In_ PBTHPS3_CLIENT_L2CAP_CHANNEL Channel
+);
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+BOOLEAN
+L2CAP_PS3_ApplyConnectCompletion(
+    _In_ PBTHPS3_PDO_CONTEXT PdoContext,
+    _In_ PBTHPS3_CLIENT_L2CAP_CHANNEL Channel,
+    _In_ NTSTATUS Status
 );
 
 EVT_WDF_REQUEST_COMPLETION_ROUTINE L2CAP_PS3_ChannelDisconnectCompleted;

@@ -579,7 +579,7 @@ jobs:
   partner-signing:
     name: 'Partner Center signing'
     needs: [version, partner-cab]
-    if: needs.version.outputs.is-release == 'true'
+    if: ${{ always() && !cancelled() && needs.version.result == 'success' && needs.version.outputs.is-release == 'true' && needs.partner-cab.result == 'success' }}
     permissions:
       contents: read
       actions: read

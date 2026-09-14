@@ -26,7 +26,7 @@
 
   <ItemGroup>
     <PackageReference Include="CliWrap" Version="3.10.5" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.12" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="Nefarius.Utilities.WixSharp" Version="1.2.1" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />

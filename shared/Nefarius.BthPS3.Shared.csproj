@@ -9,6 +9,8 @@
   <ItemGroup>
     <PackageReference Include="PInvoke.Kernel32" Version="0.7.124" />
     <PackageReference Include="PInvoke.Windows.Core" Version="0.7.124" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.3" />
   </ItemGroup>
 
 </Project>

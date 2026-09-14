@@ -223,7 +223,7 @@ jobs:
           dotnet vpatch --stamp-version "%BUILD_VERSION%" --target-file ".\BthPS3Util\BthPS3Util.rc" --resource.file-version --resource.product-version
 
       - name: 'Test release pipeline'
-        if: matrix.platform == 'x64'
+        if: matrix.platform == 'x64' && needs.version.outputs.is-release == 'true'
         shell: cmd
         run: .\build.cmd TestReleasePipeline
 

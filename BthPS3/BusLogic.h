@@ -59,6 +59,17 @@ typedef enum _BTHPS3_CONNECTION_STATE {
 } BTHPS3_CONNECTION_STATE, *PBTHPS3_CONNECTION_STATE;
 
 //
+// PDO teardown lifecycle. Destroy requests CAS Active -> Draining.
+// Unplugged is assigned only after DMF_Pdo_DeviceUnplug succeeds.
+//
+typedef enum _BTHPS3_PDO_LIFECYCLE {
+    BthPS3PdoLifecycleActive = 0,
+    BthPS3PdoLifecycleDraining,
+    BthPS3PdoLifecycleUnplugged
+
+} BTHPS3_PDO_LIFECYCLE, *PBTHPS3_PDO_LIFECYCLE;
+
+//
 // State information for a single L2CAP channel
 // 
 typedef struct _BTHPS3_CLIENT_L2CAP_CHANNEL
@@ -74,6 +85,8 @@ typedef struct _BTHPS3_CLIENT_L2CAP_CHANNEL
     WDFREQUEST ConnectDisconnectRequest;
 
     KEVENT DisconnectEvent;
+
+    struct _BTHPS3_PDO_CONTEXT* PdoContext;
 
 } BTHPS3_CLIENT_L2CAP_CHANNEL, *PBTHPS3_CLIENT_L2CAP_CHANNEL;
 
@@ -93,6 +106,12 @@ typedef struct _BTHPS3_PDO_CONTEXT
 	BTHPS3_CLIENT_L2CAP_CHANNEL HidInterruptChannel;
 
 	DMFMODULE DmfModuleIoctlHandler;
+
+	DMFMODULE DmfModuleRundown;
+
+	WDFWORKITEM TeardownWorkItem;
+
+	volatile LONG Lifecycle;
 
 	ULONG SerialNumber;
 
@@ -134,6 +153,10 @@ CLIENT_CONNECTION_REQUEST_REUSE(
 // PDO lifecycle
 // 
 
+//
+// On STATUS_SUCCESS, *PdoContext holds a rundown reference that the
+// caller must release with BthPS3_PDO_RundownRelease.
+//
 _IRQL_requires_max_(PASSIVE_LEVEL)
 _Must_inspect_result_
 _Success_(return == STATUS_SUCCESS)
@@ -146,6 +169,10 @@ BthPS3_PDO_Create(
 	_Outptr_result_maybenull_ BTHPS3_PDO_CONTEXT** PdoContext
 );
 
+//
+// On STATUS_SUCCESS, *PdoContext holds a rundown reference that the
+// caller must release with BthPS3_PDO_RundownRelease.
+//
 _IRQL_requires_max_(PASSIVE_LEVEL)
 _Must_inspect_result_
 _Success_(return == STATUS_SUCCESS)
@@ -156,10 +183,23 @@ BthPS3_PDO_RetrieveByBthAddr(
 	_Outptr_result_maybenull_ PBTHPS3_PDO_CONTEXT* PdoContext
 );
 
-_IRQL_requires_max_(PASSIVE_LEVEL)
+_IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 BthPS3_PDO_Destroy(
 	_In_ PBTHPS3_DEVICE_CONTEXT_HEADER Context,
+	_In_ PBTHPS3_PDO_CONTEXT PdoContext
+);
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+_Must_inspect_result_
+NTSTATUS
+BthPS3_PDO_RundownAcquire(
+	_In_ PBTHPS3_PDO_CONTEXT PdoContext
+);
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+BthPS3_PDO_RundownRelease(
 	_In_ PBTHPS3_PDO_CONTEXT PdoContext
 );
 
@@ -168,6 +208,8 @@ BthPS3_PDO_Destroy(
 // 
 
 EVT_WDF_OBJECT_CONTEXT_CLEANUP BthPS3_PDO_EvtContextCleanup;
+
+EVT_WDF_WORKITEM BthPS3_PDO_EvtTeardownWorkItem;
 
 //
 // DMF
@@ -236,6 +278,14 @@ BthPS3_PDO_QuerySlot(
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 BthPS3_PDO_AssignSlot(
+	PBTHPS3_DEVICE_CONTEXT_HEADER Header,
+	BTH_ADDR RemoteAddress,
+	ULONG Slot
+);
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+VOID
+BthPS3_PDO_ReleaseSlot(
 	PBTHPS3_DEVICE_CONTEXT_HEADER Header,
 	BTH_ADDR RemoteAddress,
 	ULONG Slot

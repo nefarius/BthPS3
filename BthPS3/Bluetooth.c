@@ -376,18 +376,17 @@ BthPS3_EvtQueuedWorkItemHandler(
 	case IndicationRemoteConnect:
 
 		(void)L2CAP_PS3_HandleRemoteConnect(
-			pCtx->Context.Server,
+			pCtx->Server,
 			&pCtx->IndicationParameters
 		);
 
 		break;
-	case IndicationRemoteDisconnect:
-
-		(void)L2CAP_PS3_HandleRemoteDisconnect(
-			pCtx->Context.Pdo,
-			&pCtx->IndicationParameters
+	default:
+		TraceError(
+			TRACE_BTH,
+			"Unexpected queued indication 0x%X",
+			pCtx->IndicationCode
 		);
-
 		break;
 	}
 

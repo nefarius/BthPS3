@@ -54,9 +54,11 @@ L2CAP_PS3_HandleRemoteConnect(
     PFN_WDF_REQUEST_COMPLETION_ROUTINE completionRoutine = NULL;
     USHORT psm = ConnectParams->Parameters.Connect.Request.PSM;
     PBTHPS3_PDO_CONTEXT pPdoCtx = NULL;
+    PBTHPS3_CLIENT_L2CAP_CHANNEL channel = NULL;
     WDFREQUEST brbAsyncRequest = NULL;
     CHAR remoteName[BTH_MAX_NAME_SIZE];
     DS_DEVICE_TYPE deviceType = DS_DEVICE_TYPE_UNKNOWN;
+    BOOLEAN pdoRundownHeld = FALSE;
 
 
     FuncEntry(TRACE_L2CAP);
@@ -74,6 +76,11 @@ L2CAP_PS3_HandleRemoteConnect(
         ConnectParams->BtAddress,
         &pPdoCtx
     );
+
+    if (NT_SUCCESS(status))
+    {
+        pdoRundownHeld = TRUE;
+    }
 
     //
     // This device apparently isn't connected, allocate new object
@@ -281,6 +288,8 @@ L2CAP_PS3_HandleRemoteConnect(
             );
             goto exit;
         }
+
+        pdoRundownHeld = TRUE;
     }
 
     if (pPdoCtx == NULL)
@@ -296,20 +305,20 @@ L2CAP_PS3_HandleRemoteConnect(
     {
     case PSM_DS3_HID_CONTROL:
         completionRoutine = L2CAP_PS3_ControlConnectResponseCompleted;
-        pPdoCtx->HidControlChannel.ChannelHandle = ConnectParams->ConnectionHandle;
-        brbAsyncRequest = pPdoCtx->HidControlChannel.ConnectDisconnectRequest;
-        brb = (struct _BRB_L2CA_OPEN_CHANNEL*)&(pPdoCtx->HidControlChannel.ConnectDisconnectBrb);
+        channel = &pPdoCtx->HidControlChannel;
         break;
     case PSM_DS3_HID_INTERRUPT:
         completionRoutine = L2CAP_PS3_InterruptConnectResponseCompleted;
-        pPdoCtx->HidInterruptChannel.ChannelHandle = ConnectParams->ConnectionHandle;
-        brbAsyncRequest = pPdoCtx->HidInterruptChannel.ConnectDisconnectRequest;
-        brb = (struct _BRB_L2CA_OPEN_CHANNEL*)&(pPdoCtx->HidInterruptChannel.ConnectDisconnectBrb);
+        channel = &pPdoCtx->HidInterruptChannel;
         break;
     default:
         status = STATUS_INVALID_PARAMETER;
         goto exit;
     }
+
+    channel->ChannelHandle = ConnectParams->ConnectionHandle;
+    brbAsyncRequest = channel->ConnectDisconnectRequest;
+    brb = (struct _BRB_L2CA_OPEN_CHANNEL*)&(channel->ConnectDisconnectBrb);
 
     CLIENT_CONNECTION_REQUEST_REUSE(brbAsyncRequest);
     DevCtx->Header.ProfileDrvInterface.BthReuseBrb((PBRB)brb, BRB_L2CA_OPEN_CHANNEL_RESPONSE);
@@ -363,7 +372,24 @@ L2CAP_PS3_HandleRemoteConnect(
     brb->CallbackFlags = CALLBACK_DISCONNECT | CALLBACK_CONFIG_QOS;
     brb->Callback = &L2CAP_PS3_ConnectionIndicationCallback;
     brb->CallbackContext = pPdoCtx;
-    brb->ReferenceObject = (PVOID)WdfDeviceWdmGetDeviceObject(DevCtx->Header.Device);
+    brb->ReferenceObject = (PVOID)WdfDeviceWdmGetDeviceObject(
+        WdfObjectContextGetObject(pPdoCtx)
+    );
+
+    if (!NT_SUCCESS(status = BthPS3_PDO_RundownAcquire(pPdoCtx)))
+    {
+        TraceError(
+            TRACE_L2CAP,
+            "BthPS3_PDO_RundownAcquire failed with status %!STATUS!",
+            status
+        );
+        goto exit;
+    }
+
+    WdfSpinLockAcquire(channel->ConnectionStateLock);
+    channel->ConnectionState = ConnectionStateConnecting;
+    KeClearEvent(&channel->DisconnectEvent);
+    WdfSpinLockRelease(channel->ConnectionStateLock);
 
     //
     // Submit response
@@ -382,6 +408,13 @@ L2CAP_PS3_HandleRemoteConnect(
             "BthPS3_SendBrbAsync failed with status %!STATUS!",
             status
         );
+
+        WdfSpinLockAcquire(channel->ConnectionStateLock);
+        channel->ConnectionState = ConnectionStateConnectFailed;
+        KeSetEvent(&channel->DisconnectEvent, 0, FALSE);
+        WdfSpinLockRelease(channel->ConnectionStateLock);
+
+        BthPS3_PDO_RundownRelease(pPdoCtx);
     }
 
 exit:
@@ -389,6 +422,11 @@ exit:
     if (!NT_SUCCESS(status) && pPdoCtx)
     {
         BthPS3_PDO_Destroy(&DevCtx->Header, pPdoCtx);
+    }
+
+    if (pdoRundownHeld)
+    {
+        BthPS3_PDO_RundownRelease(pPdoCtx);
     }
 
     if (!NT_SUCCESS(status))

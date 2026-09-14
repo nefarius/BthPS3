@@ -303,3 +303,92 @@ BthPS3_PDO_AssignSlot(
 	return status;
 }
 #pragma code_seg()
+
+//
+// Undoes BthPS3_PDO_AssignSlot after a failed PDO create: clears the
+// in-memory bit, persists the cleared bitmap, and drops the cached
+// per-address slot number so BthPS3_PDO_QuerySlot cannot hand out a
+// slot that was never actually committed to a live PDO.
+//
+#pragma code_seg("PAGE")
+_IRQL_requires_max_(PASSIVE_LEVEL)
+VOID
+BthPS3_PDO_ReleaseSlot(
+	PBTHPS3_DEVICE_CONTEXT_HEADER Header,
+	BTH_ADDR RemoteAddress,
+	ULONG Slot
+)
+{
+	NTSTATUS status;
+	WDFKEY hKey = NULL;
+	WDFKEY hDeviceKey = NULL;
+
+	FuncEntry(TRACE_BUSLOGIC);
+
+	PAGED_CODE();
+
+	DECLARE_UNICODE_STRING_SIZE(deviceKeyName, REG_CACHED_DEVICE_KEY_FMT_LEN);
+	DECLARE_CONST_UNICODE_STRING(slots, BTHPS3_REG_VALUE_SLOTS);
+
+	if (Slot == 0 /* invalid value */ || Slot > BTHPS3_MAX_NUM_DEVICES)
+	{
+		FuncExitNoReturn(TRACE_BUSLOGIC);
+		return;
+	}
+
+	WdfWaitLockAcquire(Header->SlotsLock, NULL);
+	ClearBit(Header->Slots, Slot);
+	WdfWaitLockRelease(Header->SlotsLock);
+
+	if (!NT_SUCCESS(status = WdfDriverOpenParametersRegistryKey(
+		WdfGetDriver(),
+		STANDARD_RIGHTS_ALL,
+		WDF_NO_OBJECT_ATTRIBUTES,
+		&hKey
+	)))
+	{
+		TraceError(
+			TRACE_BUSLOGIC,
+			"WdfDriverOpenParametersRegistryKey failed with status %!STATUS!",
+			status
+		);
+		FuncExitNoReturn(TRACE_BUSLOGIC);
+		return;
+	}
+
+	//
+	// Persist the cleared bitmap so the slot doesn't leak across reboots
+	// 
+	(void)WdfRegistryAssignValue(
+		hKey,
+		&slots,
+		REG_BINARY,
+		sizeof(Header->Slots),
+		&Header->Slots
+	);
+
+	//
+	// Drop the cached "Devices\<addr>" slot number, if any, so a retry
+	// doesn't reuse a slot number that was never actually committed
+	// 
+	if (NT_SUCCESS(RtlUnicodeStringPrintf(
+		&deviceKeyName,
+		REG_CACHED_DEVICE_KEY_FMT,
+		RemoteAddress
+	)) &&
+		NT_SUCCESS(WdfRegistryOpenKey(
+			hKey,
+			&deviceKeyName,
+			DELETE,
+			WDF_NO_OBJECT_ATTRIBUTES,
+			&hDeviceKey
+		)))
+	{
+		(void)WdfRegistryRemoveKey(hDeviceKey);
+	}
+
+	WdfRegistryClose(hKey);
+
+	FuncExitNoReturn(TRACE_BUSLOGIC);
+}
+#pragma code_seg()

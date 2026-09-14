@@ -97,7 +97,7 @@ BthPS3_IndicationCallback(
 		BTHPS3_QWI_CONTEXT qwi;
 		qwi.IndicationCode = Indication;
 		qwi.IndicationParameters = *Parameters;
-		qwi.Context.Server = devCtx;
+		qwi.Server = devCtx;
 
 		if (!NT_SUCCESS(status = DMF_QueuedWorkItem_Enqueue(
 			devCtx->Header.QueuedWorkItemModule,

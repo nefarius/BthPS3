@@ -194,6 +194,25 @@ jobs:
           path: Domito/lib/${{ matrix.platform }}/Release
           key: domito-v1-${{ matrix.platform }}-${{ steps.cache-keys.outputs.domito-sha }}-${{ steps.cache-keys.outputs.image-version }}
 
+      - name: 'Resolve cached build targets'
+        id: cached-build-targets
+        shell: pwsh
+        env:
+          DMF_CACHE_HIT: ${{ steps.dmf-cache.outputs.cache-hit }}
+          DOMITO_CACHE_HIT: ${{ steps.domito-cache.outputs.cache-hit }}
+        run: |
+          $targets = @()
+          if ($env:DMF_CACHE_HIT -eq 'true') { $targets += 'BuildDmf' }
+          if ($env:DOMITO_CACHE_HIT -eq 'true') { $targets += 'BuildDomito' }
+
+          $arguments = if ($targets.Count -gt 0) {
+            "--skip $($targets -join '+')"
+          } else {
+            ''
+          }
+          echo "arguments=$arguments" >> $env:GITHUB_OUTPUT
+          Write-Output "Cached build target arguments: $arguments"
+
       - name: 'Stamp versions'
         shell: cmd
         run: |
@@ -210,7 +229,7 @@ jobs:
 
       - name: 'Build'
         shell: cmd
-        run: .\build.cmd Compile --target-platform ${{ matrix.platform }} ${{ steps.dmf-cache.outputs.cache-hit == 'true' && '--skip BuildDmf' || '' }} ${{ steps.domito-cache.outputs.cache-hit == 'true' && '--skip BuildDomito' || '' }}
+        run: .\build.cmd Compile --target-platform ${{ matrix.platform }} ${{ steps.cached-build-targets.outputs.arguments }}
 
       - name: 'Upload artifacts'
         uses: actions/upload-artifact@v7

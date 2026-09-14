@@ -99,6 +99,10 @@ HKR,Parameters,AutoEnableFilter,0x00010003,1
 HKR,Parameters,AutoDisableFilter,0x00010003,1
 ; Time (in seconds) to wait for patch re-enable
 HKR,Parameters,AutoEnableFilterDelay,0x00010003,10
+; Time (in seconds) between stale PSM registration retries
+HKR,Parameters,PsmRegistrationRetryDelay,0x00010003,5
+; Maximum number of stale PSM registration retry attempts
+HKR,Parameters,PsmRegistrationRetryLimit,0x00010003,60
 ; SIXAXIS connection requests will be dropped, if 0
 HKR,Parameters,IsSIXAXISSupported,0x00010003,1
 ; NAVIGATION connection requests will be dropped, if 0

@@ -260,6 +260,16 @@ DEFINE_GUID(GUID_DEVINTERFACE_BTHPS3_WIRELESS,
 // 
 #define BTHPS3_REG_VALUE_AUTO_ENABLE_FILTER_DELAY   L"AutoEnableFilterDelay"
 
+//
+// Time (in seconds) between stale PSM registration retries
+// 
+#define BTHPS3_REG_VALUE_PSM_REGISTRATION_RETRY_DELAY   L"PsmRegistrationRetryDelay"
+
+//
+// Maximum number of stale PSM registration retry attempts
+// 
+#define BTHPS3_REG_VALUE_PSM_REGISTRATION_RETRY_LIMIT   L"PsmRegistrationRetryLimit"
+
 
 //
 // SIXAXIS connection requests will be dropped, if FALSE

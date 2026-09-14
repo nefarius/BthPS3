@@ -55,6 +55,12 @@ BthPS3_CreateDevice(
 EVT_WDF_DEVICE_SELF_MANAGED_IO_INIT BthPS3_EvtWdfDeviceSelfManagedIoInit;
 EVT_WDF_DEVICE_SELF_MANAGED_IO_CLEANUP BthPS3_EvtWdfDeviceSelfManagedIoCleanup;
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS
+BthPS3_StartL2CAPServices(
+    _In_ PBTHPS3_SERVER_CONTEXT DevCtx
+);
+
 NTSTATUS
 BthPS3_OpenFilterIoTarget(
     _In_ WDFDEVICE Device

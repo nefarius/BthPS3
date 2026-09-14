@@ -15,6 +15,12 @@ on:
   pull_request:
     branches:
       - master
+  workflow_dispatch:
+    inputs:
+      source-run-id:
+        description: 'Resume tools and partner-cab from this Build run ID (skips compile)'
+        required: false
+        type: string
 
 concurrency:
   group: build-${{ github.ref }}
@@ -32,6 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      actions: read
     outputs:
       is-release: ${{ steps.resolve.outputs.is-release }}
       tag: ${{ steps.resolve.outputs.tag }}
@@ -51,12 +58,31 @@ jobs:
         shell: pwsh
         env:
           RELEASE_REF: ${{ github.ref }}
+          SOURCE_RUN_ID: ${{ inputs.source-run-id }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           $ErrorActionPreference = 'Stop'
           . ./build/ReleaseVersion.ps1
+          $ref = $env:RELEASE_REF
+          $runNumber = ${{ github.run_number }}
+          if ($env:SOURCE_RUN_ID) {
+            if ($env:SOURCE_RUN_ID -notmatch '^\d+$') {
+              throw "source-run-id must be a numeric run ID. Got: '$env:SOURCE_RUN_ID'."
+            }
+            $source = gh run view $env:SOURCE_RUN_ID --repo ${{ github.repository }} --json number,headBranch | ConvertFrom-Json
+            if (-not $source.headBranch) {
+              throw "Could not resolve source run $($env:SOURCE_RUN_ID)."
+            }
+            if ($source.headBranch -notmatch '^v\d+\.\d+\.\d+$') {
+              throw "Source run $($env:SOURCE_RUN_ID) is not a vMAJOR.MINOR.PATCH tag (headBranch='$($source.headBranch)')."
+            }
+            $runNumber = [int]$source.number
+            $ref = "refs/tags/$($source.headBranch)"
+            Write-Output "Resuming versions from run $($env:SOURCE_RUN_ID) (tag $($source.headBranch), run #$runNumber)"
+          }
           $version = ConvertTo-BthPS3ReleaseVersion `
-            -Ref $env:RELEASE_REF `
-            -RunNumber ${{ github.run_number }} `
+            -Ref $ref `
+            -RunNumber $runNumber `
             -BuildVersionOffset ([int]$env:BUILD_VERSION_OFFSET)
           Write-BthPS3ReleaseVersionOutputs -Version $version -GitHubOutput $env:GITHUB_OUTPUT
           Write-Output "is-release=$($version.IsRelease) tag=$($version.Tag) setup=$($version.SetupVersion) driver=$($version.DriverVersion)"
@@ -64,6 +90,7 @@ jobs:
   build:
     name: 'Platform: ${{ matrix.platform }}'
     needs: version
+    if: ${{ !inputs.source-run-id }}
     runs-on: windows-2025-vs2026
     permissions:
       contents: read
@@ -248,7 +275,7 @@ jobs:
   tools:
     name: 'Sign and mirror tools'
     needs: [version, build]
-    if: needs.version.outputs.is-release == 'true'
+    if: ${{ always() && !cancelled() && needs.version.result == 'success' && needs.version.outputs.is-release == 'true' && (needs.build.result == 'success' || needs.build.result == 'skipped') }}
     runs-on: windows-2022
     permissions:
       contents: read
@@ -268,18 +295,21 @@ jobs:
           if (-not $env:SIGN_RELAY_SERVER) { throw 'Repository variable SIGN_RELAY_SERVER is not set.' }
           if (-not $env:SIGN_RELAY_CI_TOKEN) { throw 'Repository secret SIGN_RELAY_CI_TOKEN is not set.' }
 
+      # upload-artifact strips the shared bin/ parent, so restore it on download.
       - name: 'Download x64 artifacts'
         uses: ./.github/actions/download-artifact-with-retry
         with:
           name: bthps3-x64
-          path: .
+          path: bin
+          run-id: ${{ inputs.source-run-id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 'Download ARM64 artifacts'
         uses: ./.github/actions/download-artifact-with-retry
         with:
           name: bthps3-ARM64
-          path: .
+          path: bin
+          run-id: ${{ inputs.source-run-id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 'Assert tools are unsigned'
@@ -361,7 +391,7 @@ jobs:
   partner-cab:
     name: 'Partner Portal CAB'
     needs: [version, build]
-    if: needs.version.outputs.is-release == 'true'
+    if: ${{ always() && !cancelled() && needs.version.result == 'success' && needs.version.outputs.is-release == 'true' && (needs.build.result == 'success' || needs.build.result == 'skipped') }}
     runs-on: windows-2022
     permissions:
       contents: read
@@ -384,18 +414,21 @@ jobs:
           if (-not $env:SIGN_RELAY_SERVER) { throw 'Repository variable SIGN_RELAY_SERVER is not set.' }
           if (-not $env:SIGN_RELAY_CI_TOKEN) { throw 'Repository secret SIGN_RELAY_CI_TOKEN is not set.' }
 
+      # upload-artifact strips the shared bin/ parent, so restore it on download.
       - name: 'Download x64 artifacts'
         uses: ./.github/actions/download-artifact-with-retry
         with:
           name: bthps3-x64
-          path: .
+          path: bin
+          run-id: ${{ inputs.source-run-id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 'Download ARM64 artifacts'
         uses: ./.github/actions/download-artifact-with-retry
         with:
           name: bthps3-ARM64
-          path: .
+          path: bin
+          run-id: ${{ inputs.source-run-id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 'Assert driver binaries are unsigned'

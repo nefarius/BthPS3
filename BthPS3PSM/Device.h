@@ -1,6 +1,6 @@
 /**********************************************************************************
  *                                                                                *
- * BthPS3PSM - Windows kernel-mode BTHUSB lower filter driver                     *
+ * BthPS3PSM - Windows kernel-mode Bluetooth lower filter driver                  *
  *                                                                                *
  * BSD 3-Clause License                                                           *
  *                                                                                *
@@ -59,14 +59,47 @@ EXTERN_C_START
 #pragma endregion
 
 //
+// Identifies the transport this filter instance is attached to
+// 
+typedef enum _BTHPS3PSM_TRANSPORT_TYPE
+{
+	//
+	// Neither USB nor a recognized BTHX (extensible transport) device;
+	// the filter will not create a device object for this stack.
+	// 
+	BthPS3PsmTransportUnsupported = 0,
+
+	//
+	// Bluetooth-class device running under the USB enumerator (BTHUSB.SYS
+	// or a vendor equivalent). L2CAP traffic is intercepted via
+	// IOCTL_INTERNAL_USB_SUBMIT_URB bulk-IN transfers.
+	// 
+	BthPS3PsmTransportUsb,
+
+	//
+	// Bluetooth-class device running on top of the Bluetooth Extensibility
+	// Transport DDI (bthxddi.h), typically bound to Microsoft's inbox
+	// BthMini.sys (e.g. PCIe/iBtPciBus or UART-attached radios). L2CAP
+	// traffic is intercepted via IOCTL_BTHX_READ_HCI ACL data reads.
+	// 
+	BthPS3PsmTransportBthx
+
+} BTHPS3PSM_TRANSPORT_TYPE;
+
+//
 // Device context data
 // 
 typedef struct _DEVICE_CONTEXT
 {
 	//
-	// USB Bulk Read (in) handle
+	// USB Bulk Read (in) handle; only valid if TransportType == BthPS3PsmTransportUsb
 	// 
 	USBD_PIPE_HANDLE BulkReadPipe;
+
+	//
+	// Transport this filter instance has been attached to
+	// 
+	BTHPS3PSM_TRANSPORT_TYPE TransportType;
 
 	//
 	// Patches PSM values if TRUE
@@ -113,9 +146,16 @@ _Success_(return == STATUS_SUCCESS)
 _Must_inspect_result_
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-BthPS3PSM_IsBthUsbDevice(
+BthPS3PSM_QueryTransportType(
 	_In_ PWDFDEVICE_INIT DeviceInit,
-	_Inout_opt_ PBOOLEAN Result
+	_Inout_ BTHPS3PSM_TRANSPORT_TYPE* TransportType
+);
+
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
+BOOLEAN
+BthPS3PSM_IsBthxTransportDevice(
+	_In_ PWDFDEVICE_INIT DeviceInit
 );
 
 _Success_(return == STATUS_SUCCESS)

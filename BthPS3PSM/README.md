@@ -1,14 +1,19 @@
 # BthPS3PSM
 
-Protocol/Service Multiplexer proxy filter driver for `BTHUSB`.
+Protocol/Service Multiplexer proxy filter driver for Bluetooth host radios.
 
 ## About
 
-The `BthPS3PSM.sys` kernel-mode filter driver patches the [PSM](https://stackoverflow.com/a/55386042) values in incoming L2CAP (USB bulk pipe) packets before they reach the `bthusb.sys` function driver.
+The `BthPS3PSM.sys` kernel-mode filter driver patches the [PSM](https://stackoverflow.com/a/55386042) values in incoming L2CAP packets before they reach the Bluetooth host radio's function driver.
 
-The driver is meant to be loaded as a lower filter for `GUID_DEVCLASS_BLUETOOTH` class devices that run under the `USB` enumerator. This effectively targets a wide range of inherently compatible Bluetooth host radio devices attached via USB (common nano dongles, integrated cards, etc.), eliminating the necessity of crafting a custom `*.inf` that includes explicit hardware IDs.
+The driver is meant to be loaded as a lower filter for `GUID_DEVCLASS_BLUETOOTH` class devices and supports two transports:
 
-Although it is currently not supported by Windows to run multiple Bluetooth host radios at the same time, the driver has been designed with multiple radios in mind and can handle this case should it ever be pushed to production by Microsoft. The driver aborts initialization if it is attached to a device stack that does not run under the supported `USB` enumerator.
+- Bluetooth host radios attached via **USB** (`bthusb.sys` or a vendor equivalent), identified by the `USB` enumerator. This effectively targets a wide range of inherently compatible Bluetooth host radio devices attached via USB (common nano dongles, integrated cards, etc.).
+- Bluetooth host radios attached via the **Bluetooth Extensibility Transport** (BTHX), i.e. non-USB radios (e.g. PCIe or UART-attached controllers) bound to Microsoft's inbox `BthMini.sys` function driver, identified via the documented `MS_BTHX_BTHMINI` compatible ID (or, as a fallback, the `BthMini` service name).
+
+Either way this eliminates the necessity of crafting a custom `*.inf` that includes explicit hardware IDs.
+
+Although it is currently not supported by Windows to run multiple Bluetooth host radios at the same time, the driver has been designed with multiple radios in mind and can handle this case should it ever be pushed to production by Microsoft. The driver aborts initialization if it is attached to a device stack that runs under neither of the two supported transports.
 
 ### Why
 
@@ -16,7 +21,12 @@ PS3 peripherals lack a standard-compliant [SDP](https://www.bluetooth.com/specif
 
 ### How
 
-To accomplish its goal, the filter driver intercepts `IRP_MJ_INTERNAL_DEVICE_CONTROL` requests traveling down from `BTHUSB.SYS` towards the USB subsystem, looks for the `IOCTL_INTERNAL_USB_SUBMIT_URB` I/O control code, and attaches a completion routine when the `URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER` function is requested, matching the bulk-in endpoint (where L2CAP traffic is expected). The completion routine identifies requests of type `L2CAP_Connection_Request`, checks the buffer for values of `PSM_HID_CONTROL` or `PSM_HID_INTERRUPT`, and overwrites them with the values that the `BthPS3.sys` profile driver listens on. This modification happens before `bthport.sys!BthIsSystemPSM` is called, thereby avoiding the need to modify or hook this function.
+To accomplish its goal, the filter driver intercepts requests traveling down towards the transport, looking for L2CAP (ACL data) traffic, and attaches a completion routine so it can inspect the data once it comes back from the lower driver:
+
+- On **USB**, it hooks `IRP_MJ_INTERNAL_DEVICE_CONTROL` requests, looks for the `IOCTL_INTERNAL_USB_SUBMIT_URB` I/O control code, and attaches a completion routine when the `URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER` function is requested, matching the bulk-in endpoint (where L2CAP traffic is expected).
+- On **BTHX**, it hooks `IRP_MJ_DEVICE_CONTROL` requests carrying the `IOCTL_BTHX_READ_HCI` I/O control code and attaches a completion routine, inspecting reads of type `HciPacketAclData`.
+
+In both cases the completion routine identifies requests of type `L2CAP_Connection_Request`, checks the buffer for values of `PSM_HID_CONTROL` or `PSM_HID_INTERRUPT`, and overwrites them with the values that the `BthPS3.sys` profile driver listens on. This modification happens before `bthport.sys!BthIsSystemPSM` is called, thereby avoiding the need to modify or hook this function.
 
 ### Pitfalls
 

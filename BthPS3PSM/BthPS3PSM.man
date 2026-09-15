@@ -28,6 +28,9 @@
             <data inType="win:UInt32" name="PatchStatus" outType="xs:unsignedInt"/>
             <data inType="win:UnicodeString" name="InstanceId" outType="xs:string"/>
           </template>
+          <template tid="tid_transport_type_for_device_instance">
+            <data inType="win:UInt32" name="TransportType" outType="xs:unsignedInt"/>
+          </template>
         </templates>
         <events>
           <event value="1" channel="SYSTEM" level="win:Informational" message="$(string.StartEvent.EventMessage)" opcode="win:Start" symbol="StartEvent" template="tid_load_template"/>
@@ -36,6 +39,8 @@
           <event value="4" channel="SYSTEM" level="win:Informational" message="$(string.GetPatchStatusForDeviceInstance.EventMessage)" opcode="win:Info" symbol="GetPatchStatusForDeviceInstance" template="tid_patch_status_for_device_instance"/>
           <event value="5" channel="SYSTEM" level="win:Informational" message="$(string.SetPatchStatusForDeviceInstance.EventMessage)" opcode="win:Info" symbol="SetPatchStatusForDeviceInstance" template="tid_patch_status_for_device_instance"/>
           <event value="6" channel="SYSTEM" level="win:Error" message="$(string.FailedToFindBulkInPipe.EventMessage)" opcode="win:Info" symbol="FailedToFindBulkInPipe" />
+          <event value="7" channel="SYSTEM" level="win:Warning" message="$(string.UnsupportedTransportType.EventMessage)" opcode="win:Info" symbol="UnsupportedTransportType" />
+          <event value="8" channel="SYSTEM" level="win:Informational" message="$(string.TransportTypeDetected.EventMessage)" opcode="win:Info" symbol="TransportTypeDetected" template="tid_transport_type_for_device_instance"/>
         </events>
       </provider>
     </events>
@@ -49,6 +54,8 @@
         <string id="GetPatchStatusForDeviceInstance.EventMessage" value="Retrieved patch status %1 for device instance %2"/>
         <string id="SetPatchStatusForDeviceInstance.EventMessage" value="Stored patch status %1 on device instance %2"/>
         <string id="FailedToFindBulkInPipe.EventMessage" value="Couldn't find the BULK IN endpoint to hook, patching will not work"/>
+        <string id="UnsupportedTransportType.EventMessage" value="Device is neither a USB nor a BTHX (Bluetooth Extensibility Transport) Bluetooth host radio, filter will not attach"/>
+        <string id="TransportTypeDetected.EventMessage" value="Detected transport type %1 (1 = USB, 2 = BTHX) for this Bluetooth host radio"/>
       </stringTable>
     </resources>
   </localization>

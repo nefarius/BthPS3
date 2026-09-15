@@ -1,6 +1,6 @@
 /**********************************************************************************
  *                                                                                *
- * BthPS3PSM - Windows kernel-mode BTHUSB lower filter driver                     *
+ * BthPS3PSM - Windows kernel-mode Bluetooth lower filter driver                  *
  *                                                                                *
  * BSD 3-Clause License                                                           *
  *                                                                                *
@@ -68,7 +68,24 @@ BthPS3PSM_QueueInitialize(
     // Required for device removal: cancel forwarded requests so queue can drain
     //
     queueConfig.EvtIoStop = BthPS3PSM_EvtIoStop;
+
+    //
+    // USB traffic (URBs) arrives via IRP_MJ_INTERNAL_DEVICE_CONTROL, while a
+    // BTHX (Bluetooth Extensibility Transport, e.g. BthMini-bound PCIe/UART
+    // radios) transport uses regular IRP_MJ_DEVICE_CONTROL requests
+    //
     queueConfig.EvtIoInternalDeviceControl = BthPS3PSMEvtIoInternalDeviceControl;
+    queueConfig.EvtIoDeviceControl = BthPS3PSM_EvtIoDeviceControl;
+
+    //
+    // BthMini.sys is known to issue BTHX DDI requests (e.g.
+    // IOCTL_BTHX_GET_VERSION/IOCTL_BTHX_QUERY_CAPABILITIES) before its
+    // device reaches D0; a power-managed queue would only dispatch once D0
+    // is reached, which can deadlock device start. Disable power management
+    // for this queue; it merely forwards/inspects requests and does not
+    // need to be held back for D0.
+    //
+    queueConfig.PowerManaged = WdfFalse;
 
     if (!NT_SUCCESS(status = WdfIoQueueCreate(
         Device,
@@ -180,9 +197,11 @@ BthPS3PSMEvtIoInternalDeviceControl(
     const PIRP irp = WdfRequestWdmGetIrp(Request);
 
     //
-    // As a BTHUSB lower filter driver we expect USB/URB traffic
+    // On the USB transport we expect URB traffic; on BTHX (handled by
+    // BthPS3PSM_EvtIoDeviceControl) this major function is unused
     // 
-    if (IoControlCode == IOCTL_INTERNAL_USB_SUBMIT_URB)
+    if (pContext->TransportType == BthPS3PsmTransportUsb
+        && IoControlCode == IOCTL_INTERNAL_USB_SUBMIT_URB)
     {
         const PURB urb = (PURB)URB_FROM_IRP(irp);
 
@@ -281,6 +300,139 @@ BthPS3PSMEvtIoInternalDeviceControl(
 
     //
     // Request not for us, forward
+    // 
+    WdfRequestFormatRequestUsingCurrentType(Request);
+
+    WDF_REQUEST_SEND_OPTIONS_INIT(
+        &options,
+        WDF_REQUEST_SEND_OPTION_SEND_AND_FORGET
+    );
+
+    ret = WdfRequestSend(
+        Request,
+        WdfDeviceGetIoTarget(WdfIoQueueGetDevice(Queue)),
+        &options
+    );
+
+    if (ret == FALSE)
+    {
+        status = WdfRequestGetStatus(Request);
+        TraceError(
+            TRACE_QUEUE,
+            "WdfRequestSend failed with status %!STATUS!",
+            status
+        );
+        EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfRequestGetStatus", status);
+        WdfRequestComplete(Request, status);
+    }
+}
+
+//
+// Handle IRP_MJ_DEVICE_CONTROL requests
+//
+// BTHX (Bluetooth Extensibility Transport) radios deliver their HCI traffic
+// via regular device control requests instead of USB URBs; we hook
+// IOCTL_BTHX_READ_HCI here to inspect/patch inbound ACL Data reads.
+// 
+_Use_decl_annotations_
+VOID
+BthPS3PSM_EvtIoDeviceControl(
+    _In_ WDFQUEUE Queue,
+    _In_ WDFREQUEST Request,
+    _In_ size_t OutputBufferLength,
+    _In_ size_t InputBufferLength,
+    _In_ ULONG IoControlCode
+)
+{
+    NTSTATUS status;
+    WDF_REQUEST_SEND_OPTIONS options;
+    BOOLEAN ret;
+
+    UNREFERENCED_PARAMETER(OutputBufferLength);
+    UNREFERENCED_PARAMETER(InputBufferLength);
+
+    const WDFDEVICE device = WdfIoQueueGetDevice(Queue);
+    const PDEVICE_CONTEXT pContext = DeviceGetContext(device);
+
+    if (pContext->TransportType == BthPS3PsmTransportBthx
+        && IoControlCode == IOCTL_BTHX_READ_HCI)
+    {
+        PVOID outputBuffer = NULL;
+        size_t outputBufferLength = 0;
+
+        TraceVerbose(
+            TRACE_QUEUE,
+            "<< IOCTL_BTHX_READ_HCI");
+
+        //
+        // Grab the (unchecked) output buffer pointer/length now, at
+        // PASSIVE_LEVEL, so the completion routine - which may run at a
+        // raised IRQL once the request comes back up from the BTHX
+        // transport stack - can inspect it without touching WDF request
+        // APIs again. This also validates OutputBufferLength is at least
+        // large enough to hold the BTHX_HCI_READ_WRITE_CONTEXT header.
+        // 
+        if (NT_SUCCESS(status = WdfRequestRetrieveUnsafeUserOutputBuffer(
+            Request,
+            FIELD_OFFSET(BTHX_HCI_READ_WRITE_CONTEXT, Data),
+            &outputBuffer,
+            &outputBufferLength
+        )))
+        {
+            WDF_OBJECT_ATTRIBUTES attributes;
+            PBTHX_READ_REQUEST_CONTEXT requestContext = NULL;
+
+            WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&attributes, BTHX_READ_REQUEST_CONTEXT);
+
+            if (NT_SUCCESS(WdfObjectAllocateContext(
+                Request,
+                &attributes,
+                (PVOID*)&requestContext
+            )))
+            {
+                requestContext->OutputBuffer = outputBuffer;
+                requestContext->OutputBufferLength = outputBufferLength;
+
+                WdfRequestFormatRequestUsingCurrentType(Request);
+
+                WdfRequestSetCompletionRoutine(
+                    Request,
+                    BthxReadHciCompleted,
+                    device
+                );
+
+                ret = WdfRequestSend(
+                    Request,
+                    WdfDeviceGetIoTarget(WdfIoQueueGetDevice(Queue)),
+                    WDF_NO_SEND_OPTIONS
+                );
+
+                if (ret == FALSE)
+                {
+                    status = WdfRequestGetStatus(Request);
+                    TraceError(
+                        TRACE_QUEUE,
+                        "WdfRequestSend failed with status %!STATUS!",
+                        status
+                    );
+                    WdfRequestComplete(Request, status);
+                }
+
+                return;
+            }
+        }
+        else
+        {
+            TraceVerbose(
+                TRACE_QUEUE,
+                "-- Couldn't access IOCTL_BTHX_READ_HCI output buffer (status %!STATUS!), forwarding unmodified",
+                status
+            );
+        }
+    }
+
+    //
+    // Request not for us (or we couldn't hook it), forward
     // 
     WdfRequestFormatRequestUsingCurrentType(Request);
 

@@ -48,12 +48,12 @@ If you run into issues, **carefully read** the documentation and FAQ before open
 
 **TL;DR:** these drivers allow popular PlayStation(R) 3 gaming peripherals (SIXAXIS/DualShock 3, PS Move Navigation & Motion Controllers) to connect to Windows via Bluetooth without losing any standard functionality.
 
-This set of Windows kernel‑mode drivers extends the standard (a.k.a. vanilla) Bluetooth stack (Microsoft/Broadcom/Toshiba/Intel/...) with an additional L2CAP server service (profile driver) and a USB lower‑filter driver, [gracefully working around the reserved PSMs issue](https://nadavrub.wordpress.com/2015/07/17/simulate-hid-device-with-windows-desktop/) that causes PS3 peripheral connections to be denied on the default Windows stack. The profile driver attempts to distinguish incoming device types based on their reported remote names and exposes their HID Control and HID Interrupt channels via simple bus child devices (a.k.a. PDOs). The profile/bus driver supports both “regular” operation modes (requiring a proper function driver such as a HID minidriver) and “raw” mode (powering the PDO up without a function driver and exposing it to userland) for maximum flexibility and future‑proofing. The PSM filter attaches only to Bluetooth‑class devices and unloads itself if the underlying enumerator is not USB.
+This set of Windows kernel‑mode drivers extends the standard (a.k.a. vanilla) Bluetooth stack (Microsoft/Broadcom/Toshiba/Intel/...) with an additional L2CAP server service (profile driver) and a Bluetooth lower‑filter driver, [gracefully working around the reserved PSMs issue](https://nadavrub.wordpress.com/2015/07/17/simulate-hid-device-with-windows-desktop/) that causes PS3 peripheral connections to be denied on the default Windows stack. The profile driver attempts to distinguish incoming device types based on their reported remote names and exposes their HID Control and HID Interrupt channels via simple bus child devices (a.k.a. PDOs). The profile/bus driver supports both “regular” operation modes (requiring a proper function driver such as a HID minidriver) and “raw” mode (powering the PDO up without a function driver and exposing it to userland) for maximum flexibility and future‑proofing. The PSM filter attaches only to Bluetooth‑class devices and unloads itself if the underlying transport is neither USB nor the Bluetooth Extensibility Transport (BTHX, e.g. `BthMini.sys`-bound PCIe/UART radios).
 
 The solution consists of the following individual projects:
 
 - [`BthPS3`](/BthPS3) – multipurpose kernel‑mode driver: function driver for service PDO exposed by `BTHENUM` (Microsoft), Bluetooth profile (L2CAP server service), and bus driver for PS3 wireless peripherals.
-- [`BthPS3PSM`](/BthPS3PSM) – lower‑filter driver for `BTHUSB`, patching L2CAP packets and rerouting L2CAP traffic to the profile driver.
+- [`BthPS3PSM`](/BthPS3PSM) – lower‑filter driver for Bluetooth host radios (USB via `BTHUSB`, or non‑USB via the Bluetooth Extensibility Transport/`BthMini`), patching L2CAP packets and rerouting L2CAP traffic to the profile driver.
 - [`BthPS3CfgUI`](/BthPS3CfgUI) – userland GUI utility to safely edit driver settings.
 - [`BthPS3Util`](/BthPS3Util) – userland CLI utility to modify filter‑driver settings.
 - [`BthPS3Installer`](/BthPS3Installer) – [WiXSharp](https://github.com/oleg-shilo/wixsharp)-based setup for driver installation and removal.
@@ -194,28 +194,30 @@ The diagram below visualizes the relationships between the drivers and devices i
                                   +----------+-----------+
                                              ^
                                              |
-                                             v
-                                  +----------+-----------+
-                                  |      bthusb.sys      |
-                                  +----------+-----------+
-                                             ^
-                                             |
-                                             v
-                                  +----------+-----------+
-                                  | BthPS3PSM.sys filter |
-                                  +----------+-----------+
-                                             ^
-                                             |
-                                             v
-                                  +----------+-----------+
-                                  |       USB Stack      |
-                                  +----------+-----------+
-                                             ^
-                                             |
-                                             v
-                                  +----------+-----------+
-                                  | USB Bluetooth dongle |
-                                  +----------------------+
+                     +-----------------------+-----------------------+
+                     |                                               |
+                     v                                               v
+          +----------+-----------+                        +----------+-----------+
+          |      bthusb.sys      |                        |      BthMini.sys     |
+          +----------+-----------+                        +----------+-----------+
+                     ^                                               ^
+                     |                                               |
+                     v                                               v
+          +----------+-----------+                        +----------+-----------+
+          | BthPS3PSM.sys filter |                        | BthPS3PSM.sys filter |
+          +----------+-----------+                        +----------+-----------+
+                     ^                                               ^
+                     |                                               |
+                     v                                               v
+          +----------+-----------+                        +----------+-----------+
+          |       USB Stack      |                        | Vendor transport PDO |
+          +----------+-----------+                        | (e.g. iBtPciBus,     |
+                     ^                                     |  UART, ...)          |
+                     |                                     +----------------------+
+                     v
+          +----------+-----------+
+          | USB Bluetooth dongle |
+          +----------------------+
 
 ```
 

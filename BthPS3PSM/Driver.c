@@ -1,6 +1,6 @@
 /**********************************************************************************
  *                                                                                *
- * BthPS3PSM - Windows kernel-mode BTHUSB lower filter driver                     *
+ * BthPS3PSM - Windows kernel-mode Bluetooth lower filter driver                  *
  *                                                                                *
  * BSD 3-Clause License                                                           *
  *                                                                                *

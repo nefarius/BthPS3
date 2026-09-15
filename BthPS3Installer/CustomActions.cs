@@ -592,7 +592,11 @@ public static class CustomActions
                 return false;
             }
 
-            bool radioAvailable = HostRadio.IsAvailable;
+            // require both a live radio interface and a resolvable device node before
+            // reporting success, so a transient/incomplete re-enumeration (e.g. right after a
+            // BTHX RemoveAndSetup) falls through to the deferred/reboot path instead of being
+            // reported as a successful restart
+            bool radioAvailable = HostRadio.IsAvailable && RadioTransport.TryGetHostRadioDevice(out _);
 
             session.Log(!radioAvailable
                 ? "WARN: Radio not available after wait period"

@@ -230,6 +230,25 @@ public static class CustomActions
             return ActionResult.NotExecuted;
         }
 
+        // validate the host radio transport before doing anything destructive: there's no
+        // point tearing down an existing (possibly working) setup via UninstallDrivers below
+        // if we already know we can't (re)install for this radio afterward
+        if (!RadioTransport.TryGetHostRadioDevice(out PnPDevice preInstallRadioDevice) ||
+            RadioTransport.GetTransportType(preInstallRadioDevice) == RadioTransportType.Unsupported)
+        {
+            session.Log(
+                "WARN: Host radio not found or its transport is unsupported, aborting before uninstalling any existing setup");
+
+            Record unsupportedTransportRecord = new(1);
+            unsupportedTransportRecord[1] = "9004";
+
+            session.Message(
+                InstallMessage.User | (InstallMessage)MessageButtons.OK | (InstallMessage)MessageIcon.Error,
+                unsupportedTransportRecord);
+
+            return ActionResult.Failure;
+        }
+
         // clean out whatever has been on the machine before
         UninstallDrivers(session);
 

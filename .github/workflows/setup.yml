@@ -1,0 +1,292 @@
+name: 'Build setup'
+
+on:
+  workflow_dispatch:
+    inputs:
+      driver-tag:
+        description: 'Driver release tag whose artifacts to embed (vMAJOR.MINOR.PATCH)'
+        required: true
+        type: string
+
+concurrency:
+  group: setup-${{ inputs.driver-tag }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+  DOTNET_NOLOGO: 'true'
+
+jobs:
+  resolve:
+    name: 'Resolve driver artifacts'
+    runs-on: ubuntu-latest
+    outputs:
+      driver-tag: ${{ steps.resolve.outputs.driver-tag }}
+      setup-version: ${{ steps.resolve.outputs.setup-version }}
+      setup-tag: ${{ steps.resolve.outputs.setup-tag }}
+      driver-version: ${{ steps.resolve.outputs.driver-version }}
+      driver-commit: ${{ steps.resolve.outputs.driver-commit }}
+      setup-commit: ${{ steps.resolve.outputs.setup-commit }}
+      build-run-id: ${{ steps.resolve.outputs.build-run-id }}
+      drivers-run-id: ${{ steps.resolve.outputs.drivers-run-id }}
+      msi-name: ${{ steps.resolve.outputs.msi-name }}
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            build
+
+      - name: 'Resolve source runs and setup tag'
+        id: resolve
+        shell: pwsh
+        env:
+          DRIVER_TAG: ${{ inputs.driver-tag }}
+          SETUP_COMMIT: ${{ github.sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          . ./build/SetupRelease.ps1
+
+          $identity = ConvertTo-BthPS3SetupReleaseIdentity -DriverTag $env:DRIVER_TAG
+          $source = Resolve-BthPS3SetupArtifactRuns -Repository '${{ github.repository }}' -DriverTag $identity.DriverTag
+          $existing = Get-BthPS3ExistingSetupReleaseTags -Repository '${{ github.repository }}' -SetupVersion $identity.SetupVersion
+          $setupTag = Get-BthPS3NextSetupReleaseTag -SetupVersion $identity.SetupVersion -ExistingTags $existing
+          $msiName = Get-BthPS3SetupMsiFileName -SetupVersion $identity.SetupVersion
+
+          Write-BthPS3GitHubOutput -GitHubOutput $env:GITHUB_OUTPUT -Values @{
+            'driver-tag'     = $identity.DriverTag
+            'setup-version'  = $identity.SetupVersion
+            'setup-tag'      = $setupTag
+            'driver-version' = $source.DriverVersion
+            'driver-commit'  = $source.DriverCommit
+            'setup-commit'   = $env:SETUP_COMMIT
+            'build-run-id'   = $source.BuildRunId
+            'drivers-run-id' = $source.DriversRunId
+            'msi-name'       = $msiName
+          }
+
+          $summary = @(
+            "Resolved $($identity.DriverTag) for setup tag ``$setupTag``"
+            "- Setup version: ``$($identity.SetupVersion)``"
+            "- Driver version: ``$($source.DriverVersion)``"
+            "- Driver commit: ``$($source.DriverCommit)``"
+            "- Setup commit: ``$($env:SETUP_COMMIT)``"
+            "- Build run: ``$($source.BuildRunId)``"
+            "- Drivers run: ``$($source.DriversRunId)``"
+          ) -join [Environment]::NewLine
+          $summary >> $env:GITHUB_STEP_SUMMARY
+          Write-Output $summary
+
+  build:
+    name: 'Build and sign MSI'
+    needs: resolve
+    runs-on: windows-2022
+    env:
+      DRIVER_TAG: ${{ needs.resolve.outputs.driver-tag }}
+      SETUP_VERSION: ${{ needs.resolve.outputs.setup-version }}
+      SETUP_TAG: ${{ needs.resolve.outputs.setup-tag }}
+      DRIVER_VERSION: ${{ needs.resolve.outputs.driver-version }}
+      DRIVER_COMMIT: ${{ needs.resolve.outputs.driver-commit }}
+      SETUP_COMMIT: ${{ needs.resolve.outputs.setup-commit }}
+      BUILD_RUN_ID: ${{ needs.resolve.outputs.build-run-id }}
+      DRIVERS_RUN_ID: ${{ needs.resolve.outputs.drivers-run-id }}
+      MSI_NAME: ${{ needs.resolve.outputs.msi-name }}
+      SIGN_RELAY_SERVER: ${{ vars.SIGN_RELAY_SERVER }}
+      SIGN_RELAY_CI_TOKEN: ${{ secrets.SIGN_RELAY_CI_TOKEN }}
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: 'Require signing configuration'
+        shell: pwsh
+        run: |
+          if (-not $env:SIGN_RELAY_SERVER) { throw 'Repository variable SIGN_RELAY_SERVER is not set.' }
+          if (-not $env:SIGN_RELAY_CI_TOKEN) { throw 'Repository secret SIGN_RELAY_CI_TOKEN is not set.' }
+
+      - name: 'Download release metadata'
+        uses: ./.github/actions/download-artifact-with-retry
+        with:
+          name: release-metadata
+          path: artifacts/ci/metadata
+          run-id: ${{ env.BUILD_RUN_ID }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 'Download signed tools'
+        uses: ./.github/actions/download-artifact-with-retry
+        with:
+          name: bthps3-tools
+          path: artifacts/ci/tools
+          run-id: ${{ env.BUILD_RUN_ID }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 'Download attested drivers'
+        uses: ./.github/actions/download-artifact-with-retry
+        with:
+          name: bthps3-microsoft-drivers
+          path: artifacts/ci/drivers
+          run-id: ${{ env.DRIVERS_RUN_ID }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 'Stage setup payload'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          . ./build/SetupRelease.ps1
+
+          $metadata = Read-BthPS3ReleaseMetadataFile -Path 'artifacts/ci/metadata'
+          Assert-BthPS3ReleaseMetadataMatchesTag -Metadata $metadata -DriverTag $env:DRIVER_TAG
+          if ([string]$metadata.driverVersion -ne $env:DRIVER_VERSION) {
+            throw "Downloaded driverVersion '$($metadata.driverVersion)' does not match resolved '$($env:DRIVER_VERSION)'."
+          }
+
+          Copy-BthPS3SetupPayload `
+            -DriversSource 'artifacts/ci/drivers' `
+            -ToolsSource 'artifacts/ci/tools' `
+            -SetupRoot (Join-Path $pwd 'Setup')
+          Assert-BthPS3AttestedDriverSignatures -DriversRoot (Join-Path $pwd 'Setup\drivers')
+          Write-Output 'Do not append another publisher signature after Microsoft attestation.'
+
+      - name: 'Setup .NET'
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: 'Cache NuGet packages'
+        uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-setup-${{ runner.os }}-${{ hashFiles('BthPS3Installer/BthPS3Installer.csproj', 'shared/Nefarius.BthPS3.Shared.csproj') }}
+          restore-keys: |
+            nuget-setup-${{ runner.os }}-
+
+      - name: 'Build MSI'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet build -c Release -p:SetupVersion=$env:SETUP_VERSION .\BthPS3Installer\BthPS3Installer.csproj
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
+      - name: 'Assert MSI is unsigned'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          . ./build/SetupRelease.ps1
+          $msi = Join-Path $pwd (Join-Path 'BthPS3Installer' $env:MSI_NAME)
+          if (-not (Test-Path -LiteralPath $msi)) { throw "MSI was not produced: $msi" }
+          $sig = Get-AuthenticodeSignature -LiteralPath $msi
+          if ($sig.Status -ne 'NotSigned') {
+            throw "Expected unsigned $msi but Get-AuthenticodeSignature returned $($sig.Status)."
+          }
+          Write-Output "Unsigned as required: $msi"
+
+      - name: 'Sign MSI'
+        uses: nefarius/SignRelay@39ccbe0cef16a383237130380a5aef8db040d5d0
+        with:
+          server: ${{ env.SIGN_RELAY_SERVER }}
+          token: ${{ env.SIGN_RELAY_CI_TOKEN }}
+          in-place: true
+          files: BthPS3Installer/${{ needs.resolve.outputs.msi-name }}
+
+      - name: 'Verify signed MSI and write provenance'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          . ./build/SetupRelease.ps1
+
+          $msi = Join-Path $pwd (Join-Path 'BthPS3Installer' $env:MSI_NAME)
+          $sig = Get-AuthenticodeSignature -LiteralPath $msi
+          if ($sig.Status -ne 'Valid' -or -not $sig.SignerCertificate) {
+            throw "MSI is not validly signed: $msi (Status=$($sig.Status))."
+          }
+          Write-Output "Signed: $msi (Subject=$($sig.SignerCertificate.Subject))"
+
+          $sha = (Get-FileHash -LiteralPath $msi -Algorithm SHA256).Hash.ToLowerInvariant()
+          $provenance = New-BthPS3SetupProvenance `
+            -DriverTag $env:DRIVER_TAG `
+            -SetupVersion $env:SETUP_VERSION `
+            -SetupTag $env:SETUP_TAG `
+            -DriverVersion $env:DRIVER_VERSION `
+            -DriverCommit $env:DRIVER_COMMIT `
+            -SetupCommit $env:SETUP_COMMIT `
+            -BuildRunId ([int64]$env:BUILD_RUN_ID) `
+            -DriversRunId ([int64]$env:DRIVERS_RUN_ID) `
+            -Repository '${{ github.repository }}' `
+            -MsiName $env:MSI_NAME `
+            -MsiSha256 $sha
+
+          $out = Join-Path $pwd 'setup-artifact'
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          Copy-Item -LiteralPath $msi -Destination (Join-Path $out $env:MSI_NAME)
+          Write-BthPS3Utf8NoBomJson -Object $provenance -Path (Join-Path $out 'setup-metadata.json')
+          Write-Output ($provenance | ConvertTo-Json -Depth 8)
+
+      - name: 'Upload setup'
+        uses: actions/upload-artifact@v7
+        with:
+          name: bthps3-setup
+          if-no-files-found: error
+          path: setup-artifact
+
+  tag:
+    name: 'Create setup tag'
+    needs: [resolve, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            build
+
+      - name: 'Create collision-free setup tag'
+        shell: pwsh
+        env:
+          SETUP_VERSION: ${{ needs.resolve.outputs.setup-version }}
+          PROPOSED_SETUP_TAG: ${{ needs.resolve.outputs.setup-tag }}
+          SETUP_COMMIT: ${{ needs.resolve.outputs.setup-commit }}
+          DRIVER_TAG: ${{ needs.resolve.outputs.driver-tag }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          . ./build/SetupRelease.ps1
+
+          $repo = '${{ github.repository }}'
+          $existing = Get-BthPS3ExistingSetupReleaseTags -Repository $repo -SetupVersion $env:SETUP_VERSION
+          $tag = Get-BthPS3NextSetupReleaseTag -SetupVersion $env:SETUP_VERSION -ExistingTags $existing
+          if ($tag -ne $env:PROPOSED_SETUP_TAG) {
+            throw "Proposed tag $($env:PROPOSED_SETUP_TAG) is no longer free (next would be $tag). Re-dispatch so provenance and the Git tag stay aligned."
+          }
+
+          New-BthPS3SetupGitTag -Repository $repo -Tag $tag -Sha $env:SETUP_COMMIT
+
+          $summary = @(
+            "Created ``$tag`` at ``$($env:SETUP_COMMIT)`` for driver ``$($env:DRIVER_TAG)``"
+            "- GitHub Release creation remains manual."
+          ) -join [Environment]::NewLine
+          $summary >> $env:GITHUB_STEP_SUMMARY
+          Write-Output $summary
+
+  mirror:
+    name: 'Mirror setup'
+    needs: tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Mirror setup'
+        # nefarius/AppVeyorArtifactsReceiver@57828477ff1ba7eeeda6818fba2e3a12ce059b77 (master as of 2026-09-15, PR #134)
+        uses: nefarius/AppVeyorArtifactsReceiver@57828477ff1ba7eeeda6818fba2e3a12ce059b77
+        with:
+          webhook-url: ${{ secrets.WEBHOOK_URL }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          artifact-name: bthps3-setup
+          skip-latest-symlink: true

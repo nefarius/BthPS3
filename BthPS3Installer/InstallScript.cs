@@ -325,8 +325,7 @@ internal class InstallScript
         throw new InvalidOperationException(
             "Setup payload is incomplete, missing:" + Environment.NewLine +
             string.Join(Environment.NewLine, missing) + Environment.NewLine +
-            "Run Setup\\stage0.ps1, Setup\\stage1.ps1 (and stage2.ps1 to build) first, " +
-            "or place the drivers/artifacts manually as described in Setup\\README.md.");
+            "Build the MSI through the GitHub Actions setup workflow (see Setup\\README.md).");
     }
 
     private static void ProjectOnLoad(SetupEventArgs e)

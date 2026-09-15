@@ -1,6 +1,6 @@
 /**********************************************************************************
  *                                                                                *
- * BthPS3PSM - Windows kernel-mode BTHUSB lower filter driver                     *
+ * BthPS3PSM - Windows kernel-mode Bluetooth lower filter driver                  *
  *                                                                                *
  * BSD 3-Clause License                                                           *
  *                                                                                *
@@ -112,6 +112,93 @@ UrbSelectConfigurationCompleted(
 }
 
 //
+// Inspects an L2CAP buffer (as delivered via either the USB bulk-IN pipe or
+// a BTHX ACL Data read) for an outgoing HID Control/Interrupt L2CAP
+// Connection Request and, if enabled, patches the requested PSM to the
+// artificial value the BthPS3 profile driver listens on.
+// 
+_Use_decl_annotations_
+VOID
+BthPS3PSM_PatchL2capPsm(
+    IN PDEVICE_CONTEXT DeviceContext,
+    IN PUCHAR Buffer,
+    IN ULONG BufferLength
+)
+{
+    if (Buffer == NULL)
+    {
+        return;
+    }
+
+    if (
+        BufferLength >= L2CAP_MIN_BUFFER_LEN
+        && L2CAP_IS_CONTROL_CHANNEL(Buffer)
+        && L2CAP_IS_SIGNALLING_COMMAND_CODE(Buffer)
+    )
+    {
+        const L2CAP_SIGNALLING_COMMAND_CODE code = L2CAP_GET_SIGNALLING_COMMAND_CODE(Buffer);
+
+        if (code == L2CAP_Connection_Request)
+        {
+            const PL2CAP_SIGNALLING_CONNECTION_REQUEST pConReq = (PL2CAP_SIGNALLING_CONNECTION_REQUEST)&Buffer[8];
+
+            if (pConReq->PSM == PSM_HID_CONTROL)
+            {
+                TraceVerbose(
+                    TRACE_FILTER,
+                    ">> Connection request for HID Control PSM 0x%04X arrived",
+                    pConReq->PSM
+                );
+
+                if (DeviceContext->IsPsmPatchingEnabled)
+                {
+                    pConReq->PSM = PSM_DS3_HID_CONTROL;
+
+                    TraceInformation(
+                        TRACE_FILTER,
+                        "++ Patching HID Control PSM to 0x%04X",
+                        pConReq->PSM);
+                }
+                else
+                {
+                    TraceVerbose(
+                        TRACE_FILTER,
+                        "-- NOT Patching HID Control PSM"
+                    );
+                }
+            }
+
+            if (pConReq->PSM == PSM_HID_INTERRUPT)
+            {
+                TraceVerbose(
+                    TRACE_FILTER,
+                    ">> Connection request for HID Interrupt PSM 0x%04X arrived",
+                    pConReq->PSM
+                );
+
+                if (DeviceContext->IsPsmPatchingEnabled)
+                {
+                    pConReq->PSM = PSM_DS3_HID_INTERRUPT;
+
+                    TraceInformation(
+                        TRACE_FILTER,
+                        "++ Patching HID Interrupt PSM to 0x%04X",
+                        pConReq->PSM
+                    );
+                }
+                else
+                {
+                    TraceVerbose(
+                        TRACE_FILTER,
+                        "-- NOT Patching HID Interrupt PSM"
+                    );
+                }
+            }
+        }
+    }
+}
+
+//
 // Gets called when Bulk IN (L2CAP) data is available
 // 
 _Use_decl_annotations_
@@ -142,74 +229,80 @@ UrbFunctionBulkInTransferCompleted(
         pTransfer->TransferBufferMDL
     );
 
-    if (
-        bufferLength >= L2CAP_MIN_BUFFER_LEN
-        && L2CAP_IS_CONTROL_CHANNEL(buffer)
-        && L2CAP_IS_SIGNALLING_COMMAND_CODE(buffer)
-    )
+    BthPS3PSM_PatchL2capPsm(pDevCtx, buffer, bufferLength);
+
+    WdfRequestComplete(Request, Params->IoStatus.Status);
+
+    FuncExitNoReturn(TRACE_FILTER);
+}
+
+//
+// Gets called when a BTHX ACL Data read (IOCTL_BTHX_READ_HCI) completes
+// 
+_Use_decl_annotations_
+VOID
+BthxReadHciCompleted(
+    IN WDFREQUEST Request,
+    IN WDFIOTARGET Target,
+    IN PWDF_REQUEST_COMPLETION_PARAMS Params,
+    IN WDFCONTEXT Context
+)
+{
+    UNREFERENCED_PARAMETER(Target);
+
+    FuncEntry(TRACE_FILTER);
+
+    const WDFDEVICE device = (WDFDEVICE)Context;
+    const PDEVICE_CONTEXT pDevCtx = DeviceGetContext(device);
+
+    if (NT_SUCCESS(Params->IoStatus.Status))
     {
-        const L2CAP_SIGNALLING_COMMAND_CODE code = L2CAP_GET_SIGNALLING_COMMAND_CODE(buffer);
+        const PBTHX_READ_REQUEST_CONTEXT pReqCtx = BthxReadRequestGetContext(Request);
 
-        if (code == L2CAP_Connection_Request)
+        if (pReqCtx != NULL
+            && pReqCtx->OutputBuffer != NULL
+            && pReqCtx->OutputBufferLength >= FIELD_OFFSET(BTHX_HCI_READ_WRITE_CONTEXT, Data)
+            && Params->IoStatus.Information >= FIELD_OFFSET(BTHX_HCI_READ_WRITE_CONTEXT, Data))
         {
-            const PL2CAP_SIGNALLING_CONNECTION_REQUEST pConReq = (PL2CAP_SIGNALLING_CONNECTION_REQUEST)&buffer[8];
+            const PBTHX_HCI_READ_WRITE_CONTEXT pHciCtx = (PBTHX_HCI_READ_WRITE_CONTEXT)pReqCtx->OutputBuffer;
 
-            if (pConReq->PSM == PSM_HID_CONTROL)
+            //
+            // We're only interested in inbound ACL data; HCI events carry
+            // no L2CAP payload and are left untouched
+            //
+            if ((BTHX_HCI_PACKET_TYPE)pHciCtx->Type == HciPacketAclData)
             {
-                TraceVerbose(
-                    TRACE_FILTER,
-                    ">> Connection request for HID Control PSM 0x%04X arrived",
-                    pConReq->PSM
-                );
+                //
+                // Bound DataLen by both the buffer's allocated capacity and
+                // the number of bytes the lower driver actually reported
+                // having written (Information); the latter can be smaller
+                // than the former, in which case Data beyond it is stale/
+                // uninitialized and must not be parsed as HCI payload.
+                // 
+                const size_t maxDataLenByBuffer = pReqCtx->OutputBufferLength - FIELD_OFFSET(BTHX_HCI_READ_WRITE_CONTEXT, Data);
+                const size_t maxDataLenByInfo = (size_t)Params->IoStatus.Information - FIELD_OFFSET(BTHX_HCI_READ_WRITE_CONTEXT, Data);
 
-                if (pDevCtx->IsPsmPatchingEnabled)
+                if (pHciCtx->DataLen > 0
+                    && (size_t)pHciCtx->DataLen <= maxDataLenByBuffer
+                    && (size_t)pHciCtx->DataLen <= maxDataLenByInfo)
                 {
-                    pConReq->PSM = PSM_DS3_HID_CONTROL;
-
-                    TraceInformation(
-                        TRACE_FILTER,
-                        "++ Patching HID Control PSM to 0x%04X",
-                        pConReq->PSM);
+                    BthPS3PSM_PatchL2capPsm(pDevCtx, pHciCtx->Data, pHciCtx->DataLen);
                 }
                 else
                 {
-                    TraceVerbose(
+                    TraceEvents(TRACE_LEVEL_WARNING,
                         TRACE_FILTER,
-                        "-- NOT Patching HID Control PSM"
-                    );
-                }
-            }
-
-            if (pConReq->PSM == PSM_HID_INTERRUPT)
-            {
-                TraceVerbose(
-                    TRACE_FILTER,
-                    ">> Connection request for HID Interrupt PSM 0x%04X arrived",
-                    pConReq->PSM
-                );
-
-                if (pDevCtx->IsPsmPatchingEnabled)
-                {
-                    pConReq->PSM = PSM_DS3_HID_INTERRUPT;
-
-                    TraceInformation(
-                        TRACE_FILTER,
-                        "++ Patching HID Interrupt PSM to 0x%04X",
-                        pConReq->PSM
-                    );
-                }
-                else
-                {
-                    TraceVerbose(
-                        TRACE_FILTER,
-                        "-- NOT Patching HID Interrupt PSM"
+                        "IOCTL_BTHX_READ_HCI reported implausible DataLen %lu (max by buffer %Iu, max by Information %Iu), skipping",
+                        pHciCtx->DataLen,
+                        maxDataLenByBuffer,
+                        maxDataLenByInfo
                     );
                 }
             }
         }
     }
 
-    WdfRequestComplete(Request, Params->IoStatus.Status);
+    WdfRequestCompleteWithInformation(Request, Params->IoStatus.Status, Params->IoStatus.Information);
 
     FuncExitNoReturn(TRACE_FILTER);
 }

@@ -1,6 +1,6 @@
 /**********************************************************************************
  *                                                                                *
- * BthPS3PSM - Windows kernel-mode BTHUSB lower filter driver                     *
+ * BthPS3PSM - Windows kernel-mode Bluetooth lower filter driver                  *
  *                                                                                *
  * BSD 3-Clause License                                                           *
  *                                                                                *
@@ -51,6 +51,7 @@ BthPS3PSM_QueueInitialize(
 //
 EVT_WDF_IO_QUEUE_IO_STOP BthPS3PSM_EvtIoStop;
 EVT_WDF_IO_QUEUE_IO_INTERNAL_DEVICE_CONTROL BthPS3PSMEvtIoInternalDeviceControl;
+EVT_WDF_IO_QUEUE_IO_DEVICE_CONTROL BthPS3PSM_EvtIoDeviceControl;
 EVT_WDF_REQUEST_COMPLETION_ROUTINE UrbFunctionSelectConfigurationCompleted;
 
 EXTERN_C_END

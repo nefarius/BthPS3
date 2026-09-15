@@ -30,14 +30,14 @@ BEGIN
 	BEGIN
 		BLOCK "040904b0"
         BEGIN
-		VALUE "Comments",         "Protocol/Service Multiplexer Proxy Filter Driver for BTHUSB"
+		VALUE "Comments",         "Protocol/Service Multiplexer Proxy Filter Driver for Bluetooth host radios"
 		VALUE "CompanyName",      "Nefarius Software Solutions e.U."
-		VALUE "FileDescription",  "Protocol/Service Multiplexer Proxy Filter Driver for BTHUSB"
+		VALUE "FileDescription",  "Protocol/Service Multiplexer Proxy Filter Driver for Bluetooth host radios"
 		VALUE "FileVersion",      "1.1.4.0"
-		VALUE "InternalName",     "Protocol/Service Multiplexer Proxy Filter Driver for BTHUSB"
+		VALUE "InternalName",     "Protocol/Service Multiplexer Proxy Filter Driver for Bluetooth host radios"
 		VALUE "LegalCopyright",   "(C) 2020-2026 Nefarius Software Solutions e.U."
 		VALUE "OriginalFilename", "BthPS3PSM.sys"
-		VALUE "ProductName",      "Protocol/Service Multiplexer Proxy Filter Driver for BTHUSB"
+		VALUE "ProductName",      "Protocol/Service Multiplexer Proxy Filter Driver for Bluetooth host radios"
 		VALUE "ProductVersion",	  "1.1.4.0"
         END
 	END

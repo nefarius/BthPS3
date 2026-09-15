@@ -1,6 +1,6 @@
 /**********************************************************************************
  *                                                                                *
- * BthPS3PSM - Windows kernel-mode BTHUSB lower filter driver                     *
+ * BthPS3PSM - Windows kernel-mode Bluetooth lower filter driver                  *
  *                                                                                *
  * BSD 3-Clause License                                                           *
  *                                                                                *
@@ -53,6 +53,21 @@ extern WDFWAITLOCK FilterDeviceCollectionLock;
 
 #define BTHPS3PSM_DEVICE_PROPERTY_LENGTH        0xFF
 #define BTHPS3PSM_USB_ENUMERATOR_NAME           L"USB"
+#define BTHPS3PSM_BLUETOOTH_CLASS_NAME          L"Bluetooth"
+
+//
+// Documented compatible ID for non-USB Bluetooth radios bound to the
+// Bluetooth Extensibility Transport DDI (bthxddi.h), see
+// https://learn.microsoft.com/windows-hardware/drivers/bluetooth/bluetooth-host-radio-support
+// 
+#define BTHPS3PSM_BTHX_COMPATIBLE_ID             L"MS_BTHX_BTHMINI"
+
+//
+// Service name of Microsoft's inbox Bluetooth Extensibility Transport
+// function driver; used as a fallback signal if the compatible ID above
+// is not (or no longer) reported by a given transport stack.
+// 
+#define BTHPS3PSM_BTHMINI_SERVICE_NAME           L"BthMini"
 
 
 //
@@ -68,8 +83,7 @@ BthPS3PSM_CreateDevice(
     WDFDEVICE device;
     NTSTATUS status;
     WDF_OBJECT_ATTRIBUTES stringAttributes;
-    BOOLEAN isUsb = FALSE;
-    BOOLEAN ret = FALSE;
+    BTHPS3PSM_TRANSPORT_TYPE transportType = BthPS3PsmTransportUnsupported;
     WDFMEMORY instanceId = NULL;
 
     DECLARE_CONST_UNICODE_STRING(patchPSMRegValue, G_PatchPSMRegValue);
@@ -80,26 +94,40 @@ BthPS3PSM_CreateDevice(
 
     PAGED_CODE();
 
-    if (NT_SUCCESS(BthPS3PSM_IsBthUsbDevice(DeviceInit, &ret)) && ret)
+    if (!NT_SUCCESS(BthPS3PSM_QueryTransportType(DeviceInit, &transportType)))
     {
+        transportType = BthPS3PsmTransportUnsupported;
+    }
+
+    switch (transportType)
+    {
+    case BthPS3PsmTransportUsb:
         TraceVerbose(
             TRACE_DEVICE,
-            "Device is USB Bluetooth device"
+            "Device is a USB Bluetooth host radio"
         );
-        isUsb = TRUE;
-    }
-    else
-    {
+        EventWriteTransportTypeDetected(NULL, (ULONG)transportType);
+        break;
+    case BthPS3PsmTransportBthx:
+        TraceVerbose(
+            TRACE_DEVICE,
+            "Device is a BTHX (Bluetooth Extensibility Transport) Bluetooth host radio"
+        );
+        EventWriteTransportTypeDetected(NULL, (ULONG)transportType);
+        break;
+    default:
         TraceEvents(TRACE_LEVEL_WARNING,
                     TRACE_DEVICE,
                     "Unsupported device type, aborting initialization"
         );
+        EventWriteUnsupportedTransportType(NULL);
+        break;
     }
 
     //
     // Don't create a device object and return
     // 
-    if (!isUsb)
+    if (transportType == BthPS3PsmTransportUnsupported)
     {
         FuncExitNoReturn(TRACE_DEVICE);
         return STATUS_SUCCESS;
@@ -147,6 +175,7 @@ BthPS3PSM_CreateDevice(
         PDEVICE_CONTEXT deviceContext = DeviceGetContext(device);
 
         deviceContext->InstanceId = instanceId;
+        deviceContext->TransportType = transportType;
 
 #pragma region Add this device to global collection
 
@@ -200,6 +229,8 @@ BthPS3PSM_CreateDevice(
          * Expands to e.g.:
          *
          * "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\USB\VID_XXXX&PID_XXXX\XXXXXXXXXXXXX\Device Parameters"
+         * or, for a BTHX/BthMini-bound radio:
+         * "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\IBTPCIBUS\HCIH4\XXXXXXXXXXXXX\Device Parameters"
          */
         if (!NT_SUCCESS(status = WdfDeviceOpenRegistryKey(
             device,
@@ -278,7 +309,13 @@ BthPS3PSM_CreateDevice(
         }
 
         // 
-        // Grab symbolic link so device can be associated with radio in user-mode
+        // Grab symbolic link so device can be associated with radio in user-mode.
+        // 
+        // This value is written by bthport.sys for its device interface and is
+        // not guaranteed to exist for every transport stack (in particular some
+        // BTHX/BthMini-based radios); treat its absence as non-fatal so the
+        // filter still loads and patches PSMs, it just can't be positively
+        // associated with a specific radio symbolic link by user-mode callers.
         // 
         if (!NT_SUCCESS(status = WdfRegistryQueryString(
             deviceContext->RegKeyDeviceNode,
@@ -286,13 +323,14 @@ BthPS3PSM_CreateDevice(
             deviceContext->SymbolicLinkName
         )))
         {
-            TraceError(
+            TraceEvents(TRACE_LEVEL_WARNING,
                 TRACE_DEVICE,
-                "WdfRegistryQueryString failed with status %!STATUS!",
+                "WdfRegistryQueryString failed with status %!STATUS!, continuing without a symbolic link association",
                 status
             );
-            EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfRegistryQueryString", status);
-            break;
+
+            // reset to success; this is not a fatal condition
+            status = STATUS_SUCCESS;
         }
 
 #ifndef BTHPS3PSM_WITH_CONTROL_DEVICE
@@ -338,11 +376,16 @@ BthPS3PSM_CreateDevice(
     return status;
 }
 
+//
+// Determines whether the device we're about to attach to is a supported
+// Bluetooth host radio and, if so, which transport it runs on (USB or the
+// Bluetooth Extensibility Transport, a.k.a. BTHX/BthMini).
+// 
 _Use_decl_annotations_
 NTSTATUS
-BthPS3PSM_IsBthUsbDevice(
+BthPS3PSM_QueryTransportType(
     _In_ PWDFDEVICE_INIT DeviceInit,
-    _Inout_opt_ PBOOLEAN Result
+    _Inout_ BTHPS3PSM_TRANSPORT_TYPE* TransportType
 )
 {
     NTSTATUS status;
@@ -352,20 +395,13 @@ BthPS3PSM_IsBthUsbDevice(
     UNICODE_STRING lhsEnumeratorName, lhsClassName;
     UNICODE_STRING rhsEnumeratorName, rhsClassName;
 
-    RtlInitUnicodeString(&rhsEnumeratorName, L"USB");
-    RtlInitUnicodeString(&rhsClassName, L"Bluetooth");
+    *TransportType = BthPS3PsmTransportUnsupported;
 
-    if (!NT_SUCCESS(status = WdfFdoInitQueryProperty(
-        DeviceInit,
-        DevicePropertyEnumeratorName,
-        sizeof(enumeratorName),
-        enumeratorName,
-        &returnSize
-    )))
-    {
-        return status;
-    }
+    RtlInitUnicodeString(&rhsClassName, BTHPS3PSM_BLUETOOTH_CLASS_NAME);
 
+    //
+    // Regardless of transport, we only ever attach to Bluetooth-class devices
+    // 
     if (!NT_SUCCESS(status = WdfFdoInitQueryProperty(
         DeviceInit,
         DevicePropertyClassName,
@@ -377,14 +413,159 @@ BthPS3PSM_IsBthUsbDevice(
         return status;
     }
 
-    RtlInitUnicodeString(&lhsEnumeratorName, enumeratorName);
     RtlInitUnicodeString(&lhsClassName, className);
 
-    if (Result)
-        *Result = ((RtlCompareUnicodeString(&lhsEnumeratorName, &rhsEnumeratorName, TRUE) == 0)
-            && (RtlCompareUnicodeString(&lhsClassName, &rhsClassName, TRUE) == 0));
+    if (RtlCompareUnicodeString(&lhsClassName, &rhsClassName, TRUE) != 0)
+    {
+        return STATUS_SUCCESS;
+    }
 
-    return status;
+    //
+    // USB-attached radio (BTHUSB.SYS or a vendor equivalent)
+    // 
+    RtlInitUnicodeString(&rhsEnumeratorName, BTHPS3PSM_USB_ENUMERATOR_NAME);
+
+    if (NT_SUCCESS(WdfFdoInitQueryProperty(
+        DeviceInit,
+        DevicePropertyEnumeratorName,
+        sizeof(enumeratorName),
+        enumeratorName,
+        &returnSize
+    )))
+    {
+        RtlInitUnicodeString(&lhsEnumeratorName, enumeratorName);
+
+        if (RtlCompareUnicodeString(&lhsEnumeratorName, &rhsEnumeratorName, TRUE) == 0)
+        {
+            *TransportType = BthPS3PsmTransportUsb;
+            return STATUS_SUCCESS;
+        }
+    }
+
+    //
+    // Not USB; check for a BTHX (Bluetooth Extensibility Transport) radio,
+    // e.g. a PCIe or UART-attached controller bound to Microsoft's inbox
+    // BthMini.sys transport function driver
+    // 
+    if (BthPS3PSM_IsBthxTransportDevice(DeviceInit))
+    {
+        *TransportType = BthPS3PsmTransportBthx;
+    }
+
+    return STATUS_SUCCESS;
+}
+
+//
+// Checks the documented MS_BTHX_BTHMINI compatible ID and, as a fallback,
+// the bound service name to determine whether the device we're about to
+// filter is a BTHX (Bluetooth Extensibility Transport) radio.
+// 
+_Use_decl_annotations_
+BOOLEAN
+BthPS3PSM_IsBthxTransportDevice(
+    _In_ PWDFDEVICE_INIT DeviceInit
+)
+{
+    NTSTATUS status;
+    DEVPROPTYPE type;
+    WDF_DEVICE_PROPERTY_DATA property;
+    WDF_OBJECT_ATTRIBUTES attributes;
+    WDFMEMORY memory;
+    PWCHAR buffer;
+    size_t bufferSize;
+    BOOLEAN found = FALSE;
+    UNICODE_STRING rhsCompatibleId;
+
+    RtlInitUnicodeString(&rhsCompatibleId, BTHPS3PSM_BTHX_COMPATIBLE_ID);
+
+    //
+    // Primary signal: DEVPKEY_Device_CompatibleIds is a REG_MULTI_SZ-style
+    // string list; per Microsoft's Bluetooth host radio support
+    // documentation, non-USB radios expose MS_BTHX_BTHMINI in this list
+    // 
+    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+    WDF_DEVICE_PROPERTY_DATA_INIT(&property, &DEVPKEY_Device_CompatibleIds);
+
+    memory = NULL;
+
+    if (NT_SUCCESS(status = WdfFdoInitAllocAndQueryPropertyEx(
+        DeviceInit,
+        &property,
+        NonPagedPoolNx,
+        &attributes,
+        &memory,
+        &type
+    )))
+    {
+        if (type == DEVPROP_TYPE_STRING_LIST)
+        {
+            buffer = (PWCHAR)WdfMemoryGetBuffer(memory, &bufferSize);
+
+            for (PWCHAR cursor = buffer;
+                 cursor != NULL
+                     && ((ULONG_PTR)cursor - (ULONG_PTR)buffer) < bufferSize
+                     && *cursor != UNICODE_NULL;
+                 cursor += (wcslen(cursor) + 1))
+            {
+                UNICODE_STRING candidate;
+
+                RtlInitUnicodeString(&candidate, cursor);
+
+                if (RtlCompareUnicodeString(&candidate, &rhsCompatibleId, TRUE) == 0)
+                {
+                    found = TRUE;
+                    break;
+                }
+            }
+        }
+
+        WdfObjectDelete(memory);
+    }
+
+    if (found)
+    {
+        return TRUE;
+    }
+
+    //
+    // Fallback signal: match the well-known service name of Microsoft's
+    // inbox BTHX transport function driver in case a given stack does not
+    // (or no longer) reports the compatible ID above
+    // 
+    UNICODE_STRING rhsServiceName;
+    RtlInitUnicodeString(&rhsServiceName, BTHPS3PSM_BTHMINI_SERVICE_NAME);
+
+    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+    WDF_DEVICE_PROPERTY_DATA_INIT(&property, &DEVPKEY_Device_Service);
+
+    memory = NULL;
+
+    if (NT_SUCCESS(status = WdfFdoInitAllocAndQueryPropertyEx(
+        DeviceInit,
+        &property,
+        NonPagedPoolNx,
+        &attributes,
+        &memory,
+        &type
+    )))
+    {
+        if (type == DEVPROP_TYPE_STRING)
+        {
+            UNICODE_STRING serviceName;
+
+            buffer = (PWCHAR)WdfMemoryGetBuffer(memory, &bufferSize);
+            RtlInitUnicodeString(&serviceName, buffer);
+
+            if (RtlCompareUnicodeString(&serviceName, &rhsServiceName, TRUE) == 0)
+            {
+                found = TRUE;
+            }
+        }
+
+        WdfObjectDelete(memory);
+    }
+
+    return found;
 }
 
 _Use_decl_annotations_

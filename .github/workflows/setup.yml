@@ -167,6 +167,17 @@ jobs:
           restore-keys: |
             nuget-setup-${{ runner.os }}-
 
+      - name: 'Install WiX toolset'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # Pinned to the WiX v4 line on purpose: v6+ gates `wix.exe` behind the
+          # Open Source Maintenance Fee EULA (enforced via -acceptEula starting
+          # in v7), which would silently block CI. Bump only after confirming
+          # WixSharp_wix4's compatibility notes and re-testing the EULA gate.
+          dotnet tool install --global wix --version 4.0.6
+          "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+
       - name: 'Build MSI'
         shell: pwsh
         run: |

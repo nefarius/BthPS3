@@ -133,9 +133,10 @@ Knowledge of how to build and (test-)sign Windows drivers is required for creati
     ![components.png](assets/components.png)
 - [Step 2: Install Windows SDK 10.0.28000](https://learn.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk#download-icon-step-2-install-the-sdk)
 - [Step 3: Install WDK 10.0.28000](https://learn.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk#download-icon-step-3-install-the-wdk)
-- [Step 4: Install the WiX Toolset **v3.14.0.6526**](https://wixtoolset.org/releases/v3-14-0-6526/) (or newer)
-- [Step 5: Set up and build Microsoft DMF](https://github.com/Microsoft/DMF/blob/master/Dmf/Documentation/Driver%20Module%20Framework.md#simplifying-compilation-and-linking-with-dmf)
-- [Step 6: Set up and build Domito](https://git.nefarius.at/nefarius/Domito#how-to-use)
+- [Step 4: Set up and build Microsoft DMF](https://github.com/Microsoft/DMF/blob/master/Dmf/Documentation/Driver%20Module%20Framework.md#simplifying-compilation-and-linking-with-dmf)
+- [Step 5: Set up and build Domito](https://git.nefarius.at/nefarius/Domito#how-to-use)
+
+Building and signing the setup MSI is CI-only (see [Setup/README.md](Setup/README.md)); no local WiX Toolset install is needed.
 
 You can build individual projects of the solution within Visual Studio.
 

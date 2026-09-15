@@ -120,8 +120,9 @@
   <data name="infoLabel.Text" xml:space="preserve">
     <value>The modern method is selected by default, which works for the majority of devices and avoids
 having to reboot the system after installation. Some radios like Intel Wireless or TP-Link do 
-not like to be power-cycled during operation for whatever reason. If you run into installation
-issues using the default, try running the setup again, but choose Legacy instead.
+not like to be power-cycled during operation for whatever reason, and BTHX/BthMini-based radios
+(e.g. Intel PCIe iBtPciBus) cannot be power-cycled at all without a reboot. If you run into
+installation issues using the default, try running the setup again, but choose Legacy instead.
 </value>
   </data>
 </root>

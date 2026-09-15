@@ -313,6 +313,8 @@ public static class CustomActions
 
             #region Restart radio
 
+            bool radioRestartSucceeded;
+
             try
             {
                 Record restartTimeoutRecord = new(1);
@@ -337,6 +339,18 @@ public static class CustomActions
                 {
                     session.Log("User aborted operation");
                     return ActionResult.Failure;
+                }
+
+                radioRestartSucceeded = restartSuccess;
+
+                if (!radioRestartSucceeded)
+                {
+                    // user chose to ignore the failed/timed-out restart confirmation; the new
+                    // lower filter registration will only be picked up by the stack after a
+                    // reboot, so defer the filter-enable IOCTL below and force the reboot prompt
+                    session.Log(
+                        "Radio restart was not confirmed, deferring filter activation until reboot");
+                    rebootRequired = true;
                 }
             }
             catch (Exception ex)
@@ -424,17 +438,27 @@ public static class CustomActions
 
             #region Filter settings
 
-            try
+            if (radioRestartSucceeded)
             {
-                session.Log("Enabling PSM filter");
-                // make sure patching is enabled, might not be in the registry
-                FilterDriver.IsFilterEnabled = true;
-                session.Log("Enabled PSM filter");
+                try
+                {
+                    session.Log("Enabling PSM filter");
+                    // make sure patching is enabled, might not be in the registry
+                    FilterDriver.IsFilterEnabled = true;
+                    session.Log("Enabled PSM filter");
+                }
+                catch (Exception ex)
+                {
+                    session.Log($"Enabling filter failed with {ex}");
+                    goto exitFailure;
+                }
             }
-            catch (Exception ex)
+            else
             {
-                session.Log($"Enabling filter failed with {ex}");
-                goto exitFailure;
+                // the control device (\\.\BthPS3PSMControl) is only created once the filter
+                // attaches, which won't happen until the pending reboot; skip the IOCTL to avoid
+                // a spurious failure and rely on the profile driver's AutoEnableFilter default
+                session.Log("Skipping PSM filter enable IOCTL; filter isn't loaded until reboot");
             }
 
             #endregion
@@ -468,6 +492,12 @@ public static class CustomActions
     /// </summary>
     /// <param name="session">The <see cref="Session" />.</param>
     /// <returns>True on success, false on timeout.</returns>
+    /// <remarks>
+    ///     Reloading the device stack is the only way for a freshly registered Bluetooth class lower filter
+    ///     (<c>BthPS3PSM</c>) to attach without a full reboot. USB radios support a hot port-cycle; BTHX/BthMini-bound
+    ///     radios (e.g. Intel PCIe <c>iBtPciBus</c>) do not, so those are restarted by removing and re-enumerating the
+    ///     device node instead. See #137.
+    /// </remarks>
     private static bool RestartRadioAndAwait(Session session)
     {
         AutoResetEvent waitEvent = new(false);
@@ -487,9 +517,34 @@ public static class CustomActions
                 waitEvent.Set();
             }
 
+            if (!RadioTransport.TryGetHostRadioDevice(out PnPDevice radioDevice))
+            {
+                session.Log("WARN: Radio device not found, cannot restart");
+                return false;
+            }
+
+            RadioTransportType transportType = RadioTransport.GetTransportType(radioDevice);
+            session.Log($"Radio transport type detected as {transportType}");
+
             session.Log("Restarting radio device");
-            // restart device, filter is loaded afterward
-            HostRadio.RestartRadioDevice();
+
+            switch (transportType)
+            {
+                case RadioTransportType.Usb:
+                    // restart device, filter is loaded afterward
+                    HostRadio.RestartRadioDevice();
+                    break;
+                case RadioTransportType.Bthx:
+                    // USB port-cycling doesn't apply to BTHX/BthMini-bound radios; rebuild the
+                    // device stack instead so the updated Bluetooth class LowerFilters
+                    // registration is picked up without requiring a reboot
+                    radioDevice.RemoveAndSetup();
+                    break;
+                default:
+                    session.Log("WARN: Unsupported radio transport, skipping restart");
+                    return false;
+            }
+
             session.Log("Restarted radio device");
             session.Log("Waiting for radio device to come online...");
 

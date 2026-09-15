@@ -167,14 +167,21 @@ internal class InstallScript
             ),
             new Error("9002",
                 "Radio online detection timed out. " +
-                "This error can be misleading on some systems (using Intel Wireless). " +
-                "You can ignore the detection error and setup might be able to finish successfully. " +
+                "This error can be misleading on some systems (using Intel Wireless), and is expected on " +
+                "BTHX/BthMini-based radios (e.g. Intel PCIe iBtPciBus), which cannot be power-cycled without a reboot. " +
+                "Choosing Ignore lets setup finish; a reboot will then be required to fully load the driver. " +
                 "You can retry the same operation again, which might fix it. " +
                 "If you choose to abort, setup will end with an error."
             ),
             new Error("9003",
                 "Legacy installation method was chosen. " +
                 "After the setup is finished, you MUST REBOOT THE SYSTEM before using the software."
+            ),
+            new Error("9004",
+                "The detected Bluetooth host radio is not attached via a supported transport (USB, or BTHX/BthMini " +
+                "for select non-USB radios such as Intel PCIe iBtPciBus). " +
+                "Installing the drivers would not work and could leave your Bluetooth stack in a broken state. " +
+                "Setup will now exit without making changes."
             )
         )
         {
@@ -274,25 +281,51 @@ internal class InstallScript
 
     private static void ProjectOnLoad(SetupEventArgs e)
     {
-        if (HostRadio.IsAvailable)
+        Session? session = e.Session;
+
+        if (!HostRadio.IsAvailable)
+        {
+            if (session is null)
+            {
+                e.Result = ActionResult.Failure;
+                return;
+            }
+
+            Record record = new(1);
+            record[1] = "9001";
+
+            session.Message(
+                InstallMessage.User | (InstallMessage)MessageButtons.OK | (InstallMessage)MessageIcon.Error,
+                record);
+
+            e.Result = ActionResult.UserExit;
+            return;
+        }
+
+        // reject transports the filter driver can't attach to (see #137) before setup writes
+        // anything to the Bluetooth class LowerFilters registry value
+        if (!RadioTransport.TryGetHostRadioDevice(out PnPDevice radioDevice))
         {
             return;
         }
 
-        Session? session = e.Session;
+        if (RadioTransport.GetTransportType(radioDevice) != RadioTransportType.Unsupported)
+        {
+            return;
+        }
 
         if (session is null)
         {
             e.Result = ActionResult.Failure;
             return;
         }
-        
-        Record record = new(1);
-        record[1] = "9001";
+
+        Record unsupportedTransportRecord = new(1);
+        unsupportedTransportRecord[1] = "9004";
 
         session.Message(
             InstallMessage.User | (InstallMessage)MessageButtons.OK | (InstallMessage)MessageIcon.Error,
-            record);
+            unsupportedTransportRecord);
 
         e.Result = ActionResult.UserExit;
     }

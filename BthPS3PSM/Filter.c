@@ -261,19 +261,30 @@ BthxReadHciCompleted(
 
         if (pReqCtx != NULL
             && pReqCtx->OutputBuffer != NULL
-            && pReqCtx->OutputBufferLength >= FIELD_OFFSET(BTHX_HCI_READ_WRITE_CONTEXT, Data))
+            && pReqCtx->OutputBufferLength >= FIELD_OFFSET(BTHX_HCI_READ_WRITE_CONTEXT, Data)
+            && Params->IoStatus.Information >= FIELD_OFFSET(BTHX_HCI_READ_WRITE_CONTEXT, Data))
         {
             const PBTHX_HCI_READ_WRITE_CONTEXT pHciCtx = (PBTHX_HCI_READ_WRITE_CONTEXT)pReqCtx->OutputBuffer;
 
             //
             // We're only interested in inbound ACL data; HCI events carry
             // no L2CAP payload and are left untouched
-            // 
+            //
             if ((BTHX_HCI_PACKET_TYPE)pHciCtx->Type == HciPacketAclData)
             {
-                const size_t maxDataLen = pReqCtx->OutputBufferLength - FIELD_OFFSET(BTHX_HCI_READ_WRITE_CONTEXT, Data);
+                //
+                // Bound DataLen by both the buffer's allocated capacity and
+                // the number of bytes the lower driver actually reported
+                // having written (Information); the latter can be smaller
+                // than the former, in which case Data beyond it is stale/
+                // uninitialized and must not be parsed as HCI payload.
+                // 
+                const size_t maxDataLenByBuffer = pReqCtx->OutputBufferLength - FIELD_OFFSET(BTHX_HCI_READ_WRITE_CONTEXT, Data);
+                const size_t maxDataLenByInfo = (size_t)Params->IoStatus.Information - FIELD_OFFSET(BTHX_HCI_READ_WRITE_CONTEXT, Data);
 
-                if (pHciCtx->DataLen > 0 && (size_t)pHciCtx->DataLen <= maxDataLen)
+                if (pHciCtx->DataLen > 0
+                    && (size_t)pHciCtx->DataLen <= maxDataLenByBuffer
+                    && (size_t)pHciCtx->DataLen <= maxDataLenByInfo)
                 {
                     BthPS3PSM_PatchL2capPsm(pDevCtx, pHciCtx->Data, pHciCtx->DataLen);
                 }
@@ -281,9 +292,10 @@ BthxReadHciCompleted(
                 {
                     TraceEvents(TRACE_LEVEL_WARNING,
                         TRACE_FILTER,
-                        "IOCTL_BTHX_READ_HCI reported implausible DataLen %lu (max %Iu), skipping",
+                        "IOCTL_BTHX_READ_HCI reported implausible DataLen %lu (max by buffer %Iu, max by Information %Iu), skipping",
                         pHciCtx->DataLen,
-                        maxDataLen
+                        maxDataLenByBuffer,
+                        maxDataLenByInfo
                     );
                 }
             }

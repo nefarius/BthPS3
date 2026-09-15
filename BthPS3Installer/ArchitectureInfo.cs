@@ -22,9 +22,20 @@ internal static class ArchitectureInfo
     {
         get
         {
-            IntPtr handle = Process.GetCurrentProcess().Handle;
-            IsWow64Process2(handle, out _, out ushort nativeMachine);
-            return nativeMachine == 0xaa64;
+            try
+            {
+                IntPtr handle = Process.GetCurrentProcess().Handle;
+                if (!IsWow64Process2(handle, out _, out ushort nativeMachine))
+                {
+                    return false;
+                }
+
+                return nativeMachine == 0xaa64;
+            }
+            catch (EntryPointNotFoundException)
+            {
+                return false;
+            }
         }
     }
 

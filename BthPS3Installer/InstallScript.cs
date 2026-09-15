@@ -2,6 +2,7 @@
 using System.Buffers;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -88,12 +89,12 @@ internal class InstallScript
                 new Dir(driversFeature, "nefcon")
                 {
                     Files = new DirFiles(driversFeature, "*.*").GetFiles(nefconDir),
-                    Dirs = WixExt.GetSubDirectories(driversFeature, nefconDir).ToArray()
+                    Dirs = GetSubDirectories(driversFeature, nefconDir)
                 },
                 // driver binaries
                 new Dir(driversFeature, "drivers")
                 {
-                    Dirs = WixExt.GetSubDirectories(driversFeature, DriversRoot).ToArray()
+                    Dirs = GetSubDirectories(driversFeature, DriversRoot)
                 },
                 // manifest files
                 new Dir(driversFeature, ManifestsDir,
@@ -326,6 +327,22 @@ internal class InstallScript
             "Setup payload is incomplete, missing:" + Environment.NewLine +
             string.Join(Environment.NewLine, missing) + Environment.NewLine +
             "Build the MSI through the GitHub Actions setup workflow (see Setup\\README.md).");
+    }
+
+    /// <summary>
+    ///     Immediate child directories, each with a recursive <see cref="Files" /> wildcard.
+    ///     Local replacement for <c>WixExt.GetSubDirectories</c>, which was compiled against
+    ///     a WixSharp build that still stored <c>WixEntity.Name</c> as a field.
+    /// </summary>
+    private static Dir[] GetSubDirectories(Feature feature, string directory)
+    {
+        return Directory.GetDirectories(directory)
+            .Select(subDirectory =>
+            {
+                string name = Path.GetFileName(subDirectory);
+                return new Dir(feature, name, new Files(feature, Path.Combine(subDirectory, "*.*")));
+            })
+            .ToArray();
     }
 
     private static void ProjectOnLoad(SetupEventArgs e)

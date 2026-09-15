@@ -7,6 +7,13 @@
     Driver tags stay vMAJOR.MINOR.PATCH. The first setup tag for that payload is
     setup-vMAJOR.MINOR.PATCH; later setup-only re-spins use -r1, -r2, and so on.
     The MSI product version remains MAJOR.MINOR.PATCH.
+
+    Assert-BthPS3SetupVersionNotRegressed guards against dispatching a driver
+    tag whose MAJOR.MINOR.PATCH is lower than a setup version already
+    published (setup-v* tag anywhere in history, not just re-spins of the
+    current version). Windows Installer treats a lower ProductVersion as a
+    downgrade and blocks it, so this must fail fast instead of quietly
+    producing an MSI nobody who already updated can install.
 #>
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -118,6 +125,102 @@ function Get-BthPS3NextSetupReleaseTag {
     }
 
     return "$base-r$revision"
+}
+
+function ConvertTo-BthPS3SetupVersionFromTag {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [AllowEmptyString()]
+        [string] $Tag
+    )
+
+    $name = $Tag.Trim()
+    if ($name -match '^refs/tags/(.+)$') {
+        $name = $Matches[1]
+    }
+
+    # Accepts both the current setup-vMAJOR.MINOR.PATCH[-rN] scheme and legacy
+    # setup-v* tags with an extra 4th component (e.g. setup-v2.10.371.0) so the
+    # regression guard below can compare against the full tag history.
+    if ($name -notmatch '^setup-v(\d+(?:\.\d+){1,3})(?:-r[1-9][0-9]*)?$') {
+        return $null
+    }
+
+    return [version]$Matches[1]
+}
+
+function Get-BthPS3HighestSetupVersion {
+    [CmdletBinding()]
+    param(
+        [AllowNull()]
+        [AllowEmptyCollection()]
+        [string[]] $Tags = @()
+    )
+
+    if ($null -eq $Tags) {
+        $Tags = @()
+    }
+
+    $highest = $null
+    foreach ($tag in $Tags) {
+        $version = ConvertTo-BthPS3SetupVersionFromTag -Tag $tag
+        if ($null -eq $version) {
+            continue
+        }
+
+        if ($null -eq $highest -or $version -gt $highest) {
+            $highest = $version
+        }
+    }
+
+    return $highest
+}
+
+function Assert-BthPS3SetupVersionNotRegressed {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $SetupVersion,
+
+        [AllowNull()]
+        [version] $HighestPublishedVersion
+    )
+
+    if ($SetupVersion -notmatch '^\d+\.\d+\.\d+$') {
+        throw "SetupVersion must be MAJOR.MINOR.PATCH. Got: '$SetupVersion'."
+    }
+
+    if ($null -eq $HighestPublishedVersion) {
+        return
+    }
+
+    $candidate = [version]$SetupVersion
+    if ($candidate -lt $HighestPublishedVersion) {
+        $lines = @(
+            "Setup version $SetupVersion is older than the highest already-published setup-v$HighestPublishedVersion."
+            'Windows Installer treats a lower ProductVersion as a downgrade and blocks it for anyone already on the newer build.'
+            "Dispatch a driver tag whose MAJOR.MINOR.PATCH exceeds $HighestPublishedVersion. If the driver's own version"
+            "numbering has not caught up, bump its major version (e.g. v3.0.0) instead of adding a version offset;"
+            'that stays correct permanently without ongoing bookkeeping.'
+        )
+        throw ($lines -join ' ')
+    }
+}
+
+function Get-BthPS3AllSetupReleaseTags {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $Repository
+    )
+
+    $refs = gh api "repos/$Repository/git/matching-refs/tags/setup-v" | ConvertFrom-Json
+    if ($LASTEXITCODE) {
+        throw 'Failed to list setup-v* tags.'
+    }
+
+    @($refs | ForEach-Object { [string]$_.ref -replace '^refs/tags/', '' })
 }
 
 function Assert-BthPS3ReleaseMetadataMatchesTag {

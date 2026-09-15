@@ -54,6 +54,11 @@ jobs:
           . ./build/SetupRelease.ps1
 
           $identity = ConvertTo-BthPS3SetupReleaseIdentity -DriverTag $env:DRIVER_TAG
+
+          $allSetupTags = Get-BthPS3AllSetupReleaseTags -Repository '${{ github.repository }}'
+          $highestPublished = Get-BthPS3HighestSetupVersion -Tags $allSetupTags
+          Assert-BthPS3SetupVersionNotRegressed -SetupVersion $identity.SetupVersion -HighestPublishedVersion $highestPublished
+
           $source = Resolve-BthPS3SetupArtifactRuns -Repository '${{ github.repository }}' -DriverTag $identity.DriverTag
           $existing = Get-BthPS3ExistingSetupReleaseTags -Repository '${{ github.repository }}' -SetupVersion $identity.SetupVersion
           $setupTag = Get-BthPS3NextSetupReleaseTag -SetupVersion $identity.SetupVersion -ExistingTags $existing
@@ -262,6 +267,11 @@ jobs:
           . ./build/SetupRelease.ps1
 
           $repo = '${{ github.repository }}'
+
+          $allSetupTags = Get-BthPS3AllSetupReleaseTags -Repository $repo
+          $highestPublished = Get-BthPS3HighestSetupVersion -Tags $allSetupTags
+          Assert-BthPS3SetupVersionNotRegressed -SetupVersion $env:SETUP_VERSION -HighestPublishedVersion $highestPublished
+
           $existing = Get-BthPS3ExistingSetupReleaseTags -Repository $repo -SetupVersion $env:SETUP_VERSION
           $tag = Get-BthPS3NextSetupReleaseTag -SetupVersion $env:SETUP_VERSION -ExistingTags $existing
           if ($tag -ne $env:PROPOSED_SETUP_TAG) {

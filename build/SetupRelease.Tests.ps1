@@ -111,6 +111,26 @@ Assert-Throws { Assert-BthPS3ReleaseMetadataMatchesTag -Metadata $badCommit -Dri
 
 Assert-Equal (Get-BthPS3SetupMsiFileName -SetupVersion '2.12.0') 'Nefarius_BthPS3_Drivers_x64_arm64_v2.12.0.msi' 'msi file name'
 
+Assert-Equal (ConvertTo-BthPS3SetupVersionFromTag -Tag 'setup-v2.17.0') ([version]'2.17.0') 'parses plain setup tag'
+Assert-Equal (ConvertTo-BthPS3SetupVersionFromTag -Tag 'setup-v2.12.0-r3') ([version]'2.12.0') 'parses re-spin tag, drops -rN'
+Assert-Equal (ConvertTo-BthPS3SetupVersionFromTag -Tag 'setup-v2.10.371.0') ([version]'2.10.371.0') 'parses legacy 4-component tag'
+Assert-Equal (ConvertTo-BthPS3SetupVersionFromTag -Tag 'refs/tags/setup-v2.17.0') ([version]'2.17.0') 'strips refs/tags prefix'
+Assert-Equal (ConvertTo-BthPS3SetupVersionFromTag -Tag 'v2.17.0') $null 'ignores non-setup tags'
+Assert-Equal (ConvertTo-BthPS3SetupVersionFromTag -Tag 'setup-v2.17.0-beta') $null 'ignores non-numeric suffix'
+
+Assert-Equal (Get-BthPS3HighestSetupVersion -Tags @()) $null 'highest version of empty set is null'
+Assert-Equal (Get-BthPS3HighestSetupVersion -Tags @('setup-v2.12.0', 'setup-v2.17.0', 'setup-v2.9.336')) ([version]'2.17.0') 'highest version picks max'
+Assert-Equal (Get-BthPS3HighestSetupVersion -Tags @('setup-v2.10.371.0', 'setup-v2.10.371', 'not-a-tag')) ([version]'2.10.371.0') 'highest version ignores unrelated tags'
+
+Assert-BthPS3SetupVersionNotRegressed -SetupVersion '2.17.0' -HighestPublishedVersion $null
+Write-Output 'PASS regression guard allows first-ever setup version'
+Assert-BthPS3SetupVersionNotRegressed -SetupVersion '2.18.0' -HighestPublishedVersion ([version]'2.17.0')
+Write-Output 'PASS regression guard allows newer version'
+Assert-BthPS3SetupVersionNotRegressed -SetupVersion '2.17.0' -HighestPublishedVersion ([version]'2.17.0')
+Write-Output 'PASS regression guard allows re-spin of the current highest version'
+Assert-Throws { Assert-BthPS3SetupVersionNotRegressed -SetupVersion '2.13.0' -HighestPublishedVersion ([version]'2.17.0') } 'regression guard rejects older version'
+Assert-Throws { Assert-BthPS3SetupVersionNotRegressed -SetupVersion '2.12' -HighestPublishedVersion $null } 'regression guard rejects malformed setup version'
+
 $provenance = New-BthPS3SetupProvenance `
     -DriverTag 'v2.12.0' `
     -SetupVersion '2.12.0' `

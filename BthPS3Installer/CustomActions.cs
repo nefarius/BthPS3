@@ -554,11 +554,13 @@ public static class CustomActions
                 return false;
             }
 
-            session.Log(!HostRadio.IsAvailable
+            bool radioAvailable = HostRadio.IsAvailable;
+
+            session.Log(!radioAvailable
                 ? "WARN: Radio not available after wait period"
                 : "Radio available after restart");
 
-            return true;
+            return radioAvailable;
         }
         catch (Exception ex)
         {

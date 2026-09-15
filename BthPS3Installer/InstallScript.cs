@@ -281,6 +281,15 @@ internal class InstallScript
 
     private static void ProjectOnLoad(SetupEventArgs e)
     {
+        // this preflight only matters for a fresh install (it decides whether it is safe to
+        // write the Bluetooth class LowerFilters registry value); running it during maintenance,
+        // repair, or uninstall would incorrectly block those paths if the radio has since been
+        // removed or disabled
+        if (!e.IsInstalling)
+        {
+            return;
+        }
+
         Session? session = e.Session;
 
         if (!HostRadio.IsAvailable)
@@ -306,6 +315,10 @@ internal class InstallScript
         // anything to the Bluetooth class LowerFilters registry value
         if (!RadioTransport.TryGetHostRadioDevice(out PnPDevice radioDevice))
         {
+            // HostRadio.IsAvailable reported a radio present but the device node couldn't be
+            // resolved; don't let install proceed to DeviceClassFilters.AddLower without knowing
+            // which transport it targets
+            e.Result = ActionResult.Failure;
             return;
         }
 

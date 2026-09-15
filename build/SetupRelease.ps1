@@ -216,12 +216,18 @@ function Get-BthPS3AllSetupReleaseTags {
         [string] $Repository
     )
 
-    $refs = gh api "repos/$Repository/git/matching-refs/tags/setup-v" | ConvertFrom-Json
+    $pages = gh api --paginate --slurp "repos/$Repository/git/matching-refs/tags/setup-v" | ConvertFrom-Json
     if ($LASTEXITCODE) {
         throw 'Failed to list setup-v* tags.'
     }
 
-    @($refs | ForEach-Object { [string]$_.ref -replace '^refs/tags/', '' })
+    @(
+        foreach ($page in @($pages)) {
+            foreach ($item in @($page)) {
+                [string]$item.ref -replace '^refs/tags/', ''
+            }
+        }
+    )
 }
 
 function Assert-BthPS3ReleaseMetadataMatchesTag {

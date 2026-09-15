@@ -235,15 +235,6 @@ jobs:
           if-no-files-found: error
           path: setup-artifact
 
-      - name: 'Mirror setup'
-        # nefarius/AppVeyorArtifactsReceiver@57828477ff1ba7eeeda6818fba2e3a12ce059b77 (master as of 2026-09-15, PR #134)
-        uses: nefarius/AppVeyorArtifactsReceiver@57828477ff1ba7eeeda6818fba2e3a12ce059b77
-        with:
-          webhook-url: ${{ secrets.WEBHOOK_URL }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          artifact-name: bthps3-setup
-          skip-latest-symlink: true
-
   tag:
     name: 'Create setup tag'
     needs: [resolve, build]
@@ -285,3 +276,17 @@ jobs:
           ) -join [Environment]::NewLine
           $summary >> $env:GITHUB_STEP_SUMMARY
           Write-Output $summary
+
+  mirror:
+    name: 'Mirror setup'
+    needs: tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Mirror setup'
+        # nefarius/AppVeyorArtifactsReceiver@57828477ff1ba7eeeda6818fba2e3a12ce059b77 (master as of 2026-09-15, PR #134)
+        uses: nefarius/AppVeyorArtifactsReceiver@57828477ff1ba7eeeda6818fba2e3a12ce059b77
+        with:
+          webhook-url: ${{ secrets.WEBHOOK_URL }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          artifact-name: bthps3-setup
+          skip-latest-symlink: true

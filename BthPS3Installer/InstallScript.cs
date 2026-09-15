@@ -48,7 +48,15 @@ internal class InstallScript
         string filterPath = Path.Combine(DriversRoot, @"BthPS3PSM\x64\BthPS3PSM.sys");
         string cfgUiPath = Path.Combine(ArtifactsDir, @"bin\BthPS3CfgUI.exe");
 
-        RequireStagedPayload(driverPath, filterPath, cfgUiPath);
+        RequireStagedPayload(
+            Path.Combine(DriversRoot, @"BthPS3\BthPS3.inf"),
+            Path.Combine(DriversRoot, @"BthPS3\BthPS3_PDO_NULL_Device.inf"),
+            driverPath,
+            Path.Combine(DriversRoot, @"BthPS3\ARM64\BthPS3.sys"),
+            Path.Combine(DriversRoot, @"BthPS3PSM\BthPS3PSM.inf"),
+            filterPath,
+            Path.Combine(DriversRoot, @"BthPS3PSM\ARM64\BthPS3PSM.sys"),
+            cfgUiPath);
 
         Version driverVersion = Version.Parse(FileVersionInfo.GetVersionInfo(driverPath).FileVersion);
         Version filterVersion = Version.Parse(FileVersionInfo.GetVersionInfo(filterPath).FileVersion);

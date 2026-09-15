@@ -298,6 +298,25 @@ public static class CustomActions
 
             try
             {
+                // re-validate right before writing LowerFilters: the ProjectOnLoad preflight
+                // only guards the interactive UI session load, not this (possibly later,
+                // possibly separately elevated) deferred custom action
+                if (!RadioTransport.TryGetHostRadioDevice(out PnPDevice radioDevice) ||
+                    RadioTransport.GetTransportType(radioDevice) == RadioTransportType.Unsupported)
+                {
+                    session.Log(
+                        "WARN: Host radio not found or its transport is unsupported, aborting before filter registration");
+
+                    Record unsupportedTransportRecord = new(1);
+                    unsupportedTransportRecord[1] = "9004";
+
+                    session.Message(
+                        InstallMessage.User | (InstallMessage)MessageButtons.OK | (InstallMessage)MessageIcon.Error,
+                        unsupportedTransportRecord);
+
+                    goto exitFailure;
+                }
+
                 // register filter
                 session.Log("Adding lower filter entry");
                 DeviceClassFilters.AddLower(DeviceClassIds.Bluetooth, FilterDriver.FilterServiceName);

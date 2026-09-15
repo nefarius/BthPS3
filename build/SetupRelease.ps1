@@ -568,33 +568,22 @@ function Resolve-BthPS3SetupArtifactRuns {
     $seen = [System.Collections.Generic.HashSet[long]]::new()
     $candidates = [System.Collections.Generic.List[object]]::new()
 
-    $queries = @(
-        @(
-            'run', 'list'
-            '--repo', $Repository
-            '--workflow', 'build.yml'
-            '--branch', $identity.DriverTag
-            '--status', 'success'
-            '--limit', '20'
-            '--json', 'databaseId,headSha,createdAt,event,headBranch,url'
-        )
-        @(
-            'run', 'list'
-            '--repo', $Repository
-            '--workflow', 'build.yml'
-            '--event', 'workflow_dispatch'
-            '--status', 'success'
-            '--limit', '30'
-            '--json', 'databaseId,headSha,createdAt,event,headBranch,url'
-        )
-    )
+    # Call gh directly. A PowerShell array-of-arrays flattens, and splatting a
+    # string then invokes `gh r u n` ("unknown command r").
+    $jsonFields = 'databaseId,headSha,createdAt,event,headBranch,url'
+    $listedJson = [System.Collections.Generic.List[string]]::new()
+    $listedJson.Add([string](gh run list --repo $Repository --workflow build.yml --branch $identity.DriverTag --status success --limit 20 --json $jsonFields))
+    if ($LASTEXITCODE) {
+        throw "Failed to list Build workflow runs for $($identity.DriverTag)."
+    }
 
-    foreach ($query in $queries) {
-        $runs = gh @query | ConvertFrom-Json
-        if ($LASTEXITCODE) {
-            throw "Failed to list Build workflow runs for $($identity.DriverTag)."
-        }
+    $listedJson.Add([string](gh run list --repo $Repository --workflow build.yml --event workflow_dispatch --status success --limit 30 --json $jsonFields))
+    if ($LASTEXITCODE) {
+        throw "Failed to list Build workflow runs for $($identity.DriverTag)."
+    }
 
+    foreach ($json in $listedJson) {
+        $runs = $json | ConvertFrom-Json
         foreach ($run in @($runs)) {
             $id = [int64]$run.databaseId
             if ($seen.Add($id)) {

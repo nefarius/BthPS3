@@ -274,7 +274,7 @@ jobs:
           $existing = Get-BthPS3ExistingSetupReleaseTags -Repository $repo -SetupVersion $env:SETUP_VERSION
           $tag = Get-BthPS3NextSetupReleaseTag -SetupVersion $env:SETUP_VERSION -ExistingTags $existing
           if ($tag -ne $env:PROPOSED_SETUP_TAG) {
-            Write-Output "Proposed tag $($env:PROPOSED_SETUP_TAG) was taken; using $tag instead."
+            throw "Proposed tag $($env:PROPOSED_SETUP_TAG) is no longer free (next would be $tag). Re-dispatch so provenance and the Git tag stay aligned."
           }
 
           New-BthPS3SetupGitTag -Repository $repo -Tag $tag -Sha $env:SETUP_COMMIT

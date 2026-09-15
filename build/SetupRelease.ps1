@@ -381,7 +381,7 @@ function New-BthPS3SetupProvenance {
 
     $escaped = [regex]::Escape($identity.SetupVersion)
     if ($SetupTag -ne $identity.SetupTagBase -and $SetupTag -notmatch "^setup-v$escaped-r([1-9][0-9]*)$") {
-        throw "Setup tag '$SetupTag' is not $identity.SetupTagBase or a -rN re-spin."
+        throw "Setup tag '$SetupTag' is not $($identity.SetupTagBase) or a -rN re-spin."
     }
 
     if ($DriverVersion -notmatch '^\d+\.\d+\.\d+\.\d+$' -or
@@ -509,7 +509,7 @@ function Save-BthPS3GitHubArtifact {
     }
 
     New-Item -ItemType Directory -Force -Path $Directory | Out-Null
-    gh run download $RunId --repo $Repository --name $Name --dir $Directory
+    gh run download $RunId --repo $Repository --name $Name --dir $Directory *>$null
     if ($LASTEXITCODE) {
         throw "Failed to download artifact '$Name' from run $RunId."
     }
@@ -685,7 +685,7 @@ function Find-BthPS3MicrosoftDriversRun {
         }
 
         if ($names -notcontains 'release-metadata') {
-            Write-Output "Partner Center run $runId has attested drivers but no release-metadata; skipping identity check fallback."
+            Write-Host "Partner Center run $runId has attested drivers but no release-metadata; skipping identity check fallback."
             continue
         }
 
@@ -696,7 +696,7 @@ function Find-BthPS3MicrosoftDriversRun {
             Assert-BthPS3ReleaseMetadataMatchesTag -Metadata $metadata -DriverTag $identity.DriverTag
         }
         catch {
-            Write-Output "Skipping Partner Center run ${runId}: $($_.Exception.Message)"
+            Write-Host "Skipping Partner Center run ${runId}: $($_.Exception.Message)"
             continue
         }
 

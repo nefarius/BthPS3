@@ -125,7 +125,7 @@ $provenance = New-BthPS3SetupProvenance `
     -MsiSha256 ('a' * 64)
 Assert-Equal $provenance.setupTag 'setup-v2.12.0-r1' 'provenance setup tag'
 Assert-Equal $provenance.files.msi.sha256 ('a' * 64) 'provenance msi hash'
-Assert-Throws {
+try {
     New-BthPS3SetupProvenance `
         -DriverTag 'v2.12.0' `
         -SetupVersion '2.12.0' `
@@ -138,7 +138,18 @@ Assert-Throws {
         -Repository 'nefarius/BthPS3' `
         -MsiName 'Nefarius_BthPS3_Drivers_x64_arm64_v2.12.0.msi' `
         -MsiSha256 ('a' * 64)
-} 'provenance rejects foreign setup tag'
+    throw 'FAIL provenance rejects foreign setup tag: expected an exception'
+}
+catch {
+    if ($_.Exception.Message -eq 'FAIL provenance rejects foreign setup tag: expected an exception') {
+        throw
+    }
+    if ($_.Exception.Message -cne "Setup tag 'setup-v2.12.1' is not setup-v2.12.0 or a -rN re-spin.") {
+        throw "FAIL provenance interpolates SetupTagBase: $($_.Exception.Message)"
+    }
+    Write-Output 'PASS provenance rejects foreign setup tag'
+    Write-Output 'PASS provenance interpolates SetupTagBase'
+}
 
 $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("bthps3-setup-tests-" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Force -Path $tempRoot | Out-Null

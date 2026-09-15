@@ -7,7 +7,6 @@ static class ReleasePipelineTests
     public static void Run()
     {
         TestMetadataRoundTrip();
-        TestArrangeDownloadedArtifacts();
         TestIngestFromDirectoryAndZip();
         TestDriverLayoutRequiresBothPackages();
     }
@@ -28,29 +27,6 @@ static class ReleasePipelineTests
         string bad = Path.Combine(scope.Root, "bad.json");
         ReleaseStaging.WriteMetadata(bad, metadata);
         AssertThrows(() => ReleaseStaging.ReadMetadata(bad), "missing partnerCab name");
-    }
-
-    static void TestArrangeDownloadedArtifacts()
-    {
-        using TempScope scope = new();
-        string download = Path.Combine(scope.Root, "download");
-        string artifacts = Path.Combine(scope.Root, "artifacts");
-        ReleaseMetadata metadata = SampleMetadata();
-        string cab = Path.Combine(download, "bthps3-partner-submission", metadata.Files.PartnerCab.Name);
-        Directory.CreateDirectory(Path.GetDirectoryName(cab)!);
-        File.WriteAllText(cab, "cab-bytes");
-        metadata.Files.PartnerCab.Sha256 = ReleaseStaging.Sha256File(cab);
-        ReleaseStaging.WriteMetadata(Path.Combine(download, "release-metadata", ReleaseStaging.MetadataFileName), metadata);
-        Directory.CreateDirectory(Path.Combine(download, "bthps3-tools", "bin"));
-        File.WriteAllText(Path.Combine(download, "bthps3-tools", "bin", "BthPS3CfgUI.exe"), "app");
-
-        ReleaseStaging.ArrangeDownloadedArtifacts(download, artifacts);
-        AssertTrue(File.Exists(Path.Combine(artifacts, "bin", "BthPS3CfgUI.exe")), "cfg ui staged");
-        AssertTrue(File.Exists(Path.Combine(artifacts, "submission", metadata.Files.PartnerCab.Name)), "cab staged");
-
-        metadata.Files.PartnerCab.Sha256 = new string('0', 64);
-        ReleaseStaging.WriteMetadata(Path.Combine(download, "release-metadata", ReleaseStaging.MetadataFileName), metadata);
-        AssertThrows(() => ReleaseStaging.ArrangeDownloadedArtifacts(download, artifacts), "hash mismatch");
     }
 
     static void TestIngestFromDirectoryAndZip()
@@ -127,14 +103,6 @@ static class ReleasePipelineTests
         if (!string.Equals(actual, expected, StringComparison.Ordinal))
         {
             throw new InvalidOperationException($"FAIL {name}: expected '{expected}', got '{actual}'.");
-        }
-    }
-
-    static void AssertTrue(bool condition, string name)
-    {
-        if (!condition)
-        {
-            throw new InvalidOperationException($"FAIL {name}");
         }
     }
 

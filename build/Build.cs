@@ -24,9 +24,6 @@ class Build : NukeBuild
     [Parameter("Target platform for CI (x64 or ARM64). Not needed for local builds.")]
     readonly string TargetPlatform = "";
 
-    [Parameter("GitHub Actions run ID used by DownloadCiArtifacts")]
-    readonly string RunId = "";
-
     [Parameter("Output path for release staging. Default: ./artifacts")]
     readonly string ArtifactsPath = "./artifacts";
 
@@ -192,45 +189,7 @@ class Build : NukeBuild
         });
 
     /// <summary>
-    /// Downloads tagged-run artifacts needed to continue a local release.
-    /// </summary>
-    public Target DownloadCiArtifacts => _ => _
-        .Executes(() =>
-        {
-            if (string.IsNullOrWhiteSpace(RunId) || !long.TryParse(RunId, out long parsedRunId) || parsedRunId <= 0)
-            {
-                throw new InvalidOperationException(
-                    "DownloadCiArtifacts requires RunId (the numeric GitHub Actions run ID).");
-            }
-
-            string artifactsDir = ResolvedArtifactsPath;
-            string downloadDir = Path.Combine(artifactsDir, "ci");
-            if (Directory.Exists(downloadDir))
-            {
-                Directory.Delete(downloadDir, recursive: true);
-            }
-
-            Directory.CreateDirectory(downloadDir);
-
-            DownloadRunArtifact(parsedRunId, downloadDir, "release-metadata", required: true);
-            DownloadRunArtifact(parsedRunId, downloadDir, "bthps3-tools", required: true);
-            DownloadRunArtifact(parsedRunId, downloadDir, "bthps3-partner-submission", required: true);
-            DownloadRunArtifact(parsedRunId, downloadDir, "bthps3-microsoft-drivers", required: false);
-
-            ReleaseStaging.ArrangeDownloadedArtifacts(downloadDir, artifactsDir);
-            if (ReleaseStaging.TryStageMicrosoftDrivers(downloadDir, artifactsDir))
-            {
-                Log.Information("Microsoft-attested drivers are in {Drivers}",
-                    ReleaseStaging.DriversDirectory(artifactsDir));
-            }
-            else
-            {
-                Log.Information("Microsoft-attested drivers are not on this run yet.");
-            }
-        });
-
-    /// <summary>
-    /// Runs offline version, INF, and Partner Center dry-run checks.
+    /// Runs offline version, INF, setup-release, and Partner Center dry-run checks.
     /// </summary>
     public Target TestReleasePipeline => _ => _
         .Executes(() =>
@@ -242,6 +201,7 @@ class Build : NukeBuild
             foreach (string testFile in new[]
                      {
                          "ReleaseVersion.Tests.ps1",
+                         "SetupRelease.Tests.ps1",
                          "New-PartnerSubmissionInf.Tests.ps1",
                          "PartnerSigning.Tests.ps1",
                          "PartnerSigning.DryRun.ps1"
@@ -305,24 +265,6 @@ class Build : NukeBuild
             .SetProperty("AssemblyVersion", BuildVersionStamp)
             .SetProperty("FileVersion", BuildVersionStamp)
             .SetProperty("InformationalVersion", BuildVersionStamp);
-    }
-
-    static void DownloadRunArtifact(long runId, string downloadDir, string pattern, bool required)
-    {
-        var process = ProcessTasks.StartProcess("gh",
-            $"run download {runId} --repo nefarius/BthPS3 --dir \"{downloadDir}\" --pattern \"{pattern}\"");
-        process.WaitForExit();
-        if (process.ExitCode == 0)
-        {
-            return;
-        }
-
-        if (required)
-        {
-            throw new InvalidOperationException($"Failed to download '{pattern}' from GitHub Actions run {runId}.");
-        }
-
-        Log.Information("Optional artifact {Pattern} is not on run {RunId}", pattern, runId);
     }
 
     static string TryGetPathExecutable(string name)

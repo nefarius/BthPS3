@@ -26,10 +26,6 @@ static class ReleaseStaging
 
     public static string DriversDirectory(string artifactsRoot) => Path.Combine(artifactsRoot, "drivers");
 
-    public static string BinDirectory(string artifactsRoot) => Path.Combine(artifactsRoot, "bin");
-
-    public static string SubmissionDirectory(string artifactsRoot) => Path.Combine(artifactsRoot, "submission");
-
     public static string MetadataPath(string artifactsRoot) => Path.Combine(artifactsRoot, MetadataFileName);
 
     public static ReleaseMetadata ReadMetadata(string path)
@@ -62,96 +58,6 @@ static class ReleaseStaging
         using FileStream stream = File.OpenRead(path);
         byte[] hash = SHA256.HashData(stream);
         return Convert.ToHexString(hash).ToLowerInvariant();
-    }
-
-    public static string FindExistingFile(string root, params string[] relativeCandidates)
-    {
-        foreach (string relative in relativeCandidates)
-        {
-            string path = Path.Combine(root, relative);
-            if (File.Exists(path))
-            {
-                return path;
-            }
-        }
-
-        IEnumerable<string> matches = Directory.Exists(root)
-            ? relativeCandidates.SelectMany(name =>
-                Directory.GetFiles(root, Path.GetFileName(name), SearchOption.AllDirectories)
-                    .Where(path => path.Replace('\\', '/').EndsWith(name.Replace('\\', '/'), StringComparison.OrdinalIgnoreCase)))
-            : [];
-
-        return matches.FirstOrDefault();
-    }
-
-    public static void ArrangeDownloadedArtifacts(string downloadDir, string artifactsRoot)
-    {
-        if (!Directory.Exists(downloadDir))
-        {
-            throw new InvalidOperationException($"Download directory not found: {downloadDir}");
-        }
-
-        Directory.CreateDirectory(artifactsRoot);
-        Directory.CreateDirectory(BinDirectory(artifactsRoot));
-        Directory.CreateDirectory(SubmissionDirectory(artifactsRoot));
-
-        string cfgUi = FindExistingFile(downloadDir, Path.Combine("bin", "BthPS3CfgUI.exe"), "BthPS3CfgUI.exe")
-                       ?? throw new InvalidOperationException("Downloaded artifacts are missing BthPS3CfgUI.exe.");
-        File.Copy(cfgUi, Path.Combine(BinDirectory(artifactsRoot), "BthPS3CfgUI.exe"), overwrite: true);
-
-        string metadata = FindExistingFile(downloadDir, MetadataFileName)
-                          ?? throw new InvalidOperationException(
-                              "Downloaded artifacts are missing release-metadata.json.");
-        File.Copy(metadata, MetadataPath(artifactsRoot), overwrite: true);
-        ReadMetadata(MetadataPath(artifactsRoot));
-
-        string cab = Directory.GetFiles(downloadDir, "BthPS3_*.cab", SearchOption.AllDirectories).SingleOrDefault()
-                     ?? throw new InvalidOperationException(
-                         "Downloaded artifacts are missing the bthps3-partner-submission CAB.");
-        string cabDest = Path.Combine(SubmissionDirectory(artifactsRoot), Path.GetFileName(cab));
-        File.Copy(cab, cabDest, overwrite: true);
-
-        ReleaseMetadata parsed = ReadMetadata(MetadataPath(artifactsRoot));
-        if (parsed.Files?.PartnerCab is not { } partnerCab)
-        {
-            throw new InvalidOperationException("Release metadata is missing files.partnerCab.");
-        }
-
-        string actualHash = Sha256File(cabDest);
-        if (!string.Equals(actualHash, partnerCab.Sha256, StringComparison.OrdinalIgnoreCase))
-        {
-            throw new InvalidOperationException(
-                $"Partner CAB hash mismatch. Metadata has {partnerCab.Sha256}, file is {actualHash}.");
-        }
-    }
-
-    public static bool TryStageMicrosoftDrivers(string downloadDir, string artifactsRoot)
-    {
-        string preferred = Path.Combine(downloadDir, "bthps3-microsoft-drivers");
-        if (!Directory.Exists(preferred) || !File.Exists(Path.Combine(preferred, "BthPS3", "BthPS3.inf")))
-        {
-            IReadOnlyList<string> packages = FindDriverRoots(downloadDir);
-            if (packages.Count == 0)
-            {
-                return false;
-            }
-
-            preferred = Path.GetDirectoryName(packages[0])!;
-            if (Path.GetFileName(preferred).Equals("BthPS3", StringComparison.OrdinalIgnoreCase))
-            {
-                preferred = Path.GetDirectoryName(preferred)!;
-            }
-        }
-
-        string destination = DriversDirectory(artifactsRoot);
-        if (Directory.Exists(destination))
-        {
-            Directory.Delete(destination, recursive: true);
-        }
-
-        CopyDirectory(preferred, destination);
-        RequireDriverLayout(destination);
-        return true;
     }
 
     public static void ExtractArchive(string archivePath, string destination)
@@ -308,21 +214,6 @@ static class ReleaseStaging
 
         throw new InvalidOperationException(
             $"Could not find both BthPS3 and BthPS3PSM packages under {root}.");
-    }
-
-    static IReadOnlyList<string> FindDriverRoots(string root)
-    {
-        if (!Directory.Exists(root))
-        {
-            return [];
-        }
-
-        return Directory.GetFiles(root, "BthPS3.inf", SearchOption.AllDirectories)
-            .Select(Path.GetDirectoryName)
-            .Where(directory => !string.IsNullOrWhiteSpace(directory))
-            .Select(Path.GetFullPath)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
     }
 
     static void CopyDirectory(string source, string destination)

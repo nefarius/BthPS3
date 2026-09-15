@@ -28,7 +28,6 @@
         "BuildDomito",
         "Clean",
         "Compile",
-        "DownloadCiArtifacts",
         "IngestMicrosoftPackage",
         "Restore",
         "TestReleasePipeline"
@@ -120,10 +119,6 @@
         "MicrosoftPackagePath": {
           "type": "string",
           "description": "Path to the Microsoft-attested driver package (zip, cab, or extracted directory)"
-        },
-        "RunId": {
-          "type": "string",
-          "description": "GitHub Actions run ID used by DownloadCiArtifacts"
         },
         "Solution": {
           "type": "string",

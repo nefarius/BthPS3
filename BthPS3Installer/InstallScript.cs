@@ -45,9 +45,20 @@ internal class InstallScript
         Version version = Version.Parse(BuildVariables.SetupVersion);
 
         string driverPath = Path.Combine(DriversRoot, @"BthPS3\x64\BthPS3.sys");
-        Version driverVersion = Version.Parse(FileVersionInfo.GetVersionInfo(driverPath).FileVersion);
-
         string filterPath = Path.Combine(DriversRoot, @"BthPS3PSM\x64\BthPS3PSM.sys");
+        string cfgUiPath = Path.Combine(ArtifactsDir, @"bin\BthPS3CfgUI.exe");
+
+        RequireStagedPayload(
+            Path.Combine(DriversRoot, @"BthPS3\BthPS3.inf"),
+            Path.Combine(DriversRoot, @"BthPS3\BthPS3_PDO_NULL_Device.inf"),
+            driverPath,
+            Path.Combine(DriversRoot, @"BthPS3\ARM64\BthPS3.sys"),
+            Path.Combine(DriversRoot, @"BthPS3PSM\BthPS3PSM.inf"),
+            filterPath,
+            Path.Combine(DriversRoot, @"BthPS3PSM\ARM64\BthPS3PSM.sys"),
+            cfgUiPath);
+
+        Version driverVersion = Version.Parse(FileVersionInfo.GetVersionInfo(driverPath).FileVersion);
         Version filterVersion = Version.Parse(FileVersionInfo.GetVersionInfo(filterPath).FileVersion);
 
         const string nefconDir = @".\nefcon";
@@ -136,7 +147,14 @@ internal class InstallScript
             new ElevatedManagedAction(CustomActions.UninstallManifest, Return.check,
                 When.Before,
                 Step.RemoveFiles,
-                Condition.Installed
+                new Condition("REMOVE=\"ALL\"")
+            ),
+            // remove driver residue via legacy method (must run before packaged files are
+            // removed, since it shells out to INSTALLDIR\nefcon\<arch>\nefconc.exe)
+            new ElevatedManagedAction(CustomActions.UninstallDriversLegacyAction, Return.check,
+                When.Before,
+                Step.RemoveFiles,
+                new Condition("REMOVE=\"ALL\"")
             ),
             // register updater
             new ManagedAction(CustomActions.RegisterUpdater, Return.check,
@@ -148,7 +166,7 @@ internal class InstallScript
             new ManagedAction(CustomActions.DeregisterUpdater, Return.check,
                 When.Before,
                 Step.RemoveFiles,
-                Condition.Installed
+                new Condition("REMOVE=\"ALL\"")
             ),
             new ManagedAction(CustomActions.OpenArticle, Return.check,
                 When.After,
@@ -205,7 +223,10 @@ internal class InstallScript
         project.AddProperty(new Property("RADIOFOUND", "1"));
         // override old detection check with absent
         project.AddProperty(new Property("FILTERNOTFOUND", "1"));
-        // suppresses reboot dialogs from removing older versions
+        // suppresses reboot dialogs from removing older versions; note this applies to the
+        // whole session (not just RemoveExistingProducts), so this setup never lets MSI itself
+        // schedule a reboot - the 9000/9003 messages below are purely informational and rely on
+        // the user rebooting manually
         project.AddProperty(new Property("REBOOT", "ReallySuppress"));
 
         #endregion
@@ -213,7 +234,12 @@ internal class InstallScript
         project.MajorUpgrade = new MajorUpgrade
         {
             Schedule = UpgradeSchedule.afterInstallInitialize,
-            DowngradeErrorMessage = "A later version of [ProductName] is already installed. Setup will now exit."
+            DowngradeErrorMessage = "A later version of [ProductName] is already installed. Setup will now exit.",
+            // ProductCode is regenerated on every build while the UpgradeCode (project.GUID)
+            // stays fixed; without this, re-releasing the same SetupVersion (e.g. a re-spin
+            // after a signing retry) installs side-by-side as a duplicate ARP entry instead of
+            // upgrading the existing one.
+            AllowSameVersionUpgrades = true
         };
 
         /*
@@ -270,6 +296,8 @@ internal class InstallScript
         project.ControlPanelInfo.Manufacturer = "Nefarius Software Solutions e.U.";
         project.ControlPanelInfo.HelpLink = "https://docs.nefarius.at/Community-Support/";
         project.ControlPanelInfo.UrlInfoAbout = "https://github.com/nefarius/BthPS3";
+        // hides the "Change" button in Add/Remove Programs; ManagedUI.ModifyDialogs above is
+        // still reachable via `msiexec /f` (repair) and is kept for that path
         project.ControlPanelInfo.NoModify = true;
 
         #endregion
@@ -277,6 +305,28 @@ internal class InstallScript
         project.ResolveWildCards();
 
         project.BuildMsi();
+    }
+
+    /// <summary>
+    ///     Fails fast with an actionable message when the expected staged driver/artifact
+    ///     payload (Setup\drivers, Setup\artifacts\bin) is missing, instead of letting
+    ///     <see cref="FileVersionInfo.GetVersionInfo(string)" /> throw an opaque
+    ///     <see cref="FileNotFoundException" />.
+    /// </summary>
+    private static void RequireStagedPayload(params string[] requiredFiles)
+    {
+        string[] missing = Array.FindAll(requiredFiles, path => !System.IO.File.Exists(path));
+
+        if (missing.Length == 0)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(
+            "Setup payload is incomplete, missing:" + Environment.NewLine +
+            string.Join(Environment.NewLine, missing) + Environment.NewLine +
+            "Run Setup\\stage0.ps1, Setup\\stage1.ps1 (and stage2.ps1 to build) first, " +
+            "or place the drivers/artifacts manually as described in Setup\\README.md.");
     }
 
     private static void ProjectOnLoad(SetupEventArgs e)
@@ -318,7 +368,20 @@ internal class InstallScript
             // HostRadio.IsAvailable reported a radio present but the device node couldn't be
             // resolved; don't let install proceed to DeviceClassFilters.AddLower without knowing
             // which transport it targets
-            e.Result = ActionResult.Failure;
+            if (session is null)
+            {
+                e.Result = ActionResult.Failure;
+                return;
+            }
+
+            Record unresolvedDeviceRecord = new(1);
+            unresolvedDeviceRecord[1] = "9004";
+
+            session.Message(
+                InstallMessage.User | (InstallMessage)MessageButtons.OK | (InstallMessage)MessageIcon.Error,
+                unresolvedDeviceRecord);
+
+            e.Result = ActionResult.UserExit;
             return;
         }
 
@@ -346,13 +409,17 @@ internal class InstallScript
     /// <summary>
     ///     Put uninstall logic that doesn't access packaged files in here.
     /// </summary>
-    /// <remarks>Runs with elevated privileges.</remarks>
+    /// <remarks>
+    ///     Runs with elevated privileges, after <c>InstallFinalize</c> - i.e. after
+    ///     <c>RemoveFiles</c> has already deleted the package payload. Legacy driver removal
+    ///     needs the packaged <c>nefconc.exe</c> and is therefore scheduled separately as
+    ///     <see cref="CustomActions.UninstallDriversLegacyAction" /> before <c>RemoveFiles</c>.
+    /// </remarks>
     private static void ProjectOnAfterInstall(SetupEventArgs e)
     {
         if (e.IsUninstalling)
         {
             CustomActions.UninstallDrivers(e.Session);
-            CustomActions.UninstallDriversLegacy(e.Session);
         }
     }
 }

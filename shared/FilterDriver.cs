@@ -4,6 +4,8 @@ using System.Runtime.InteropServices;
 
 using PInvoke;
 
+using Win32Exception = System.ComponentModel.Win32Exception;
+
 namespace Nefarius.BthPS3.Shared;
 
 [SuppressMessage("ReSharper", "InconsistentNaming")]
@@ -53,7 +55,7 @@ public class FilterDriver
             {
                 Marshal.StructureToPtr(payload, payloadBuffer, false);
 
-                Kernel32.DeviceIoControl(
+                bool ioctlSucceeded = Kernel32.DeviceIoControl(
                     handle,
                     unchecked((int)IOCTL_BTHPS3PSM_GET_PSM_PATCHING),
                     payloadBuffer,
@@ -63,6 +65,11 @@ public class FilterDriver
                     out _,
                     IntPtr.Zero
                 );
+
+                if (!ioctlSucceeded)
+                {
+                    throw new Win32Exception(Marshal.GetLastWin32Error(), ErrorMessage);
+                }
 
                 payload = Marshal.PtrToStructure<BTHPS3PSM_GET_PSM_PATCHING>(payloadBuffer);
             }
@@ -75,6 +82,11 @@ public class FilterDriver
         }
         set
         {
+            if (!BluetoothHelper.IsBluetoothRadioAvailable)
+            {
+                throw new Exception(ErrorMessage);
+            }
+
             using Kernel32.SafeObjectHandle handle = Kernel32.CreateFile(BTHPS3PSM_CONTROL_DEVICE_PATH,
                 Kernel32.ACCESS_MASK.GenericRight.GENERIC_READ | Kernel32.ACCESS_MASK.GenericRight.GENERIC_WRITE,
                 Kernel32.FileShare.FILE_SHARE_READ | Kernel32.FileShare.FILE_SHARE_WRITE,
@@ -99,9 +111,11 @@ public class FilterDriver
                 Marshal.StructureToPtr(payloadEnable, payloadEnableBuffer, false);
                 Marshal.StructureToPtr(payloadDisable, payloadDisableBuffer, false);
 
+                bool ioctlSucceeded;
+
                 if (value)
                 {
-                    Kernel32.DeviceIoControl(
+                    ioctlSucceeded = Kernel32.DeviceIoControl(
                         handle,
                         unchecked((int)IOCTL_BTHPS3PSM_ENABLE_PSM_PATCHING),
                         payloadEnableBuffer,
@@ -114,7 +128,7 @@ public class FilterDriver
                 }
                 else
                 {
-                    Kernel32.DeviceIoControl(
+                    ioctlSucceeded = Kernel32.DeviceIoControl(
                         handle,
                         unchecked((int)IOCTL_BTHPS3PSM_DISABLE_PSM_PATCHING),
                         payloadDisableBuffer,
@@ -124,6 +138,11 @@ public class FilterDriver
                         out _,
                         IntPtr.Zero
                     );
+                }
+
+                if (!ioctlSucceeded)
+                {
+                    throw new Win32Exception(Marshal.GetLastWin32Error(), ErrorMessage);
                 }
             }
             finally

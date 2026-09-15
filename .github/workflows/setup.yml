@@ -177,6 +177,8 @@ jobs:
           # WixSharp_wix4's compatibility notes and re-testing the EULA gate.
           dotnet tool install --global wix --version 4.0.6
           "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          & "$env:USERPROFILE\.dotnet\tools\wix.exe" extension add -g WixToolset.UI.wixext/4.0.6
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
       - name: 'Build MSI'
         shell: pwsh

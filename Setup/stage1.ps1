@@ -60,3 +60,25 @@ if (Test-Path -LiteralPath $setupDrivers) {
 Copy-Item -LiteralPath $drivers -Destination $setupDrivers -Recurse
 Write-Output "Copied attested drivers to $setupDrivers"
 Write-Output 'Do not append another publisher signature after Microsoft attestation.'
+
+# BthPS3Installer.csproj packages ..\setup\artifacts\bin\BthPS3CfgUI.exe (relative to
+# BthPS3Installer\), i.e. Setup\artifacts\bin here. stage0.ps1 downloads CI artifacts into
+# $Path\bin; mirror that into Setup\artifacts\bin so stage2.ps1 can build the MSI.
+$binSource = Join-Path $repoRoot (Join-Path $Path 'bin')
+if (-not (Test-Path -LiteralPath $binSource)) {
+    throw "Downloaded artifact bin directory was not found at $binSource. Run stage0.ps1 first."
+}
+
+$cfgUiSource = Join-Path $binSource 'BthPS3CfgUI.exe'
+if (-not (Test-Path -LiteralPath $cfgUiSource)) {
+    throw "Missing BthPS3CfgUI.exe in downloaded artifacts: $cfgUiSource"
+}
+
+$setupArtifactsBin = Join-Path $PSScriptRoot 'artifacts\bin'
+if (Test-Path -LiteralPath $setupArtifactsBin) {
+    Remove-Item -LiteralPath $setupArtifactsBin -Recurse -Force
+}
+
+New-Item -ItemType Directory -Force -Path (Split-Path -Parent $setupArtifactsBin) | Out-Null
+Copy-Item -LiteralPath $binSource -Destination $setupArtifactsBin -Recurse
+Write-Output "Copied artifact binaries to $setupArtifactsBin"

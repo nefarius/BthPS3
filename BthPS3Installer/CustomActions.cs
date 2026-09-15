@@ -25,6 +25,17 @@ namespace Nefarius.BthPS3.Setup;
 
 public static class CustomActions
 {
+    /// <summary>
+    ///     Reads the <see cref="CustomProperties.UseModern" /> session property, defaulting to
+    ///     <c>true</c> (the modern install path) when the property is missing or not a valid
+    ///     boolean, instead of letting <see cref="bool.Parse(string)" /> throw and fail the
+    ///     whole install with an opaque 1603.
+    /// </summary>
+    private static bool GetUseModern(Session session)
+    {
+        return !bool.TryParse(session.Property(CustomProperties.UseModern), out bool useModern) || useModern;
+    }
+
     #region Web
 
     [CustomAction]
@@ -60,7 +71,7 @@ public static class CustomActions
     {
         session.Log($"{nameof(InstallDriversLegacy)} - USE_MODERN = {session.Property(CustomProperties.UseModern)}");
 
-        if (bool.Parse(session.Property(CustomProperties.UseModern)))
+        if (GetUseModern(session))
         {
             session.Log("USE_MODERN set to true, skipping action");
             return ActionResult.NotExecuted;
@@ -201,7 +212,7 @@ public static class CustomActions
         }
 
         exitFailure:
-        session.Log($"--- END {nameof(InstallDrivers)} FAILURE ---");
+        session.Log($"--- END {nameof(InstallDriversLegacy)} FAILURE ---");
         return ActionResult.Failure;
     }
 
@@ -224,7 +235,7 @@ public static class CustomActions
     {
         session.Log($"{nameof(InstallDrivers)} - USE_MODERN = {session.Property(CustomProperties.UseModern)}");
 
-        if (!bool.Parse(session.Property(CustomProperties.UseModern)))
+        if (!GetUseModern(session))
         {
             session.Log("USE_MODERN set to false, skipping action");
             return ActionResult.NotExecuted;
@@ -287,7 +298,7 @@ public static class CustomActions
             #region Filter install
 
             // BthPS3PSM filter install
-            BufferedCommandResult? result = Cli.Wrap(nefconcPath)
+            BufferedCommandResult result = Cli.Wrap(nefconcPath)
                 .WithArguments(builder => builder
                     .Add("--inf-default-install")
                     .Add("--inf-path")
@@ -301,12 +312,12 @@ public static class CustomActions
             session.Log($"BthPS3PSM command stdout: {result.StandardOutput}");
             session.Log($"BthPS3PSM command stderr: {result.StandardError}");
 
-            bool rebootRequired = result?.ExitCode == 3010;
+            bool rebootRequired = result.ExitCode == 3010;
 
-            if (result?.ExitCode != 0 && result?.ExitCode != 3010)
+            if (result.ExitCode != 0 && result.ExitCode != 3010)
             {
                 session.Log(
-                    $"Filter installer failed with exit code: {result?.ExitCode}, message: {Win32Exception.GetMessageFor(result?.ExitCode)}");
+                    $"Filter installer failed with exit code: {result.ExitCode}, message: {Win32Exception.GetMessageFor(result.ExitCode)}");
 
                 goto exitFailure;
             }
@@ -376,7 +387,7 @@ public static class CustomActions
                 if (dialogResult == MessageResult.Abort)
                 {
                     session.Log("User aborted operation");
-                    return ActionResult.Failure;
+                    goto exitFailure;
                 }
 
                 radioRestartSucceeded = restartSuccess;
@@ -538,6 +549,8 @@ public static class CustomActions
     /// </remarks>
     private static bool RestartRadioAndAwait(Session session)
     {
+        object syncRoot = new();
+        bool disposed = false;
         AutoResetEvent waitEvent = new(false);
         DeviceNotificationListener listener = new();
 
@@ -548,11 +561,24 @@ public static class CustomActions
 
             void RadioDeviceArrived(DeviceEventArgs obj)
             {
-                session.Log("Radio arrival event, path: {0}", obj.SymLink);
-                // ReSharper disable once AccessToDisposedClosure
-                listener.StopListen(HostRadio.DeviceInterface);
-                // ReSharper disable once AccessToDisposedClosure
-                waitEvent.Set();
+                // the arrival callback can fire on a notification thread concurrently with the
+                // WaitOne timeout below returning on this thread and running the finally block;
+                // guard against touching already (or concurrently being) disposed objects
+                // ReSharper disable AccessToModifiedClosure
+                lock (syncRoot)
+                {
+                    if (disposed)
+                    {
+                        return;
+                    }
+
+                    session.Log("Radio arrival event, path: {0}", obj.SymLink);
+                    // ReSharper disable once AccessToDisposedClosure
+                    listener.StopListen(HostRadio.DeviceInterface);
+                    // ReSharper disable once AccessToDisposedClosure
+                    waitEvent.Set();
+                }
+                // ReSharper restore AccessToModifiedClosure
             }
 
             if (!RadioTransport.TryGetHostRadioDevice(out PnPDevice radioDevice))
@@ -610,11 +636,27 @@ public static class CustomActions
         }
         finally
         {
-            listener.Dispose();
-            waitEvent.Dispose();
+            lock (syncRoot)
+            {
+                disposed = true;
+                listener.Dispose();
+                waitEvent.Dispose();
+            }
         }
 
         return false;
+    }
+
+    /// <summary>
+    ///     Custom action wrapper for <see cref="UninstallDriversLegacy" />, scheduled before
+    ///     <c>RemoveFiles</c> so packaged files (nefconc.exe) still exist when it runs.
+    /// </summary>
+    /// <remarks>Requires elevated permissions.</remarks>
+    [CustomAction]
+    public static ActionResult UninstallDriversLegacyAction(Session session)
+    {
+        UninstallDriversLegacy(session);
+        return ActionResult.Success;
     }
 
     /// <summary>
@@ -796,7 +838,7 @@ public static class CustomActions
         }
         catch (Exception ex)
         {
-            session.Log("FTL: Radio access for enabling failed, ignoring", ex);
+            session.Log($"FTL: Radio access for enabling failed, ignoring: {ex}");
         }
 
         session.Log($"--- END {nameof(UninstallDrivers)} ---");
@@ -812,22 +854,31 @@ public static class CustomActions
     [CustomAction]
     public static ActionResult RegisterUpdater(Session session)
     {
-        DirectoryInfo installDir = new(session.Property("INSTALLDIR"));
-        string updaterPath = Path.Combine(installDir.FullName, "nefarius_BthPS3_Updater.exe");
+        try
+        {
+            DirectoryInfo installDir = new(session.Property("INSTALLDIR"));
+            string updaterPath = Path.Combine(installDir.FullName, "nefarius_BthPS3_Updater.exe");
 
-        CommandResult? result = Cli.Wrap(updaterPath)
-            .WithArguments(builder => builder
-                .Add("--install")
-                .Add("--silent")
-                .Add("--override-success-code 0")
-            )
-            .WithValidation(CommandResultValidation.None)
-            .ExecuteAsync()
-            .GetAwaiter()
-            .GetResult();
+            CommandResult? result = Cli.Wrap(updaterPath)
+                .WithArguments(builder => builder
+                    .Add("--install")
+                    .Add("--silent")
+                    .Add("--override-success-code 0")
+                )
+                .WithValidation(CommandResultValidation.None)
+                .ExecuteAsync()
+                .GetAwaiter()
+                .GetResult();
 
-        session.Log(
-            $"Updater registration {(result.IsSuccess ? "succeeded" : "failed")}, exit code: {result.ExitCode}");
+            session.Log(
+                $"Updater registration {(result.IsSuccess ? "succeeded" : "failed")}, exit code: {result.ExitCode}");
+        }
+        catch (Exception ex)
+        {
+            // don't fail the whole install if the updater (a non-essential component) can't
+            // be registered, e.g. because AV quarantined it
+            session.Log($"Updater registration failed with error {ex}");
+        }
 
         return ActionResult.Success;
     }

@@ -25,8 +25,9 @@ build or sign the MSI locally.
    `vMAJOR.MINOR.PATCH` (example: `v2.12.0`).
 3. The workflow embeds that tag's signed drivers and tools, then builds the
    setup from the dispatched ref.
-4. On success it uploads and mirrors artifact `bthps3-setup` and creates the
-   next free `setup-v*` tag.
+4. On success it uploads artifact `bthps3-setup`, creates the reserved
+   `setup-v*` tag, then mirrors the artifact. A tag collision fails the run
+   without mirroring.
 5. Create the GitHub Release on that tag and attach the signed MSI.
 
 ## Outputs

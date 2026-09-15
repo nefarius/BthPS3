@@ -113,14 +113,18 @@ Assert-Equal (Get-BthPS3SetupMsiFileName -SetupVersion '2.12.0') 'Nefarius_BthPS
 
 Assert-Equal (ConvertTo-BthPS3SetupVersionFromTag -Tag 'setup-v2.17.0') ([version]'2.17.0') 'parses plain setup tag'
 Assert-Equal (ConvertTo-BthPS3SetupVersionFromTag -Tag 'setup-v2.12.0-r3') ([version]'2.12.0') 'parses re-spin tag, drops -rN'
-Assert-Equal (ConvertTo-BthPS3SetupVersionFromTag -Tag 'setup-v2.10.371.0') ([version]'2.10.371.0') 'parses legacy 4-component tag'
+Assert-Equal (ConvertTo-BthPS3SetupVersionFromTag -Tag 'setup-v2.10.371.0') ([version]'2.10.371') 'parses legacy 4-component tag as ProductVersion'
 Assert-Equal (ConvertTo-BthPS3SetupVersionFromTag -Tag 'refs/tags/setup-v2.17.0') ([version]'2.17.0') 'strips refs/tags prefix'
 Assert-Equal (ConvertTo-BthPS3SetupVersionFromTag -Tag 'v2.17.0') $null 'ignores non-setup tags'
 Assert-Equal (ConvertTo-BthPS3SetupVersionFromTag -Tag 'setup-v2.17.0-beta') $null 'ignores non-numeric suffix'
 
 Assert-Equal (Get-BthPS3HighestSetupVersion -Tags @()) $null 'highest version of empty set is null'
 Assert-Equal (Get-BthPS3HighestSetupVersion -Tags @('setup-v2.12.0', 'setup-v2.17.0', 'setup-v2.9.336')) ([version]'2.17.0') 'highest version picks max'
-Assert-Equal (Get-BthPS3HighestSetupVersion -Tags @('setup-v2.10.371.0', 'setup-v2.10.371', 'not-a-tag')) ([version]'2.10.371.0') 'highest version ignores unrelated tags'
+Assert-Equal (Get-BthPS3HighestSetupVersion -Tags @('setup-v2.10.371.0', 'setup-v2.10.371', 'not-a-tag')) ([version]'2.10.371') 'highest version ignores unrelated tags'
+$legacyHighest = Get-BthPS3HighestSetupVersion -Tags @('setup-v2.10.371.0')
+Assert-Equal $legacyHighest ([version]'2.10.371') 'legacy four-component tag normalizes to ProductVersion'
+Assert-BthPS3SetupVersionNotRegressed -SetupVersion '2.10.371' -HighestPublishedVersion $legacyHighest
+Write-Output 'PASS regression guard treats setup-v2.10.371.0 as ProductVersion 2.10.371'
 
 Assert-BthPS3SetupVersionNotRegressed -SetupVersion '2.17.0' -HighestPublishedVersion $null
 Write-Output 'PASS regression guard allows first-ever setup version'

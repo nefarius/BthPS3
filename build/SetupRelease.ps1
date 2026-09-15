@@ -141,13 +141,14 @@ function ConvertTo-BthPS3SetupVersionFromTag {
     }
 
     # Accepts both the current setup-vMAJOR.MINOR.PATCH[-rN] scheme and legacy
-    # setup-v* tags with an extra 4th component (e.g. setup-v2.10.371.0) so the
-    # regression guard below can compare against the full tag history.
-    if ($name -notmatch '^setup-v(\d+(?:\.\d+){1,3})(?:-r[1-9][0-9]*)?$') {
+    # setup-v* tags with an extra 4th component (e.g. setup-v2.10.371.0). The
+    # fourth component is dropped so comparison uses the three-part
+    # ProductVersion that SetupVersion / MSI actually ship.
+    if ($name -notmatch '^setup-v(\d+)\.(\d+)\.(\d+)(?:\.\d+)?(?:-r[1-9][0-9]*)?$') {
         return $null
     }
 
-    return [version]$Matches[1]
+    return [version]"$($Matches[1]).$($Matches[2]).$($Matches[3])"
 }
 
 function Get-BthPS3HighestSetupVersion {

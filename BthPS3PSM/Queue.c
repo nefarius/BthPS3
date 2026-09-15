@@ -357,6 +357,7 @@ BthPS3PSM_EvtIoDeviceControl(
     if (pContext->TransportType == BthPS3PsmTransportBthx
         && IoControlCode == IOCTL_BTHX_READ_HCI)
     {
+        WDFMEMORY outputMemory = NULL;
         PVOID outputBuffer = NULL;
         size_t outputBufferLength = 0;
 
@@ -365,70 +366,86 @@ BthPS3PSM_EvtIoDeviceControl(
             "<< IOCTL_BTHX_READ_HCI");
 
         //
-        // Grab the (unchecked) output buffer pointer/length now, at
-        // PASSIVE_LEVEL, so the completion routine - which may run at a
-        // raised IRQL once the request comes back up from the BTHX
-        // transport stack - can inspect it without touching WDF request
-        // APIs again. This also validates OutputBufferLength is at least
-        // large enough to hold the BTHX_HCI_READ_WRITE_CONTEXT header.
+        // This IOCTL is always forwarded to us by BthMini.sys, i.e. it
+        // originates from another kernel-mode driver in this device stack.
+        // Per WdfRequestRetrieveOutputMemory's documented contract, that
+        // means it also supports METHOD_NEITHER requests (unlike a plain
+        // user-mode METHOD_NEITHER request, which would require an
+        // EvtIoInCallerContext callback and
+        // WdfRequestRetrieveUnsafeUserOutputBuffer instead). The resulting
+        // WDFMEMORY/buffer stays valid until the request completes, so the
+        // completion routine can safely inspect it, including once the
+        // request comes back up from the BTHX transport stack at a raised
+        // IRQL.
         // 
-        if (NT_SUCCESS(status = WdfRequestRetrieveUnsafeUserOutputBuffer(
+        status = WdfRequestRetrieveOutputMemory(Request, &outputMemory);
+
+        if (NT_SUCCESS(status))
+        {
+            outputBuffer = WdfMemoryGetBuffer(outputMemory, &outputBufferLength);
+        }
+
+        if (!NT_SUCCESS(status)
+            || outputBuffer == NULL
+            || outputBufferLength < FIELD_OFFSET(BTHX_HCI_READ_WRITE_CONTEXT, Data))
+        {
+            TraceError(
+                TRACE_QUEUE,
+                "IOCTL_BTHX_READ_HCI output buffer unavailable or too small (status %!STATUS!, length %Iu)",
+                status,
+                outputBufferLength
+            );
+
+            WdfRequestComplete(Request, STATUS_BUFFER_TOO_SMALL);
+            return;
+        }
+
+        WDF_OBJECT_ATTRIBUTES attributes;
+        PBTHX_READ_REQUEST_CONTEXT requestContext = NULL;
+
+        WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&attributes, BTHX_READ_REQUEST_CONTEXT);
+
+        if (NT_SUCCESS(WdfObjectAllocateContext(
             Request,
-            FIELD_OFFSET(BTHX_HCI_READ_WRITE_CONTEXT, Data),
-            &outputBuffer,
-            &outputBufferLength
+            &attributes,
+            (PVOID*)&requestContext
         )))
         {
-            WDF_OBJECT_ATTRIBUTES attributes;
-            PBTHX_READ_REQUEST_CONTEXT requestContext = NULL;
+            requestContext->OutputBuffer = outputBuffer;
+            requestContext->OutputBufferLength = outputBufferLength;
 
-            WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&attributes, BTHX_READ_REQUEST_CONTEXT);
+            WdfRequestFormatRequestUsingCurrentType(Request);
 
-            if (NT_SUCCESS(WdfObjectAllocateContext(
+            WdfRequestSetCompletionRoutine(
                 Request,
-                &attributes,
-                (PVOID*)&requestContext
-            )))
-            {
-                requestContext->OutputBuffer = outputBuffer;
-                requestContext->OutputBufferLength = outputBufferLength;
-
-                WdfRequestFormatRequestUsingCurrentType(Request);
-
-                WdfRequestSetCompletionRoutine(
-                    Request,
-                    BthxReadHciCompleted,
-                    device
-                );
-
-                ret = WdfRequestSend(
-                    Request,
-                    WdfDeviceGetIoTarget(WdfIoQueueGetDevice(Queue)),
-                    WDF_NO_SEND_OPTIONS
-                );
-
-                if (ret == FALSE)
-                {
-                    status = WdfRequestGetStatus(Request);
-                    TraceError(
-                        TRACE_QUEUE,
-                        "WdfRequestSend failed with status %!STATUS!",
-                        status
-                    );
-                    WdfRequestComplete(Request, status);
-                }
-
-                return;
-            }
-        }
-        else
-        {
-            TraceVerbose(
-                TRACE_QUEUE,
-                "-- Couldn't access IOCTL_BTHX_READ_HCI output buffer (status %!STATUS!), forwarding unmodified",
-                status
+                BthxReadHciCompleted,
+                device
             );
+
+            ret = WdfRequestSend(
+                Request,
+                WdfDeviceGetIoTarget(WdfIoQueueGetDevice(Queue)),
+                WDF_NO_SEND_OPTIONS
+            );
+
+            if (ret == FALSE)
+            {
+                status = WdfRequestGetStatus(Request);
+                TraceError(
+                    TRACE_QUEUE,
+                    "WdfRequestSend failed with status %!STATUS!",
+                    status
+                );
+                WdfRequestComplete(Request, status);
+            }
+
+            return;
         }
+
+        TraceVerbose(
+            TRACE_QUEUE,
+            "-- Couldn't allocate request context for IOCTL_BTHX_READ_HCI, forwarding unmodified"
+        );
     }
 
     //

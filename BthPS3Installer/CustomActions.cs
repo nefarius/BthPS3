@@ -230,6 +230,25 @@ public static class CustomActions
             return ActionResult.NotExecuted;
         }
 
+        // validate the host radio transport before doing anything destructive: there's no
+        // point tearing down an existing (possibly working) setup via UninstallDrivers below
+        // if we already know we can't (re)install for this radio afterward
+        if (!RadioTransport.TryGetHostRadioDevice(out PnPDevice preInstallRadioDevice) ||
+            RadioTransport.GetTransportType(preInstallRadioDevice) == RadioTransportType.Unsupported)
+        {
+            session.Log(
+                "WARN: Host radio not found or its transport is unsupported, aborting before uninstalling any existing setup");
+
+            Record unsupportedTransportRecord = new(1);
+            unsupportedTransportRecord[1] = "9004";
+
+            session.Message(
+                InstallMessage.User | (InstallMessage)MessageButtons.OK | (InstallMessage)MessageIcon.Error,
+                unsupportedTransportRecord);
+
+            return ActionResult.Failure;
+        }
+
         // clean out whatever has been on the machine before
         UninstallDrivers(session);
 
@@ -298,6 +317,25 @@ public static class CustomActions
 
             try
             {
+                // re-validate right before writing LowerFilters: the ProjectOnLoad preflight
+                // only guards the interactive UI session load, not this (possibly later,
+                // possibly separately elevated) deferred custom action
+                if (!RadioTransport.TryGetHostRadioDevice(out PnPDevice radioDevice) ||
+                    RadioTransport.GetTransportType(radioDevice) == RadioTransportType.Unsupported)
+                {
+                    session.Log(
+                        "WARN: Host radio not found or its transport is unsupported, aborting before filter registration");
+
+                    Record unsupportedTransportRecord = new(1);
+                    unsupportedTransportRecord[1] = "9004";
+
+                    session.Message(
+                        InstallMessage.User | (InstallMessage)MessageButtons.OK | (InstallMessage)MessageIcon.Error,
+                        unsupportedTransportRecord);
+
+                    goto exitFailure;
+                }
+
                 // register filter
                 session.Log("Adding lower filter entry");
                 DeviceClassFilters.AddLower(DeviceClassIds.Bluetooth, FilterDriver.FilterServiceName);
@@ -312,6 +350,8 @@ public static class CustomActions
             #endregion
 
             #region Restart radio
+
+            bool radioRestartSucceeded;
 
             try
             {
@@ -337,6 +377,18 @@ public static class CustomActions
                 {
                     session.Log("User aborted operation");
                     return ActionResult.Failure;
+                }
+
+                radioRestartSucceeded = restartSuccess;
+
+                if (!radioRestartSucceeded)
+                {
+                    // user chose to ignore the failed/timed-out restart confirmation; the new
+                    // lower filter registration will only be picked up by the stack after a
+                    // reboot, so defer the filter-enable IOCTL below and force the reboot prompt
+                    session.Log(
+                        "Radio restart was not confirmed, deferring filter activation until reboot");
+                    rebootRequired = true;
                 }
             }
             catch (Exception ex)
@@ -424,17 +476,27 @@ public static class CustomActions
 
             #region Filter settings
 
-            try
+            if (radioRestartSucceeded)
             {
-                session.Log("Enabling PSM filter");
-                // make sure patching is enabled, might not be in the registry
-                FilterDriver.IsFilterEnabled = true;
-                session.Log("Enabled PSM filter");
+                try
+                {
+                    session.Log("Enabling PSM filter");
+                    // make sure patching is enabled, might not be in the registry
+                    FilterDriver.IsFilterEnabled = true;
+                    session.Log("Enabled PSM filter");
+                }
+                catch (Exception ex)
+                {
+                    session.Log($"Enabling filter failed with {ex}");
+                    goto exitFailure;
+                }
             }
-            catch (Exception ex)
+            else
             {
-                session.Log($"Enabling filter failed with {ex}");
-                goto exitFailure;
+                // the control device (\\.\BthPS3PSMControl) is only created once the filter
+                // attaches, which won't happen until the pending reboot; skip the IOCTL to avoid
+                // a spurious failure and rely on the profile driver's AutoEnableFilter default
+                session.Log("Skipping PSM filter enable IOCTL; filter isn't loaded until reboot");
             }
 
             #endregion
@@ -468,6 +530,12 @@ public static class CustomActions
     /// </summary>
     /// <param name="session">The <see cref="Session" />.</param>
     /// <returns>True on success, false on timeout.</returns>
+    /// <remarks>
+    ///     Reloading the device stack is the only way for a freshly registered Bluetooth class lower filter
+    ///     (<c>BthPS3PSM</c>) to attach without a full reboot. USB radios support a hot port-cycle; BTHX/BthMini-bound
+    ///     radios (e.g. Intel PCIe <c>iBtPciBus</c>) do not, so those are restarted by removing and re-enumerating the
+    ///     device node instead. See #137.
+    /// </remarks>
     private static bool RestartRadioAndAwait(Session session)
     {
         AutoResetEvent waitEvent = new(false);
@@ -487,9 +555,34 @@ public static class CustomActions
                 waitEvent.Set();
             }
 
+            if (!RadioTransport.TryGetHostRadioDevice(out PnPDevice radioDevice))
+            {
+                session.Log("WARN: Radio device not found, cannot restart");
+                return false;
+            }
+
+            RadioTransportType transportType = RadioTransport.GetTransportType(radioDevice);
+            session.Log($"Radio transport type detected as {transportType}");
+
             session.Log("Restarting radio device");
-            // restart device, filter is loaded afterward
-            HostRadio.RestartRadioDevice();
+
+            switch (transportType)
+            {
+                case RadioTransportType.Usb:
+                    // restart device, filter is loaded afterward
+                    HostRadio.RestartRadioDevice();
+                    break;
+                case RadioTransportType.Bthx:
+                    // USB port-cycling doesn't apply to BTHX/BthMini-bound radios; rebuild the
+                    // device stack instead so the updated Bluetooth class LowerFilters
+                    // registration is picked up without requiring a reboot
+                    radioDevice.RemoveAndSetup();
+                    break;
+                default:
+                    session.Log("WARN: Unsupported radio transport, skipping restart");
+                    return false;
+            }
+
             session.Log("Restarted radio device");
             session.Log("Waiting for radio device to come online...");
 
@@ -499,11 +592,17 @@ public static class CustomActions
                 return false;
             }
 
-            session.Log(!HostRadio.IsAvailable
+            // require both a live radio interface and a resolvable device node before
+            // reporting success, so a transient/incomplete re-enumeration (e.g. right after a
+            // BTHX RemoveAndSetup) falls through to the deferred/reboot path instead of being
+            // reported as a successful restart
+            bool radioAvailable = HostRadio.IsAvailable && RadioTransport.TryGetHostRadioDevice(out _);
+
+            session.Log(!radioAvailable
                 ? "WARN: Radio not available after wait period"
                 : "Radio available after restart");
 
-            return true;
+            return radioAvailable;
         }
         catch (Exception ex)
         {

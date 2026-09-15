@@ -16,7 +16,6 @@ using Nefarius.BthPS3.Setup.Dialogues;
 using Nefarius.BthPS3.Shared;
 using Nefarius.Utilities.Bluetooth;
 using Nefarius.Utilities.DeviceManagement.PnP;
-using Nefarius.Utilities.WixSharp.Util;
 
 using PInvoke;
 
@@ -272,8 +271,6 @@ internal class InstallScript
 
         #region Embed types of dependencies
 
-        project.EmbedCliWrap();
-
         project.DefaultRefAssemblies.Add(typeof(Devcon).Assembly.Location);
         project.DefaultRefAssemblies.Add(typeof(HostRadio).Assembly.Location);
         project.DefaultRefAssemblies.Add(typeof(Cli).Assembly.Location);
@@ -287,7 +284,6 @@ internal class InstallScript
         project.DefaultRefAssemblies.Add(typeof(FilterDriver).Assembly.Location);
         project.DefaultRefAssemblies.Add(typeof(BluetoothHelper).Assembly.Location);
         project.DefaultRefAssemblies.Add(typeof(SafeRegistryHandle).Assembly.Location);
-        project.DefaultRefAssemblies.Add(typeof(WixExt).Assembly.Location);
 
         #endregion
 
@@ -331,8 +327,6 @@ internal class InstallScript
 
     /// <summary>
     ///     Immediate child directories, each with a recursive <see cref="Files" /> wildcard.
-    ///     Local replacement for <c>WixExt.GetSubDirectories</c>, which was compiled against
-    ///     a WixSharp build that still stored <c>WixEntity.Name</c> as a field.
     /// </summary>
     private static Dir[] GetSubDirectories(Feature feature, string directory)
     {

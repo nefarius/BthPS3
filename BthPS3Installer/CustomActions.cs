@@ -15,7 +15,6 @@ using Nefarius.Utilities.Bluetooth;
 using Nefarius.Utilities.DeviceManagement.Drivers;
 using Nefarius.Utilities.DeviceManagement.Exceptions;
 using Nefarius.Utilities.DeviceManagement.PnP;
-using Nefarius.Utilities.WixSharp.Util;
 
 using WixSharp;
 
@@ -771,7 +770,7 @@ public static class CustomActions
 
         // remove all old copies of BthPS3
         foreach (string driverPackage in allDriverPackages.Where(p =>
-                     p.Contains("bthps3.inf", StringComparison.OrdinalIgnoreCase)))
+                     p.IndexOf("bthps3.inf", StringComparison.OrdinalIgnoreCase) >= 0))
         {
             try
             {
@@ -786,7 +785,7 @@ public static class CustomActions
 
         // remove all old copies of BthPS3 NULL driver
         foreach (string driverPackage in allDriverPackages.Where(p =>
-                     p.Contains("bthps3_pdo_null_device.inf", StringComparison.OrdinalIgnoreCase)))
+                     p.IndexOf("bthps3_pdo_null_device.inf", StringComparison.OrdinalIgnoreCase) >= 0))
         {
             try
             {
@@ -801,7 +800,7 @@ public static class CustomActions
 
         // remove all old copies of BthPS3PSM
         foreach (string driverPackage in allDriverPackages.Where(p =>
-                     p.Contains("bthps3psm.inf", StringComparison.OrdinalIgnoreCase)))
+                     p.IndexOf("bthps3psm.inf", StringComparison.OrdinalIgnoreCase) >= 0))
         {
             try
             {

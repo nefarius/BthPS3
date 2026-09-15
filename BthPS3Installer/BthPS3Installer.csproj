@@ -15,7 +15,7 @@
     <Compile Remove="GeneratedBuildVariables.g.cs" />
   </ItemGroup>
   <Target Name="GenerateBuildVariableFile" BeforeTargets="BeforeCompile;CoreCompile">
-    <WriteLinesToFile File="GeneratedBuildVariables.g.cs" Lines="namespace Nefarius.BthPS3.Setup { public static class BuildVariables { public const string SetupVersion = &quot;$(SetupVersion)&quot;%3B } }" Overwrite="true" />
+    <WriteLinesToFile File="GeneratedBuildVariables.g.cs" Lines="namespace Nefarius.BthPS3.Setup { public static class BuildVariables { public const string SetupVersion = &quot;$(SetupVersion)&quot;%3B } }" Overwrite="true" WriteOnlyWhenDifferent="true" />
     <ItemGroup>
       <Compile Include="GeneratedBuildVariables.g.cs" />
     </ItemGroup>

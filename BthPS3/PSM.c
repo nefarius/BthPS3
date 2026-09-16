@@ -149,6 +149,7 @@ BthPS3PSM_EnablePatchAsync(
 		(PVOID)&pPayload
     )))
 	{
+		WdfObjectDelete(request);
 		return status;
 	}
 
@@ -167,6 +168,7 @@ BthPS3PSM_EnablePatchAsync(
 		NULL
 	)))
 	{
+		WdfObjectDelete(request);
 		return status;
 	}
 
@@ -186,7 +188,9 @@ BthPS3PSM_EnablePatchAsync(
 		IoTarget,
 		NULL) == FALSE)
 	{
-		return WdfRequestGetStatus(request);
+		status = WdfRequestGetStatus(request);
+		WdfObjectDelete(request);
+		return status;
 	}
 
 	return status;

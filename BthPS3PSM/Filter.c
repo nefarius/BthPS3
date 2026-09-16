@@ -63,47 +63,51 @@ UrbSelectConfigurationCompleted(
     const PIRP pIrp = WdfRequestWdmGetIrp(Request);
     const PURB pUrb = (PURB)URB_FROM_IRP(pIrp);
 
-    const PUSBD_INTERFACE_INFORMATION interfaceInfo = &pUrb->UrbSelectConfiguration.Interface;
-
-    TraceVerbose(
-        TRACE_FILTER,
-        "Enumerating %d pipes",
-        interfaceInfo->NumberOfPipes
-    );
-
-    for (ULONG i = 0; i < interfaceInfo->NumberOfPipes; i++)
+    if (NT_SUCCESS(Params->IoStatus.Status) &&
+        USBD_SUCCESS(pUrb->UrbHeader.Status))
     {
-        const PUSBD_PIPE_INFORMATION pipeInfo = &interfaceInfo->Pipes[i];
+        const PUSBD_INTERFACE_INFORMATION interfaceInfo = &pUrb->UrbSelectConfiguration.Interface;
 
         TraceVerbose(
             TRACE_FILTER,
-            "Enumerating pipe %d with type 0x%X and address 0x%02X (handle 0x%p)",
-            i, pipeInfo->PipeType, pipeInfo->EndpointAddress, pipeInfo->PipeHandle
+            "Enumerating %d pipes",
+            interfaceInfo->NumberOfPipes
         );
 
-        if (pipeInfo->PipeType == UsbdPipeTypeBulk)
+        for (ULONG i = 0; i < interfaceInfo->NumberOfPipes; i++)
         {
-            if (USB_ENDPOINT_DIRECTION_IN(pipeInfo->EndpointAddress))
+            const PUSBD_PIPE_INFORMATION pipeInfo = &interfaceInfo->Pipes[i];
+
+            TraceVerbose(
+                TRACE_FILTER,
+                "Enumerating pipe %d with type 0x%X and address 0x%02X (handle 0x%p)",
+                i, pipeInfo->PipeType, pipeInfo->EndpointAddress, pipeInfo->PipeHandle
+            );
+
+            if (pipeInfo->PipeType == UsbdPipeTypeBulk)
             {
-                TraceInformation(
-                    TRACE_FILTER,
-                    "Found Bulk IN pipe handle 0x%p for endpoint 0x%02X",
-                    pipeInfo->PipeHandle, pipeInfo->EndpointAddress
-                );
-                // store handle so we later only hook the relevant transfer
-                pDevCtx->BulkReadPipe = pipeInfo->PipeHandle;
-                break;
+                if (USB_ENDPOINT_DIRECTION_IN(pipeInfo->EndpointAddress))
+                {
+                    TraceInformation(
+                        TRACE_FILTER,
+                        "Found Bulk IN pipe handle 0x%p for endpoint 0x%02X",
+                        pipeInfo->PipeHandle, pipeInfo->EndpointAddress
+                    );
+                    // store handle so we later only hook the relevant transfer
+                    pDevCtx->BulkReadPipe = pipeInfo->PipeHandle;
+                    break;
+                }
             }
         }
-    }
 
-    if (pDevCtx->BulkReadPipe == NULL)
-    {
-        TraceError(
-            TRACE_QUEUE,
-            "Failed to find BULK IN pipe"
-        );
-        EventWriteFailedToFindBulkInPipe(NULL);
+        if (pDevCtx->BulkReadPipe == NULL)
+        {
+            TraceError(
+                TRACE_QUEUE,
+                "Failed to find BULK IN pipe"
+            );
+            EventWriteFailedToFindBulkInPipe(NULL);
+        }
     }
 
     WdfRequestComplete(Request, Params->IoStatus.Status);
@@ -220,16 +224,20 @@ UrbFunctionBulkInTransferCompleted(
     const PIRP pIrp = WdfRequestWdmGetIrp(Request);
     const PURB pUrb = (PURB)URB_FROM_IRP(pIrp);
 
-    const struct _URB_BULK_OR_INTERRUPT_TRANSFER* pTransfer = &pUrb->UrbBulkOrInterruptTransfer;
+    if (NT_SUCCESS(Params->IoStatus.Status) &&
+        USBD_SUCCESS(pUrb->UrbHeader.Status))
+    {
+        const struct _URB_BULK_OR_INTERRUPT_TRANSFER* pTransfer = &pUrb->UrbBulkOrInterruptTransfer;
 
-    const ULONG bufferLength = pTransfer->TransferBufferLength;
-    buffer = (PUCHAR)USBPcapURBGetBufferPointer(
-        pTransfer->TransferBufferLength,
-        pTransfer->TransferBuffer,
-        pTransfer->TransferBufferMDL
-    );
+        const ULONG bufferLength = pTransfer->TransferBufferLength;
+        buffer = (PUCHAR)USBPcapURBGetBufferPointer(
+            pTransfer->TransferBufferLength,
+            pTransfer->TransferBuffer,
+            pTransfer->TransferBufferMDL
+        );
 
-    BthPS3PSM_PatchL2capPsm(pDevCtx, buffer, bufferLength);
+        BthPS3PSM_PatchL2capPsm(pDevCtx, buffer, bufferLength);
+    }
 
     WdfRequestComplete(Request, Params->IoStatus.Status);
 

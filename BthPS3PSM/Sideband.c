@@ -81,7 +81,19 @@ BthPS3PSM_CreateControlDevice(
     // collection has more than one device then we know somebody has already
     // created or in the process of creating the device.
     //
-    WdfWaitLockAcquire(FilterDeviceCollectionLock, NULL);
+    if (!NT_SUCCESS(status = WdfWaitLockAcquire(
+        FilterDeviceCollectionLock,
+        NULL
+    )))
+    {
+        TraceError(
+            TRACE_SIDEBAND,
+            "WdfWaitLockAcquire failed with status %!STATUS!",
+            status
+        );
+        EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfWaitLockAcquire", status);
+        return status;
+    }
 
     if (WdfCollectionGetCount(FilterDeviceCollection) == 1)
     {
@@ -312,7 +324,19 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
             break;
         }
 
-        WdfWaitLockAcquire(FilterDeviceCollectionLock, NULL);
+        if (!NT_SUCCESS(status = WdfWaitLockAcquire(
+            FilterDeviceCollectionLock,
+            NULL
+        )))
+        {
+            TraceError(
+                TRACE_SIDEBAND,
+                "WdfWaitLockAcquire failed with status %!STATUS!",
+                status
+            );
+            EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfWaitLockAcquire", status);
+            break;
+        }
 
         device = WdfCollectionGetItem(FilterDeviceCollection, pEnable->DeviceIndex);
 
@@ -388,7 +412,19 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
             break;
         }
 
-        WdfWaitLockAcquire(FilterDeviceCollectionLock, NULL);
+        if (!NT_SUCCESS(status = WdfWaitLockAcquire(
+            FilterDeviceCollectionLock,
+            NULL
+        )))
+        {
+            TraceError(
+                TRACE_SIDEBAND,
+                "WdfWaitLockAcquire failed with status %!STATUS!",
+                status
+            );
+            EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfWaitLockAcquire", status);
+            break;
+        }
 
         device = WdfCollectionGetItem(FilterDeviceCollection, pDisable->DeviceIndex);
 
@@ -464,7 +500,19 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
             break;
         }
 
-        WdfWaitLockAcquire(FilterDeviceCollectionLock, NULL);
+        if (!NT_SUCCESS(status = WdfWaitLockAcquire(
+            FilterDeviceCollectionLock,
+            NULL
+        )))
+        {
+            TraceError(
+                TRACE_SIDEBAND,
+                "WdfWaitLockAcquire failed with status %!STATUS!",
+                status
+            );
+            EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfWaitLockAcquire", status);
+            break;
+        }
 
         device = WdfCollectionGetItem(FilterDeviceCollection, pGet->DeviceIndex);
 

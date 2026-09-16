@@ -80,7 +80,7 @@ BthPS3PSM_CreateDevice(
 )
 {
     WDF_OBJECT_ATTRIBUTES deviceAttributes;
-    WDFDEVICE device;
+    WDFDEVICE device = NULL;
     NTSTATUS status;
     WDF_OBJECT_ATTRIBUTES stringAttributes;
     BTHPS3PSM_TRANSPORT_TYPE transportType = BthPS3PsmTransportUnsupported;
@@ -366,9 +366,22 @@ BthPS3PSM_CreateDevice(
     }
     while (FALSE);
 
-    if (instanceId && !NT_SUCCESS(status))
+    if (!NT_SUCCESS(status))
     {
-        WdfObjectDelete(instanceId);
+        //
+        // WdfDeviceCreate does not roll back a created WDFDEVICE when
+        // EvtDeviceAdd later fails. Delete it here so PnP does not keep
+        // a half-initialized filter FDO. Cleanup owns instanceId once
+        // the device exists; otherwise free the pre-create allocation.
+        //
+        if (device != NULL)
+        {
+            WdfObjectDelete(device);
+        }
+        else if (instanceId != NULL)
+        {
+            WdfObjectDelete(instanceId);
+        }
     }
 
     FuncExit(TRACE_DEVICE, "status=%!STATUS!", status);
@@ -626,39 +639,41 @@ BthPS3PSM_EvtDeviceContextCleanup(
         );
         EventWriteFailedWithNTStatus(NULL, __FUNCTION__, L"WdfWaitLockAcquire", status);
     }
-
-    const ULONG count = WdfCollectionGetCount(FilterDeviceCollection);
-
-    if (count == 1)
+    else
     {
-        //
-        // We are the last instance. So let us delete the control-device
-        // so that driver can unload when the FilterDevice is deleted.
-        // We absolutely have to do the deletion of control device with
-        // the collection lock acquired because we implicitly use this
-        // lock to protect ControlDevice global variable. We need to make
-        // sure another thread doesn't attempt to create while we are
-        // deleting the device.
-        //
-        BthPS3PSM_DeleteControlDevice((WDFDEVICE)Device);
-    }
+        const ULONG count = WdfCollectionGetCount(FilterDeviceCollection);
 
-    //
-    // Collection might be empty due to device creation failure
-    // Loop though and compare items before removal attempt
-    // 
-    for (ULONG i = 0; i < count; i++)
-    {
-        WDFDEVICE devIter = WdfCollectionGetItem(FilterDeviceCollection, i);
-
-        if (devIter == Device)
+        if (count == 1 &&
+            WdfCollectionGetItem(FilterDeviceCollection, 0) == Device)
         {
-            WdfCollectionRemoveItem(FilterDeviceCollection, i);
-            break;
+            //
+            // We are the last inserted instance. Delete the control-device
+            // so that the driver can unload when this FilterDevice is
+            // deleted. Skip this if Device never entered the collection
+            // (failed WdfCollectionAdd or a later EvtDeviceAdd rollback).
+            // Keep the deletion under the collection lock so it stays
+            // serialized with ControlDevice create.
+            //
+            BthPS3PSM_DeleteControlDevice((WDFDEVICE)Device);
         }
-    }
 
-    WdfWaitLockRelease(FilterDeviceCollectionLock);
+        //
+        // Collection might be empty due to device creation failure
+        // Loop though and compare items before removal attempt
+        // 
+        for (ULONG i = 0; i < count; i++)
+        {
+            WDFDEVICE devIter = WdfCollectionGetItem(FilterDeviceCollection, i);
+
+            if (devIter == Device)
+            {
+                WdfCollectionRemoveItem(FilterDeviceCollection, i);
+                break;
+            }
+        }
+
+        WdfWaitLockRelease(FilterDeviceCollectionLock);
+    }
 
     //
     // This object has no parent so we need to delete it manually

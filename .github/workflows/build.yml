@@ -398,12 +398,13 @@ jobs:
           path: tools-artifact
 
       - name: 'Mirror tools'
-        # nefarius/AppVeyorArtifactsReceiver@18a32a353900635575675e59d7659781913c8e4b (master as of 2026-09-12, PR #128)
-        uses: nefarius/AppVeyorArtifactsReceiver@18a32a353900635575675e59d7659781913c8e4b
+        # nefarius/AppVeyorArtifactsReceiver@89b6e611c9f1997c3faf8c57401d3c0e557a2dc4 (master as of 2026-09-16, PR #135)
+        uses: nefarius/AppVeyorArtifactsReceiver@89b6e611c9f1997c3faf8c57401d3c0e557a2dc4
         with:
           webhook-url: ${{ secrets.WEBHOOK_URL }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           artifact-name: bthps3-tools
+          job-label: tools
 
   partner-cab:
     name: 'Partner Portal CAB'
@@ -587,12 +588,13 @@ jobs:
           path: ${{ env.RELEASE_METADATA }}
 
       - name: 'Mirror partner submission CAB'
-        # nefarius/AppVeyorArtifactsReceiver@18a32a353900635575675e59d7659781913c8e4b (master as of 2026-09-12, PR #128)
-        uses: nefarius/AppVeyorArtifactsReceiver@18a32a353900635575675e59d7659781913c8e4b
+        # nefarius/AppVeyorArtifactsReceiver@89b6e611c9f1997c3faf8c57401d3c0e557a2dc4 (master as of 2026-09-16, PR #135)
+        uses: nefarius/AppVeyorArtifactsReceiver@89b6e611c9f1997c3faf8c57401d3c0e557a2dc4
         with:
           webhook-url: ${{ secrets.WEBHOOK_URL }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           artifact-name: bthps3-partner-submission
+          job-label: partner-submission
 
   partner-signing:
     name: 'Partner Center signing'

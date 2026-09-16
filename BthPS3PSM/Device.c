@@ -643,16 +643,16 @@ BthPS3PSM_EvtDeviceContextCleanup(
     {
         const ULONG count = WdfCollectionGetCount(FilterDeviceCollection);
 
-        if (count == 1)
+        if (count == 1 &&
+            WdfCollectionGetItem(FilterDeviceCollection, 0) == Device)
         {
             //
-            // We are the last instance. So let us delete the control-device
-            // so that driver can unload when the FilterDevice is deleted.
-            // We absolutely have to do the deletion of control device with
-            // the collection lock acquired because we implicitly use this
-            // lock to protect ControlDevice global variable. We need to make
-            // sure another thread doesn't attempt to create while we are
-            // deleting the device.
+            // We are the last inserted instance. Delete the control-device
+            // so that the driver can unload when this FilterDevice is
+            // deleted. Skip this if Device never entered the collection
+            // (failed WdfCollectionAdd or a later EvtDeviceAdd rollback).
+            // Keep the deletion under the collection lock so it stays
+            // serialized with ControlDevice create.
             //
             BthPS3PSM_DeleteControlDevice((WDFDEVICE)Device);
         }

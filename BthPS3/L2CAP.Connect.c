@@ -59,6 +59,7 @@ L2CAP_PS3_HandleRemoteConnect(
     CHAR remoteName[BTH_MAX_NAME_SIZE];
     DS_DEVICE_TYPE deviceType = DS_DEVICE_TYPE_UNKNOWN;
     BOOLEAN pdoRundownHeld = FALSE;
+    BOOLEAN responseSent = FALSE;
 
 
     FuncEntry(TRACE_L2CAP);
@@ -416,21 +417,33 @@ L2CAP_PS3_HandleRemoteConnect(
 
         BthPS3_PDO_RundownRelease(pPdoCtx);
     }
+    else
+    {
+        responseSent = TRUE;
+    }
 
 exit:
 
-    if (!NT_SUCCESS(status) && pPdoCtx)
+    if (!NT_SUCCESS(status) && pPdoCtx != NULL)
     {
         BthPS3_PDO_Destroy(&DevCtx->Header, pPdoCtx);
     }
 
-    if (pdoRundownHeld)
+    if (pdoRundownHeld && pPdoCtx != NULL)
     {
         BthPS3_PDO_RundownRelease(pPdoCtx);
+        pdoRundownHeld = FALSE;
     }
 
-    if (!NT_SUCCESS(status))
+    //
+    // Every IndicationRemoteConnect must receive exactly one OPEN
+    // response. Early deny paths return before this label; any other
+    // failure must still reject the remote so the stack does not stall.
+    //
+    if (!NT_SUCCESS(status) && !responseSent)
     {
+        (void)L2CAP_PS3_DenyRemoteConnect(DevCtx, ConnectParams);
+        responseSent = TRUE;
         EventWriteL2CAPRemoteConnectFailed(NULL, psm, status);
     }
 

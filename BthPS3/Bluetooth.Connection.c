@@ -111,6 +111,7 @@ BthPS3_IndicationCallback(
 				status
 			);
 
+			(void)L2CAP_PS3_DenyRemoteConnect(devCtx, Parameters);
 			break;
 		}
 

@@ -39,6 +39,20 @@
 #include "L2CAP.Transfer.tmh"
 
 
+static
+size_t
+L2CAP_PS3_TransferredLength(
+    _In_ const struct _BRB_L2CA_ACL_TRANSFER* Brb
+)
+{
+    if (Brb->RemainingBufferSize > Brb->BufferSize)
+    {
+        return 0;
+    }
+
+    return (size_t)(Brb->BufferSize - Brb->RemainingBufferSize);
+}
+
 //
 // Submits an outgoing control request
 // 
@@ -411,7 +425,7 @@ L2CAP_PS3_AsyncReadControlTransferCompleted(
         Params->IoStatus.Status
     );
 
-    length = brb->BufferSize;
+    length = L2CAP_PS3_TransferredLength(brb);
     pPdoCtx->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
     BthPS3_PDO_RundownRelease(pPdoCtx);
     WdfRequestCompleteWithInformation(
@@ -447,7 +461,7 @@ L2CAP_PS3_AsyncReadInterruptTransferCompleted(
         brb->RemainingBufferSize
     );
 
-    length = brb->BufferSize;
+    length = L2CAP_PS3_TransferredLength(brb);
     pPdoCtx->DevCtxHdr->ProfileDrvInterface.BthFreeBrb((PBRB)brb);
     BthPS3_PDO_RundownRelease(pPdoCtx);
     WdfRequestCompleteWithInformation(

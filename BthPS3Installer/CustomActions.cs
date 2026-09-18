@@ -49,16 +49,16 @@ public static class CustomActions
         // wizard run. WIXSHARP_MANAGED_UI_HANDLE is only set when the ManagedUI window
         // is actually shown; it stays empty for reduced/basic/suppressed execution.
         string managedUiHandle = session.Property("WIXSHARP_MANAGED_UI_HANDLE");
-        bool managedUiDisplayed = !string.IsNullOrWhiteSpace(managedUiHandle);
         bool articleFeatureEnabled = session.IsFeatureEnabled("PostInstArticle");
+        bool shouldLaunch = OpenArticleDecision.ShouldLaunch(managedUiHandle, articleFeatureEnabled);
 
         session.Log(
             $"{nameof(OpenArticle)} - WIXSHARP_MANAGED_UI_HANDLE='{managedUiHandle}', " +
-            $"managedUiDisplayed={managedUiDisplayed}, PostInstArticle={articleFeatureEnabled}");
+            $"managedUiDisplayed={!string.IsNullOrWhiteSpace(managedUiHandle)}, PostInstArticle={articleFeatureEnabled}");
 
         // Full ManagedUI: honor the optional feature. Reduced/basic/suppressed UI
         // never shows the Features dialog, so always open the article.
-        if (managedUiDisplayed && !articleFeatureEnabled)
+        if (!shouldLaunch)
         {
             session.Log($"{nameof(OpenArticle)} - skipping launch; feature deselected in full UI");
             return ActionResult.Success;

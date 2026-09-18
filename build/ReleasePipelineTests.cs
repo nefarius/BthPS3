@@ -9,6 +9,7 @@ static class ReleasePipelineTests
         TestMetadataRoundTrip();
         TestIngestFromDirectoryAndZip();
         TestDriverLayoutRequiresBothPackages();
+        OpenArticleTests.Run();
     }
 
     static void TestMetadataRoundTrip()

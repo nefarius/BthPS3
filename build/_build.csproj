@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -13,6 +13,10 @@
 
   <ItemGroup>
     <PackageReference Include="Nuke.Common" Version="10.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\BthPS3Installer\OpenArticleDecision.cs" Link="OpenArticleDecision.cs" />
   </ItemGroup>
 
 </Project>

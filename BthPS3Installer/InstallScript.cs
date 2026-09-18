@@ -1,23 +1,13 @@
 using System;
-using System.Buffers;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-
-using CliWrap;
-
-using Microsoft.Win32;
-using Microsoft.Win32.SafeHandles;
+using System.Reflection;
 
 using Nefarius.BthPS3.Setup.Dialogues;
-using Nefarius.BthPS3.Shared;
 using Nefarius.Utilities.Bluetooth;
 using Nefarius.Utilities.DeviceManagement.PnP;
-
-using PInvoke;
 
 using WixSharp;
 using WixSharp.CommonTasks;
@@ -25,6 +15,7 @@ using WixSharp.Forms;
 
 using WixToolset.Dtf.WindowsInstaller;
 
+using Assembly = System.Reflection.Assembly;
 using File = WixSharp.File;
 using RegistryHive = WixSharp.RegistryHive;
 
@@ -318,41 +309,68 @@ internal class InstallScript
     }
 
     /// <summary>
-    ///     Assemblies MakeSfxCA must pack beside the deferred custom-action host.
-    ///     Paths are resolved from the assemblies loaded by this build process so the
-    ///     packaged versions match <see cref="CustomActions.config" /> redirects.
+    ///     Assemblies MakeSfxCA must pack beside the deferred custom-action host: the
+    ///     transitive reference closure of this assembly, restricted to files that ship
+    ///     in its own output directory. Hand-listing <c>typeof(X).Assembly.Location</c>
+    ///     missed indirect references such as <c>System.Numerics.Vectors</c> (pulled in by
+    ///     <c>System.Memory</c>), which made the deferred actions fail at runtime.
     /// </summary>
     private static string[] GetCustomActionSupportAssemblies()
     {
-        return new[]
-        {
-            RequireAssemblyFile(typeof(Devcon)),
-            RequireAssemblyFile(typeof(HostRadio)),
-            RequireAssemblyFile(typeof(Cli)),
-            RequireAssemblyFile(typeof(RegistryKey)),
-            RequireAssemblyFile(typeof(ValueTask)),
-            RequireAssemblyFile(typeof(IAsyncDisposable)),
-            RequireAssemblyFile(typeof(Unsafe)),
-            RequireAssemblyFile(typeof(BuffersExtensions)),
-            RequireAssemblyFile(typeof(ArrayPool<>)),
-            RequireAssemblyFile(typeof(Kernel32.SafeObjectHandle)),
-            RequireAssemblyFile(typeof(FilterDriver)),
-            RequireAssemblyFile(typeof(BluetoothHelper)),
-            RequireAssemblyFile(typeof(SafeRegistryHandle))
-        };
-    }
-
-    private static string RequireAssemblyFile(Type type)
-    {
-        string location = type.Assembly.Location;
-        if (string.IsNullOrWhiteSpace(location) || !System.IO.File.Exists(location))
+        Assembly root = typeof(CustomActions).Assembly;
+        string directory = Path.GetDirectoryName(root.Location);
+        if (string.IsNullOrEmpty(directory))
         {
             throw new InvalidOperationException(
-                $"Cannot embed '{type.Assembly.GetName().Name}' for custom actions; " +
-                "Assembly.Location is empty or the file is missing.");
+                "Cannot resolve the custom-action output directory; Assembly.Location is empty.");
         }
 
-        return location;
+        Dictionary<string, string> resolved = new(StringComparer.OrdinalIgnoreCase);
+        Queue<Assembly> pending = new();
+        HashSet<string> visited = new(StringComparer.OrdinalIgnoreCase);
+
+        pending.Enqueue(root);
+        visited.Add(root.GetName().Name);
+
+        while (pending.Count > 0)
+        {
+            foreach (AssemblyName reference in pending.Dequeue().GetReferencedAssemblies())
+            {
+                if (!visited.Add(reference.Name))
+                {
+                    continue;
+                }
+
+                // Anything not present next to the custom action comes from the framework
+                // and must not be embedded.
+                string path = new[] { ".dll", ".exe" }
+                    .Select(extension => Path.Combine(directory, reference.Name + extension))
+                    .FirstOrDefault(System.IO.File.Exists);
+                if (path is null)
+                {
+                    continue;
+                }
+
+                resolved[reference.Name] = path;
+                pending.Enqueue(Assembly.LoadFrom(path));
+            }
+        }
+
+        // WixSharp adds its own and the DTF assemblies to every custom-action package.
+        string[] assemblies = resolved
+            .Where(entry => !entry.Key.StartsWith("WixSharp", StringComparison.OrdinalIgnoreCase) &&
+                            !entry.Key.StartsWith("WixToolset.", StringComparison.OrdinalIgnoreCase))
+            .Select(entry => entry.Value)
+            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        Console.WriteLine($"Custom-action support assemblies: {assemblies.Length}");
+        foreach (string assembly in assemblies)
+        {
+            Console.WriteLine($"  {Path.GetFileName(assembly)}");
+        }
+
+        return assemblies;
     }
 
     /// <summary>

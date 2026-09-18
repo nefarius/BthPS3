@@ -109,6 +109,10 @@ jobs:
         uses: actions/checkout@v7
         with:
           persist-credentials: false
+          # nefcon and the updater are Git LFS objects. Without this they check out as
+          # 132-byte pointer stubs, which MSI packages as unversioned files and then
+          # refuses to install over an existing versioned copy.
+          lfs: true
 
       - name: 'Require signing configuration'
         shell: pwsh
@@ -185,6 +189,13 @@ jobs:
           & "$env:USERPROFILE\.dotnet\tools\wix.exe" extension add -g WixToolset.UI.wixext/4.0.6
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
+      - name: 'Assert LFS payload is materialized'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          . ./build/SetupRelease.ps1
+          Assert-BthPS3NoGitLfsPointers -RepositoryRoot $pwd
+
       - name: 'Build MSI'
         shell: pwsh
         run: |
@@ -192,13 +203,14 @@ jobs:
           dotnet build -c Release -p:SetupVersion=$env:SETUP_VERSION .\BthPS3Installer\BthPS3Installer.csproj
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
-      - name: 'Assert custom-action package'
+      - name: 'Assert MSI payload and custom-action package'
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           . ./build/SetupRelease.ps1
           $msi = Join-Path $pwd (Join-Path 'BthPS3Installer' $env:MSI_NAME)
           if (-not (Test-Path -LiteralPath $msi)) { throw "MSI was not produced: $msi" }
+          Assert-BthPS3MsiBinariesVersioned -PayloadFiles (Get-BthPS3MsiPayloadFiles -MsiPath $msi)
           Assert-BthPS3CustomActionPackage -MsiPath $msi
 
       - name: 'Assert MSI is unsigned'

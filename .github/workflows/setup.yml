@@ -192,6 +192,15 @@ jobs:
           dotnet build -c Release -p:SetupVersion=$env:SETUP_VERSION .\BthPS3Installer\BthPS3Installer.csproj
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
+      - name: 'Assert custom-action package'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          . ./build/SetupRelease.ps1
+          $msi = Join-Path $pwd (Join-Path 'BthPS3Installer' $env:MSI_NAME)
+          if (-not (Test-Path -LiteralPath $msi)) { throw "MSI was not produced: $msi" }
+          Assert-BthPS3CustomActionPackage -MsiPath $msi
+
       - name: 'Assert MSI is unsigned'
         shell: pwsh
         run: |

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -24,6 +24,11 @@ namespace Nefarius.BthPS3.Setup;
 
 public static class CustomActions
 {
+    static CustomActions()
+    {
+        CustomActionAssemblyResolver.Register();
+    }
+
     /// <summary>
     ///     Reads the <see cref="CustomProperties.UseModern" /> session property, defaulting to
     ///     <c>true</c> (the modern install path) when the property is missing or not a valid

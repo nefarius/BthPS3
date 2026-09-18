@@ -212,6 +212,63 @@ try {
     Assert-Throws {
         Copy-BthPS3SetupPayload -DriversSource $drivers -ToolsSource $emptyTools -SetupRoot (Join-Path $tempRoot 'Setup3')
     } 'missing tools rejected'
+
+    $requiredCa = Get-BthPS3RequiredCustomActionAssemblies
+    Assert-True ($requiredCa -contains 'CliWrap.dll') 'required CA assemblies include CliWrap.dll'
+    Assert-True ($requiredCa -contains 'Nefarius.Utilities.DeviceManagement.dll') 'required CA assemblies include DeviceManagement'
+
+    $complete = @($requiredCa + 'BthPS3Installer.dll' + 'CustomActions.config')
+    Assert-BthPS3CustomActionPackageFiles -PackageFiles $complete
+    Write-Output 'PASS complete custom-action file list accepted'
+
+    $extensionless = @($requiredCa | ForEach-Object {
+            if ($_ -eq 'CliWrap.dll') { 'CliWrap' } else { $_ }
+        })
+    Assert-BthPS3CustomActionPackageFiles -PackageFiles $extensionless
+    Write-Output 'PASS extensionless CliWrap name accepted'
+
+    Assert-Throws {
+        Assert-BthPS3CustomActionPackageFiles -PackageFiles @('BthPS3Installer.dll', 'CustomActions.config')
+    } 'custom-action list missing CliWrap rejected'
+
+    $cabSource = Join-Path $tempRoot 'cab-src'
+    $cabOut = Join-Path $tempRoot 'cab-out'
+    New-Item -ItemType Directory -Force -Path @($cabSource, $cabOut) | Out-Null
+    Set-Content -LiteralPath (Join-Path $cabSource 'CliWrap.dll') -Value 'cliwrap' -Encoding utf8
+    Set-Content -LiteralPath (Join-Path $cabSource 'Nefarius.BthPS3.Shared.dll') -Value 'shared' -Encoding utf8
+    $ddf = Join-Path $tempRoot 'package.ddf'
+    @(
+        '.OPTION EXPLICIT'
+        ".Set CabinetNameTemplate=package.cab"
+        ".Set DiskDirectoryTemplate=$cabOut"
+        '.Set Cabinet=ON'
+        '.Set Compress=ON'
+        ('"{0}"' -f (Join-Path $cabSource 'CliWrap.dll'))
+        ('"{0}"' -f (Join-Path $cabSource 'Nefarius.BthPS3.Shared.dll'))
+    ) | Set-Content -LiteralPath $ddf -Encoding ascii
+    $makecab = Join-Path $env:WINDIR 'System32\makecab.exe'
+    $null = & $makecab /F $ddf
+    $cab = Join-Path $cabOut 'package.cab'
+    Assert-True (Test-Path -LiteralPath $cab -PathType Leaf) 'test cabinet created'
+
+    $sfx = Join-Path $tempRoot 'InstallDrivers_File.bin'
+    $stub = [Text.Encoding]::ASCII.GetBytes('SfxCA-stub')
+    $cabBytes = [IO.File]::ReadAllBytes($cab)
+    $payload = New-Object byte[] ($stub.Length + $cabBytes.Length)
+    [Array]::Copy($stub, 0, $payload, 0, $stub.Length)
+    [Array]::Copy($cabBytes, 0, $payload, $stub.Length, $cabBytes.Length)
+    [IO.File]::WriteAllBytes($sfx, $payload)
+
+    $names = Get-BthPS3SfxCaCabinetFileNames -Path $sfx
+    Assert-True ($names -contains 'CliWrap.dll') 'SfxCA cabinet lister finds CliWrap.dll'
+    Assert-True ($names -contains 'Nefarius.BthPS3.Shared.dll') 'SfxCA cabinet lister finds Shared.dll'
+
+    Assert-Throws {
+        Get-BthPS3SfxCaCabinetFileNames -Path (Join-Path $tempRoot 'missing.bin')
+    } 'missing SfxCA payload rejected'
+    $emptyPayload = Join-Path $tempRoot 'empty.bin'
+    [IO.File]::WriteAllBytes($emptyPayload, [Text.Encoding]::ASCII.GetBytes('not-a-cabinet'))
+    Assert-Throws { Get-BthPS3SfxCaCabinetFileNames -Path $emptyPayload } 'payload without cabinet rejected'
 }
 finally {
     if (Test-Path -LiteralPath $tempRoot) {

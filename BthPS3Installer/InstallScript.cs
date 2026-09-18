@@ -306,6 +306,32 @@ internal class InstallScript
 
         project.ResolveWildCards();
 
+        // WiX 4.0.5+ extracts the SFXCA payload into C:\Windows\Installer, which an
+        // impersonated standard-user token cannot write, so every non-elevated launch
+        // fails with "SFXCA: Failed to create temp directory. Error code 5" (1603).
+        // Fixed in the v5 custom-action tooling; see wixtoolset/issues#8078.
+        WixTools.WixDtfPackages = new[]
+        {
+            // PackageDir() matches this array case-sensitively against lowercase
+            // nuget cache folder names (wixtoolset.dtf.customaction). PascalCase IDs
+            // restore the nupkg but still resolve SfxCA.dll from GlobalWixVersion (4.0.6).
+            ("wixtoolset.dtf.customaction", "5.0.2"),
+            ("wixtoolset.dtf.windowsinstaller", "4.0.6"),
+            ("wixtoolset.heat", "*"),
+            ("wixtoolset.mba.core", "*")
+        };
+        WixTools.RestoreDtfPackages();
+
+        string sfxCa = WixTools.SfxCAFor(true);
+        FileVersionInfo sfxCaVersion = FileVersionInfo.GetVersionInfo(sfxCa);
+        Console.WriteLine($"SfxCA.dll: {sfxCaVersion.FileVersion} ({sfxCa})");
+        if (sfxCaVersion.FileMajorPart < 5)
+        {
+            throw new InvalidOperationException(
+                $"SfxCA.dll {sfxCaVersion.FileVersion} at '{sfxCa}' predates the WiX v5 temp-folder fix; " +
+                "non-elevated installs would fail with 1603.");
+        }
+
         project.BuildMsi();
     }
 

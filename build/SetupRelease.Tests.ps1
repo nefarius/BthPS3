@@ -243,8 +243,8 @@ try {
         ".Set DiskDirectoryTemplate=$cabOut"
         '.Set Cabinet=ON'
         '.Set Compress=ON'
-        (Join-Path $cabSource 'CliWrap.dll')
-        (Join-Path $cabSource 'Nefarius.BthPS3.Shared.dll')
+        ('"{0}"' -f (Join-Path $cabSource 'CliWrap.dll'))
+        ('"{0}"' -f (Join-Path $cabSource 'Nefarius.BthPS3.Shared.dll'))
     ) | Set-Content -LiteralPath $ddf -Encoding ascii
     $makecab = Join-Path $env:WINDIR 'System32\makecab.exe'
     $null = & $makecab /F $ddf

@@ -396,6 +396,245 @@ function Copy-BthPS3SetupPayload {
     Assert-BthPS3SetupPayload -SetupRoot $SetupRoot
 }
 
+function Get-BthPS3RequiredCustomActionAssemblies {
+    @(
+        'CliWrap.dll'
+        'Microsoft.Bcl.AsyncInterfaces.dll'
+        'Nefarius.BthPS3.Shared.dll'
+        'Nefarius.Utilities.Bluetooth.dll'
+        'Nefarius.Utilities.DeviceManagement.dll'
+        'PInvoke.Kernel32.dll'
+        'System.Buffers.dll'
+        'System.Memory.dll'
+        'System.Runtime.CompilerServices.Unsafe.dll'
+        'System.Threading.Tasks.Extensions.dll'
+    )
+}
+
+function Find-BthPS3CabinetRange {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [byte[]] $Bytes
+    )
+
+    for ($offset = 0; $offset -le $Bytes.Length - 36; $offset++) {
+        if ($Bytes[$offset] -ne 0x4D -or $Bytes[$offset + 1] -ne 0x53 -or
+            $Bytes[$offset + 2] -ne 0x43 -or $Bytes[$offset + 3] -ne 0x46) {
+            continue
+        }
+
+        $length = [BitConverter]::ToUInt32($Bytes, $offset + 8)
+        if ($length -ge 36 -and ($offset + $length) -le $Bytes.Length) {
+            return [pscustomobject]@{
+                Offset = $offset
+                Length = [int]$length
+            }
+        }
+    }
+
+    return $null
+}
+
+function Get-BthPS3SfxCaCabinetFileNames {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $Path
+    )
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        throw "SfxCA payload was not found: $Path"
+    }
+
+    $bytes = [IO.File]::ReadAllBytes((Resolve-Path -LiteralPath $Path).Path)
+    $range = Find-BthPS3CabinetRange -Bytes $bytes
+    if ($null -eq $range) {
+        throw "No appended cabinet was found in SfxCA payload: $Path"
+    }
+
+    $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("bthps3-sfxca-" + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Force -Path $tempRoot | Out-Null
+    try {
+        $cab = Join-Path $tempRoot 'package.cab'
+        $extract = Join-Path $tempRoot 'files'
+        New-Item -ItemType Directory -Force -Path $extract | Out-Null
+        $cabBytes = New-Object byte[] $range.Length
+        [Array]::Copy($bytes, $range.Offset, $cabBytes, 0, $range.Length)
+        [IO.File]::WriteAllBytes($cab, $cabBytes)
+
+        $expand = Join-Path $env:WINDIR 'System32\expand.exe'
+        if (-not (Test-Path -LiteralPath $expand -PathType Leaf)) {
+            throw "expand.exe was not found at $expand."
+        }
+
+        $null = & $expand $cab -F:* $extract
+        if ($LASTEXITCODE) {
+            throw "expand.exe failed to extract the SfxCA cabinet from $Path (exit $LASTEXITCODE)."
+        }
+
+        @(Get-ChildItem -LiteralPath $extract -File | ForEach-Object { $_.Name })
+    }
+    finally {
+        if (Test-Path -LiteralPath $tempRoot) {
+            Remove-Item -LiteralPath $tempRoot -Recurse -Force
+        }
+    }
+}
+
+function Get-BthPS3MsiBinaryPayload {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $MsiPath,
+
+        [Parameter(Mandatory)]
+        [string] $BinaryName
+    )
+
+    if (-not (Test-Path -LiteralPath $MsiPath -PathType Leaf)) {
+        throw "MSI was not found: $MsiPath"
+    }
+
+    if ($BinaryName -match "[^A-Za-z0-9_.-]") {
+        throw "Binary name contains unsupported characters: '$BinaryName'."
+    }
+
+    $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("bthps3-msi-binary-" + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Force -Path $tempRoot | Out-Null
+    $destination = Join-Path $tempRoot 'payload.bin'
+
+    $installer = $null
+    $database = $null
+    $view = $null
+    $record = $null
+    try {
+        $installer = New-Object -ComObject WindowsInstaller.Installer
+        $database = $installer.OpenDatabase((Resolve-Path -LiteralPath $MsiPath).Path, 0)
+        $view = $database.OpenView("SELECT ``Data`` FROM ``Binary`` WHERE ``Name``='$BinaryName'")
+        [void]$view.Execute()
+        $record = $view.Fetch()
+        if ($null -eq $record) {
+            throw "Binary '$BinaryName' was not found in $MsiPath."
+        }
+
+        $remaining = [int64]$record.DataSize(1)
+        if ($remaining -le 0) {
+            throw "Binary '$BinaryName' in $MsiPath is empty."
+        }
+
+        $output = [IO.File]::Create($destination)
+        try {
+            while ($remaining -gt 0) {
+                $chunkSize = [int][Math]::Min(1048576L, $remaining)
+                # Record.ReadStream(..., 1) returns a string whose Char values are the raw bytes.
+                $chunk = $record.ReadStream(1, $chunkSize, 1)
+                $bytes = [byte[]][char[]]$chunk
+                if ($bytes.Length -le 0) {
+                    throw "Windows Installer stopped streaming '$BinaryName' with $remaining bytes remaining."
+                }
+
+                $output.Write($bytes, 0, $bytes.Length)
+                $remaining -= $bytes.Length
+            }
+        }
+        finally {
+            $output.Dispose()
+        }
+
+        return [pscustomobject]@{
+            Path     = $destination
+            TempRoot = $tempRoot
+        }
+    }
+    catch {
+        if (Test-Path -LiteralPath $tempRoot) {
+            Remove-Item -LiteralPath $tempRoot -Recurse -Force
+        }
+        throw
+    }
+    finally {
+        foreach ($comObject in @($record, $view, $database, $installer)) {
+            if ($null -ne $comObject) {
+                [void][Runtime.InteropServices.Marshal]::ReleaseComObject($comObject)
+            }
+        }
+    }
+}
+
+function Test-BthPS3PackageContainsAssembly {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [System.Collections.Generic.HashSet[string]] $Present,
+
+        [Parameter(Mandatory)]
+        [string] $AssemblyFileName
+    )
+
+    $base = [IO.Path]::GetFileNameWithoutExtension($AssemblyFileName)
+    return $Present.Contains($AssemblyFileName) -or
+        $Present.Contains($base) -or
+        $Present.Contains("$base.dll")
+}
+
+function Assert-BthPS3CustomActionPackageFiles {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
+        [string[]] $PackageFiles
+    )
+
+    $present = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    foreach ($name in @($PackageFiles)) {
+        if (-not [string]::IsNullOrWhiteSpace($name)) {
+            [void]$present.Add($name.Trim())
+        }
+    }
+
+    $missing = @(
+        Get-BthPS3RequiredCustomActionAssemblies |
+            Where-Object { -not (Test-BthPS3PackageContainsAssembly -Present $present -AssemblyFileName $_) }
+    )
+    if ($missing.Count -gt 0) {
+        throw "Custom-action package is missing required assemblies:`n$($missing -join [Environment]::NewLine)"
+    }
+}
+
+function Assert-BthPS3CustomActionPackage {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $MsiPath,
+
+        [string] $BinaryName = 'InstallDrivers_File'
+    )
+
+    $payload = Get-BthPS3MsiBinaryPayload -MsiPath $MsiPath -BinaryName $BinaryName
+    try {
+        $names = Get-BthPS3SfxCaCabinetFileNames -Path $payload.Path
+        Assert-BthPS3CustomActionPackageFiles -PackageFiles $names
+        Write-Output "Custom-action package $BinaryName contains required assemblies."
+        foreach ($name in ($names | Sort-Object)) {
+            Write-Output "  $name"
+        }
+    }
+    finally {
+        $tempRoot = $null
+        if ($null -ne $payload -and $payload -isnot [array]) {
+            $tempRoot = $payload.TempRoot
+        }
+        elseif ($payload -is [array]) {
+            $tempRoot = @($payload | Where-Object { $_ -and $_.PSObject.Properties['TempRoot'] } | Select-Object -Last 1).TempRoot
+        }
+
+        if ($tempRoot -and (Test-Path -LiteralPath $tempRoot)) {
+            Remove-Item -LiteralPath $tempRoot -Recurse -Force
+        }
+    }
+}
+
 function Assert-BthPS3SetupPayload {
     [CmdletBinding()]
     param(

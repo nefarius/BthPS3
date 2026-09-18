@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Buffers;
 using System.Diagnostics;
 using System.IO;
@@ -82,6 +82,11 @@ internal class InstallScript
         driversFeature.Add(postInstallArticleFeature);
         driversFeature.Display = FeatureDisplay.expand;
 
+        // Attach the support assemblies on each action as well as DefaultRefAssemblies.
+        // WixSharp's ManagedUI packaging can rewrite the shared default list (the v3.0.0
+        // MSI shipped a deferred CA package without CliWrap.dll and failed with 1603).
+        string[] customActionAssemblies = GetCustomActionSupportAssemblies();
+
         ManagedProject project = new(ProductName,
             new Dir(driversFeature, @"%ProgramFiles%\Nefarius Software Solutions\BthPS3",
                 // nefcon
@@ -126,7 +131,8 @@ internal class InstallScript
                 Condition.NOT_Installed
             )
             {
-                UsesProperties = CustomProperties.UseModern
+                UsesProperties = CustomProperties.UseModern,
+                RefAssemblies = customActionAssemblies
             },
             // install drivers via legacy method
             new ElevatedManagedAction(CustomActions.InstallDriversLegacy, Return.check,
@@ -135,44 +141,63 @@ internal class InstallScript
                 Condition.NOT_Installed
             )
             {
-                UsesProperties = CustomProperties.UseModern
+                UsesProperties = CustomProperties.UseModern,
+                RefAssemblies = customActionAssemblies
             },
             // install manifests
             new ElevatedManagedAction(CustomActions.InstallManifest, Return.check,
                 When.After,
                 Step.InstallFiles,
                 Condition.NOT_Installed
-            ),
+            )
+            {
+                RefAssemblies = customActionAssemblies
+            },
             // remove manifests
             new ElevatedManagedAction(CustomActions.UninstallManifest, Return.check,
                 When.Before,
                 Step.RemoveFiles,
                 new Condition("REMOVE=\"ALL\"")
-            ),
+            )
+            {
+                RefAssemblies = customActionAssemblies
+            },
             // remove driver residue via legacy method (must run before packaged files are
             // removed, since it shells out to INSTALLDIR\nefcon\<arch>\nefconc.exe)
             new ElevatedManagedAction(CustomActions.UninstallDriversLegacyAction, Return.check,
                 When.Before,
                 Step.RemoveFiles,
                 new Condition("REMOVE=\"ALL\"")
-            ),
+            )
+            {
+                RefAssemblies = customActionAssemblies
+            },
             // register updater
             new ManagedAction(CustomActions.RegisterUpdater, Return.check,
                 When.After,
                 Step.InstallFinalize,
                 Condition.NOT_Installed
-            ),
+            )
+            {
+                RefAssemblies = customActionAssemblies
+            },
             // remove updater cleanly
             new ManagedAction(CustomActions.DeregisterUpdater, Return.check,
                 When.Before,
                 Step.RemoveFiles,
                 new Condition("REMOVE=\"ALL\"")
-            ),
+            )
+            {
+                RefAssemblies = customActionAssemblies
+            },
             new ManagedAction(CustomActions.OpenArticle, Return.check,
                 When.After,
                 Step.InstallFinalize,
                 Condition.NOT_Installed
-            ),
+            )
+            {
+                RefAssemblies = customActionAssemblies
+            },
             // custom reboot prompt message
             new Error("9000",
                 "Driver installation succeeded but a reboot is required to be fully operational. " +
@@ -271,19 +296,7 @@ internal class InstallScript
 
         #region Embed types of dependencies
 
-        project.DefaultRefAssemblies.Add(typeof(Devcon).Assembly.Location);
-        project.DefaultRefAssemblies.Add(typeof(HostRadio).Assembly.Location);
-        project.DefaultRefAssemblies.Add(typeof(Cli).Assembly.Location);
-        project.DefaultRefAssemblies.Add(typeof(RegistryKey).Assembly.Location);
-        project.DefaultRefAssemblies.Add(typeof(ValueTask).Assembly.Location);
-        project.DefaultRefAssemblies.Add(typeof(IAsyncDisposable).Assembly.Location);
-        project.DefaultRefAssemblies.Add(typeof(Unsafe).Assembly.Location);
-        project.DefaultRefAssemblies.Add(typeof(BuffersExtensions).Assembly.Location);
-        project.DefaultRefAssemblies.Add(typeof(ArrayPool<>).Assembly.Location);
-        project.DefaultRefAssemblies.Add(typeof(Kernel32.SafeObjectHandle).Assembly.Location);
-        project.DefaultRefAssemblies.Add(typeof(FilterDriver).Assembly.Location);
-        project.DefaultRefAssemblies.Add(typeof(BluetoothHelper).Assembly.Location);
-        project.DefaultRefAssemblies.Add(typeof(SafeRegistryHandle).Assembly.Location);
+        project.DefaultRefAssemblies.AddRange(customActionAssemblies);
 
         #endregion
 
@@ -302,6 +315,44 @@ internal class InstallScript
         project.ResolveWildCards();
 
         project.BuildMsi();
+    }
+
+    /// <summary>
+    ///     Assemblies MakeSfxCA must pack beside the deferred custom-action host.
+    ///     Paths are resolved from the assemblies loaded by this build process so the
+    ///     packaged versions match <see cref="CustomActions.config" /> redirects.
+    /// </summary>
+    private static string[] GetCustomActionSupportAssemblies()
+    {
+        return new[]
+        {
+            RequireAssemblyFile(typeof(Devcon)),
+            RequireAssemblyFile(typeof(HostRadio)),
+            RequireAssemblyFile(typeof(Cli)),
+            RequireAssemblyFile(typeof(RegistryKey)),
+            RequireAssemblyFile(typeof(ValueTask)),
+            RequireAssemblyFile(typeof(IAsyncDisposable)),
+            RequireAssemblyFile(typeof(Unsafe)),
+            RequireAssemblyFile(typeof(BuffersExtensions)),
+            RequireAssemblyFile(typeof(ArrayPool<>)),
+            RequireAssemblyFile(typeof(Kernel32.SafeObjectHandle)),
+            RequireAssemblyFile(typeof(FilterDriver)),
+            RequireAssemblyFile(typeof(BluetoothHelper)),
+            RequireAssemblyFile(typeof(SafeRegistryHandle))
+        };
+    }
+
+    private static string RequireAssemblyFile(Type type)
+    {
+        string location = type.Assembly.Location;
+        if (string.IsNullOrWhiteSpace(location) || !System.IO.File.Exists(location))
+        {
+            throw new InvalidOperationException(
+                $"Cannot embed '{type.Assembly.GetName().Name}' for custom actions; " +
+                "Assembly.Location is empty or the file is missing.");
+        }
+
+        return location;
     }
 
     /// <summary>

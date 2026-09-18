@@ -24,6 +24,7 @@ namespace Nefarius.BthPS3.Setup;
 internal class InstallScript
 {
     public const string ProductName = "Nefarius BthPS3 Bluetooth Drivers";
+    public const string CustomActionManifestName = "ca-support-assemblies.txt";
     public const string ArtifactsDir = @"..\setup\artifacts";
     public const string DriversRoot = @"..\setup\drivers";
     public const string ManifestsDir = "manifests";
@@ -325,7 +326,7 @@ internal class InstallScript
                 "Cannot resolve the custom-action output directory; Assembly.Location is empty.");
         }
 
-        Dictionary<string, string> resolved = new(StringComparer.OrdinalIgnoreCase);
+        SortedDictionary<string, string> resolved = new(StringComparer.OrdinalIgnoreCase);
         Queue<Assembly> pending = new();
         HashSet<string> visited = new(StringComparer.OrdinalIgnoreCase);
 
@@ -341,14 +342,31 @@ internal class InstallScript
                     continue;
                 }
 
-                // Anything not present next to the custom action comes from the framework
-                // and must not be embedded.
+                // WixSharp packs itself and the DTF/Mba assemblies into every custom-action
+                // package, so their private dependencies are not ours to resolve.
+                if (IsWixAssembly(reference.Name))
+                {
+                    continue;
+                }
+
                 string path = new[] { ".dll", ".exe" }
                     .Select(extension => Path.Combine(directory, reference.Name + extension))
                     .FirstOrDefault(System.IO.File.Exists);
+
                 if (path is null)
                 {
-                    continue;
+                    // Framework assemblies come from the GAC on the target machine and must
+                    // not be embedded. Anything else is a dependency we were supposed to ship.
+                    if (IsFrameworkAssembly(reference))
+                    {
+                        continue;
+                    }
+
+                    throw new InvalidOperationException(
+                        $"Custom-action dependency '{reference.FullName}' was not found in " +
+                        $"'{directory}' and is not a framework assembly. Add it to " +
+                        "BthPS3Installer.csproj so MakeSfxCA can pack it; a deferred custom " +
+                        "action would otherwise fail at runtime with FileNotFoundException.");
                 }
 
                 resolved[reference.Name] = path;
@@ -356,13 +374,7 @@ internal class InstallScript
             }
         }
 
-        // WixSharp adds its own and the DTF assemblies to every custom-action package.
-        string[] assemblies = resolved
-            .Where(entry => !entry.Key.StartsWith("WixSharp", StringComparison.OrdinalIgnoreCase) &&
-                            !entry.Key.StartsWith("WixToolset.", StringComparison.OrdinalIgnoreCase))
-            .Select(entry => entry.Value)
-            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
+        string[] assemblies = resolved.Values.ToArray();
 
         Console.WriteLine($"Custom-action support assemblies: {assemblies.Length}");
         foreach (string assembly in assemblies)
@@ -370,7 +382,45 @@ internal class InstallScript
             Console.WriteLine($"  {Path.GetFileName(assembly)}");
         }
 
+        WriteCustomActionManifest(assemblies);
+
         return assemblies;
+    }
+
+    private static bool IsWixAssembly(string name)
+    {
+        return name.StartsWith("WixSharp", StringComparison.OrdinalIgnoreCase) ||
+               name.StartsWith("WixToolset.", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    ///     True when the reference resolves to a GAC assembly, i.e. it ships with the
+    ///     .NET Framework and is present on every target machine.
+    /// </summary>
+    private static bool IsFrameworkAssembly(AssemblyName reference)
+    {
+        try
+        {
+            return Assembly.ReflectionOnlyLoad(reference.FullName).GlobalAssemblyCache;
+        }
+        catch (Exception exception) when (exception is IOException ||
+                                          exception is BadImageFormatException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    ///     Records the packed support assemblies so the release guard in
+    ///     <c>build/SetupRelease.ps1</c> validates the closure this build actually produced
+    ///     instead of a hand-maintained list that silently drifts.
+    /// </summary>
+    private static void WriteCustomActionManifest(string[] assemblies)
+    {
+        string path = Path.Combine("obj", CustomActionManifestName);
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path)));
+        System.IO.File.WriteAllLines(path, assemblies.Select(Path.GetFileName));
+        Console.WriteLine($"Custom-action manifest: {Path.GetFullPath(path)}");
     }
 
     /// <summary>

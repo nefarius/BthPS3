@@ -751,12 +751,41 @@ function Test-BthPS3PackageContainsAssembly {
         $Present.Contains("$base.dll")
 }
 
+function Get-BthPS3CustomActionManifestAssemblies {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $ManifestPath
+    )
+
+    if (-not (Test-Path -LiteralPath $ManifestPath -PathType Leaf)) {
+        throw "Custom-action manifest was not produced by the build: $ManifestPath"
+    }
+
+    $names = @(
+        Get-Content -LiteralPath $ManifestPath |
+            ForEach-Object { $_.Trim() } |
+            Where-Object { $_ }
+    )
+    if ($names.Count -eq 0) {
+        throw "Custom-action manifest is empty: $ManifestPath"
+    }
+
+    return $names
+}
+
 function Assert-BthPS3CustomActionPackageFiles {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
         [AllowEmptyCollection()]
-        [string[]] $PackageFiles
+        [string[]] $PackageFiles,
+
+        # Closure emitted by the MSI build. Checking it keeps this guard honest when a new
+        # or transitive dependency is added that the static baseline below does not name.
+        [AllowNull()]
+        [AllowEmptyCollection()]
+        [string[]] $ExpectedAssemblies
     )
 
     $present = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
@@ -766,9 +795,17 @@ function Assert-BthPS3CustomActionPackageFiles {
         }
     }
 
+    $required = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    foreach ($name in @(Get-BthPS3RequiredCustomActionAssemblies) + @($ExpectedAssemblies)) {
+        if (-not [string]::IsNullOrWhiteSpace($name)) {
+            [void]$required.Add($name.Trim())
+        }
+    }
+
     $missing = @(
-        Get-BthPS3RequiredCustomActionAssemblies |
-            Where-Object { -not (Test-BthPS3PackageContainsAssembly -Present $present -AssemblyFileName $_) }
+        $required |
+            Where-Object { -not (Test-BthPS3PackageContainsAssembly -Present $present -AssemblyFileName $_) } |
+            Sort-Object
     )
     if ($missing.Count -gt 0) {
         throw "Custom-action package is missing required assemblies:`n$($missing -join [Environment]::NewLine)"
@@ -781,13 +818,22 @@ function Assert-BthPS3CustomActionPackage {
         [Parameter(Mandatory)]
         [string] $MsiPath,
 
-        [string] $BinaryName = 'InstallDrivers_File'
+        [string] $BinaryName = 'InstallDrivers_File',
+
+        [AllowNull()]
+        [string] $ManifestPath
     )
+
+    $expected = @()
+    if ($ManifestPath) {
+        $expected = Get-BthPS3CustomActionManifestAssemblies -ManifestPath $ManifestPath
+        Write-Output "Custom-action manifest lists $($expected.Count) support assemblies."
+    }
 
     $payload = Get-BthPS3MsiBinaryPayload -MsiPath $MsiPath -BinaryName $BinaryName
     try {
         $names = Get-BthPS3SfxCaCabinetFileNames -Path $payload.Path
-        Assert-BthPS3CustomActionPackageFiles -PackageFiles $names
+        Assert-BthPS3CustomActionPackageFiles -PackageFiles $names -ExpectedAssemblies $expected
         Write-Output "Custom-action package $BinaryName contains required assemblies."
         foreach ($name in ($names | Sort-Object)) {
             Write-Output "  $name"

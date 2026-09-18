@@ -232,6 +232,26 @@ try {
         Assert-BthPS3CustomActionPackageFiles -PackageFiles @('BthPS3Installer.dll', 'CustomActions.config')
     } 'custom-action list missing CliWrap rejected'
 
+    Assert-Throws {
+        Assert-BthPS3CustomActionPackageFiles -PackageFiles $complete -ExpectedAssemblies @('Totally.New.Dependency.dll')
+    } 'transitive dependency from build manifest enforced'
+
+    $manifestPath = Join-Path $tempRoot 'ca-support-assemblies.txt'
+    Set-Content -LiteralPath $manifestPath -Value @('CliWrap.dll', '', '  System.Numerics.Vectors.dll  ') -Encoding utf8
+    $manifestNames = Get-BthPS3CustomActionManifestAssemblies -ManifestPath $manifestPath
+    Assert-Equal $manifestNames.Count 2 'manifest skips blank lines'
+    Assert-True ($manifestNames -contains 'System.Numerics.Vectors.dll') 'manifest entries are trimmed'
+
+    Assert-Throws {
+        Get-BthPS3CustomActionManifestAssemblies -ManifestPath (Join-Path $tempRoot 'absent-manifest.txt')
+    } 'missing custom-action manifest rejected'
+
+    $emptyManifest = Join-Path $tempRoot 'empty-manifest.txt'
+    Set-Content -LiteralPath $emptyManifest -Value '' -Encoding utf8
+    Assert-Throws {
+        Get-BthPS3CustomActionManifestAssemblies -ManifestPath $emptyManifest
+    } 'empty custom-action manifest rejected'
+
     $cabSource = Join-Path $tempRoot 'cab-src'
     $cabOut = Join-Path $tempRoot 'cab-out'
     New-Item -ItemType Directory -Force -Path @($cabSource, $cabOut) | Out-Null

@@ -211,7 +211,8 @@ jobs:
           $msi = Join-Path $pwd (Join-Path 'BthPS3Installer' $env:MSI_NAME)
           if (-not (Test-Path -LiteralPath $msi)) { throw "MSI was not produced: $msi" }
           Assert-BthPS3MsiBinariesVersioned -PayloadFiles (Get-BthPS3MsiPayloadFiles -MsiPath $msi)
-          Assert-BthPS3CustomActionPackage -MsiPath $msi
+          $manifest = Join-Path $pwd 'BthPS3Installer\obj\ca-support-assemblies.txt'
+          Assert-BthPS3CustomActionPackage -MsiPath $msi -ManifestPath $manifest
 
       - name: 'Assert MSI is unsigned'
         shell: pwsh

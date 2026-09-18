@@ -45,13 +45,28 @@ public static class CustomActions
     [CustomAction]
     public static ActionResult OpenArticle(Session session)
     {
-        if (!session.IsFeatureEnabled("PostInstArticle"))
+        // MSI UILevel is reported as silent for Embedded/ManagedUI even during a full
+        // wizard run. WIXSHARP_MANAGED_UI_HANDLE is only set when the ManagedUI window
+        // is actually shown; it stays empty for reduced/basic/suppressed execution.
+        string managedUiHandle = session.Property("WIXSHARP_MANAGED_UI_HANDLE");
+        bool managedUiDisplayed = !string.IsNullOrWhiteSpace(managedUiHandle);
+        bool articleFeatureEnabled = session.IsFeatureEnabled("PostInstArticle");
+
+        session.Log(
+            $"{nameof(OpenArticle)} - WIXSHARP_MANAGED_UI_HANDLE='{managedUiHandle}', " +
+            $"managedUiDisplayed={managedUiDisplayed}, PostInstArticle={articleFeatureEnabled}");
+
+        // Full ManagedUI: honor the optional feature. Reduced/basic/suppressed UI
+        // never shows the Features dialog, so always open the article.
+        if (managedUiDisplayed && !articleFeatureEnabled)
         {
+            session.Log($"{nameof(OpenArticle)} - skipping launch; feature deselected in full UI");
             return ActionResult.Success;
         }
 
         try
         {
+            session.Log($"{nameof(OpenArticle)} - launching post-installation article");
             Process.Start("https://docs.nefarius.at/projects/BthPS3/Welcome/Installation-Successful/");
         }
         catch (Exception ex)

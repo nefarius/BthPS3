@@ -1,23 +1,13 @@
 using System;
-using System.Buffers;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-
-using CliWrap;
-
-using Microsoft.Win32;
-using Microsoft.Win32.SafeHandles;
+using System.Reflection;
 
 using Nefarius.BthPS3.Setup.Dialogues;
-using Nefarius.BthPS3.Shared;
 using Nefarius.Utilities.Bluetooth;
 using Nefarius.Utilities.DeviceManagement.PnP;
-
-using PInvoke;
 
 using WixSharp;
 using WixSharp.CommonTasks;
@@ -25,6 +15,7 @@ using WixSharp.Forms;
 
 using WixToolset.Dtf.WindowsInstaller;
 
+using Assembly = System.Reflection.Assembly;
 using File = WixSharp.File;
 using RegistryHive = WixSharp.RegistryHive;
 
@@ -33,6 +24,7 @@ namespace Nefarius.BthPS3.Setup;
 internal class InstallScript
 {
     public const string ProductName = "Nefarius BthPS3 Bluetooth Drivers";
+    public const string CustomActionManifestName = "ca-support-assemblies.txt";
     public const string ArtifactsDir = @"..\setup\artifacts";
     public const string DriversRoot = @"..\setup\drivers";
     public const string ManifestsDir = "manifests";
@@ -318,41 +310,117 @@ internal class InstallScript
     }
 
     /// <summary>
-    ///     Assemblies MakeSfxCA must pack beside the deferred custom-action host.
-    ///     Paths are resolved from the assemblies loaded by this build process so the
-    ///     packaged versions match <see cref="CustomActions.config" /> redirects.
+    ///     Assemblies MakeSfxCA must pack beside the deferred custom-action host: the
+    ///     transitive reference closure of this assembly, restricted to files that ship
+    ///     in its own output directory. Hand-listing <c>typeof(X).Assembly.Location</c>
+    ///     missed indirect references such as <c>System.Numerics.Vectors</c> (pulled in by
+    ///     <c>System.Memory</c>), which made the deferred actions fail at runtime.
     /// </summary>
     private static string[] GetCustomActionSupportAssemblies()
     {
-        return new[]
-        {
-            RequireAssemblyFile(typeof(Devcon)),
-            RequireAssemblyFile(typeof(HostRadio)),
-            RequireAssemblyFile(typeof(Cli)),
-            RequireAssemblyFile(typeof(RegistryKey)),
-            RequireAssemblyFile(typeof(ValueTask)),
-            RequireAssemblyFile(typeof(IAsyncDisposable)),
-            RequireAssemblyFile(typeof(Unsafe)),
-            RequireAssemblyFile(typeof(BuffersExtensions)),
-            RequireAssemblyFile(typeof(ArrayPool<>)),
-            RequireAssemblyFile(typeof(Kernel32.SafeObjectHandle)),
-            RequireAssemblyFile(typeof(FilterDriver)),
-            RequireAssemblyFile(typeof(BluetoothHelper)),
-            RequireAssemblyFile(typeof(SafeRegistryHandle))
-        };
-    }
-
-    private static string RequireAssemblyFile(Type type)
-    {
-        string location = type.Assembly.Location;
-        if (string.IsNullOrWhiteSpace(location) || !System.IO.File.Exists(location))
+        Assembly root = typeof(CustomActions).Assembly;
+        string directory = Path.GetDirectoryName(root.Location);
+        if (string.IsNullOrEmpty(directory))
         {
             throw new InvalidOperationException(
-                $"Cannot embed '{type.Assembly.GetName().Name}' for custom actions; " +
-                "Assembly.Location is empty or the file is missing.");
+                "Cannot resolve the custom-action output directory; Assembly.Location is empty.");
         }
 
-        return location;
+        SortedDictionary<string, string> resolved = new(StringComparer.OrdinalIgnoreCase);
+        Queue<Assembly> pending = new();
+        HashSet<string> visited = new(StringComparer.OrdinalIgnoreCase);
+
+        pending.Enqueue(root);
+        visited.Add(root.GetName().Name);
+
+        while (pending.Count > 0)
+        {
+            foreach (AssemblyName reference in pending.Dequeue().GetReferencedAssemblies())
+            {
+                if (!visited.Add(reference.Name))
+                {
+                    continue;
+                }
+
+                // WixSharp packs itself and the DTF/Mba assemblies into every custom-action
+                // package, so their private dependencies are not ours to resolve.
+                if (IsWixAssembly(reference.Name))
+                {
+                    continue;
+                }
+
+                string path = new[] { ".dll", ".exe" }
+                    .Select(extension => Path.Combine(directory, reference.Name + extension))
+                    .FirstOrDefault(System.IO.File.Exists);
+
+                if (path is null)
+                {
+                    // Framework assemblies come from the GAC on the target machine and must
+                    // not be embedded. Anything else is a dependency we were supposed to ship.
+                    if (IsFrameworkAssembly(reference))
+                    {
+                        continue;
+                    }
+
+                    throw new InvalidOperationException(
+                        $"Custom-action dependency '{reference.FullName}' was not found in " +
+                        $"'{directory}' and is not a framework assembly. Add it to " +
+                        "BthPS3Installer.csproj so MakeSfxCA can pack it; a deferred custom " +
+                        "action would otherwise fail at runtime with FileNotFoundException.");
+                }
+
+                resolved[reference.Name] = path;
+                pending.Enqueue(Assembly.LoadFrom(path));
+            }
+        }
+
+        string[] assemblies = resolved.Values.ToArray();
+
+        Console.WriteLine($"Custom-action support assemblies: {assemblies.Length}");
+        foreach (string assembly in assemblies)
+        {
+            Console.WriteLine($"  {Path.GetFileName(assembly)}");
+        }
+
+        WriteCustomActionManifest(assemblies);
+
+        return assemblies;
+    }
+
+    private static bool IsWixAssembly(string name)
+    {
+        return name.StartsWith("WixSharp", StringComparison.OrdinalIgnoreCase) ||
+               name.StartsWith("WixToolset.", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    ///     True when the reference resolves to a GAC assembly, i.e. it ships with the
+    ///     .NET Framework and is present on every target machine.
+    /// </summary>
+    private static bool IsFrameworkAssembly(AssemblyName reference)
+    {
+        try
+        {
+            return Assembly.ReflectionOnlyLoad(reference.FullName).GlobalAssemblyCache;
+        }
+        catch (Exception exception) when (exception is IOException ||
+                                          exception is BadImageFormatException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    ///     Records the packed support assemblies so the release guard in
+    ///     <c>build/SetupRelease.ps1</c> validates the closure this build actually produced
+    ///     instead of a hand-maintained list that silently drifts.
+    /// </summary>
+    private static void WriteCustomActionManifest(string[] assemblies)
+    {
+        string path = Path.Combine("obj", CustomActionManifestName);
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path)));
+        System.IO.File.WriteAllLines(path, assemblies.Select(Path.GetFileName));
+        Console.WriteLine($"Custom-action manifest: {Path.GetFullPath(path)}");
     }
 
     /// <summary>

@@ -216,6 +216,7 @@ try {
     $requiredCa = Get-BthPS3RequiredCustomActionAssemblies
     Assert-True ($requiredCa -contains 'CliWrap.dll') 'required CA assemblies include CliWrap.dll'
     Assert-True ($requiredCa -contains 'Nefarius.Utilities.DeviceManagement.dll') 'required CA assemblies include DeviceManagement'
+    Assert-True ($requiredCa -contains 'System.Numerics.Vectors.dll') 'required CA assemblies include System.Numerics.Vectors'
 
     $complete = @($requiredCa + 'BthPS3Installer.dll' + 'CustomActions.config')
     Assert-BthPS3CustomActionPackageFiles -PackageFiles $complete
@@ -230,6 +231,26 @@ try {
     Assert-Throws {
         Assert-BthPS3CustomActionPackageFiles -PackageFiles @('BthPS3Installer.dll', 'CustomActions.config')
     } 'custom-action list missing CliWrap rejected'
+
+    Assert-Throws {
+        Assert-BthPS3CustomActionPackageFiles -PackageFiles $complete -ExpectedAssemblies @('Totally.New.Dependency.dll')
+    } 'transitive dependency from build manifest enforced'
+
+    $manifestPath = Join-Path $tempRoot 'ca-support-assemblies.txt'
+    Set-Content -LiteralPath $manifestPath -Value @('CliWrap.dll', '', '  System.Numerics.Vectors.dll  ') -Encoding utf8
+    $manifestNames = Get-BthPS3CustomActionManifestAssemblies -ManifestPath $manifestPath
+    Assert-Equal $manifestNames.Count 2 'manifest skips blank lines'
+    Assert-True ($manifestNames -contains 'System.Numerics.Vectors.dll') 'manifest entries are trimmed'
+
+    Assert-Throws {
+        Get-BthPS3CustomActionManifestAssemblies -ManifestPath (Join-Path $tempRoot 'absent-manifest.txt')
+    } 'missing custom-action manifest rejected'
+
+    $emptyManifest = Join-Path $tempRoot 'empty-manifest.txt'
+    Set-Content -LiteralPath $emptyManifest -Value '' -Encoding utf8
+    Assert-Throws {
+        Get-BthPS3CustomActionManifestAssemblies -ManifestPath $emptyManifest
+    } 'empty custom-action manifest rejected'
 
     $cabSource = Join-Path $tempRoot 'cab-src'
     $cabOut = Join-Path $tempRoot 'cab-out'
@@ -269,6 +290,44 @@ try {
     $emptyPayload = Join-Path $tempRoot 'empty.bin'
     [IO.File]::WriteAllBytes($emptyPayload, [Text.Encoding]::ASCII.GetBytes('not-a-cabinet'))
     Assert-Throws { Get-BthPS3SfxCaCabinetFileNames -Path $emptyPayload } 'payload without cabinet rejected'
+
+    $lfsRoot = Join-Path $tempRoot 'lfs-repo'
+    $payloadRelative = @('BthPS3Installer\nefcon\x64\nefconc.exe', 'BthPS3Installer\nefarius_BthPS3_Updater.exe')
+    foreach ($relative in $payloadRelative) {
+        $path = Join-Path $lfsRoot $relative
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $path) | Out-Null
+        [IO.File]::WriteAllBytes($path, (New-Object byte[] 4096))
+    }
+    Assert-BthPS3NoGitLfsPointers -RepositoryRoot $lfsRoot -RelativePaths $payloadRelative
+    Write-Output 'PASS materialized payload binaries accepted'
+
+    $pointerText = @(
+        'version https://git-lfs.github.com/spec/v1'
+        'oid sha256:b65013f08bef9d0ddcdeef7501fc6be346478b7b29b7730de97c496408ddf9b4'
+        'size 1054688'
+    ) -join "`n"
+    [IO.File]::WriteAllText((Join-Path $lfsRoot $payloadRelative[0]), $pointerText)
+    Assert-True (Test-BthPS3IsGitLfsPointer -Path (Join-Path $lfsRoot $payloadRelative[0])) 'pointer stub detected'
+    Assert-Throws {
+        Assert-BthPS3NoGitLfsPointers -RepositoryRoot $lfsRoot -RelativePaths $payloadRelative
+    } 'Git LFS pointer payload rejected'
+    Assert-Throws {
+        Assert-BthPS3NoGitLfsPointers -RepositoryRoot $lfsRoot -RelativePaths @('BthPS3Installer\does-not-exist.exe')
+    } 'missing payload file rejected'
+
+    Assert-BthPS3MsiBinariesVersioned -PayloadFiles @(
+        [pscustomobject]@{ FileName = 'nefconc.exe'; FileSize = 1054688; Version = '1.20.0.0' }
+        [pscustomobject]@{ FileName = 'BthPS3.sys'; FileSize = 67712; Version = '3.0.0.2082' }
+        [pscustomobject]@{ FileName = 'LICENSE'; FileSize = 1574; Version = '' }
+        [pscustomobject]@{ FileName = 'BthPS3.man'; FileSize = 12453; Version = '' }
+    )
+    Write-Output 'PASS versioned MSI binaries accepted, unversioned data files ignored'
+
+    Assert-Throws {
+        Assert-BthPS3MsiBinariesVersioned -PayloadFiles @(
+            [pscustomobject]@{ FileName = 'nefconc.exe'; FileSize = 132; Version = '' }
+        )
+    } 'unversioned MSI executable rejected'
 }
 finally {
     if (Test-Path -LiteralPath $tempRoot) {

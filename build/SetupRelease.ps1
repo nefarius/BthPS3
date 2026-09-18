@@ -400,15 +400,102 @@ function Get-BthPS3RequiredCustomActionAssemblies {
     @(
         'CliWrap.dll'
         'Microsoft.Bcl.AsyncInterfaces.dll'
+        'Microsoft.Win32.Registry.dll'
         'Nefarius.BthPS3.Shared.dll'
         'Nefarius.Utilities.Bluetooth.dll'
         'Nefarius.Utilities.DeviceManagement.dll'
         'PInvoke.Kernel32.dll'
+        'PInvoke.Windows.Core.dll'
         'System.Buffers.dll'
         'System.Memory.dll'
+        'System.Numerics.Vectors.dll'
         'System.Runtime.CompilerServices.Unsafe.dll'
         'System.Threading.Tasks.Extensions.dll'
     )
+}
+
+function Get-BthPS3LfsTrackedPayloadFiles {
+    @(
+        'BthPS3Installer\nefcon\x64\nefconc.exe'
+        'BthPS3Installer\nefcon\x64\nefconw.exe'
+        'BthPS3Installer\nefcon\ARM64\nefconc.exe'
+        'BthPS3Installer\nefcon\ARM64\nefconw.exe'
+        'BthPS3Installer\nefarius_BthPS3_Updater.exe'
+    )
+}
+
+function Test-BthPS3IsGitLfsPointer {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $Path
+    )
+
+    $file = Get-Item -LiteralPath $Path
+    # Pointer files are small UTF-8 text blobs; real payload binaries are far larger.
+    if ($file.Length -gt 1024) {
+        return $false
+    }
+
+    $bytes = [IO.File]::ReadAllBytes($file.FullName)
+    $text = [Text.Encoding]::ASCII.GetString($bytes)
+    return $text.StartsWith('version https://git-lfs.github.com/spec/', [StringComparison]::Ordinal)
+}
+
+<#
+.SYNOPSIS
+    Fails when repository-tracked installer binaries are still Git LFS pointer stubs.
+
+.DESCRIPTION
+    nefcon and the updater are stored in Git LFS. A checkout without LFS leaves
+    132-byte pointer files behind, and MSI happily packages those as unversioned
+    files. Windows Installer then refuses to overwrite the versioned copy from an
+    earlier setup ("higher versioned keyfile exists"), so nefconc.exe is never laid
+    down and the deferred driver install fails with 1603.
+#>
+function Assert-BthPS3NoGitLfsPointers {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $RepositoryRoot,
+
+        [AllowNull()]
+        [AllowEmptyCollection()]
+        [string[]] $RelativePaths
+    )
+
+    if ($null -eq $RelativePaths -or $RelativePaths.Count -eq 0) {
+        $RelativePaths = Get-BthPS3LfsTrackedPayloadFiles
+    }
+
+    $missing = @()
+    $pointers = @()
+    foreach ($relative in $RelativePaths) {
+        $path = Join-Path $RepositoryRoot $relative
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+            $missing += $relative
+            continue
+        }
+
+        if (Test-BthPS3IsGitLfsPointer -Path $path) {
+            $pointers += $relative
+        }
+    }
+
+    if ($missing.Count -gt 0) {
+        throw "Installer payload files are missing:`n$($missing -join [Environment]::NewLine)"
+    }
+
+    if ($pointers.Count -gt 0) {
+        $lines = @(
+            'Installer payload files are Git LFS pointer stubs, not real binaries:'
+            ($pointers -join [Environment]::NewLine)
+            "Check out with LFS enabled (actions/checkout 'lfs: true', or run 'git lfs pull')."
+        )
+        throw ($lines -join [Environment]::NewLine)
+    }
+
+    Write-Output "Installer payload binaries are real files (no Git LFS pointers): $($RelativePaths.Count) checked."
 }
 
 function Find-BthPS3CabinetRange {
@@ -562,6 +649,92 @@ function Get-BthPS3MsiBinaryPayload {
     }
 }
 
+function Get-BthPS3MsiPayloadFiles {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $MsiPath
+    )
+
+    if (-not (Test-Path -LiteralPath $MsiPath -PathType Leaf)) {
+        throw "MSI was not found: $MsiPath"
+    }
+
+    $installer = $null
+    $database = $null
+    $view = $null
+    try {
+        $installer = New-Object -ComObject WindowsInstaller.Installer
+        $database = $installer.OpenDatabase((Resolve-Path -LiteralPath $MsiPath).Path, 0)
+        $view = $database.OpenView("SELECT ``File``,``FileName``,``FileSize``,``Version`` FROM ``File``")
+        [void]$view.Execute()
+
+        $rows = [System.Collections.Generic.List[object]]::new()
+        while ($true) {
+            $record = $view.Fetch()
+            if ($null -eq $record) {
+                break
+            }
+
+            try {
+                # FileName is "short|long" when a short name was generated.
+                $name = [string]$record.StringData(2)
+                $long = $name.Split('|')[-1]
+                $rows.Add([pscustomobject]@{
+                        Key      = [string]$record.StringData(1)
+                        FileName = $long
+                        FileSize = [int64]$record.StringData(3)
+                        Version  = [string]$record.StringData(4)
+                    })
+            }
+            finally {
+                [void][Runtime.InteropServices.Marshal]::ReleaseComObject($record)
+            }
+        }
+
+        return $rows.ToArray()
+    }
+    finally {
+        foreach ($comObject in @($view, $database, $installer)) {
+            if ($null -ne $comObject) {
+                [void][Runtime.InteropServices.Marshal]::ReleaseComObject($comObject)
+            }
+        }
+    }
+}
+
+function Assert-BthPS3MsiBinariesVersioned {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
+        $PayloadFiles
+    )
+
+    $unversioned = @(
+        foreach ($row in @($PayloadFiles)) {
+            $extension = [IO.Path]::GetExtension([string]$row.FileName)
+            if ($extension -notin @('.exe', '.dll', '.sys')) {
+                continue
+            }
+
+            if ([string]::IsNullOrWhiteSpace($row.Version)) {
+                "$($row.FileName) (size $($row.FileSize), no version)"
+            }
+        }
+    )
+
+    if ($unversioned.Count -gt 0) {
+        $lines = @(
+            'MSI packages executables without version resources:'
+            ($unversioned -join [Environment]::NewLine)
+            'This is what a Git LFS pointer stub looks like once packaged; Windows Installer'
+            'will refuse to overwrite an existing versioned copy of these files.'
+        )
+        throw ($lines -join [Environment]::NewLine)
+    }
+}
+
 function Test-BthPS3PackageContainsAssembly {
     [CmdletBinding()]
     param(
@@ -578,12 +751,41 @@ function Test-BthPS3PackageContainsAssembly {
         $Present.Contains("$base.dll")
 }
 
+function Get-BthPS3CustomActionManifestAssemblies {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $ManifestPath
+    )
+
+    if (-not (Test-Path -LiteralPath $ManifestPath -PathType Leaf)) {
+        throw "Custom-action manifest was not produced by the build: $ManifestPath"
+    }
+
+    $names = @(
+        Get-Content -LiteralPath $ManifestPath |
+            ForEach-Object { $_.Trim() } |
+            Where-Object { $_ }
+    )
+    if ($names.Count -eq 0) {
+        throw "Custom-action manifest is empty: $ManifestPath"
+    }
+
+    return $names
+}
+
 function Assert-BthPS3CustomActionPackageFiles {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
         [AllowEmptyCollection()]
-        [string[]] $PackageFiles
+        [string[]] $PackageFiles,
+
+        # Closure emitted by the MSI build. Checking it keeps this guard honest when a new
+        # or transitive dependency is added that the static baseline below does not name.
+        [AllowNull()]
+        [AllowEmptyCollection()]
+        [string[]] $ExpectedAssemblies
     )
 
     $present = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
@@ -593,9 +795,17 @@ function Assert-BthPS3CustomActionPackageFiles {
         }
     }
 
+    $required = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    foreach ($name in @(Get-BthPS3RequiredCustomActionAssemblies) + @($ExpectedAssemblies)) {
+        if (-not [string]::IsNullOrWhiteSpace($name)) {
+            [void]$required.Add($name.Trim())
+        }
+    }
+
     $missing = @(
-        Get-BthPS3RequiredCustomActionAssemblies |
-            Where-Object { -not (Test-BthPS3PackageContainsAssembly -Present $present -AssemblyFileName $_) }
+        $required |
+            Where-Object { -not (Test-BthPS3PackageContainsAssembly -Present $present -AssemblyFileName $_) } |
+            Sort-Object
     )
     if ($missing.Count -gt 0) {
         throw "Custom-action package is missing required assemblies:`n$($missing -join [Environment]::NewLine)"
@@ -608,13 +818,22 @@ function Assert-BthPS3CustomActionPackage {
         [Parameter(Mandatory)]
         [string] $MsiPath,
 
-        [string] $BinaryName = 'InstallDrivers_File'
+        [string] $BinaryName = 'InstallDrivers_File',
+
+        [AllowNull()]
+        [string] $ManifestPath
     )
+
+    $expected = @()
+    if ($ManifestPath) {
+        $expected = Get-BthPS3CustomActionManifestAssemblies -ManifestPath $ManifestPath
+        Write-Output "Custom-action manifest lists $($expected.Count) support assemblies."
+    }
 
     $payload = Get-BthPS3MsiBinaryPayload -MsiPath $MsiPath -BinaryName $BinaryName
     try {
         $names = Get-BthPS3SfxCaCabinetFileNames -Path $payload.Path
-        Assert-BthPS3CustomActionPackageFiles -PackageFiles $names
+        Assert-BthPS3CustomActionPackageFiles -PackageFiles $names -ExpectedAssemblies $expected
         Write-Output "Custom-action package $BinaryName contains required assemblies."
         foreach ($name in ($names | Sort-Object)) {
             Write-Output "  $name"

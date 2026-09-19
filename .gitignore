@@ -270,6 +270,10 @@ __pycache__/
 /Setup/drivers
 /Setup/artifacts
 /Setup/*.7z
+# makecab writes these into the working directory; build/SetupRelease.Tests.ps1
+# builds a cabinet fixture and so drops them in the repository root.
+/setup.inf
+/setup.rpt
 /artifacts
 RC*
 **/vcpkg_installed/

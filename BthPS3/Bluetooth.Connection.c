@@ -111,6 +111,14 @@ BthPS3_IndicationCallback(
 				status
 			);
 
+			EventWriteRemoteConnectDispatchFailed(
+				NULL,
+				Parameters->BtAddress,
+				Parameters->Parameters.Connect.Request.PSM,
+				KeGetCurrentIrql(),
+				status
+			);
+
 			(void)L2CAP_PS3_DenyRemoteConnect(devCtx, Parameters);
 			break;
 		}

@@ -37,6 +37,34 @@
             <data inType="win:UInt32" name="Patched" outType="xs:unsignedInt"/>
             <data inType="win:UInt32" name="Channel" outType="xs:unsignedInt"/>
           </template>
+          <template tid="tid_filter_device_initialized">
+            <data inType="win:UnicodeString" name="InstanceId" outType="xs:string"/>
+            <data inType="win:UInt32" name="TransportType" outType="xs:unsignedInt"/>
+            <data inType="win:UInt32" name="PatchStatus" outType="xs:unsignedInt"/>
+            <data inType="win:UInt32" name="Status" outType="win:NTSTATUS"/>
+          </template>
+          <template tid="tid_psm_patch_activity_detailed">
+            <data inType="win:UInt32" name="OriginalPsm" outType="win:HexInt32"/>
+            <data inType="win:UInt32" name="EffectivePsm" outType="win:HexInt32"/>
+            <data inType="win:UInt32" name="Patched" outType="xs:unsignedInt"/>
+            <data inType="win:UInt32" name="Channel" outType="xs:unsignedInt"/>
+            <data inType="win:UnicodeString" name="InstanceId" outType="xs:string"/>
+            <data inType="win:UInt32" name="TransportType" outType="xs:unsignedInt"/>
+          </template>
+          <template tid="tid_hook_send_failed">
+            <data inType="win:UnicodeString" name="InstanceId" outType="xs:string"/>
+            <data inType="win:UInt32" name="HookKind" outType="xs:unsignedInt"/>
+            <data inType="win:UInt32" name="Status" outType="win:NTSTATUS"/>
+          </template>
+          <template tid="tid_bthx_acl_data_rejected">
+            <data inType="win:UInt32" name="ReportedDataLen" outType="xs:unsignedInt"/>
+            <data inType="win:UInt32" name="MaxByBuffer" outType="xs:unsignedInt"/>
+            <data inType="win:UInt32" name="MaxByInfo" outType="xs:unsignedInt"/>
+          </template>
+          <template tid="tid_sideband_device_not_found">
+            <data inType="win:UInt32" name="IoControlCode" outType="win:HexInt32"/>
+            <data inType="win:UInt32" name="DeviceIndex" outType="xs:unsignedInt"/>
+          </template>
         </templates>
         <events>
           <event value="1" channel="SYSTEM" level="win:Informational" message="$(string.StartEvent.EventMessage)" opcode="win:Start" symbol="StartEvent" template="tid_load_template"/>
@@ -48,6 +76,11 @@
           <event value="7" channel="SYSTEM" level="win:Warning" message="$(string.UnsupportedTransportType.EventMessage)" opcode="win:Info" symbol="UnsupportedTransportType" />
           <event value="8" channel="SYSTEM" level="win:Informational" message="$(string.TransportTypeDetected.EventMessage)" opcode="win:Info" symbol="TransportTypeDetected" template="tid_transport_type_for_device_instance"/>
           <event value="9" channel="SYSTEM" level="win:Informational" message="$(string.PsmPatchActivity.EventMessage)" opcode="win:Info" symbol="PsmPatchActivity" template="tid_psm_patch_activity"/>
+          <event value="10" channel="SYSTEM" level="win:Informational" message="$(string.FilterDeviceInitialized.EventMessage)" opcode="win:Info" symbol="FilterDeviceInitialized" template="tid_filter_device_initialized"/>
+          <event value="11" channel="SYSTEM" level="win:Informational" message="$(string.PsmPatchActivityDetailed.EventMessage)" opcode="win:Info" symbol="PsmPatchActivityDetailed" template="tid_psm_patch_activity_detailed"/>
+          <event value="12" channel="SYSTEM" level="win:Error" message="$(string.HookSendFailed.EventMessage)" opcode="win:Info" symbol="HookSendFailed" template="tid_hook_send_failed"/>
+          <event value="13" channel="SYSTEM" level="win:Warning" message="$(string.BthxAclDataRejected.EventMessage)" opcode="win:Info" symbol="BthxAclDataRejected" template="tid_bthx_acl_data_rejected"/>
+          <event value="14" channel="SYSTEM" level="win:Warning" message="$(string.SidebandDeviceNotFound.EventMessage)" opcode="win:Info" symbol="SidebandDeviceNotFound" template="tid_sideband_device_not_found"/>
         </events>
       </provider>
     </events>
@@ -64,6 +97,11 @@
         <string id="UnsupportedTransportType.EventMessage" value="Device is neither a USB nor a BTHX (Bluetooth Extensibility Transport) Bluetooth host radio, filter will not attach"/>
         <string id="TransportTypeDetected.EventMessage" value="Detected transport type %1 (1 = USB, 2 = BTHX) for this Bluetooth host radio"/>
         <string id="PsmPatchActivity.EventMessage" value="Observed L2CAP connection request for PSM 0x%1 on channel %4, patched=%3, effective PSM 0x%2"/>
+        <string id="FilterDeviceInitialized.EventMessage" value="Filter initialized for instance %1, transport %2 (1 = USB, 2 = BTHX), patch status %3, status: %4"/>
+        <string id="PsmPatchActivityDetailed.EventMessage" value="Observed L2CAP connection request for PSM 0x%1 on channel %4, patched=%3, effective PSM 0x%2, instance %5, transport %6 (1 = USB, 2 = BTHX)"/>
+        <string id="HookSendFailed.EventMessage" value="Hooked request send failed for instance %1, hook kind %2 (1 = USB Select Configuration, 2 = USB Bulk IN, 3 = BTHX Read HCI), status: %3"/>
+        <string id="BthxAclDataRejected.EventMessage" value="BTHX ACL completion reported implausible DataLen %1 (max by buffer %2, max by Information %3)"/>
+        <string id="SidebandDeviceNotFound.EventMessage" value="Sideband IOCTL 0x%1 requested unknown device index %2"/>
       </stringTable>
     </resources>
   </localization>

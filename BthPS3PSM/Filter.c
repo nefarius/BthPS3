@@ -115,6 +115,31 @@ UrbSelectConfigurationCompleted(
     FuncExitNoReturn(TRACE_FILTER);
 }
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
+static
+VOID
+BthPS3PSM_WritePsmPatchActivity(
+    _In_ PDEVICE_CONTEXT DeviceContext,
+    _In_ USHORT OriginalPsm,
+    _In_ USHORT EffectivePsm,
+    _In_ ULONG Patched,
+    _In_ ULONG Channel
+)
+{
+    const PWSTR instanceIdString = (const PWSTR)WdfMemoryGetBuffer(DeviceContext->InstanceId, NULL);
+
+    EventWritePsmPatchActivity(NULL, OriginalPsm, EffectivePsm, Patched, Channel);
+    EventWritePsmPatchActivityDetailed(
+        NULL,
+        OriginalPsm,
+        EffectivePsm,
+        Patched,
+        Channel,
+        instanceIdString,
+        (ULONG)DeviceContext->TransportType
+    );
+}
+
 //
 // Inspects an L2CAP buffer (as delivered via either the USB bulk-IN pipe or
 // a BTHX ACL Data read) for an outgoing HID Control/Interrupt L2CAP
@@ -165,7 +190,7 @@ BthPS3PSM_PatchL2capPsm(
                         "++ Patching HID Control PSM to 0x%04X",
                         pConReq->PSM);
 
-                    EventWritePsmPatchActivity(NULL, originalPsm, pConReq->PSM, TRUE, 1);
+                    BthPS3PSM_WritePsmPatchActivity(DeviceContext, originalPsm, pConReq->PSM, TRUE, 1);
                 }
                 else
                 {
@@ -174,7 +199,7 @@ BthPS3PSM_PatchL2capPsm(
                         "-- NOT Patching HID Control PSM"
                     );
 
-                    EventWritePsmPatchActivity(NULL, originalPsm, originalPsm, FALSE, 1);
+                    BthPS3PSM_WritePsmPatchActivity(DeviceContext, originalPsm, originalPsm, FALSE, 1);
                 }
             }
 
@@ -198,7 +223,7 @@ BthPS3PSM_PatchL2capPsm(
                         pConReq->PSM
                     );
 
-                    EventWritePsmPatchActivity(NULL, originalPsm, pConReq->PSM, TRUE, 2);
+                    BthPS3PSM_WritePsmPatchActivity(DeviceContext, originalPsm, pConReq->PSM, TRUE, 2);
                 }
                 else
                 {
@@ -207,7 +232,7 @@ BthPS3PSM_PatchL2capPsm(
                         "-- NOT Patching HID Interrupt PSM"
                     );
 
-                    EventWritePsmPatchActivity(NULL, originalPsm, originalPsm, FALSE, 2);
+                    BthPS3PSM_WritePsmPatchActivity(DeviceContext, originalPsm, originalPsm, FALSE, 2);
                 }
             }
         }
@@ -316,6 +341,12 @@ BthxReadHciCompleted(
                         pHciCtx->DataLen,
                         maxDataLenByBuffer,
                         maxDataLenByInfo
+                    );
+                    EventWriteBthxAclDataRejected(
+                        NULL,
+                        pHciCtx->DataLen,
+                        (ULONG)maxDataLenByBuffer,
+                        (ULONG)maxDataLenByInfo
                     );
                 }
             }

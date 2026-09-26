@@ -42,9 +42,27 @@
 #include <BthPS3PSMETW.h>
 
 
+#define BTHPS3PSM_HOOK_USB_SELECT_CONFIGURATION ((ULONG)1)
+#define BTHPS3PSM_HOOK_USB_BULK_IN              ((ULONG)2)
+#define BTHPS3PSM_HOOK_BTHX_READ_HCI            ((ULONG)3)
+
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text (PAGE, BthPS3PSM_QueueInitialize)
 #endif
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+static
+VOID
+BthPS3PSM_WriteHookSendFailed(
+    _In_ PDEVICE_CONTEXT DeviceContext,
+    _In_ ULONG HookKind,
+    _In_ NTSTATUS Status
+)
+{
+    const PWSTR instanceIdString = (const PWSTR)WdfMemoryGetBuffer(DeviceContext->InstanceId, NULL);
+
+    EventWriteHookSendFailed(NULL, instanceIdString, HookKind, Status);
+}
 
 
 _Use_decl_annotations_
@@ -237,6 +255,11 @@ BthPS3PSMEvtIoInternalDeviceControl(
                     "WdfRequestSend failed with status %!STATUS!",
                     status
                 );
+                BthPS3PSM_WriteHookSendFailed(
+                    pContext,
+                    BTHPS3PSM_HOOK_USB_SELECT_CONFIGURATION,
+                    status
+                );
                 WdfRequestComplete(Request, status);
             }
 
@@ -281,6 +304,11 @@ BthPS3PSMEvtIoInternalDeviceControl(
                     TraceError(
                         TRACE_QUEUE,
                         "WdfRequestSend failed with status %!STATUS!",
+                        status
+                    );
+                    BthPS3PSM_WriteHookSendFailed(
+                        pContext,
+                        BTHPS3PSM_HOOK_USB_BULK_IN,
                         status
                     );
                     WdfRequestComplete(Request, status);
@@ -434,6 +462,11 @@ BthPS3PSM_EvtIoDeviceControl(
                 TraceError(
                     TRACE_QUEUE,
                     "WdfRequestSend failed with status %!STATUS!",
+                    status
+                );
+                BthPS3PSM_WriteHookSendFailed(
+                    pContext,
+                    BTHPS3PSM_HOOK_BTHX_READ_HCI,
                     status
                 );
                 WdfRequestComplete(Request, status);

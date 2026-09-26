@@ -147,6 +147,7 @@ BthPS3_RegisterSinglePSM(
 	NTSTATUS status;
 	struct _BRB_PSM* brb;
 	ULONG attempt;
+	ULONG reclaimAttempted = 0;
 
 	FuncEntry(TRACE_BTH);
 
@@ -219,6 +220,7 @@ BthPS3_RegisterSinglePSM(
 		);
 
 		EventWritePsmRegistrationStale(NULL, DesiredPsm, status);
+		reclaimAttempted = 1;
 
 		DevCtx->Header.ProfileDrvInterface.BthReuseBrb(
 			&(DevCtx->RegisterUnregisterBrb),
@@ -252,6 +254,27 @@ BthPS3_RegisterSinglePSM(
 			TRACE_BTH,
 			"Reclaimed stale PSM 0x%04X, retrying registration",
 			DesiredPsm
+		);
+	}
+
+	if (NT_SUCCESS(status))
+	{
+		EventWritePsmRegistrationSucceeded(
+			NULL,
+			DesiredPsm,
+			*ObtainedPsm,
+			reclaimAttempted,
+			status
+		);
+	}
+	else
+	{
+		EventWritePsmRegistrationFailed(
+			NULL,
+			DesiredPsm,
+			*ObtainedPsm,
+			reclaimAttempted,
+			status
 		);
 	}
 

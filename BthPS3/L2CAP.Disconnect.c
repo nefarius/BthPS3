@@ -37,6 +37,7 @@
 
 #include "Driver.h"
 #include "L2CAP.Disconnect.tmh"
+#include "BthPS3ETW.h"
 
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
@@ -144,6 +145,8 @@ L2CAP_PS3_HandleRemoteDisconnect(
 			"HID Control Channel 0x%p disconnected",
 			DisconnectParams->ConnectionHandle);
 
+		EventWriteRemoteL2capDisconnected(NULL, pPdoCtx->RemoteAddress, 1);
+
 		L2CAP_PS3_RemoteDisconnect(
 			pPdoCtx->DevCtxHdr,
 			pPdoCtx->RemoteAddress,
@@ -161,6 +164,8 @@ L2CAP_PS3_HandleRemoteDisconnect(
 			TRACE_L2CAP,
 			"HID Interrupt Channel 0x%p disconnected",
 			DisconnectParams->ConnectionHandle);
+
+		EventWriteRemoteL2capDisconnected(NULL, pPdoCtx->RemoteAddress, 2);
 
 		L2CAP_PS3_RemoteDisconnect(
 			pPdoCtx->DevCtxHdr,

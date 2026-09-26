@@ -80,6 +80,7 @@ L2CAP_PS3_ControlConnectResponseCompleted(
 		);
 
 		EventWriteHidControlChannelConnected(NULL);
+		EventWriteHidChannelConnectedDetailed(NULL, pPdoCtx->RemoteAddress, 1);
 
 		//
 		// Channel connected, queues ready to start processing
@@ -173,6 +174,7 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
 		);
 
 		EventWriteHidInterruptChannelConnected(NULL);
+		EventWriteHidChannelConnectedDetailed(NULL, pPdoCtx->RemoteAddress, 2);
 
 		//
 		// Control channel is expected to be established by now

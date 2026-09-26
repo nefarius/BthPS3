@@ -343,6 +343,7 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
         if (device == NULL)
         {
             status = STATUS_NO_SUCH_DEVICE;
+            EventWriteSidebandDeviceNotFound(NULL, IoControlCode, pEnable->DeviceIndex);
         }
         else
         {
@@ -431,6 +432,7 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
         if (device == NULL)
         {
             status = STATUS_NO_SUCH_DEVICE;
+            EventWriteSidebandDeviceNotFound(NULL, IoControlCode, pDisable->DeviceIndex);
         }
         else
         {
@@ -518,6 +520,11 @@ VOID BthPS3PSM_SidebandIoDeviceControl(
 
         if (device == NULL)
         {
+            //
+            // BthPS3CfgUI polls this IOCTL about once a second while open.
+            // Do not emit SidebandDeviceNotFound here or a missing filter
+            // instance floods the System log.
+            //
             status = STATUS_NO_SUCH_DEVICE;
         }
         else

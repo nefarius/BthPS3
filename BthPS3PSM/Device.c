@@ -363,6 +363,17 @@ BthPS3PSM_CreateDevice(
         // Initialize the I/O Package and any Queues
         //
         status = BthPS3PSM_QueueInitialize(device);
+
+        if (NT_SUCCESS(status))
+        {
+            EventWriteFilterDeviceInitialized(
+                NULL,
+                (const PWSTR)WdfMemoryGetBuffer(deviceContext->InstanceId, NULL),
+                (ULONG)deviceContext->TransportType,
+                deviceContext->IsPsmPatchingEnabled,
+                status
+            );
+        }
     }
     while (FALSE);
 

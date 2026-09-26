@@ -65,6 +65,13 @@ L2CAP_PS3_HandleRemoteConnect(
     FuncEntry(TRACE_L2CAP);
 
     //
+    // First observable signal that a remote connection attempt reached the
+    // profile driver at all; distinguishes "never arrived" from any later
+    // rejection/failure for diagnostics.
+    // 
+    EventWriteRemoteConnectReceived(NULL, ConnectParams->BtAddress, psm);
+
+    //
     // (Try to) refresh settings from registry
     // 
     (void)BthPS3_SettingsContextInit(DevCtx);

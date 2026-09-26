@@ -130,7 +130,7 @@
 				<string id="PsmRegistrationStale.EventMessage" value="PSM %1 already committed (status %2), attempting reclaim"/>
 				<string id="PsmRegistrationDeferred.EventMessage" value="PSM registration still stale, retrying device start in %1 seconds"/>
 				<string id="PsmRegistrationRecovered.EventMessage" value="PSM registration recovered after %1 attempt(s)"/>
-				<string id="RemoteConnectReceived.EventMessage" value="Remote connect indication for %1 on PSM 0x%2 received by profile driver"/>
+				<string id="RemoteConnectReceived.EventMessage" value="Remote connect indication for %1 on PSM %2 received by profile driver"/>
 			</stringTable>
 		</resources>
 	</localization>

@@ -98,10 +98,10 @@
         <string id="TransportTypeDetected.EventMessage" value="Detected transport type %1 (1 = USB, 2 = BTHX) for this Bluetooth host radio"/>
         <string id="PsmPatchActivity.EventMessage" value="Observed L2CAP connection request for PSM 0x%1 on channel %4, patched=%3, effective PSM 0x%2"/>
         <string id="FilterDeviceInitialized.EventMessage" value="Filter initialized for instance %1, transport %2 (1 = USB, 2 = BTHX), patch status %3, status: %4"/>
-        <string id="PsmPatchActivityDetailed.EventMessage" value="Observed L2CAP connection request for PSM 0x%1 on channel %4, patched=%3, effective PSM 0x%2, instance %5, transport %6 (1 = USB, 2 = BTHX)"/>
+        <string id="PsmPatchActivityDetailed.EventMessage" value="Observed L2CAP connection request for PSM %1 on channel %4, patched=%3, effective PSM %2, instance %5, transport %6 (1 = USB, 2 = BTHX)"/>
         <string id="HookSendFailed.EventMessage" value="Hooked request send failed for instance %1, hook kind %2 (1 = USB Select Configuration, 2 = USB Bulk IN, 3 = BTHX Read HCI), status: %3"/>
         <string id="BthxAclDataRejected.EventMessage" value="BTHX ACL completion reported implausible DataLen %1 (max by buffer %2, max by Information %3)"/>
-        <string id="SidebandDeviceNotFound.EventMessage" value="Sideband IOCTL 0x%1 requested unknown device index %2"/>
+        <string id="SidebandDeviceNotFound.EventMessage" value="Sideband IOCTL %1 requested unknown device index %2"/>
       </stringTable>
     </resources>
   </localization>

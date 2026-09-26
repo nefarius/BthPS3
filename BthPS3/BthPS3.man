@@ -153,8 +153,8 @@
 				<string id="PsmRegistrationRecovered.EventMessage" value="PSM registration recovered after %1 attempt(s)"/>
 				<string id="RemoteConnectReceived.EventMessage" value="Remote connect indication for %1 on PSM %2 received by profile driver"/>
 				<string id="RemoteConnectDispatchFailed.EventMessage" value="Remote connect for %1 on PSM %2 could not be queued at IRQL %3, status: %4"/>
-				<string id="PsmRegistrationSucceeded.EventMessage" value="Registered PSM 0x%1 (obtained 0x%2), reclaim attempted=%3, status: %4"/>
-				<string id="PsmRegistrationFailed.EventMessage" value="Failed to register PSM 0x%1 (obtained 0x%2), reclaim attempted=%3, status: %4"/>
+				<string id="PsmRegistrationSucceeded.EventMessage" value="Registered PSM %1 (obtained %2), reclaim attempted=%3, status: %4"/>
+				<string id="PsmRegistrationFailed.EventMessage" value="Failed to register PSM %1 (obtained %2), reclaim attempted=%3, status: %4"/>
 				<string id="HidChannelConnectedDetailed.EventMessage" value="Device %1 established HID channel %2 (1 = Control, 2 = Interrupt)"/>
 				<string id="RemoteL2capDisconnected.EventMessage" value="Device %1 disconnected HID channel %2 (1 = Control, 2 = Interrupt)"/>
 			</stringTable>

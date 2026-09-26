@@ -364,13 +364,16 @@ BthPS3PSM_CreateDevice(
         //
         status = BthPS3PSM_QueueInitialize(device);
 
-        EventWriteFilterDeviceInitialized(
-            NULL,
-            (const PWSTR)WdfMemoryGetBuffer(deviceContext->InstanceId, NULL),
-            (ULONG)deviceContext->TransportType,
-            deviceContext->IsPsmPatchingEnabled,
-            status
-        );
+        if (NT_SUCCESS(status))
+        {
+            EventWriteFilterDeviceInitialized(
+                NULL,
+                (const PWSTR)WdfMemoryGetBuffer(deviceContext->InstanceId, NULL),
+                (ULONG)deviceContext->TransportType,
+                deviceContext->IsPsmPatchingEnabled,
+                status
+            );
+        }
     }
     while (FALSE);
 

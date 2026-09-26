@@ -64,6 +64,10 @@
 						<data inType="win:UInt64" name="Address" outType="win:HexInt64"/>
 						<data inType="win:UInt32" name="Status" outType="win:NTSTATUS"/>
 					</template>
+					<template tid="tid_remote_connect_received">
+						<data inType="win:UInt64" name="Address" outType="win:HexInt64"/>
+						<data inType="win:UInt32" name="PSM" outType="win:HexInt32"/>
+					</template>
 				</templates>
 				<events>
 					<event value="1" channel="SYSTEM" level="win:Informational" message="$(string.StartEvent.EventMessage)" opcode="win:Start" symbol="StartEvent" template="tid_load_template"/>
@@ -92,6 +96,7 @@
 					<event value="24" channel="SYSTEM" level="win:Warning" message="$(string.PsmRegistrationStale.EventMessage)" opcode="win:Info" symbol="PsmRegistrationStale" template="tid_l2cap_remote_connect"/>
 					<event value="25" channel="SYSTEM" level="win:Warning" message="$(string.PsmRegistrationDeferred.EventMessage)" opcode="win:Info" symbol="PsmRegistrationDeferred" template="tid_filter_auto_enable"/>
 					<event value="26" channel="SYSTEM" level="win:Informational" message="$(string.PsmRegistrationRecovered.EventMessage)" opcode="win:Info" symbol="PsmRegistrationRecovered" template="tid_hci_version_template"/>
+					<event value="27" channel="SYSTEM" level="win:Informational" message="$(string.RemoteConnectReceived.EventMessage)" opcode="win:Info" symbol="RemoteConnectReceived" template="tid_remote_connect_received"/>
 				</events>
 			</provider>
 		</events>
@@ -125,6 +130,7 @@
 				<string id="PsmRegistrationStale.EventMessage" value="PSM %1 already committed (status %2), attempting reclaim"/>
 				<string id="PsmRegistrationDeferred.EventMessage" value="PSM registration still stale, retrying device start in %1 seconds"/>
 				<string id="PsmRegistrationRecovered.EventMessage" value="PSM registration recovered after %1 attempt(s)"/>
+				<string id="RemoteConnectReceived.EventMessage" value="Remote connect indication for %1 on PSM 0x%2 received by profile driver"/>
 			</stringTable>
 		</resources>
 	</localization>

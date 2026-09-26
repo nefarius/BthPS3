@@ -148,6 +148,8 @@ BthPS3PSM_PatchL2capPsm(
 
             if (pConReq->PSM == PSM_HID_CONTROL)
             {
+                const USHORT originalPsm = pConReq->PSM;
+
                 TraceVerbose(
                     TRACE_FILTER,
                     ">> Connection request for HID Control PSM 0x%04X arrived",
@@ -162,6 +164,8 @@ BthPS3PSM_PatchL2capPsm(
                         TRACE_FILTER,
                         "++ Patching HID Control PSM to 0x%04X",
                         pConReq->PSM);
+
+                    EventWritePsmPatchActivity(NULL, originalPsm, pConReq->PSM, TRUE, 1);
                 }
                 else
                 {
@@ -169,11 +173,15 @@ BthPS3PSM_PatchL2capPsm(
                         TRACE_FILTER,
                         "-- NOT Patching HID Control PSM"
                     );
+
+                    EventWritePsmPatchActivity(NULL, originalPsm, originalPsm, FALSE, 1);
                 }
             }
 
             if (pConReq->PSM == PSM_HID_INTERRUPT)
             {
+                const USHORT originalPsm = pConReq->PSM;
+
                 TraceVerbose(
                     TRACE_FILTER,
                     ">> Connection request for HID Interrupt PSM 0x%04X arrived",
@@ -189,6 +197,8 @@ BthPS3PSM_PatchL2capPsm(
                         "++ Patching HID Interrupt PSM to 0x%04X",
                         pConReq->PSM
                     );
+
+                    EventWritePsmPatchActivity(NULL, originalPsm, pConReq->PSM, TRUE, 2);
                 }
                 else
                 {
@@ -196,6 +206,8 @@ BthPS3PSM_PatchL2capPsm(
                         TRACE_FILTER,
                         "-- NOT Patching HID Interrupt PSM"
                     );
+
+                    EventWritePsmPatchActivity(NULL, originalPsm, originalPsm, FALSE, 2);
                 }
             }
         }

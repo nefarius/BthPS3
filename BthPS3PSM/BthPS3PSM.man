@@ -31,6 +31,12 @@
           <template tid="tid_transport_type_for_device_instance">
             <data inType="win:UInt32" name="TransportType" outType="xs:unsignedInt"/>
           </template>
+          <template tid="tid_psm_patch_activity">
+            <data inType="win:UInt32" name="OriginalPsm" outType="win:HexInt32"/>
+            <data inType="win:UInt32" name="EffectivePsm" outType="win:HexInt32"/>
+            <data inType="win:UInt32" name="Patched" outType="xs:unsignedInt"/>
+            <data inType="win:UInt32" name="Channel" outType="xs:unsignedInt"/>
+          </template>
         </templates>
         <events>
           <event value="1" channel="SYSTEM" level="win:Informational" message="$(string.StartEvent.EventMessage)" opcode="win:Start" symbol="StartEvent" template="tid_load_template"/>
@@ -41,6 +47,7 @@
           <event value="6" channel="SYSTEM" level="win:Error" message="$(string.FailedToFindBulkInPipe.EventMessage)" opcode="win:Info" symbol="FailedToFindBulkInPipe" />
           <event value="7" channel="SYSTEM" level="win:Warning" message="$(string.UnsupportedTransportType.EventMessage)" opcode="win:Info" symbol="UnsupportedTransportType" />
           <event value="8" channel="SYSTEM" level="win:Informational" message="$(string.TransportTypeDetected.EventMessage)" opcode="win:Info" symbol="TransportTypeDetected" template="tid_transport_type_for_device_instance"/>
+          <event value="9" channel="SYSTEM" level="win:Informational" message="$(string.PsmPatchActivity.EventMessage)" opcode="win:Info" symbol="PsmPatchActivity" template="tid_psm_patch_activity"/>
         </events>
       </provider>
     </events>
@@ -56,6 +63,7 @@
         <string id="FailedToFindBulkInPipe.EventMessage" value="Couldn't find the BULK IN endpoint to hook, patching will not work"/>
         <string id="UnsupportedTransportType.EventMessage" value="Device is neither a USB nor a BTHX (Bluetooth Extensibility Transport) Bluetooth host radio, filter will not attach"/>
         <string id="TransportTypeDetected.EventMessage" value="Detected transport type %1 (1 = USB, 2 = BTHX) for this Bluetooth host radio"/>
+        <string id="PsmPatchActivity.EventMessage" value="Observed L2CAP connection request for PSM 0x%1 on channel %4, patched=%3, effective PSM 0x%2"/>
       </stringTable>
     </resources>
   </localization>

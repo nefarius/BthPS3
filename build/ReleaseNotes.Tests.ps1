@@ -1,0 +1,230 @@
+#Requires -Version 7.0
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+
+$here = Split-Path -Parent $MyInvocation.MyCommand.Path
+. (Join-Path $here 'ReleaseNotes.ps1')
+
+function Assert-Equal($Actual, $Expected, [string] $Name) {
+    if ($Actual -cne $Expected) {
+        throw "FAIL ${Name}: expected '${Expected}', got '${Actual}'"
+    }
+    Write-Output "PASS $Name"
+}
+
+function Assert-True([bool] $Condition, [string] $Name) {
+    if (-not $Condition) {
+        throw "FAIL $Name"
+    }
+    Write-Output "PASS $Name"
+}
+
+function Assert-Throws([scriptblock] $Action, [string] $Name) {
+    $threw = $false
+    try {
+        & $Action
+    }
+    catch {
+        $threw = $true
+    }
+
+    if (-not $threw) {
+        throw "FAIL ${Name}: expected an exception"
+    }
+
+    Write-Output "PASS $Name"
+}
+
+$identity = ConvertTo-BthPS3SetupReleaseTagIdentity -Tag 'setup-v3.2.0'
+Assert-Equal $identity.Tag 'setup-v3.2.0' 'parses setup tag'
+Assert-Equal $identity.Version ([version]'3.2.0') 'parses setup version'
+Assert-Equal $identity.Revision 0 'base tag is revision 0'
+
+$respin = ConvertTo-BthPS3SetupReleaseTagIdentity -Tag 'refs/tags/setup-v3.0.0-r6'
+Assert-Equal $respin.Tag 'setup-v3.0.0-r6' 'strips refs/tags from respin'
+Assert-Equal $respin.Revision 6 'parses respin revision'
+Assert-Equal (ConvertTo-BthPS3SetupReleaseTagIdentity -Tag 'v3.2.0') $null 'ignores driver tags'
+Assert-Equal (ConvertTo-BthPS3SetupReleaseTagIdentity -Tag 'setup-v3.2.0-beta') $null 'ignores non-numeric suffix'
+
+$tags = @(
+    'v3.2.0'
+    'setup-v2.17.0'
+    'setup-v3.0.0'
+    'setup-v3.0.0-r6'
+    'setup-v3.2.0'
+    'not-a-tag'
+)
+Assert-Equal (Get-BthPS3PreviousSetupReleaseTag -CurrentTag 'setup-v3.2.0' -Tags $tags) 'setup-v3.0.0-r6' 'previous tag is last setup release'
+Assert-Equal (Get-BthPS3PreviousSetupReleaseTag -CurrentTag 'setup-v3.0.0-r6' -Tags $tags) 'setup-v3.0.0' 'respin compares to previous respin or base'
+Assert-Equal (Get-BthPS3PreviousSetupReleaseTag -CurrentTag 'setup-v3.0.0-r1' -Tags @('setup-v3.0.0', 'setup-v3.0.0-r1')) 'setup-v3.0.0' 'first respin uses base tag'
+Assert-Equal (Get-BthPS3PreviousSetupReleaseTag -CurrentTag 'setup-v2.0.0' -Tags @('setup-v2.0.0')) $null 'first setup tag has no previous'
+Assert-Equal (Get-BthPS3PreviousSetupReleaseTag -CurrentTag 'setup-v3.1.0' -Tags @('setup-v3.0.0-r2', 'setup-v3.2.0')) 'setup-v3.0.0-r2' 'skips newer setup tags'
+Assert-Throws { Get-BthPS3PreviousSetupReleaseTag -CurrentTag 'v3.2.0' -Tags $tags } 'driver tag rejected as current'
+
+$template = @"
+# v{{SetupVersion}} changelog
+
+## ✨ Highlights
+
+{{HIGHLIGHTS}}
+
+{{WHATS_CHANGED}}
+"@
+$rendered = Format-BthPS3ReleaseNotes `
+    -Template $template `
+    -SetupVersion '3.2.0' `
+    -Highlights "- One change" `
+    -WhatsChanged "## What's Changed`n* Title by @user in https://github.com/nefarius/BthPS3/pull/1"
+Assert-True ($rendered -match '# v3.2.0 changelog') 'renders version'
+Assert-True ($rendered -match '- One change') 'renders highlights'
+Assert-True ($rendered -match "What's Changed") 'renders generated notes'
+Assert-Throws { Format-BthPS3ReleaseNotes -Template $template -SetupVersion '3.2' -Highlights 'x' -WhatsChanged 'y' } 'short version rejected'
+
+$generated = @"
+## What's Changed
+* Wrap the install-method description by @nefarius in https://github.com/nefarius/BthPS3/pull/175
+* diag: add structured PSM events by @nefarius in https://github.com/nefarius/BthPS3/pull/177
+
+**Full Changelog**: https://github.com/nefarius/BthPS3/compare/setup-v3.0.0-r6...setup-v3.2.0
+"@
+Assert-True (Test-BthPS3GeneratedNotesHavePullRequests -GeneratedNotes $generated) 'detects PR lines'
+Assert-True (-not (Test-BthPS3GeneratedNotesHavePullRequests -GeneratedNotes "## What's Changed`n")) 'empty generated notes have no PRs'
+Assert-Equal (Get-BthPS3FallbackHighlights -SetupVersion '3.2.0' -PreviousSetupTag 'setup-v3.0.0-r6') '- Packaging or installer-only refresh of v3.2.0 with no additional pull requests since `setup-v3.0.0-r6`.' 'fallback mentions previous tag'
+
+$ok = Assert-BthPS3HighlightsMarkdown -Highlights @"
+## ✨ Highlights
+
+This release focuses on diagnostics.
+
+- Improved ETW diagnostics
+- Cleaner idle-settings logging
+"@
+Assert-True ($ok -match 'Improved ETW diagnostics') 'accepts typical highlights'
+Assert-True ($ok -notmatch '✨ Highlights') 'strips highlights heading'
+
+Assert-Throws { Assert-BthPS3HighlightsMarkdown -Highlights '' } 'empty highlights rejected'
+Assert-Throws { Assert-BthPS3HighlightsMarkdown -Highlights 'Just a sentence.' } 'highlights require a bullet'
+Assert-Throws { Assert-BthPS3HighlightsMarkdown -Highlights "- Fine`n`n## What's Changed`n* injected" } 'whats-changed injection rejected'
+Assert-Throws { Assert-BthPS3HighlightsMarkdown -Highlights "- Fine`n`n**Full Changelog**: https://example.test" } 'changelog injection rejected'
+Assert-Throws { Assert-BthPS3HighlightsMarkdown -Highlights "- Fine`n`n## Extra Section" } 'extra heading rejected'
+Assert-Throws { Assert-BthPS3HighlightsMarkdown -Highlights '- {{HIGHLIGHTS}}' } 'placeholder injection rejected'
+Assert-Throws { Assert-BthPS3HighlightsMarkdown -Highlights '- <script>alert(1)</script>' } 'html injection rejected'
+
+$draftView = ConvertFrom-BthPS3GitHubReleaseView -ExitCode 0 -Stdout '{"isDraft":true,"tagName":"setup-v3.2.0","name":"BthPS3 Bluetooth Drivers v3.2.0"}' -Stderr ''
+Assert-True ([bool]$draftView.isDraft) 'release view JSON exposes isDraft'
+Assert-Equal $draftView.tagName 'setup-v3.2.0' 'release view JSON exposes tagName'
+Assert-Equal (ConvertFrom-BthPS3GitHubReleaseView -ExitCode 1 -Stdout '' -Stderr 'release not found') $null 'missing release is null'
+Assert-Equal (ConvertFrom-BthPS3GitHubReleaseView -ExitCode 1 -Stdout '' -Stderr 'HTTP 404: Not Found') $null 'HTTP 404 is treated as missing'
+Assert-Throws { ConvertFrom-BthPS3GitHubReleaseView -ExitCode 1 -Stdout '' -Stderr 'HTTP 401: Bad credentials' } 'auth failure is not treated as missing'
+Assert-Throws { ConvertFrom-BthPS3GitHubReleaseView -ExitCode 1 -Stdout '' -Stderr 'dial tcp: lookup api.github.com' } 'network failure is not treated as missing'
+Assert-Throws { ConvertFrom-BthPS3GitHubReleaseView -ExitCode 0 -Stdout '' -Stderr '' } 'empty successful view is rejected'
+
+Assert-Equal (Resolve-BthPS3DraftReleaseAction -ExistingRelease $null) 'create' 'missing release creates draft'
+Assert-Equal (Resolve-BthPS3DraftReleaseAction -ExistingRelease ([pscustomobject]@{ draft = $true; tag_name = 'setup-v3.2.0' })) 'update' 'draft is updated'
+Assert-Equal (Resolve-BthPS3DraftReleaseAction -ExistingRelease ([pscustomobject]@{ isDraft = $true })) 'update' 'isDraft alias is accepted'
+Assert-Throws { Resolve-BthPS3DraftReleaseAction -ExistingRelease ([pscustomobject]@{ draft = $false; tag_name = 'setup-v3.2.0' }) } 'published release is protected'
+
+$temp = Join-Path ([IO.Path]::GetTempPath()) ("bthps3-notes-tests-" + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Force -Path $temp | Out-Null
+try {
+    $templatePath = Join-Path $temp 'release-notes.md'
+    [IO.File]::WriteAllText($templatePath, $template, [Text.UTF8Encoding]::new($false))
+    $notes = New-BthPS3ReleaseNotes `
+        -SetupVersion '3.2.0' `
+        -SetupTag 'setup-v3.2.0' `
+        -Repository 'nefarius/BthPS3' `
+        -TemplatePath $templatePath `
+        -SetupTags $tags `
+        -GenerateNotes { param($Repository, $SetupTag, $Previous) "$Repository $SetupTag $Previous`n* Title by @user in https://github.com/nefarius/BthPS3/pull/1" } `
+        -HighlightsProvider { '- From provider' }
+    Assert-Equal $notes.PreviousSetupTag 'setup-v3.0.0-r6' 'generator selects previous setup tag'
+    Assert-Equal $notes.Title 'BthPS3 Bluetooth Drivers v3.2.0' 'generator title'
+    Assert-True ($notes.Body -match '- From provider') 'injectable highlights used when PRs exist'
+    Assert-True ($notes.WhatsChanged -match 'setup-v3.0.0-r6') 'generate-notes receives previous tag'
+
+    $fallbackNotes = New-BthPS3ReleaseNotes `
+        -SetupVersion '3.2.0' `
+        -SetupTag 'setup-v3.2.0' `
+        -Repository 'nefarius/BthPS3' `
+        -TemplatePath $templatePath `
+        -SetupTags $tags `
+        -GenerateNotes { "## What's Changed" } `
+        -HighlightsProvider { throw 'Copilot should not run when there are no PRs' }
+    Assert-True ($fallbackNotes.Highlights -match 'no additional pull requests') 'empty PR history uses fallback highlights'
+
+    $repoRootTemplate = Join-Path (Split-Path -Parent $here) '.github\release-notes.md'
+    $fromRepo = Get-BthPS3ReleaseNotesTemplate -Path $repoRootTemplate
+    Assert-True ($fromRepo -match 'BthPS3 Bluetooth Drivers changelog') 'repo template has product title'
+    Assert-True ($fromRepo -match '\{\{HIGHLIGHTS\}\}') 'repo template has highlights placeholder'
+    Assert-True ($fromRepo -match '\{\{WHATS_CHANGED\}\}') 'repo template has generated-notes placeholder'
+
+    $metadataPath = Join-Path $temp 'setup-metadata.json'
+    $msiPath = Join-Path $temp 'Nefarius_BthPS3_Drivers_x64_arm64_v3.2.0.msi'
+    [IO.File]::WriteAllText($msiPath, 'msi-bytes', [Text.UTF8Encoding]::new($false))
+    $sha = (Get-FileHash -LiteralPath $msiPath -Algorithm SHA256).Hash.ToLowerInvariant()
+    $metadata = [pscustomobject]@{
+        setupTag     = 'setup-v3.2.0'
+        setupVersion = '3.2.0'
+        files        = [pscustomobject]@{
+            msi = [pscustomobject]@{
+                name   = 'Nefarius_BthPS3_Drivers_x64_arm64_v3.2.0.msi'
+                sha256 = $sha
+            }
+        }
+    }
+    [IO.File]::WriteAllText($metadataPath, ($metadata | ConvertTo-Json -Depth 5), [Text.UTF8Encoding]::new($false))
+    $read = Read-BthPS3SetupMetadataFile -Path $temp
+    $artifact = Assert-BthPS3SetupReleaseArtifact -Metadata $read -ArtifactDirectory $temp
+    Assert-Equal $artifact.MsiName 'Nefarius_BthPS3_Drivers_x64_arm64_v3.2.0.msi' 'artifact name'
+    Assert-Equal $artifact.MsiSha256 $sha 'artifact hash'
+
+    $bad = $metadata | ConvertTo-Json -Depth 5 | ConvertFrom-Json
+    $bad.files.msi.sha256 = '0' * 64
+    Assert-Throws { Assert-BthPS3SetupReleaseArtifact -Metadata $bad -ArtifactDirectory $temp } 'hash mismatch rejected'
+
+    $notesPath = Join-Path $temp 'notes.md'
+    Export-BthPS3ReleaseNotes -Path $notesPath -Body $notes.Body
+    $bytes = [IO.File]::ReadAllBytes($notesPath)
+    Assert-True (-not ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF)) 'notes file has no UTF-8 BOM'
+
+    $created = [System.Collections.Generic.List[object]]::new()
+    $createAction = Publish-BthPS3DraftRelease `
+        -Repository 'nefarius/BthPS3' `
+        -Tag 'setup-v3.2.0' `
+        -Title $notes.Title `
+        -NotesPath $notesPath `
+        -MsiPath $msiPath `
+        -GetExistingRelease { $null } `
+        -GitHubCommand { param($Arguments) $created.Add(@($Arguments)) }
+    Assert-Equal $createAction 'create' 'publish creates missing draft'
+    Assert-Equal $created[0][1] 'create' 'create uses gh release create'
+
+    $updated = [System.Collections.Generic.List[object]]::new()
+    $updateAction = Publish-BthPS3DraftRelease `
+        -Repository 'nefarius/BthPS3' `
+        -Tag 'setup-v3.2.0' `
+        -Title $notes.Title `
+        -NotesPath $notesPath `
+        -MsiPath $msiPath `
+        -GetExistingRelease { [pscustomobject]@{ draft = $true; tag_name = 'setup-v3.2.0' } } `
+        -GitHubCommand { param($Arguments) $updated.Add(@($Arguments)) }
+    Assert-Equal $updateAction 'update' 'publish updates existing draft'
+    Assert-Equal $updated[0][1] 'edit' 'update edits notes'
+    Assert-Equal $updated[1][1] 'upload' 'update reclobbers MSI'
+
+    Assert-Throws {
+        Publish-BthPS3DraftRelease `
+            -Repository 'nefarius/BthPS3' `
+            -Tag 'setup-v3.2.0' `
+            -Title $notes.Title `
+            -NotesPath $notesPath `
+            -MsiPath $msiPath `
+            -GetExistingRelease { [pscustomobject]@{ draft = $false; tag_name = 'setup-v3.2.0' } } `
+            -GitHubCommand { throw 'gh must not run for a published release' }
+    } 'publish refuses a published release'
+}
+finally {
+    Remove-Item -LiteralPath $temp -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+Write-Output 'PASS ReleaseNotes.Tests.ps1'

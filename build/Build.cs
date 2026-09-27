@@ -189,7 +189,7 @@ class Build : NukeBuild
         });
 
     /// <summary>
-    /// Runs offline version, INF, setup-release, and Partner Center dry-run checks.
+    /// Runs offline version, INF, setup-release, release-notes, and Partner Center dry-run checks.
     /// </summary>
     public Target TestReleasePipeline => _ => _
         .Executes(() =>
@@ -202,6 +202,7 @@ class Build : NukeBuild
                      {
                          "ReleaseVersion.Tests.ps1",
                          "SetupRelease.Tests.ps1",
+                         "ReleaseNotes.Tests.ps1",
                          "New-PartnerSubmissionInf.Tests.ps1",
                          "PartnerSigning.Tests.ps1",
                          "PartnerSigning.DryRun.ps1"

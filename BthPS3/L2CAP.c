@@ -68,6 +68,10 @@ L2CAP_PS3_ControlConnectResponseCompleted(
 	brb = (struct _BRB_L2CA_OPEN_CHANNEL*)Context;
 	pPdoCtx = brb->Hdr.ClientContext[0];
 
+	//
+	// Failed OPEN retires BTHport callback ownership here. Success keeps
+	// it until IndicationReleaseReference.
+	//
 	if (L2CAP_PS3_ApplyConnectCompletion(
 		pPdoCtx,
 		&pPdoCtx->HidControlChannel,
@@ -160,6 +164,10 @@ L2CAP_PS3_InterruptConnectResponseCompleted(
 	brb = (struct _BRB_L2CA_OPEN_CHANNEL*)Context;
 	pPdoCtx = brb->Hdr.ClientContext[0];
 
+	//
+	// Failed OPEN retires BTHport callback ownership here. Success keeps
+	// it until IndicationReleaseReference.
+	//
 	enableIo = L2CAP_PS3_ApplyConnectCompletion(
 		pPdoCtx,
 		&pPdoCtx->HidInterruptChannel,

@@ -69,6 +69,10 @@ typedef enum _BTHPS3_PDO_LIFECYCLE {
 
 } BTHPS3_PDO_LIFECYCLE, *PBTHPS3_PDO_LIFECYCLE;
 
+typedef struct _BTHPS3_L2CAP_CALLBACK_CONTEXT *PBTHPS3_L2CAP_CALLBACK_CONTEXT;
+
+#define BTHPS3_L2CAP_CALLBACK_SIGNATURE ((ULONG)'CBL2')
+
 //
 // State information for a single L2CAP channel
 // 
@@ -87,6 +91,12 @@ typedef struct _BTHPS3_CLIENT_L2CAP_CHANNEL
     KEVENT DisconnectEvent;
 
     struct _BTHPS3_PDO_CONTEXT* PdoContext;
+
+    //
+    // Outlives the PDO. BTHport holds this pointer until the matching
+    // IndicationReleaseReference (or a failed OPEN that never retained it).
+    //
+    PBTHPS3_L2CAP_CALLBACK_CONTEXT CallbackContext;
 
 } BTHPS3_CLIENT_L2CAP_CHANNEL, *PBTHPS3_CLIENT_L2CAP_CHANNEL;
 
@@ -132,6 +142,37 @@ typedef struct _BTHPS3_PDO_CONTEXT
 } BTHPS3_PDO_CONTEXT, * PBTHPS3_PDO_CONTEXT;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(BTHPS3_PDO_CONTEXT, GetPdoContext)
+
+//
+// Per-channel callback registration state. Allocated from nonpaged pool so
+// BTHport can still invoke IndicationReleaseReference after PDO teardown.
+//
+typedef struct _BTHPS3_L2CAP_CALLBACK_CONTEXT
+{
+    ULONG Signature;
+
+    PBTHPS3_PDO_CONTEXT PdoContext;
+
+    PBTHPS3_CLIENT_L2CAP_CHANNEL Channel;
+
+    EX_RUNDOWN_REF CallbackRundown;
+
+    volatile LONG ReferenceCount;
+
+    volatile LONG BthportOwnsRegistration;
+
+    volatile LONG Detached;
+
+    volatile LONG AddReferenceCount;
+
+    volatile LONG ReleaseReferenceCount;
+
+    PCSTR ChannelName;
+
+} BTHPS3_L2CAP_CALLBACK_CONTEXT;
+
+#define BTHPS3_L2CAP_CALLBACK_CONTEXT_VALID(_ctx) \
+    ((_ctx) != NULL && (_ctx)->Signature == BTHPS3_L2CAP_CALLBACK_SIGNATURE)
 
 
 VOID
@@ -200,6 +241,55 @@ BthPS3_PDO_RundownAcquire(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 BthPS3_PDO_RundownRelease(
+	_In_ PBTHPS3_PDO_CONTEXT PdoContext
+);
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+_Must_inspect_result_
+NTSTATUS
+BthPS3_L2CAP_CallbackContextCreate(
+	_In_ PBTHPS3_PDO_CONTEXT PdoContext,
+	_In_ PBTHPS3_CLIENT_L2CAP_CHANNEL Channel,
+	_In_ PCSTR ChannelName,
+	_Outptr_ PBTHPS3_L2CAP_CALLBACK_CONTEXT* CallbackContext
+);
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+BthPS3_L2CAP_CallbackContextArmRegistration(
+	_In_ PBTHPS3_L2CAP_CALLBACK_CONTEXT CallbackContext
+);
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+BthPS3_L2CAP_CallbackContextReleaseRegistration(
+	_In_opt_ PBTHPS3_L2CAP_CALLBACK_CONTEXT CallbackContext
+);
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+BthPS3_L2CAP_CallbackContextReleaseDriver(
+	_Inout_ PBTHPS3_L2CAP_CALLBACK_CONTEXT* CallbackContext
+);
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+VOID
+BthPS3_PDO_CallbackContextsDetachAndWait(
+	_In_ PBTHPS3_PDO_CONTEXT PdoContext
+);
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+_Must_inspect_result_
+NTSTATUS
+BthPS3_L2CAP_CallbackContextAcquirePdo(
+	_In_ PBTHPS3_L2CAP_CALLBACK_CONTEXT CallbackContext,
+	_Outptr_ PBTHPS3_PDO_CONTEXT* PdoContext
+);
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+BthPS3_L2CAP_CallbackContextReleasePdo(
+	_In_ PBTHPS3_L2CAP_CALLBACK_CONTEXT CallbackContext,
 	_In_ PBTHPS3_PDO_CONTEXT PdoContext
 );
 

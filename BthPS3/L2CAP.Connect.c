@@ -60,6 +60,7 @@ L2CAP_PS3_HandleRemoteConnect(
     DS_DEVICE_TYPE deviceType = DS_DEVICE_TYPE_UNKNOWN;
     BOOLEAN pdoRundownHeld = FALSE;
     BOOLEAN responseSent = FALSE;
+    BOOLEAN registrationArmed = FALSE;
 
 
     FuncEntry(TRACE_L2CAP);
@@ -375,14 +376,23 @@ L2CAP_PS3_HandleRemoteConnect(
     brb->IncomingQueueDepth = 10;
 
     //
-    // Get notifications about disconnect and QOS
+    // Get notifications about disconnect and QOS. CallbackContext is the
+    // per-channel allocation that outlives the PDO; ReferenceObject is the
+    // long-lived server FDO so BTHport does not pin the child PDO.
     //
+    if (channel->CallbackContext == NULL)
+    {
+        status = STATUS_INVALID_DEVICE_STATE;
+        goto exit;
+    }
+
     brb->CallbackFlags = CALLBACK_DISCONNECT | CALLBACK_CONFIG_QOS;
     brb->Callback = &L2CAP_PS3_ConnectionIndicationCallback;
-    brb->CallbackContext = pPdoCtx;
-    brb->ReferenceObject = (PVOID)WdfDeviceWdmGetDeviceObject(
-        WdfObjectContextGetObject(pPdoCtx)
-    );
+    brb->CallbackContext = channel->CallbackContext;
+    brb->ReferenceObject = (PVOID)WdfDeviceWdmGetDeviceObject(DevCtx->Header.Device);
+
+    BthPS3_L2CAP_CallbackContextArmRegistration(channel->CallbackContext);
+    registrationArmed = TRUE;
 
     if (!NT_SUCCESS(status = BthPS3_PDO_RundownAcquire(pPdoCtx)))
     {
@@ -422,6 +432,8 @@ L2CAP_PS3_HandleRemoteConnect(
         KeSetEvent(&channel->DisconnectEvent, 0, FALSE);
         WdfSpinLockRelease(channel->ConnectionStateLock);
 
+        BthPS3_L2CAP_CallbackContextReleaseRegistration(channel->CallbackContext);
+        registrationArmed = FALSE;
         BthPS3_PDO_RundownRelease(pPdoCtx);
     }
     else
@@ -430,6 +442,12 @@ L2CAP_PS3_HandleRemoteConnect(
     }
 
 exit:
+
+    if (!NT_SUCCESS(status) && registrationArmed && channel != NULL)
+    {
+        BthPS3_L2CAP_CallbackContextReleaseRegistration(channel->CallbackContext);
+        registrationArmed = FALSE;
+    }
 
     if (!NT_SUCCESS(status) && pPdoCtx != NULL)
     {

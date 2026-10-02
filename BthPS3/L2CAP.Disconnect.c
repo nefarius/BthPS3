@@ -192,17 +192,77 @@ L2CAP_PS3_ConnectionIndicationCallback(
 	_In_ PINDICATION_PARAMETERS Parameters
 )
 {
-	PBTHPS3_PDO_CONTEXT pPdoCtx = Context;
+	PBTHPS3_L2CAP_CALLBACK_CONTEXT callbackCtx = Context;
+	PBTHPS3_PDO_CONTEXT pPdoCtx = NULL;
 	NTSTATUS status;
+	LONG indicationCount;
 
 	FuncEntryArguments(TRACE_L2CAP, "Indication=0x%X, Context=0x%p",
 		Indication, Context);
 
-	if (!NT_SUCCESS(status = BthPS3_PDO_RundownAcquire(pPdoCtx)))
+	if (!BTHPS3_L2CAP_CALLBACK_CONTEXT_VALID(callbackCtx))
+	{
+		NT_ASSERT(FALSE);
+		FuncExitNoReturn(TRACE_L2CAP);
+		return;
+	}
+
+	switch (Indication)
+	{
+	case IndicationAddReference:
+		indicationCount = InterlockedIncrement(&callbackCtx->AddReferenceCount);
+		TraceVerbose(
+			TRACE_L2CAP,
+			"IndicationAddReference (count=%d, channel=%s)",
+			indicationCount,
+			callbackCtx->ChannelName
+		);
+		if (indicationCount > 1)
+		{
+			TraceInformation(
+				TRACE_L2CAP,
+				"Duplicate IndicationAddReference on %s",
+				callbackCtx->ChannelName
+			);
+		}
+		FuncExitNoReturn(TRACE_L2CAP);
+		return;
+
+	case IndicationReleaseReference:
+		indicationCount = InterlockedIncrement(&callbackCtx->ReleaseReferenceCount);
+		TraceVerbose(
+			TRACE_L2CAP,
+			"IndicationReleaseReference (count=%d, channel=%s)",
+			indicationCount,
+			callbackCtx->ChannelName
+		);
+		if (indicationCount != 1)
+		{
+			NT_ASSERT(indicationCount == 1);
+			TraceError(
+				TRACE_L2CAP,
+				"Unexpected IndicationReleaseReference count %d on %s",
+				indicationCount,
+				callbackCtx->ChannelName
+			);
+		}
+		BthPS3_L2CAP_CallbackContextReleaseRegistration(callbackCtx);
+		FuncExitNoReturn(TRACE_L2CAP);
+		return;
+
+	case IndicationFreeExtraOptions:
+		FuncExitNoReturn(TRACE_L2CAP);
+		return;
+
+	default:
+		break;
+	}
+
+	if (!NT_SUCCESS(status = BthPS3_L2CAP_CallbackContextAcquirePdo(callbackCtx, &pPdoCtx)))
 	{
 		TraceVerbose(
 			TRACE_L2CAP,
-			"Ignoring indication 0x%X, PDO rundown unavailable (%!STATUS!)",
+			"Ignoring indication 0x%X, callback PDO unavailable (%!STATUS!)",
 			Indication,
 			status
 		);
@@ -212,12 +272,6 @@ L2CAP_PS3_ConnectionIndicationCallback(
 
 	switch (Indication)
 	{
-	case IndicationAddReference:
-		TraceVerbose(TRACE_L2CAP, "IndicationAddReference");
-		break;
-	case IndicationReleaseReference:
-		TraceVerbose(TRACE_L2CAP, "IndicationReleaseReference");
-		break;
 	case IndicationRemoteConnect:
 	{
 		//
@@ -253,8 +307,6 @@ L2CAP_PS3_ConnectionIndicationCallback(
 
 		break;
 
-	case IndicationFreeExtraOptions:
-		break;
 	default:
 		//
 		// We don't expect any other indications on this callback
@@ -262,7 +314,7 @@ L2CAP_PS3_ConnectionIndicationCallback(
 		NT_ASSERT(FALSE);
 	}
 
-	BthPS3_PDO_RundownRelease(pPdoCtx);
+	BthPS3_L2CAP_CallbackContextReleasePdo(callbackCtx, pPdoCtx);
 
 	FuncExitNoReturn(TRACE_L2CAP);
 }
@@ -354,6 +406,7 @@ L2CAP_PS3_ApplyConnectCompletion(
 		KeSetEvent(&Channel->DisconnectEvent, 0, FALSE);
 		WdfSpinLockRelease(Channel->ConnectionStateLock);
 
+		BthPS3_L2CAP_CallbackContextReleaseRegistration(Channel->CallbackContext);
 		BthPS3_PDO_Destroy(PdoContext->DevCtxHdr, PdoContext);
 		return FALSE;
 	}

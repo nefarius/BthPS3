@@ -650,6 +650,21 @@ BthPS3_PDO_Create(
 			pPdoCtx->HidControlChannel.ConnectionState = ConnectionStateInitialized;
 			pPdoCtx->HidControlChannel.PdoContext = pPdoCtx;
 
+		if (!NT_SUCCESS(status = BthPS3_L2CAP_CallbackContextCreate(
+			pPdoCtx,
+			&pPdoCtx->HidControlChannel,
+			"HID Control",
+			&pPdoCtx->HidControlChannel.CallbackContext
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"BthPS3_L2CAP_CallbackContextCreate for HidControlChannel failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
+
 		//
 		// Initialize HidInterruptChannel properties
 		// 
@@ -686,6 +701,21 @@ BthPS3_PDO_Create(
 
 			pPdoCtx->HidInterruptChannel.ConnectionState = ConnectionStateInitialized;
 			pPdoCtx->HidInterruptChannel.PdoContext = pPdoCtx;
+
+		if (!NT_SUCCESS(status = BthPS3_L2CAP_CallbackContextCreate(
+			pPdoCtx,
+			&pPdoCtx->HidInterruptChannel,
+			"HID Interrupt",
+			&pPdoCtx->HidInterruptChannel.CallbackContext
+		)))
+		{
+			TraceError(
+				TRACE_BUSLOGIC,
+				"BthPS3_L2CAP_CallbackContextCreate for HidInterruptChannel failed with status %!STATUS!",
+				status
+			);
+			break;
+		}
 
 			//
 			// Allow callbacks and BRB completions to acquire the PDO
@@ -868,7 +898,295 @@ BthPS3_PDO_RundownRelease(
 		return;
 	}
 
-	DMF_Rundown_Dereference(PdoContext->DmfModuleRundown);
+		DMF_Rundown_Dereference(PdoContext->DmfModuleRundown);
+}
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+static
+VOID
+BthPS3_L2CAP_CallbackContextAddRef(
+	_In_ PBTHPS3_L2CAP_CALLBACK_CONTEXT CallbackContext
+)
+{
+	const LONG count = InterlockedIncrement(&CallbackContext->ReferenceCount);
+
+	NT_ASSERT(count > 1);
+	UNREFERENCED_PARAMETER(count);
+}
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+static
+VOID
+BthPS3_L2CAP_CallbackContextRelease(
+	_In_opt_ PBTHPS3_L2CAP_CALLBACK_CONTEXT CallbackContext
+)
+{
+	LONG count;
+
+	if (CallbackContext == NULL)
+	{
+		return;
+	}
+
+	NT_ASSERT(BTHPS3_L2CAP_CALLBACK_CONTEXT_VALID(CallbackContext));
+
+	count = InterlockedDecrement(&CallbackContext->ReferenceCount);
+	NT_ASSERT(count >= 0);
+
+	if (count == 0)
+	{
+		NT_ASSERT(CallbackContext->BthportOwnsRegistration == 0);
+
+		TraceVerbose(
+			TRACE_BUSLOGIC,
+			"Freeing L2CAP callback context 0x%p (%s)",
+			CallbackContext,
+			CallbackContext->ChannelName
+		);
+
+		CallbackContext->Signature = 0;
+		CallbackContext->Channel = NULL;
+		CallbackContext->PdoContext = NULL;
+		ExFreePoolWithTag(CallbackContext, POOLTAG_BTHPS3);
+	}
+}
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+static
+VOID
+BthPS3_L2CAP_CallbackContextDetachAndWait(
+	_In_opt_ PBTHPS3_L2CAP_CALLBACK_CONTEXT CallbackContext
+)
+{
+	if (!BTHPS3_L2CAP_CALLBACK_CONTEXT_VALID(CallbackContext))
+	{
+		return;
+	}
+
+	if (InterlockedCompareExchange(&CallbackContext->Detached, 1, 0) != 0)
+	{
+		return;
+	}
+
+	ExWaitForRundownProtectionRelease(&CallbackContext->CallbackRundown);
+	InterlockedExchangePointer((PVOID*)&CallbackContext->PdoContext, NULL);
+
+	TraceVerbose(
+		TRACE_BUSLOGIC,
+		"Detached L2CAP callback context 0x%p (%s)",
+		CallbackContext,
+		CallbackContext->ChannelName
+	);
+}
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+_Must_inspect_result_
+NTSTATUS
+BthPS3_L2CAP_CallbackContextCreate(
+	_In_ PBTHPS3_PDO_CONTEXT PdoContext,
+	_In_ PBTHPS3_CLIENT_L2CAP_CHANNEL Channel,
+	_In_ PCSTR ChannelName,
+	_Outptr_ PBTHPS3_L2CAP_CALLBACK_CONTEXT* CallbackContext
+)
+{
+	PBTHPS3_L2CAP_CALLBACK_CONTEXT callbackContext;
+
+	*CallbackContext = NULL;
+
+	callbackContext = ExAllocatePool2(
+		POOL_FLAG_NON_PAGED,
+		sizeof(BTHPS3_L2CAP_CALLBACK_CONTEXT),
+		POOLTAG_BTHPS3
+	);
+
+	if (callbackContext == NULL)
+	{
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+
+	callbackContext->Signature = BTHPS3_L2CAP_CALLBACK_SIGNATURE;
+	callbackContext->PdoContext = PdoContext;
+	callbackContext->Channel = Channel;
+	callbackContext->ChannelName = ChannelName;
+	callbackContext->ReferenceCount = 1;
+	callbackContext->BthportOwnsRegistration = 0;
+	callbackContext->Detached = 0;
+	callbackContext->AddReferenceCount = 0;
+	callbackContext->ReleaseReferenceCount = 0;
+	ExInitializeRundownProtection(&callbackContext->CallbackRundown);
+
+	*CallbackContext = callbackContext;
+
+	TraceVerbose(
+		TRACE_BUSLOGIC,
+		"Created L2CAP callback context 0x%p (%s) for PDO 0x%p",
+		callbackContext,
+		ChannelName,
+		PdoContext
+	);
+
+	return STATUS_SUCCESS;
+}
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+_Must_inspect_result_
+BOOLEAN
+BthPS3_L2CAP_CallbackContextArmRegistration(
+	_In_ PBTHPS3_L2CAP_CALLBACK_CONTEXT CallbackContext
+)
+{
+	if (!BTHPS3_L2CAP_CALLBACK_CONTEXT_VALID(CallbackContext))
+	{
+		return FALSE;
+	}
+
+	if (InterlockedCompareExchange(&CallbackContext->BthportOwnsRegistration, 1, 0) == 0)
+	{
+		BthPS3_L2CAP_CallbackContextAddRef(CallbackContext);
+
+		TraceVerbose(
+			TRACE_BUSLOGIC,
+			"Armed BTHport registration on callback context 0x%p (%s)",
+			CallbackContext,
+			CallbackContext->ChannelName
+		);
+		return TRUE;
+	}
+
+	NT_ASSERT(FALSE);
+	TraceError(
+		TRACE_BUSLOGIC,
+		"Duplicate BTHport registration arm on callback context 0x%p (%s)",
+		CallbackContext,
+		CallbackContext->ChannelName
+	);
+	return FALSE;
+}
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+BthPS3_L2CAP_CallbackContextReleaseRegistration(
+	_In_opt_ PBTHPS3_L2CAP_CALLBACK_CONTEXT CallbackContext
+)
+{
+	if (!BTHPS3_L2CAP_CALLBACK_CONTEXT_VALID(CallbackContext))
+	{
+		return;
+	}
+
+	if (InterlockedCompareExchange(&CallbackContext->BthportOwnsRegistration, 0, 1) == 1)
+	{
+		TraceVerbose(
+			TRACE_BUSLOGIC,
+			"Released BTHport registration on callback context 0x%p (%s)",
+			CallbackContext,
+			CallbackContext->ChannelName
+		);
+		BthPS3_L2CAP_CallbackContextRelease(CallbackContext);
+		return;
+	}
+
+	TraceVerbose(
+		TRACE_BUSLOGIC,
+		"BTHport registration already retired on callback context 0x%p (%s)",
+		CallbackContext,
+		CallbackContext->ChannelName
+	);
+}
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+BthPS3_L2CAP_CallbackContextReleaseDriver(
+	_Inout_ PBTHPS3_L2CAP_CALLBACK_CONTEXT* CallbackContext
+)
+{
+	PBTHPS3_L2CAP_CALLBACK_CONTEXT callbackContext;
+
+	if (CallbackContext == NULL)
+	{
+		return;
+	}
+
+	callbackContext = InterlockedExchangePointer((PVOID*)CallbackContext, NULL);
+	if (callbackContext == NULL)
+	{
+		return;
+	}
+
+	if (callbackContext->BthportOwnsRegistration != 0)
+	{
+		TraceError(
+			TRACE_BUSLOGIC,
+			"Leaked BTHport registration on callback context 0x%p (%s); "
+			"allocation stays until IndicationReleaseReference",
+			callbackContext,
+			callbackContext->ChannelName
+		);
+	}
+
+	BthPS3_L2CAP_CallbackContextRelease(callbackContext);
+}
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+VOID
+BthPS3_PDO_CallbackContextsDetachAndWait(
+	_In_ PBTHPS3_PDO_CONTEXT PdoContext
+)
+{
+	BthPS3_L2CAP_CallbackContextDetachAndWait(PdoContext->HidControlChannel.CallbackContext);
+	BthPS3_L2CAP_CallbackContextDetachAndWait(PdoContext->HidInterruptChannel.CallbackContext);
+}
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+_Must_inspect_result_
+NTSTATUS
+BthPS3_L2CAP_CallbackContextAcquirePdo(
+	_In_ PBTHPS3_L2CAP_CALLBACK_CONTEXT CallbackContext,
+	_Outptr_ PBTHPS3_PDO_CONTEXT* PdoContext
+)
+{
+	PBTHPS3_PDO_CONTEXT pdoContext;
+	NTSTATUS status;
+
+	*PdoContext = NULL;
+
+	if (!BTHPS3_L2CAP_CALLBACK_CONTEXT_VALID(CallbackContext))
+	{
+		return STATUS_INVALID_DEVICE_STATE;
+	}
+
+	if (!ExAcquireRundownProtection(&CallbackContext->CallbackRundown))
+	{
+		return STATUS_INVALID_DEVICE_STATE;
+	}
+
+	pdoContext = CallbackContext->PdoContext;
+	if (pdoContext == NULL)
+	{
+		ExReleaseRundownProtection(&CallbackContext->CallbackRundown);
+		return STATUS_INVALID_DEVICE_STATE;
+	}
+
+	status = BthPS3_PDO_RundownAcquire(pdoContext);
+	if (!NT_SUCCESS(status))
+	{
+		ExReleaseRundownProtection(&CallbackContext->CallbackRundown);
+		return status;
+	}
+
+	*PdoContext = pdoContext;
+	return STATUS_SUCCESS;
+}
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+BthPS3_L2CAP_CallbackContextReleasePdo(
+	_In_ PBTHPS3_L2CAP_CALLBACK_CONTEXT CallbackContext,
+	_In_ PBTHPS3_PDO_CONTEXT PdoContext
+)
+{
+	BthPS3_PDO_RundownRelease(PdoContext);
+	ExReleaseRundownProtection(&CallbackContext->CallbackRundown);
 }
 
 static
@@ -1029,6 +1347,8 @@ BthPS3_PDO_Destroy(
 	}
 	else if (KeGetCurrentIrql() <= PASSIVE_LEVEL)
 	{
+		BthPS3_PDO_CallbackContextsDetachAndWait(PdoContext);
+
 		if (PdoContext->DmfModuleRundown != NULL)
 		{
 			DMF_Rundown_EndAndWait(PdoContext->DmfModuleRundown);
@@ -1084,6 +1404,13 @@ BthPS3_PDO_EvtTeardownWorkItem(
 		"HID Interrupt"
 	);
 
+	//
+	// Stop late indications from touching the PDO before DMF rundown
+	// ends. Disconnect-event timeout is diagnostic only and does not
+	// authorize freeing callback-visible state.
+	//
+	BthPS3_PDO_CallbackContextsDetachAndWait(pPdoCtx);
+
 	DMF_Rundown_EndAndWait(pPdoCtx->DmfModuleRundown);
 
 	BthPS3_PDO_UnplugNow(pPdoCtx->DevCtxHdr, pPdoCtx);
@@ -1121,6 +1448,10 @@ BthPS3_PDO_EvtContextCleanup(
 		Object,
 		pPdoCtx->Lifecycle
 	);
+
+	BthPS3_PDO_CallbackContextsDetachAndWait(pPdoCtx);
+	BthPS3_L2CAP_CallbackContextReleaseDriver(&pPdoCtx->HidControlChannel.CallbackContext);
+	BthPS3_L2CAP_CallbackContextReleaseDriver(&pPdoCtx->HidInterruptChannel.CallbackContext);
 
 	FuncExitNoReturn(TRACE_BUSLOGIC);
 }

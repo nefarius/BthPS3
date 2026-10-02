@@ -1029,12 +1029,16 @@ BthPS3_L2CAP_CallbackContextCreate(
 }
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
-VOID
+_Must_inspect_result_
+BOOLEAN
 BthPS3_L2CAP_CallbackContextArmRegistration(
 	_In_ PBTHPS3_L2CAP_CALLBACK_CONTEXT CallbackContext
 )
 {
-	NT_ASSERT(BTHPS3_L2CAP_CALLBACK_CONTEXT_VALID(CallbackContext));
+	if (!BTHPS3_L2CAP_CALLBACK_CONTEXT_VALID(CallbackContext))
+	{
+		return FALSE;
+	}
 
 	if (InterlockedCompareExchange(&CallbackContext->BthportOwnsRegistration, 1, 0) == 0)
 	{
@@ -1046,7 +1050,7 @@ BthPS3_L2CAP_CallbackContextArmRegistration(
 			CallbackContext,
 			CallbackContext->ChannelName
 		);
-		return;
+		return TRUE;
 	}
 
 	NT_ASSERT(FALSE);
@@ -1056,6 +1060,7 @@ BthPS3_L2CAP_CallbackContextArmRegistration(
 		CallbackContext,
 		CallbackContext->ChannelName
 	);
+	return FALSE;
 }
 
 _IRQL_requires_max_(DISPATCH_LEVEL)

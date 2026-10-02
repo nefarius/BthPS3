@@ -391,7 +391,11 @@ L2CAP_PS3_HandleRemoteConnect(
     brb->CallbackContext = channel->CallbackContext;
     brb->ReferenceObject = (PVOID)WdfDeviceWdmGetDeviceObject(DevCtx->Header.Device);
 
-    BthPS3_L2CAP_CallbackContextArmRegistration(channel->CallbackContext);
+    if (!BthPS3_L2CAP_CallbackContextArmRegistration(channel->CallbackContext))
+    {
+        status = STATUS_INVALID_DEVICE_STATE;
+        goto exit;
+    }
     registrationArmed = TRUE;
 
     if (!NT_SUCCESS(status = BthPS3_PDO_RundownAcquire(pPdoCtx)))

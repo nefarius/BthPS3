@@ -255,7 +255,8 @@ BthPS3_L2CAP_CallbackContextCreate(
 );
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
-VOID
+_Must_inspect_result_
+BOOLEAN
 BthPS3_L2CAP_CallbackContextArmRegistration(
 	_In_ PBTHPS3_L2CAP_CALLBACK_CONTEXT CallbackContext
 );

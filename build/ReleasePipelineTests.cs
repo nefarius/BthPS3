@@ -10,6 +10,7 @@ static class ReleasePipelineTests
         TestIngestFromDirectoryAndZip();
         TestDriverLayoutRequiresBothPackages();
         OpenArticleTests.Run();
+        CustomActionBindingRedirectTests.Run();
     }
 
     static void TestMetadataRoundTrip()

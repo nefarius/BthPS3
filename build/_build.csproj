@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <Compile Include="..\BthPS3Installer\OpenArticleDecision.cs" Link="OpenArticleDecision.cs" />
+    <Compile Include="..\BthPS3Installer\CustomActionBindingRedirects.cs" Link="CustomActionBindingRedirects.cs" />
   </ItemGroup>
 
 </Project>

@@ -332,7 +332,27 @@ internal class InstallScript
                 "non-elevated installs would fail with 1603.");
         }
 
+        RequireMatchingBindingRedirects();
         project.BuildMsi();
+    }
+
+    /// <summary>
+    ///     The DTF host loads <c>CustomActions.config</c>, not the MSBuild-generated
+    ///     application config. Fail the build when a redirect names a different version
+    ///     than the assembly copied beside this executable.
+    /// </summary>
+    private static void RequireMatchingBindingRedirects()
+    {
+        string directory = Path.GetDirectoryName(typeof(InstallScript).Assembly.Location);
+        if (string.IsNullOrEmpty(directory))
+        {
+            throw new InvalidOperationException(
+                "Cannot validate custom-action binding redirects; Assembly.Location is empty.");
+        }
+
+        string configPath = Path.GetFullPath("CustomActions.config");
+        int count = CustomActionBindingRedirects.AssertMatch(configPath, directory);
+        Console.WriteLine($"Custom-action binding redirects match {count} shipped assemblies.");
     }
 
     /// <summary>

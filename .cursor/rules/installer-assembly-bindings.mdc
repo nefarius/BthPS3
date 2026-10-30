@@ -1,0 +1,24 @@
+---
+description: Keep installer custom-action binding redirects aligned with shipped assemblies
+globs: BthPS3Installer/**
+alwaysApply: false
+---
+
+# Installer assembly binding redirects
+
+`BthPS3Installer/CustomActions.config` is embedded in the DTF custom-action host. Each `bindingRedirect` must match the assembly copied beside `BthPS3Installer.exe`. Use that assembly identity, not the NuGet package version.
+
+When a change adds, removes, or updates a package under `BthPS3Installer/`:
+
+- Restore or build the installer and read each affected DLL with `AssemblyName.GetAssemblyName`. Use the version and public key token from the assembly the net48 project copies to its output.
+- When that identity changes, set both `newVersion` and the `oldVersion` upper bound in `CustomActions.config` to the shipped assembly version. Leave the redirect unchanged when the assembly version did not change.
+- Add a redirect when custom actions load a newly shipped dependency through an older requested version. Remove a redirect when its assembly is no longer shipped.
+- Build the installer so `CustomActionBindingRedirects.AssertMatch` checks the output. Run `.\build.cmd TestReleasePipeline` when the checker or its tests change.
+
+```xml
+<!-- BAD: package 10.0.14 does not mean assembly version 10.0.14.0 -->
+<bindingRedirect oldVersion="0.0.0.0-10.0.14.0" newVersion="10.0.14.0" />
+
+<!-- GOOD: net48 ships lib/net462 at assembly version 10.0.0.14 -->
+<bindingRedirect oldVersion="0.0.0.0-10.0.0.14" newVersion="10.0.0.14" />
+```

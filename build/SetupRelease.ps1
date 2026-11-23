@@ -1444,9 +1444,27 @@ function Test-BthPS3IsPeImage {
 
     $stream = [IO.File]::Open($Path, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::ReadWrite)
     try {
-        $header = New-Object byte[] 2
-        $read = $stream.Read($header, 0, 2)
-        return $read -eq 2 -and $header[0] -eq 0x4D -and $header[1] -eq 0x5A
+        if ($stream.Length -lt 68) {
+            return $false
+        }
+
+        $header = New-Object byte[] 64
+        if ($stream.Read($header, 0, 64) -ne 64 -or $header[0] -ne 0x4D -or $header[1] -ne 0x5A) {
+            return $false
+        }
+
+        $lfanew = [BitConverter]::ToInt32($header, 0x3C)
+        if ($lfanew -lt 0 -or ($lfanew + 4) -gt $stream.Length) {
+            return $false
+        }
+
+        $stream.Position = $lfanew
+        $signature = New-Object byte[] 4
+        if ($stream.Read($signature, 0, 4) -ne 4) {
+            return $false
+        }
+
+        return $signature[0] -eq 0x50 -and $signature[1] -eq 0x45 -and $signature[2] -eq 0 -and $signature[3] -eq 0
     }
     finally {
         $stream.Dispose()
@@ -1812,9 +1830,14 @@ function Assert-BthPS3MsiEmbeddedSignatures {
     }
 
     $checked = 0
-    foreach ($table in @('Binary', 'MsiEmbeddedUI')) {
+    foreach ($table in @(
+            @{ Name = 'Binary'; Key = 'Name' }
+            @{ Name = 'MsiEmbeddedUI'; Key = 'MsiEmbeddedUI' }
+        )) {
+        $tableName = $table.Name
+        $key = $table.Key
         $names = @(
-            Get-BthPS3MsiTableRows -MsiPath $MsiPath -Sql "SELECT ``Name`` FROM ``$table``" -ColumnCount 1 |
+            Get-BthPS3MsiTableRows -MsiPath $MsiPath -Sql "SELECT ``$key`` FROM ``$tableName``" -ColumnCount 1 |
                 ForEach-Object { $_[0] }
         )
         $peCount = 0
@@ -1825,8 +1848,8 @@ function Assert-BthPS3MsiEmbeddedSignatures {
 
             $payload = Get-BthPS3MsiStreamPayload `
                 -MsiPath $MsiPath `
-                -Sql "SELECT ``Data`` FROM ``$table`` WHERE ``Name``='$name'" `
-                -Label "$table/$name"
+                -Sql "SELECT ``Data`` FROM ``$tableName`` WHERE ``$key``='$name'" `
+                -Label "$tableName/$name"
             try {
                 if (-not (Test-BthPS3IsPeImage -Path $payload.Path)) {
                     continue
@@ -1836,7 +1859,7 @@ function Assert-BthPS3MsiEmbeddedSignatures {
                 Assert-BthPS3PeSignature -Path $payload.Path -RequireAllowlistedPublisher | Out-Null
                 Assert-BthPS3SfxCaContentsSigned -Path $payload.Path
                 $checked++
-                Write-Output "Signed embedded ${table}: $name"
+                Write-Output "Signed embedded ${tableName}: $name"
             }
             finally {
                 if ($payload.TempRoot -and (Test-Path -LiteralPath $payload.TempRoot)) {
@@ -1846,7 +1869,7 @@ function Assert-BthPS3MsiEmbeddedSignatures {
         }
 
         if ($peCount -eq 0) {
-            throw "MSI $table table has no embedded PE image: $MsiPath"
+            throw "MSI $tableName table has no embedded PE image: $MsiPath"
         }
     }
 

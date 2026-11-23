@@ -523,7 +523,7 @@ function Find-BthPS3CabinetRange {
     return $null
 }
 
-function Get-BthPS3SfxCaCabinetFileNames {
+function Expand-BthPS3SfxCaCabinet {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -560,11 +560,33 @@ function Get-BthPS3SfxCaCabinetFileNames {
             throw "expand.exe failed to extract the SfxCA cabinet from $Path (exit $LASTEXITCODE)."
         }
 
-        @(Get-ChildItem -LiteralPath $extract -File | ForEach-Object { $_.Name })
+        return [pscustomobject]@{
+            TempRoot = $tempRoot
+            Files    = @(Get-ChildItem -LiteralPath $extract -File)
+        }
     }
-    finally {
+    catch {
         if (Test-Path -LiteralPath $tempRoot) {
             Remove-Item -LiteralPath $tempRoot -Recurse -Force
+        }
+        throw
+    }
+}
+
+function Get-BthPS3SfxCaCabinetFileNames {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $Path
+    )
+
+    $expanded = Expand-BthPS3SfxCaCabinet -Path $Path
+    try {
+        return @($expanded.Files | ForEach-Object { $_.Name })
+    }
+    finally {
+        if ($expanded.TempRoot -and (Test-Path -LiteralPath $expanded.TempRoot)) {
+            Remove-Item -LiteralPath $expanded.TempRoot -Recurse -Force
         }
     }
 }
@@ -876,6 +898,64 @@ function Assert-BthPS3SetupPayload {
     if ($missing.Count -gt 0) {
         throw "Setup payload is incomplete, missing:`n$($missing -join [Environment]::NewLine)"
     }
+}
+
+function Get-BthPS3AllowlistedPublisherIdentities {
+    [pscustomobject]@{
+        Subjects    = @('Nefarius Software Solutions e.U.')
+        Thumbprints = @()
+    }
+}
+
+function Test-BthPS3IsAllowlistedPublisher {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        $Certificate
+    )
+
+    $allow = Get-BthPS3AllowlistedPublisherIdentities
+    $thumbprint = [string]$Certificate.Thumbprint
+    $simpleName = ''
+    try {
+        $simpleName = [string]$Certificate.GetNameInfo(
+            [System.Security.Cryptography.X509Certificates.X509NameType]::SimpleName,
+            $false)
+    }
+    catch {
+        $simpleName = ''
+    }
+
+    foreach ($name in @($allow.Subjects)) {
+        if ($simpleName -and $simpleName.Equals($name, [StringComparison]::OrdinalIgnoreCase)) {
+            return $true
+        }
+    }
+
+    foreach ($thumb in @($allow.Thumbprints)) {
+        if ($thumbprint -and $thumbprint.Equals($thumb, [StringComparison]::OrdinalIgnoreCase)) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
+function Assert-BthPS3AllowlistedPublisher {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        $Certificate,
+
+        [Parameter(Mandatory)]
+        [string] $Path
+    )
+
+    if (Test-BthPS3IsAllowlistedPublisher -Certificate $Certificate) {
+        return
+    }
+
+    throw "Signer on $Path is not the allowlisted publisher: Subject='$($Certificate.Subject)'; Thumbprint='$($Certificate.Thumbprint)'."
 }
 
 function Assert-BthPS3AttestedDriverSignatures {
@@ -1290,4 +1370,564 @@ function New-BthPS3SetupGitTag {
     }
 
     return $Tag
+}
+
+function Get-BthPS3MsiTableRows {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $MsiPath,
+
+        [Parameter(Mandatory)]
+        [string] $Sql,
+
+        # Windows Installer's Record COM object does not expose FieldCount through
+        # PowerShell's COM adapter, so the selected column count has to be passed in.
+        [ValidateRange(1, 16)]
+        [int] $ColumnCount = 1
+    )
+
+    if (-not (Test-Path -LiteralPath $MsiPath -PathType Leaf)) {
+        throw "MSI was not found: $MsiPath"
+    }
+
+    $installer = $null
+    $database = $null
+    $view = $null
+    try {
+        $installer = New-Object -ComObject WindowsInstaller.Installer
+        $database = $installer.OpenDatabase((Resolve-Path -LiteralPath $MsiPath).Path, 0)
+        $view = $database.OpenView($Sql)
+        [void]$view.Execute()
+
+        $rows = [System.Collections.Generic.List[object]]::new()
+        while ($true) {
+            $record = $view.Fetch()
+            if ($null -eq $record) {
+                break
+            }
+
+            try {
+                $values = @(
+                    for ($i = 1; $i -le $ColumnCount; $i++) {
+                        [string]$record.StringData($i)
+                    }
+                )
+                $rows.Add($values)
+            }
+            finally {
+                [void][Runtime.InteropServices.Marshal]::ReleaseComObject($record)
+            }
+        }
+
+        return $rows.ToArray()
+    }
+    finally {
+        foreach ($comObject in @($view, $database, $installer)) {
+            if ($null -ne $comObject) {
+                [void][Runtime.InteropServices.Marshal]::ReleaseComObject($comObject)
+            }
+        }
+    }
+}
+
+function Test-BthPS3IsPeImage {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $Path
+    )
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        return $false
+    }
+
+    $stream = [IO.File]::Open($Path, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::ReadWrite)
+    try {
+        if ($stream.Length -lt 68) {
+            return $false
+        }
+
+        $header = New-Object byte[] 64
+        if ($stream.Read($header, 0, 64) -ne 64 -or $header[0] -ne 0x4D -or $header[1] -ne 0x5A) {
+            return $false
+        }
+
+        $lfanew = [BitConverter]::ToInt32($header, 0x3C)
+        if ($lfanew -lt 0 -or ($lfanew + 4) -gt $stream.Length) {
+            return $false
+        }
+
+        $stream.Position = $lfanew
+        $signature = New-Object byte[] 4
+        if ($stream.Read($signature, 0, 4) -ne 4) {
+            return $false
+        }
+
+        return $signature[0] -eq 0x50 -and $signature[1] -eq 0x45 -and $signature[2] -eq 0 -and $signature[3] -eq 0
+    }
+    finally {
+        $stream.Dispose()
+    }
+}
+
+function Test-BthPS3AuthenticodeExtension {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $Path
+    )
+
+    $extension = [IO.Path]::GetExtension($Path)
+    return $extension -match '^\.(exe|dll|sys|ocx|mui|scr|efi)$'
+}
+
+function Get-BthPS3AuthenticodeProbePath {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $Path
+    )
+
+    if (Test-BthPS3AuthenticodeExtension -Path $Path) {
+        return [pscustomobject]@{
+            Path     = $Path
+            TempRoot = $null
+        }
+    }
+
+    # Get-AuthenticodeSignature ignores images whose extension it does not
+    # recognize, including the extensionless assemblies MakeSfxCA sometimes stores.
+    $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("bthps3-pe-probe-" + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Force -Path $tempRoot | Out-Null
+    $probe = Join-Path $tempRoot (([IO.Path]::GetFileName($Path)) + '.dll')
+    Copy-Item -LiteralPath $Path -Destination $probe
+    return [pscustomobject]@{
+        Path     = $probe
+        TempRoot = $tempRoot
+    }
+}
+
+function Get-BthPS3PeSignature {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $Path
+    )
+
+    $probe = Get-BthPS3AuthenticodeProbePath -Path $Path
+    try {
+        return Get-AuthenticodeSignature -LiteralPath $probe.Path
+    }
+    finally {
+        if ($probe.TempRoot -and (Test-Path -LiteralPath $probe.TempRoot)) {
+            Remove-Item -LiteralPath $probe.TempRoot -Recurse -Force
+        }
+    }
+}
+
+function Assert-BthPS3PeSignature {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $Path,
+
+        [switch] $RequireAllowlistedPublisher
+    )
+
+    $signature = Get-BthPS3PeSignature -Path $Path
+    if ($signature.Status -ne 'Valid' -or -not $signature.SignerCertificate) {
+        throw "PE image is not validly signed: $Path (Status=$($signature.Status))."
+    }
+
+    if ($RequireAllowlistedPublisher) {
+        Assert-BthPS3AllowlistedPublisher -Certificate $signature.SignerCertificate -Path $Path
+    }
+
+    return $signature
+}
+
+function Assert-BthPS3TrustedOrPublisherSignature {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $Path
+    )
+
+    $signature = Assert-BthPS3PeSignature -Path $Path
+    $subject = [string]$signature.SignerCertificate.Subject
+    if ((Test-BthPS3IsAllowlistedPublisher -Certificate $signature.SignerCertificate) -or
+        $subject -match 'Microsoft') {
+        Write-Output "Valid: $Path ($subject)"
+        return
+    }
+
+    throw "Unexpected signer on $Path : $subject"
+}
+
+function Get-BthPS3UnsignedPeFiles {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $Directory
+    )
+
+    if (-not (Test-Path -LiteralPath $Directory -PathType Container)) {
+        throw "PE directory was not found: $Directory"
+    }
+
+    $unsigned = [System.Collections.Generic.List[string]]::new()
+    $files = @(
+        Get-ChildItem -LiteralPath $Directory -File |
+            Where-Object { $_.Extension -match '^\.(exe|dll)$' -and (Test-BthPS3IsPeImage -Path $_.FullName) }
+    )
+    foreach ($file in $files) {
+        $signature = Get-AuthenticodeSignature -LiteralPath $file.FullName
+        if ($signature.Status -eq 'Valid') {
+            continue
+        }
+
+        if ($signature.Status -eq 'NotSigned') {
+            $unsigned.Add($file.FullName)
+            continue
+        }
+
+        throw "Unexpected Authenticode status $($signature.Status) on $($file.FullName)."
+    }
+
+    return @($unsigned)
+}
+
+function Assert-BthPS3DirectoryPeSignatures {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $Directory,
+
+        [AllowNull()]
+        [AllowEmptyCollection()]
+        [string[]] $PublisherOwnedFiles
+    )
+
+    if (-not (Test-Path -LiteralPath $Directory -PathType Container)) {
+        throw "PE directory was not found: $Directory"
+    }
+
+    $owned = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    foreach ($name in @($PublisherOwnedFiles)) {
+        if (-not [string]::IsNullOrWhiteSpace($name)) {
+            [void]$owned.Add($name)
+        }
+    }
+
+    $files = @(Get-ChildItem -LiteralPath $Directory -File | Where-Object { $_.Extension -match '^\.(exe|dll)$' })
+    if ($files.Count -eq 0) {
+        throw "No PE images were found in $Directory."
+    }
+
+    foreach ($file in $files) {
+        $requirePublisher = $owned.Contains($file.Name)
+        Assert-BthPS3PeSignature -Path $file.FullName -RequireAllowlistedPublisher:$requirePublisher | Out-Null
+        Write-Output "Valid: $($file.FullName)"
+    }
+}
+
+function Resolve-BthPS3WxsSourceFile {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $WxsPath,
+
+        [Parameter(Mandatory)]
+        [string] $SourceFile
+    )
+
+    if ([IO.Path]::IsPathRooted($SourceFile)) {
+        return [IO.Path]::GetFullPath($SourceFile)
+    }
+
+    $base = Split-Path -Parent (Resolve-Path -LiteralPath $WxsPath).Path
+    return [IO.Path]::GetFullPath((Join-Path $base $SourceFile))
+}
+
+function Get-BthPS3WxsEmbeddedPeFiles {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $WxsPath
+    )
+
+    if (-not (Test-Path -LiteralPath $WxsPath -PathType Leaf)) {
+        throw "WiX source was not found: $WxsPath"
+    }
+
+    $xml = New-Object System.Xml.XmlDocument
+    $xml.Load((Resolve-Path -LiteralPath $WxsPath).Path)
+
+    $resolved = [System.Collections.Generic.List[string]]::new()
+    foreach ($elementName in @('EmbeddedUI', 'Binary')) {
+        $nodes = @($xml.SelectNodes("//*[local-name()='$elementName']"))
+        $peFiles = [System.Collections.Generic.List[string]]::new()
+        foreach ($node in $nodes) {
+            $source = [string]$node.GetAttribute('SourceFile')
+            if ([string]::IsNullOrWhiteSpace($source)) {
+                continue
+            }
+
+            $full = Resolve-BthPS3WxsSourceFile -WxsPath $WxsPath -SourceFile $source
+            if (-not (Test-Path -LiteralPath $full -PathType Leaf)) {
+                throw "WiX $elementName SourceFile does not exist: $full"
+            }
+
+            if (Test-BthPS3IsPeImage -Path $full) {
+                $peFiles.Add($full)
+            }
+        }
+
+        if ($peFiles.Count -eq 0) {
+            throw "WiX source has no $elementName PE image: $WxsPath"
+        }
+
+        foreach ($path in $peFiles) {
+            $resolved.Add($path)
+        }
+    }
+
+    return @($resolved | Select-Object -Unique)
+}
+
+function Get-BthPS3MsiStreamPayload {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $MsiPath,
+
+        [Parameter(Mandatory)]
+        [string] $Sql,
+
+        [Parameter(Mandatory)]
+        [string] $Label
+    )
+
+    if (-not (Test-Path -LiteralPath $MsiPath -PathType Leaf)) {
+        throw "MSI was not found: $MsiPath"
+    }
+
+    $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("bthps3-msi-stream-" + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Force -Path $tempRoot | Out-Null
+    $destination = Join-Path $tempRoot 'payload.bin'
+
+    $installer = $null
+    $database = $null
+    $view = $null
+    $record = $null
+    try {
+        $installer = New-Object -ComObject WindowsInstaller.Installer
+        $database = $installer.OpenDatabase((Resolve-Path -LiteralPath $MsiPath).Path, 0)
+        $view = $database.OpenView($Sql)
+        [void]$view.Execute()
+        $record = $view.Fetch()
+        if ($null -eq $record) {
+            throw "Stream '$Label' was not found in $MsiPath."
+        }
+
+        $remaining = [int64]$record.DataSize(1)
+        if ($remaining -le 0) {
+            throw "Stream '$Label' in $MsiPath is empty."
+        }
+
+        $output = [IO.File]::Create($destination)
+        try {
+            while ($remaining -gt 0) {
+                $chunkSize = [int][Math]::Min(1048576L, $remaining)
+                # Record.ReadStream(..., 1) returns a string whose Char values are the raw bytes.
+                $chunk = $record.ReadStream(1, $chunkSize, 1)
+                $bytes = [byte[]][char[]]$chunk
+                if ($bytes.Length -le 0) {
+                    throw "Windows Installer stopped streaming '$Label' with $remaining bytes remaining."
+                }
+
+                $output.Write($bytes, 0, $bytes.Length)
+                $remaining -= $bytes.Length
+            }
+        }
+        finally {
+            $output.Dispose()
+        }
+
+        return [pscustomobject]@{
+            Path     = $destination
+            TempRoot = $tempRoot
+        }
+    }
+    catch {
+        if (Test-Path -LiteralPath $tempRoot) {
+            Remove-Item -LiteralPath $tempRoot -Recurse -Force
+        }
+        throw
+    }
+    finally {
+        foreach ($comObject in @($record, $view, $database, $installer)) {
+            if ($null -ne $comObject) {
+                [void][Runtime.InteropServices.Marshal]::ReleaseComObject($comObject)
+            }
+        }
+    }
+}
+
+function Assert-BthPS3SfxCaContentsSigned {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $Path
+    )
+
+    $bytes = [IO.File]::ReadAllBytes((Resolve-Path -LiteralPath $Path).Path)
+    if ($null -eq (Find-BthPS3CabinetRange -Bytes $bytes)) {
+        return
+    }
+
+    $expanded = Expand-BthPS3SfxCaCabinet -Path $Path
+    try {
+        $checked = 0
+        foreach ($file in @($expanded.Files)) {
+            if (-not (Test-BthPS3IsPeImage -Path $file.FullName)) {
+                continue
+            }
+
+            Assert-BthPS3PeSignature -Path $file.FullName | Out-Null
+            $checked++
+        }
+
+        if ($checked -eq 0) {
+            throw "SfxCA package contains no PE images: $Path"
+        }
+
+        Write-Output "SfxCA package is signed inside: $Path ($checked PE images)"
+    }
+    finally {
+        if ($expanded.TempRoot -and (Test-Path -LiteralPath $expanded.TempRoot)) {
+            Remove-Item -LiteralPath $expanded.TempRoot -Recurse -Force
+        }
+    }
+}
+
+function Assert-BthPS3MsiEmbeddedSignatures {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $MsiPath
+    )
+
+    $tables = @(
+        Get-BthPS3MsiTableRows -MsiPath $MsiPath -Sql "SELECT ``Name`` FROM ``_Tables``" -ColumnCount 1 |
+            ForEach-Object { $_[0] }
+    )
+    foreach ($required in @('Binary', 'MsiEmbeddedUI')) {
+        if ($tables -notcontains $required) {
+            throw "MSI is missing the $required table: $MsiPath"
+        }
+    }
+
+    $checked = 0
+    foreach ($table in @(
+            @{ Name = 'Binary'; Key = 'Name' }
+            @{ Name = 'MsiEmbeddedUI'; Key = 'MsiEmbeddedUI' }
+        )) {
+        $tableName = $table.Name
+        $key = $table.Key
+        $names = @(
+            Get-BthPS3MsiTableRows -MsiPath $MsiPath -Sql "SELECT ``$key`` FROM ``$tableName``" -ColumnCount 1 |
+                ForEach-Object { $_[0] }
+        )
+        $peCount = 0
+        foreach ($name in $names) {
+            if ($name -match "'") {
+                throw "MSI stream name contains a quote and cannot be queried safely: '$name'."
+            }
+
+            $payload = Get-BthPS3MsiStreamPayload `
+                -MsiPath $MsiPath `
+                -Sql "SELECT ``Data`` FROM ``$tableName`` WHERE ``$key``='$name'" `
+                -Label "$tableName/$name"
+            try {
+                if (-not (Test-BthPS3IsPeImage -Path $payload.Path)) {
+                    continue
+                }
+
+                $peCount++
+                Assert-BthPS3PeSignature -Path $payload.Path -RequireAllowlistedPublisher | Out-Null
+                Assert-BthPS3SfxCaContentsSigned -Path $payload.Path
+                $checked++
+                Write-Output "Signed embedded ${tableName}: $name"
+            }
+            finally {
+                if ($payload.TempRoot -and (Test-Path -LiteralPath $payload.TempRoot)) {
+                    Remove-Item -LiteralPath $payload.TempRoot -Recurse -Force
+                }
+            }
+        }
+
+        if ($peCount -eq 0) {
+            throw "MSI $tableName table has no embedded PE image: $MsiPath"
+        }
+    }
+
+    Write-Output "Embedded installer images are signed: $checked"
+}
+
+function Assert-BthPS3StagedPayloadSignatures {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $RepositoryRoot,
+
+        [Parameter(Mandatory)]
+        [string] $SetupRoot
+    )
+
+    $publisherOwned = @(
+        (Join-Path $SetupRoot 'artifacts\bin\BthPS3CfgUI.exe')
+        (Join-Path $RepositoryRoot 'BthPS3Installer\nefcon\x64\nefconc.exe')
+        (Join-Path $RepositoryRoot 'BthPS3Installer\nefcon\x64\nefconw.exe')
+        (Join-Path $RepositoryRoot 'BthPS3Installer\nefcon\ARM64\nefconc.exe')
+        (Join-Path $RepositoryRoot 'BthPS3Installer\nefcon\ARM64\nefconw.exe')
+        (Join-Path $RepositoryRoot 'BthPS3Installer\nefarius_BthPS3_Updater.exe')
+    )
+    foreach ($file in $publisherOwned) {
+        if (-not (Test-Path -LiteralPath $file -PathType Leaf)) {
+            throw "Staged payload file is missing: $file"
+        }
+
+        Assert-BthPS3PeSignature -Path $file -RequireAllowlistedPublisher | Out-Null
+        Write-Output "Publisher-signed: $file"
+    }
+}
+
+function Write-BthPS3GitHubMultilineOutput {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $Name,
+
+        [AllowNull()]
+        [AllowEmptyCollection()]
+        [string[]] $Values,
+
+        [Parameter(Mandatory)]
+        [string] $GitHubOutput
+    )
+
+    if ($Name -notmatch '^[A-Za-z0-9_-]+$') {
+        throw "GitHub output name contains unsupported characters: '$Name'."
+    }
+
+    $directory = Split-Path -Parent $GitHubOutput
+    if ($directory -and -not (Test-Path -LiteralPath $directory)) {
+        New-Item -ItemType Directory -Force -Path $directory | Out-Null
+    }
+
+    $delimiter = "bthps3_$([guid]::NewGuid().ToString('N'))"
+    $lines = @("$Name<<$delimiter") + @($Values) + @($delimiter)
+    Add-Content -LiteralPath $GitHubOutput -Value $lines -Encoding utf8
 }

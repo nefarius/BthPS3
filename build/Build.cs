@@ -93,7 +93,7 @@ class Build : NukeBuild
             foreach ((Configuration config, MSBuildTargetPlatform platform) in CiOrLocalCombinations())
             {
                 Log.Information("Building DMF DmfK {Configuration} | {Platform}", config, platform);
-                MSBuild(s => s
+                MSBuild(s => SuppressWdkAmxIntrinsicWarning(s
                     .SetProcessToolPath(MSBuildPath)
                     .SetTargetPath(DmfSolution)
                     .SetTargets("DmfK")
@@ -102,7 +102,7 @@ class Build : NukeBuild
                     .SetMaxCpuCount(Environment.ProcessorCount)
                     .SetNodeReuse(IsLocalBuild)
                     .SetVerbosity(MSBuildVerbosity.Minimal)
-                );
+                ));
             }
         });
 
@@ -114,7 +114,7 @@ class Build : NukeBuild
             foreach ((Configuration config, MSBuildTargetPlatform platform) in CiOrLocalCombinations())
             {
                 Log.Information("Building Domito {Configuration} | {Platform}", config, platform);
-                MSBuild(s => s
+                MSBuild(s => SuppressWdkAmxIntrinsicWarning(s
                     .SetProcessToolPath(MSBuildPath)
                     .SetTargetPath(DomitoSolution)
                     .SetTargets("Build")
@@ -123,7 +123,7 @@ class Build : NukeBuild
                     .SetMaxCpuCount(Environment.ProcessorCount)
                     .SetNodeReuse(IsLocalBuild)
                     .SetVerbosity(MSBuildVerbosity.Minimal)
-                );
+                ));
             }
         });
 
@@ -138,7 +138,7 @@ class Build : NukeBuild
                 foreach ((Configuration config, MSBuildTargetPlatform platform) in LocalCombinations())
                 {
                     Log.Information("Compiling main solution {Configuration} | {Platform}", config, platform);
-                    MSBuild(s => ApplyVersionStamp(s
+                    MSBuild(s => SuppressWdkAmxIntrinsicWarning(ApplyVersionStamp(s
                         .SetProcessToolPath(MSBuildPath)
                         .SetTargetPath(Solution)
                         .SetTargets("Rebuild")
@@ -147,7 +147,7 @@ class Build : NukeBuild
                         .SetMaxCpuCount(Environment.ProcessorCount)
                         .SetNodeReuse(IsLocalBuild)
                         .SetVerbosity(MSBuildVerbosity.Minimal)
-                    ));
+                    )));
                 }
 
                 return;
@@ -155,7 +155,7 @@ class Build : NukeBuild
 
             MSBuildTargetPlatform ciPlatform = RequireCiPlatform();
             Log.Information("Compiling main solution {Configuration} | {Platform}", Configuration, ciPlatform);
-            MSBuild(s => ApplyVersionStamp(s
+            MSBuild(s => SuppressWdkAmxIntrinsicWarning(ApplyVersionStamp(s
                 .SetProcessToolPath(MSBuildPath)
                 .SetTargetPath(Solution)
                 .SetTargets("Rebuild")
@@ -165,7 +165,7 @@ class Build : NukeBuild
                 .SetMaxCpuCount(Environment.ProcessorCount)
                 .SetNodeReuse(IsLocalBuild)
                 .SetVerbosity(MSBuildVerbosity.Minimal)
-            ));
+            )));
         });
 
     /// <summary>
@@ -252,6 +252,19 @@ class Build : NukeBuild
         }
 
         throw new InvalidOperationException($"Unsupported TargetPlatform '{TargetPlatform}'. Use x64 or ARM64.");
+    }
+
+    /// <summary>
+    /// WDK 10.0.28000 declares <c>__rmpadjust</c> with four parameters in km/crt/ammintrin.h.
+    /// Current x64 MSVC expects five and reports C4392, which /WX promotes to C2220.
+    /// ARM64 does not compile that intrinsic. cl.exe reads the CL variable itself.
+    /// </summary>
+    static MSBuildSettings SuppressWdkAmxIntrinsicWarning(MSBuildSettings settings)
+    {
+        const string option = "/wd4392";
+        string existing = Environment.GetEnvironmentVariable("CL");
+        string value = string.IsNullOrWhiteSpace(existing) ? option : $"{existing} {option}";
+        return settings.SetProcessEnvironmentVariable("CL", value);
     }
 
     static MSBuildSettings ApplyVersionStamp(MSBuildSettings settings)

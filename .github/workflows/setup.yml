@@ -161,6 +161,7 @@ jobs:
             -ToolsSource 'artifacts/ci/tools' `
             -SetupRoot (Join-Path $pwd 'Setup')
           Assert-BthPS3AttestedDriverSignatures -DriversRoot (Join-Path $pwd 'Setup\drivers')
+          Assert-BthPS3StagedPayloadSignatures -RepositoryRoot $pwd -SetupRoot (Join-Path $pwd 'Setup')
           Write-Output 'Do not append another publisher signature after Microsoft attestation.'
 
       - name: 'Setup .NET'
@@ -196,11 +197,106 @@ jobs:
           . ./build/SetupRelease.ps1
           Assert-BthPS3NoGitLfsPointers -RepositoryRoot $pwd
 
-      - name: 'Build MSI'
+      - name: 'Compile installer'
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           dotnet build -c Release -p:SetupVersion=$env:SETUP_VERSION .\BthPS3Installer\BthPS3Installer.csproj
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
+      - name: 'List unsigned installer assemblies'
+        id: unsigned-assemblies
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          . ./build/SetupRelease.ps1
+          $dir = Join-Path $pwd 'BthPS3Installer\bin\Release\net48'
+          $files = @(Get-BthPS3UnsignedPeFiles -Directory $dir)
+          Write-BthPS3GitHubOutput -GitHubOutput $env:GITHUB_OUTPUT -Values @{ count = $files.Count }
+          Write-BthPS3GitHubMultilineOutput -Name 'files' -Values $files -GitHubOutput $env:GITHUB_OUTPUT
+          Write-Output "Unsigned installer assemblies: $($files.Count)"
+
+      - name: 'Sign installer assemblies'
+        if: steps.unsigned-assemblies.outputs.count != '0'
+        uses: nefarius/SignRelay@31a8d34f0d7da6e44e9c4a794b0f51e0f5f2e8fd
+        with:
+          server: ${{ env.SIGN_RELAY_SERVER }}
+          token: ${{ env.SIGN_RELAY_CI_TOKEN }}
+          in-place: true
+          files: ${{ steps.unsigned-assemblies.outputs.files }}
+
+      - name: 'Verify installer assembly signatures'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          . ./build/SetupRelease.ps1
+          Assert-BthPS3DirectoryPeSignatures `
+            -Directory (Join-Path $pwd 'BthPS3Installer\bin\Release\net48') `
+            -PublisherOwnedFiles @(
+              'BthPS3Installer.exe',
+              'Nefarius.BthPS3.Shared.dll',
+              'Nefarius.Utilities.Bluetooth.dll',
+              'Nefarius.Utilities.DeviceManagement.dll')
+
+      - name: 'Emit MSI build command'
+        working-directory: BthPS3Installer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & .\bin\Release\net48\BthPS3Installer.exe --build-cmd
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
+      - name: 'List unsigned SfxCA packages'
+        id: unsigned-sfxca
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          . ./build/SetupRelease.ps1
+          $base = [IO.Path]::GetFileNameWithoutExtension($env:MSI_NAME)
+          $wxs = Join-Path $pwd "BthPS3Installer\$base.wxs"
+          $files = @(Get-BthPS3WxsEmbeddedPeFiles -WxsPath $wxs)
+          foreach ($file in $files) {
+            $sig = Get-AuthenticodeSignature -LiteralPath $file
+            if ($sig.Status -ne 'NotSigned') {
+              throw "Expected unsigned $file but Get-AuthenticodeSignature returned $($sig.Status)."
+            }
+          }
+          Write-BthPS3GitHubOutput -GitHubOutput $env:GITHUB_OUTPUT -Values @{ count = $files.Count }
+          Write-BthPS3GitHubMultilineOutput -Name 'files' -Values $files -GitHubOutput $env:GITHUB_OUTPUT
+          Write-Output "Unsigned SfxCA packages: $($files.Count)"
+
+      - name: 'Sign SfxCA packages'
+        if: steps.unsigned-sfxca.outputs.count != '0'
+        uses: nefarius/SignRelay@31a8d34f0d7da6e44e9c4a794b0f51e0f5f2e8fd
+        with:
+          server: ${{ env.SIGN_RELAY_SERVER }}
+          token: ${{ env.SIGN_RELAY_CI_TOKEN }}
+          in-place: true
+          skip-tool-install: "${{ steps.unsigned-assemblies.outputs.count != '0' }}"
+          files: ${{ steps.unsigned-sfxca.outputs.files }}
+
+      - name: 'Verify SfxCA signatures'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          . ./build/SetupRelease.ps1
+          $base = [IO.Path]::GetFileNameWithoutExtension($env:MSI_NAME)
+          $files = @(Get-BthPS3WxsEmbeddedPeFiles -WxsPath (Join-Path $pwd "BthPS3Installer\$base.wxs"))
+          foreach ($file in $files) {
+            Assert-BthPS3PeSignature -Path $file -RequireAllowlistedPublisher | Out-Null
+            Write-Output "Signed: $file"
+          }
+
+      - name: 'Link MSI'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $base = [IO.Path]::GetFileNameWithoutExtension($env:MSI_NAME)
+          $cmd = Join-Path $pwd "BthPS3Installer\Build_$base.cmd"
+          if (-not (Test-Path -LiteralPath $cmd -PathType Leaf)) {
+            throw "MSI build command was not produced: $cmd"
+          }
+          & cmd.exe /c "`"$cmd`""
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
       - name: 'Assert MSI payload and custom-action package'
@@ -213,6 +309,7 @@ jobs:
           Assert-BthPS3MsiBinariesVersioned -PayloadFiles (Get-BthPS3MsiPayloadFiles -MsiPath $msi)
           $manifest = Join-Path $pwd 'BthPS3Installer\obj\ca-support-assemblies.txt'
           Assert-BthPS3CustomActionPackage -MsiPath $msi -ManifestPath $manifest
+          Assert-BthPS3MsiEmbeddedSignatures -MsiPath $msi
 
       - name: 'Assert MSI is unsigned'
         shell: pwsh
@@ -233,6 +330,7 @@ jobs:
           server: ${{ env.SIGN_RELAY_SERVER }}
           token: ${{ env.SIGN_RELAY_CI_TOKEN }}
           in-place: true
+          skip-tool-install: true
           files: BthPS3Installer/${{ needs.resolve.outputs.msi-name }}
 
       - name: 'Verify signed MSI and write provenance'
@@ -246,6 +344,7 @@ jobs:
           if ($sig.Status -ne 'Valid' -or -not $sig.SignerCertificate) {
             throw "MSI is not validly signed: $msi (Status=$($sig.Status))."
           }
+          Assert-BthPS3AllowlistedPublisher -Certificate $sig.SignerCertificate -Path $msi
           Write-Output "Signed: $msi (Subject=$($sig.SignerCertificate.Subject))"
 
           $sha = (Get-FileHash -LiteralPath $msi -Algorithm SHA256).Hash.ToLowerInvariant()

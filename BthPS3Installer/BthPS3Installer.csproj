@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -8,6 +8,7 @@
 
   <PropertyGroup>
     <SetupVersion Condition="'$(SetupVersion)' == ''">2.17.0</SetupVersion>
+    <GenerateMsi Condition="'$(GenerateMsi)' == ''">false</GenerateMsi>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -49,7 +50,7 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(GenerateMsi)' == 'true'">
     <Exec Command="cd .\&#xD;&#xA;set ide=true&#xD;&#xA;&quot;$(TargetPath)&quot;" />
   </Target>
 

@@ -32,7 +32,7 @@ internal class InstallScript
     public static string BthPs3ServiceName => "BthPS3Service";
     public static Guid BthPs3ServiceGuid => Guid.Parse("{1cb831ea-79cd-4508-b0fc-85f7c85ae8e0}");
 
-    private static void Main()
+    private static void Main(string[] args)
     {
         Version version = Version.Parse(BuildVariables.SetupVersion);
 
@@ -333,6 +333,28 @@ internal class InstallScript
         }
 
         RequireMatchingBindingRedirects();
+
+        bool buildCmd = false;
+        foreach (string arg in args)
+        {
+            if (string.Equals(arg, "--build-cmd", StringComparison.OrdinalIgnoreCase))
+            {
+                buildCmd = true;
+                continue;
+            }
+
+            throw new ArgumentException($"Unknown installer argument '{arg}'.");
+        }
+
+        if (buildCmd)
+        {
+            // Emit the WiX source and SfxCA packages without linking, so CI can sign
+            // the *.CA.dll images before wix.exe packs them into the MSI.
+            string cmd = Compiler.BuildMsiCmd(project);
+            Console.WriteLine($"MSI build command: {cmd}");
+            return;
+        }
+
         project.BuildMsi();
     }
 
